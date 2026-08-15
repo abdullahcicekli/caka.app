@@ -13,7 +13,7 @@ interface NavbarProps {
 /** Lime hero'nun üstünde yüzen beyaz hap navbar. */
 export function Navbar({ items, login, cta }: NavbarProps) {
   return (
-    <header className="px-4 pt-6 sm:px-8">
+    <header className="relative z-10 px-4 pt-6 sm:px-8">
       <nav className="mx-auto flex max-w-7xl items-center gap-8 rounded-full bg-white py-3 pr-3 pl-6 shadow-sm">
         <Link to="/" className="shrink-0" aria-label="Caka ana sayfa">
           <img src={logoBlackText} alt="Caka" className="h-7 w-auto" />

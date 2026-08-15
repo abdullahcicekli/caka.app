@@ -1,6 +1,11 @@
+import creatorElif from "~/assets/landing/creator-elif.webp";
+import creatorKerem from "~/assets/landing/creator-kerem.webp";
+import creatorNaz from "~/assets/landing/creator-naz.webp";
+import creatorSelin from "~/assets/landing/creator-selin.webp";
+
 /**
- * Landing içeriğinin tek kaynağı. Metin, link ve bölüm verisi burada değişir;
- * bileşenler yalnızca bu tipleri tüketir (içerik/görünüm ayrımı).
+ * Landing içeriğinin tek kaynağı. Metin, link, görsel ve bölüm verisi burada
+ * değişir; bileşenler yalnızca bu tipleri tüketir (içerik/görünüm ayrımı).
  */
 
 export interface NavItem {
@@ -13,12 +18,10 @@ export interface Cta {
   href: string;
 }
 
-/** Vitrin kartı: image verilirse fotoğraf, verilmezse dekoratif blok çizilir. */
-export interface ShowcaseItem {
-  caption?: string;
-  tone: "erik" | "kum" | "mor" | "cam";
-  image?: string;
-  alt?: string;
+/** Hero'daki akan vitrin kartı. */
+export interface MarqueeItem {
+  image: string;
+  caption: string;
 }
 
 export const landing = {
@@ -41,10 +44,15 @@ export const landing = {
       cta: "Ücretsiz başla",
       action: "/login",
     },
-    showcase: [
-      { caption: "Naz Erdem · Yayıncı", tone: "cam" },
-      { caption: "Deniz Aksoy · Tasarımcı", tone: "erik" },
-    ] satisfies ShowcaseItem[],
+    marquee: {
+      durationSeconds: 30,
+      items: [
+        { image: creatorKerem, caption: "Kerem Aydın · Müzisyen" },
+        { image: creatorSelin, caption: "Selin Duru · Seramik atölyesi" },
+        { image: creatorElif, caption: "Elif Şahin · Podcast sunucusu" },
+        { image: creatorNaz, caption: "Naz Erdem · Yayıncı" },
+      ] satisfies MarqueeItem[],
+    },
   },
   minutes: {
     title: "Caka sayfanı\ndakikalar içinde kur",

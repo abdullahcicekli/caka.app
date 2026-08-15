@@ -35,6 +35,18 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-2xl: 16px;
+
+  /* Hero vitrin şeridi: dikey sonsuz akış (içerik iki kez render edilir) */
+  --animate-marquee: caka-marquee 30s linear infinite;
+
+  @keyframes caka-marquee {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-50%);
+    }
+  }
 }
 
 html,
