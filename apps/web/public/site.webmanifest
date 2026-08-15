@@ -1,0 +1,21 @@
+{
+  "name": "Caka",
+  "short_name": "Caka",
+  "description": "Bio linkin, kendi mini siten olsun — sürükle-bırak grid ile profil sayfanı kur, yayınla, paylaş.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#3554ec",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
