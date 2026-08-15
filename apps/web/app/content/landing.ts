@@ -33,7 +33,7 @@ export const landing = {
       { label: "Fiyat", href: "#fiyat" },
     ] satisfies NavItem[],
     login: { label: "Giriş yap", href: "/login" } satisfies Cta,
-    cta: { label: "Ücretsiz başla", href: "/login" } satisfies Cta,
+    cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
   },
   hero: {
     title: "Sana göre\nbir bio linki.",
@@ -42,7 +42,7 @@ export const landing = {
       domain: "caka.app/",
       placeholder: "adin",
       cta: "Ücretsiz başla",
-      action: "/login",
+      action: "/onboarding",
     },
     marquee: {
       durationSeconds: 30,
@@ -57,7 +57,7 @@ export const landing = {
   minutes: {
     title: "Caka sayfanı\ndakikalar içinde kur",
     body: "Sosyal hesaplarını, sitelerini, projelerini ve mağazanı tek bağlantıda topla. Her detayı kendin ayarla ya da hazır temayla başla.",
-    cta: { label: "Ücretsiz başla", href: "/login" } satisfies Cta,
+    cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
   },
 } as const;
 

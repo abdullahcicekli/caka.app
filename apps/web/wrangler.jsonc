@@ -10,6 +10,9 @@
 	"observability": {
 		"enabled": true
 	},
+	"vars": {
+		"BETTER_AUTH_URL": "https://caka.abdulahcicekli.workers.dev"
+	},
 	"upload_source_maps": true,
 	"d1_databases": [
 		{

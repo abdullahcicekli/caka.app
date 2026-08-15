@@ -1,3 +1,3 @@
-// @caka/shared — layout/blok Zod şemaları, username kuralları, rezerve liste,
-// sosyal platform enum'u ve sabitler burada yaşayacak (U3).
-export const CAKA = "caka" as const;
+// @caka/shared — uygulama genelinde paylaşılan saf kurallar ve tipler.
+// Blok/layout Zod şemaları U3'te eklenecek.
+export * from "./username";

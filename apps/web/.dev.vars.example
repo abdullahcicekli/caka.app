@@ -1,0 +1,6 @@
+# Lokal geliştirme değerleri — .dev.vars olarak kopyala (gitignore'da).
+# Üretimde bunlar `wrangler secret put` ile tanımlanır (BETTER_AUTH_URL hariç, o wrangler.jsonc vars'ta).
+BETTER_AUTH_URL=http://localhost:5173
+BETTER_AUTH_SECRET=dev-secret-en-az-32-karakter-uzunlugunda-olsun
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxx

@@ -7,7 +7,8 @@
     "app/**/.client/**/*",
     "server/**/*",
     "workers/**/*",
-    "worker-configuration.d.ts"
+    "worker-configuration.d.ts",
+    "worker-env.d.ts"
   ],
   "compilerOptions": {
     "composite": true,

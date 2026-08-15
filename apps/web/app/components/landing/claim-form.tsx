@@ -20,7 +20,7 @@ export function ClaimForm({ claim }: { claim: ClaimContent }) {
         <span className="text-murekkep/60">{claim.domain}</span>
         <input
           type="text"
-          name="username"
+          name="u"
           placeholder={claim.placeholder}
           autoComplete="off"
           autoCapitalize="none"
