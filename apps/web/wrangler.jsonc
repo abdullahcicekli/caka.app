@@ -11,8 +11,14 @@
 		"enabled": true
 	},
 	"vars": {
-		"BETTER_AUTH_URL": "https://caka.abdulahcicekli.workers.dev"
+		"BETTER_AUTH_URL": "https://caka.app"
 	},
+	"routes": [
+		{
+			"pattern": "caka.app",
+			"custom_domain": true
+		}
+	],
 	"upload_source_maps": true,
 	"d1_databases": [
 		{
@@ -29,8 +35,6 @@
 		}
 	]
 	/**
-	 * Custom domain (caka.app) U12'de bağlanacak:
-	 * "routes": [ { "pattern": "caka.app", "custom_domain": true } ]
 	 * Smart Placement: https://developers.cloudflare.com/workers/configuration/smart-placement/
 	 * // "placement": { "mode": "smart" }
 	 */

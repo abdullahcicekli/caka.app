@@ -6,7 +6,14 @@ import { createDb, schema } from "@caka/db";
 function buildAuth(env: Env) {
   const db = createDb(env.DB);
   return betterAuth({
-    baseURL: env.BETTER_AUTH_URL,
+    // Prod'da kanonik domain (caka.app); lokalde boş bırakılır ve origin
+    // istekten türetilir (5173/5174 — ikisi de Google'da kayıtlı).
+    baseURL: env.BETTER_AUTH_URL || undefined,
+    trustedOrigins: [
+      "https://caka.app",
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
     socialProviders: {
