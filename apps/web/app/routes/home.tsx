@@ -1,19 +1,17 @@
-import { env } from "cloudflare:workers";
-
 import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Caka — bio linkin, kendi mini siten" },
+    {
+      name: "description",
+      content:
+        "Sürükle-bırak grid ile profil sayfanı kur, yayınla, paylaş. Tek linkle her şeyin tek ekranda.",
+    },
   ];
 }
 
-export function loader() {
-  return { message: env.VALUE_FROM_CLOUDFLARE };
-}
-
-export default function Home({ loaderData }: Route.ComponentProps) {
-  return <Welcome message={loaderData.message} />;
+export default function Home() {
+  return <Welcome message="caka.app" />;
 }

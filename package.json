@@ -16,6 +16,6 @@
     "build": "pnpm --filter @caka/web build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "deploy": "pnpm --filter @caka/web deploy"
+    "deploy": "pnpm --filter @caka/web run deploy"
   }
 }
