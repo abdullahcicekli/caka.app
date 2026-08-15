@@ -1,0 +1,14 @@
+/* @caka/ui — light / dark / paper tema token'ları (KTD12).
+   Tam token seti U5/U6'da doldurulacak; data-theme sözleşmesi buradan yönetilir. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="paper"] {
+  color-scheme: light;
+}

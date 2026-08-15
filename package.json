@@ -1,0 +1,21 @@
+{
+  "name": "caka",
+  "private": true,
+  "packageManager": "pnpm@10.28.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  },
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @caka/web dev",
+    "build": "pnpm --filter @caka/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "deploy": "pnpm --filter @caka/web deploy"
+  }
+}
