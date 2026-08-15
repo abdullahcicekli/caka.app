@@ -29,7 +29,7 @@ export async function getProfileByUserId(env: Env, userId: string) {
   });
 }
 
-/** R3: sayfa asla boş açılmaz — Google adı + avatarıyla tohum profil kartı. */
+/** R3: sayfa asla boş açılmaz — hesap adı + avatarıyla tohum profil kartı. */
 function buildSeedLayout(name: string, avatarAssetId: string | null) {
   return {
     version: 1,

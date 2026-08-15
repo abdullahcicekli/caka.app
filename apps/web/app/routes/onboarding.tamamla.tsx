@@ -19,7 +19,7 @@ function readClaimCookie(request: Request): string | null {
 }
 
 /**
- * Google dönüşü: çerezdeki adresi claim eder (R2/R3). Görünür bir ekranı yok;
+ * OAuth dönüşü: çerezdeki adresi claim eder (R2/R3). Görünür bir ekranı yok;
  * her koşulda uygun sayfaya yönlendirir.
  */
 export async function loader({ request }: Route.LoaderArgs) {

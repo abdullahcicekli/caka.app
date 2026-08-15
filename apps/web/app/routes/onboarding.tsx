@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 import { Form, Link, data, redirect, useSearchParams } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
+import { AppleIcon } from "~/components/icons/apple";
 import { GoogleIcon } from "~/components/icons/google";
 import {
   Dialog,
@@ -11,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { authClient } from "~/lib/auth-client";
+import { signInWithSocial, type SocialProvider } from "~/lib/auth-client";
 import { USERNAME_ERROR_MESSAGES, validateUsername } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { claimUsername, getProfileByUserId } from "../../server/profile";
@@ -100,15 +101,12 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
   const ready = availability.state === "available";
   const username = ready ? availability.username : null;
 
-  function startGoogleSignup() {
+  function startSocialSignup(provider: SocialProvider) {
     if (!username) return;
     // Adres, OAuth gidiş-dönüşü boyunca kısa ömürlü çerezde taşınır;
     // claim /onboarding/tamamla loader'ında yapılır.
     document.cookie = `${CLAIM_COOKIE}=${encodeURIComponent(username)}; Path=/; Max-Age=900; SameSite=Lax`;
-    void authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/onboarding/tamamla",
-    });
+    void signInWithSocial(provider);
   }
 
   return (
@@ -190,14 +188,24 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
               </button>
             </Form>
           ) : (
-            <button
-              type="button"
-              onClick={startGoogleSignup}
-              className="flex w-full items-center justify-center gap-2 rounded-full border border-sinir bg-white py-3 font-medium hover:bg-zemin"
-            >
-              <GoogleIcon />
-              Google ile kaydol
-            </button>
+            <div className="flex w-full flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => startSocialSignup("google")}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-sinir bg-white py-3 font-medium hover:bg-zemin"
+              >
+                <GoogleIcon />
+                Google ile kaydol
+              </button>
+              <button
+                type="button"
+                onClick={() => startSocialSignup("apple")}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-murekkep py-3 font-medium text-white hover:bg-murekkep/85"
+              >
+                <AppleIcon />
+                Apple ile kaydol
+              </button>
+            </div>
           )}
           <p className="text-xs text-murekkep/50">
             Kaydolarak kullanım şartlarını ve gizlilik politikasını kabul edersin.

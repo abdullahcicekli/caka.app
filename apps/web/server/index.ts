@@ -10,7 +10,7 @@ export const honoApp = new Hono<{ Bindings: Env }>();
 
 honoApp.get("/api/health", (c) => c.json({ ok: true }));
 
-// Better Auth: /api/auth/* (Google OAuth dahil)
+// Better Auth: /api/auth/* (Google + Apple OAuth)
 honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
   getAuth(c.env).handler(c.req.raw),
 );

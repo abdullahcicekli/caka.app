@@ -3,8 +3,9 @@ import { Link, redirect } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
 import creatorSelin from "~/assets/landing/creator-selin.webp";
+import { AppleIcon } from "~/components/icons/apple";
 import { GoogleIcon } from "~/components/icons/google";
-import { authClient } from "~/lib/auth-client";
+import { signInWithSocial } from "~/lib/auth-client";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/login";
@@ -21,13 +22,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Login() {
-  function signInWithGoogle() {
-    void authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/onboarding/tamamla",
-    });
-  }
-
   return (
     <main className="grid min-h-svh bg-white lg:grid-cols-2">
       <div className="relative flex flex-col px-6 py-6 sm:px-10">
@@ -41,11 +35,19 @@ export default function Login() {
 
           <button
             type="button"
-            onClick={signInWithGoogle}
+            onClick={() => void signInWithSocial("google")}
             className="mt-8 flex w-full items-center justify-center gap-2 rounded-full border border-sinir bg-white py-3 font-medium hover:bg-zemin"
           >
             <GoogleIcon />
             Google ile giriş yap
+          </button>
+          <button
+            type="button"
+            onClick={() => void signInWithSocial("apple")}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-murekkep py-3 font-medium text-white hover:bg-murekkep/85"
+          >
+            <AppleIcon />
+            Apple ile giriş yap
           </button>
 
           <p className="mt-8 text-sm text-murekkep/60">

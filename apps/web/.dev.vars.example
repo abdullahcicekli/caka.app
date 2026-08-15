@@ -1,7 +1,13 @@
 # Lokal geliştirme değerleri — .dev.vars olarak kopyala (gitignore'da).
-# Üretimde bunlar `wrangler secret put` ile tanımlanır (BETTER_AUTH_URL hariç, o wrangler.jsonc vars'ta).
+# Üretimde bunlar `wrangler secret put` ile tanımlanır (BETTER_AUTH_URL ve
+# APPLE_CLIENT_ID/TEAM_ID/KEY_ID hariç; onlar wrangler.jsonc vars'ta).
 # BETTER_AUTH_URL lokalde BOŞ kalır: origin istekten türetilir (5173/5174).
+# Apple localhost kabul etmez; Sign in with Apple yalnızca https://caka.app üzerinde çalışır.
 BETTER_AUTH_URL=
 BETTER_AUTH_SECRET=dev-secret-en-az-32-karakter-uzunlugunda-olsun
 GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-xxx
+APPLE_CLIENT_ID=app.caka.web
+APPLE_TEAM_ID=82ALKT75W8
+APPLE_KEY_ID=7JP7G5WHM4
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
