@@ -17,7 +17,7 @@ export function HeroMarquee({ items, durationSeconds }: HeroMarqueeProps) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-y-0 right-6 z-0 hidden w-[420px] overflow-hidden [mask-image:linear-gradient(to_bottom,black_82%,transparent)] lg:block xl:right-12 xl:w-[470px]"
+      className="pointer-events-none absolute inset-y-0 right-4 z-0 hidden w-[420px] overflow-hidden [mask-image:linear-gradient(to_bottom,black_82%,transparent)] sm:right-8 lg:block xl:w-[470px]"
     >
       <div
         className="flex flex-col gap-[18px] motion-safe:animate-marquee"

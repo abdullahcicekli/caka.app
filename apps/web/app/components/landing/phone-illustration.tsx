@@ -7,7 +7,7 @@ export function PhoneIllustration() {
       src={phone3d}
       alt=""
       loading="lazy"
-      className="mx-auto w-full max-w-[520px] rounded-2xl"
+      className="mx-auto w-full max-w-[520px]"
     />
   );
 }

@@ -10,11 +10,14 @@ import type { LandingContent } from "~/content/landing";
 export function Hero({ hero }: { hero: LandingContent["hero"] }) {
   return (
     <section className="relative bg-kirec">
-      <div className="absolute inset-x-0 -top-24 bottom-0">
-        <HeroMarquee
-          items={hero.marquee.items}
-          durationSeconds={hero.marquee.durationSeconds}
-        />
+      {/* Şerit, viewport'a değil ortalanmış içerik konteynerine hizalanır */}
+      <div className="pointer-events-none absolute inset-x-0 -top-24 bottom-0">
+        <div className="relative mx-auto h-full max-w-7xl">
+          <HeroMarquee
+            items={hero.marquee.items}
+            durationSeconds={hero.marquee.durationSeconds}
+          />
+        </div>
       </div>
       <div className="relative z-10 mx-auto max-w-7xl px-4 pt-14 pb-16 sm:px-8 lg:pt-20 lg:pb-24">
         <div className="flex flex-col justify-center lg:max-w-[54%]">
