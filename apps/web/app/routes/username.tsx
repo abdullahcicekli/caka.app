@@ -2,8 +2,10 @@ import { env } from "cloudflare:workers";
 import { Link, data, redirect } from "react-router";
 
 import { ProfileAvatar } from "~/components/profile-avatar";
+import { SignOutLink } from "~/components/sign-out-link";
 import { parseSeedProfile } from "~/lib/profile-view";
 import { normalizeUsername } from "@caka/shared";
+import { getSession } from "../../server/auth";
 import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
 
@@ -39,16 +41,18 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const p = resolved.profile;
   const seed = parseSeedProfile(p.layout);
+  const session = await getSession(env, request);
   return {
     username: p.username,
     name: seed.name ?? p.username,
     avatarUrl: seed.avatarUrl,
     theme: p.theme,
+    isOwner: session?.user.id === p.userId,
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
-  const { name, username, avatarUrl } = loaderData;
+  const { name, username, avatarUrl, isOwner } = loaderData;
   return (
     <main className="flex min-h-svh flex-col items-center bg-zemin px-6 pt-20 pb-10">
       <div className="flex w-full max-w-md flex-col items-center text-center">
@@ -56,13 +60,14 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
         <h1 className="mt-5 text-2xl font-bold">{name}</h1>
         <p className="mt-1 text-murekkep/50">@{username}</p>
       </div>
-      <footer className="mt-auto pt-16">
+      <footer className="mt-auto flex flex-col items-center gap-4 pt-16">
         <Link
           to="/"
           className="rounded-full bg-white px-4 py-2 text-sm font-medium text-murekkep/70 shadow-sm hover:text-murekkep"
         >
           ⌘ Caka ile yapıldı
         </Link>
+        {isOwner ? <SignOutLink /> : null}
       </footer>
     </main>
   );
