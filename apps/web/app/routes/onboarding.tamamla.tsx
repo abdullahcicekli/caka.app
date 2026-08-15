@@ -2,7 +2,11 @@ import { env } from "cloudflare:workers";
 import { redirect } from "react-router";
 
 import { getSession } from "../../server/auth";
-import { claimUsername, getProfileByUserId } from "../../server/profile";
+import {
+  claimUsername,
+  ensureProfileAvatar,
+  getProfileByUserId,
+} from "../../server/profile";
 import type { Route } from "./+types/onboarding.tamamla";
 
 const CLAIM_COOKIE = "caka_claim";
@@ -24,7 +28,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const existing = await getProfileByUserId(env, session.user.id);
   if (existing) {
-    // Girişten dönen mevcut kullanıcı — kendi sayfasına.
+    // Girişten dönen mevcut kullanıcı — avatarsız kalmışsa onar, sayfasına git.
+    await ensureProfileAvatar(env, session.user, existing);
     throw redirect(`/${existing.username}`, {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
     });

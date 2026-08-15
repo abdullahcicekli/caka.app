@@ -20,6 +20,25 @@ honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
  * Onboarding auth'tan ÖNCE geldiği için oturumsuz erişilebilir; kötüye
  * kullanım sınırı zone-level rate limit ile (U12) tamamlanacak.
  */
+/** R2 görsel servisi (KTD10): anahtar = asset id, path-traversal yüzeyi yok. */
+const ASSET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+honoApp.get("/i/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!ASSET_ID_PATTERN.test(id)) return c.notFound();
+  const object = await c.env.BUCKET.get(id);
+  if (!object) return c.notFound();
+  return new Response(object.body, {
+    headers: {
+      "Content-Type": object.httpMetadata?.contentType ?? "application/octet-stream",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": "inline",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+    },
+  });
+});
+
 honoApp.get("/api/username-check", async (c) => {
   const input = c.req.query("u") ?? "";
   const result = validateUsername(input);

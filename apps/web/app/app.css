@@ -54,6 +54,18 @@ body {
   @apply bg-zemin text-murekkep antialiased;
 }
 
+/* Tailwind v4 varsayılanı cursor:default — tıklanabilir her şey pointer olsun */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="menuitem"],
+  label[for],
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

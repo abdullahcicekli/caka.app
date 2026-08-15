@@ -1,7 +1,8 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 
 import { createDb, profile, usernameRedirect } from "@caka/db";
 import { validateUsername } from "@caka/shared";
+import { copyGoogleAvatar } from "./avatar";
 
 /** Adres kullanılabilir mi? Profil kaydı + süresi geçmemiş devir kilidi bakılır. */
 export async function isUsernameAvailable(env: Env, username: string) {
@@ -28,8 +29,8 @@ export async function getProfileByUserId(env: Env, userId: string) {
   });
 }
 
-/** R3: sayfa asla boş açılmaz — Google adından tohum profil kartı. */
-function buildSeedLayout(name: string) {
+/** R3: sayfa asla boş açılmaz — Google adı + avatarıyla tohum profil kartı. */
+function buildSeedLayout(name: string, avatarAssetId: string | null) {
   return {
     version: 1,
     blocks: [
@@ -41,7 +42,11 @@ function buildSeedLayout(name: string) {
           sm: { x: 0, y: 0, w: 2, h: 2 },
         },
         smManual: false,
-        data: { name: name.slice(0, 60), title: "" },
+        data: {
+          name: name.slice(0, 60),
+          title: "",
+          ...(avatarAssetId ? { avatarAssetId } : {}),
+        },
       },
     ],
   };
@@ -57,7 +62,7 @@ export type ClaimResult =
  */
 export async function claimUsername(
   env: Env,
-  user: { id: string; name: string },
+  user: { id: string; name: string; image?: string | null },
   input: string,
 ): Promise<ClaimResult> {
   const result = validateUsername(input);
@@ -66,18 +71,58 @@ export async function claimUsername(
     return { ok: false, error: "taken" };
   }
 
+  // Avatar kopyalama başarısız olsa da claim tamamlanır (R3).
+  const avatarAssetId = user.image
+    ? await copyGoogleAvatar(env, user.id, user.image)
+    : null;
+
   const db = createDb(env.DB);
   try {
     await db.insert(profile).values({
       id: crypto.randomUUID(),
       userId: user.id,
       username: result.username,
-      layout: JSON.stringify(buildSeedLayout(user.name)),
+      layout: JSON.stringify(buildSeedLayout(user.name, avatarAssetId)),
     });
     return { ok: true, username: result.username };
   } catch {
     // Unique ihlali: kontrol ile insert arasında başkası kaptı (AE1).
     return { ok: false, error: "taken" };
+  }
+}
+
+/**
+ * Avatarsız kalmış mevcut profilleri girişte kendiliğinden onarır
+ * (avatar kopyalama sonradan eklendi; eski kayıtlar baş harfle kalmıştı).
+ */
+export async function ensureProfileAvatar(
+  env: Env,
+  user: { id: string; image?: string | null },
+  row: { id: string; layout: string },
+): Promise<string | null> {
+  if (!user.image) return null;
+  try {
+    const layout = JSON.parse(row.layout) as {
+      blocks?: { type?: string; data?: Record<string, unknown> }[];
+    };
+    const block = layout.blocks?.find((b) => b.type === "profile");
+    if (!block || block.data?.avatarAssetId) return null;
+
+    const avatarAssetId = await copyGoogleAvatar(env, user.id, user.image);
+    if (!avatarAssetId) return null;
+
+    block.data = { ...block.data, avatarAssetId };
+    await createDb(env.DB)
+      .update(profile)
+      .set({
+        layout: JSON.stringify(layout),
+        version: sql`${profile.version} + 1`,
+      })
+      .where(eq(profile.id, row.id));
+    return avatarAssetId;
+  } catch {
+    // Onarım best-effort; giriş akışını etkilemez.
+    return null;
   }
 }
 

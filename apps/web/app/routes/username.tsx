@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
 import { Link, data, redirect } from "react-router";
 
-import { initials, parseSeedName } from "~/lib/profile-view";
+import { ProfileAvatar } from "~/components/profile-avatar";
+import { parseSeedProfile } from "~/lib/profile-view";
 import { normalizeUsername } from "@caka/shared";
 import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
@@ -37,21 +38,21 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (rawParam !== username) throw redirect(`/${username}`, { status: 302 });
 
   const p = resolved.profile;
+  const seed = parseSeedProfile(p.layout);
   return {
     username: p.username,
-    name: parseSeedName(p.layout) ?? p.username,
+    name: seed.name ?? p.username,
+    avatarUrl: seed.avatarUrl,
     theme: p.theme,
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
-  const { name, username } = loaderData;
+  const { name, username, avatarUrl } = loaderData;
   return (
     <main className="flex min-h-svh flex-col items-center bg-zemin px-6 pt-20 pb-10">
       <div className="flex w-full max-w-md flex-col items-center text-center">
-        <div className="flex size-24 items-center justify-center rounded-full bg-kirec text-3xl font-bold text-kirec-koyu">
-          {initials(name)}
-        </div>
+        <ProfileAvatar name={name} avatarUrl={avatarUrl} className="size-24 text-3xl" />
         <h1 className="mt-5 text-2xl font-bold">{name}</h1>
         <p className="mt-1 text-murekkep/50">@{username}</p>
       </div>

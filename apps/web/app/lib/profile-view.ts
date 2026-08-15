@@ -2,17 +2,25 @@
 
 interface SeedBlock {
   type?: string;
-  data?: { name?: string; title?: string };
+  data?: { name?: string; title?: string; avatarAssetId?: string };
 }
 
-/** Tohum layout'taki profil kartından ismi çeker; bozuk JSON'da null. */
-export function parseSeedName(layoutJson: string): string | null {
+export interface SeedProfile {
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+/** Tohum layout'taki profil kartından isim + avatar URL'ini çeker. */
+export function parseSeedProfile(layoutJson: string): SeedProfile {
   try {
     const layout = JSON.parse(layoutJson) as { blocks?: SeedBlock[] };
     const block = layout.blocks?.find((b) => b.type === "profile");
-    return block?.data?.name ?? null;
+    return {
+      name: block?.data?.name ?? null,
+      avatarUrl: block?.data?.avatarAssetId ? `/i/${block.data.avatarAssetId}` : null,
+    };
   } catch {
-    return null;
+    return { name: null, avatarUrl: null };
   }
 }
 

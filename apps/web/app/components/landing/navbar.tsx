@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
+import { UserMenu, type SessionUser } from "~/components/user-menu";
 import { PillLink } from "./pill-button";
 import type { Cta, NavItem } from "~/content/landing";
 
@@ -8,10 +9,11 @@ interface NavbarProps {
   items: readonly NavItem[];
   login: Cta;
   cta: Cta;
+  user?: SessionUser | null;
 }
 
 /** Lime hero'nun üstünde yüzen beyaz hap navbar. */
-export function Navbar({ items, login, cta }: NavbarProps) {
+export function Navbar({ items, login, cta, user }: NavbarProps) {
   return (
     <header className="relative z-10 px-4 pt-6 sm:px-8">
       <nav className="mx-auto flex max-w-7xl items-center gap-8 rounded-full bg-white py-3 pr-3 pl-6 shadow-sm">
@@ -33,12 +35,18 @@ export function Navbar({ items, login, cta }: NavbarProps) {
         </ul>
 
         <div className="ml-auto flex items-center gap-3">
-          <PillLink to={login.href} variant="soft" className="hidden sm:inline-flex">
-            {login.label}
-          </PillLink>
-          <PillLink to={cta.href} variant="ink">
-            {cta.label}
-          </PillLink>
+          {user ? (
+            <UserMenu user={user} />
+          ) : (
+            <>
+              <PillLink to={login.href} variant="soft" className="hidden sm:inline-flex">
+                {login.label}
+              </PillLink>
+              <PillLink to={cta.href} variant="ink">
+                {cta.label}
+              </PillLink>
+            </>
+          )}
         </div>
       </nav>
     </header>
