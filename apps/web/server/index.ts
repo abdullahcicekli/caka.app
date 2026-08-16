@@ -5,6 +5,7 @@ import { getAuth } from "./auth";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
 import { ogApi } from "./og";
+import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
 import { seoRoutes } from "./seo";
 
@@ -25,6 +26,8 @@ honoApp.route("/api/onboarding", onboardingApi);
 // layoutApi: PUT /api/profile/layout (taslak kaydı) + POST /api/profile/publish
 honoApp.route("/api/profile", layoutApi);
 honoApp.route("/api/og-image", ogApi);
+// Kullanıcıya özel og:image: /og/u/:username/:hash.png (hash'li, immutable)
+honoApp.route("/og", ogImageApi);
 
 /**
  * Canlı adres kontrolü — yalnızca tavsiye niteliğinde (R2); garanti claim'de.

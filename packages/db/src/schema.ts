@@ -25,6 +25,9 @@ export const profile = sqliteTable(
       .references(() => user.id, { onDelete: "cascade" }),
     username: text("username").notNull().unique(),
     theme: text("theme").notNull().default("light"),
+    // og:image şablonu (paylaşım görseli yerleşimi); geçerli değerler
+    // @caka/shared `ogTemplateSchema`'da, okurken normalizeOgTemplate uygulanır.
+    ogTemplate: text("og_template").notNull().default("p1"),
     layout: text("layout").notNull(),
     // Taslak/yayınla modeli: editör taslağa yazar, "yayınla" layout/theme'e
     // kopyalar. null = bekleyen taslak yok (yayınlanmış hâl güncel).

@@ -6,9 +6,6 @@ const requestHandler = createRequestHandler(
   import.meta.env.MODE,
 );
 
-// /:username/og.png — tek path segmenti + og.png (KTD7'nin route'u)
-const OG_IMAGE_PATH = /^\/[^/]+\/og\.png$/;
-
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
@@ -21,7 +18,10 @@ export default {
       pathname.startsWith("/sitemaps/") ||
       pathname === "/robots.txt" ||
       pathname === "/llms.txt" ||
-      OG_IMAGE_PATH.test(pathname)
+      // Kullanıcıya özel og:image (KTD7'nin `/:username/og.png`u yerine
+      // hash'li URL — bkz. server/og-image.ts). Statik /og/*.png marka
+      // görselleri assets katmanından döner, Worker'a hiç düşmez.
+      pathname.startsWith("/og/u/")
     ) {
       return honoApp.fetch(request, env, ctx);
     }

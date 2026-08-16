@@ -1,0 +1,1 @@
+ALTER TABLE `profile` ADD `og_template` text DEFAULT 'p1' NOT NULL;

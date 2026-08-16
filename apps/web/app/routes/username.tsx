@@ -11,12 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { parseSeedProfile } from "~/lib/profile-view";
-import {
-  absoluteSiteUrl,
-  buildSeoMeta,
-  noIndexMeta,
-  pickRandomOgImage,
-} from "~/lib/seo";
+import { absoluteSiteUrl, buildSeoMeta, noIndexMeta } from "~/lib/seo";
 import {
   normalizeUsername,
   ensureLayoutPositions,
@@ -26,6 +21,7 @@ import {
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
+import { ogImagePathForProfile } from "../../server/og-image";
 import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
 
@@ -133,7 +129,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     sameAs,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
-    ogImage: pickRandomOgImage(),
+    // Kullanıcıya özel paylaşım görseli; hash içerik değişince değişir
+    // (sosyal ağ scraper cache'i kendiliğinden tazelenir).
+    ogImage: absoluteSiteUrl(await ogImagePathForProfile(p)),
     theme: normalizeTheme(p.theme),
     layout: ensureLayoutPositions(layout),
     isOwner: session?.user.id === p.userId,
