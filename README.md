@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="apps/web/app/assets/brand/logo-black-text.png" alt="Caka" width="160" />
+  <img src="apps/web/app/assets/brand/logo-black.png" alt="Caka" width="72" />
 </p>
+
+<h1 align="center">caka</h1>
 
 <p align="center">
   <b>Sana göre bir bio linki.</b><br />
