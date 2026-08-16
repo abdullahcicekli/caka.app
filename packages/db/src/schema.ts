@@ -28,6 +28,10 @@ export const profile = sqliteTable(
     // og:image şablonu (paylaşım görseli yerleşimi); geçerli değerler
     // @caka/shared `ogTemplateSchema`'da, okurken normalizeOgTemplate uygulanır.
     ogTemplate: text("og_template").notNull().default("p1"),
+    // Paylaşım görseli fotoğraf kaynağı: null = avatar (varsayılan); dolu =
+    // layout'taki bu assetId'li görsel bloğu. Asset artık layout'ta yoksa
+    // okuma sırasında sessizce avatara düşülür (resolveOgPhotoAssetId).
+    ogPhotoAssetId: text("og_photo_asset_id"),
     layout: text("layout").notNull(),
     // Taslak/yayınla modeli: editör taslağa yazar, "yayınla" layout/theme'e
     // kopyalar. null = bekleyen taslak yok (yayınlanmış hâl güncel).

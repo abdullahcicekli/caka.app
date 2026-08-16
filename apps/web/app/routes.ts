@@ -11,5 +11,6 @@ export default [
   route("login", "routes/login.tsx"),
   route("edit", "routes/edit.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
+  route("ayarlar", "routes/ayarlar.tsx"),
   route(":username", "routes/username.tsx"),
 ] satisfies RouteConfig;

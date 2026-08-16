@@ -113,10 +113,30 @@ export interface OgProfileData {
   name: string;
   title: string;
   username: string;
-  /** p1/p4 fotoğrafı: ilk görsel bloğu, yoksa avatar (yüksek çözünürlük tercihi). */
+  /** p1/p4 fotoğrafı — resolveOgPhotoAssetId ile çözülmüş kaynak. */
   photoAssetId: string | null;
   avatarAssetId: string | null;
   linkTitles: string[];
+}
+
+/**
+ * Paylaşım görseli fotoğraf kaynağı önceliği: kullanıcının seçtiği görsel
+ * bloğu (hâlâ layout'taysa) → avatar → ilk görsel bloğu → null (monogram).
+ * Avatar öne alınır çünkü semantik olarak "kişinin kendisi" olan tek alan
+ * odur; görsel bloğu ancak kullanıcı bilinçli seçtiyse fotoğraf sayılır.
+ * Seçili asset layout'tan silinmişse sessizce avatara düşülür.
+ */
+export function resolveOgPhotoAssetId(input: {
+  /** profile.ogPhotoAssetId — null = avatar kullan (varsayılan). */
+  selectedAssetId: string | null;
+  avatarAssetId: string | null;
+  /** Layout'taki görsel bloklarının assetId'leri, sayfadaki sırayla. */
+  imageAssetIds: string[];
+}): string | null {
+  if (input.selectedAssetId && input.imageAssetIds.includes(input.selectedAssetId)) {
+    return input.selectedAssetId;
+  }
+  return input.avatarAssetId ?? input.imageAssetIds[0] ?? null;
 }
 
 /**
@@ -142,6 +162,12 @@ export async function computeOgHash(data: OgProfileData): Promise<string> {
     .join("");
 }
 
-export function ogImagePath(username: string, hash: string): string {
-  return `/og/u/${username}/${hash}.png`;
+/**
+ * Kanonik og:image yolu. Şablon URL'dedir ki Ayarlar sayfası 6 şablonu da
+ * gerçek render'la gösterebilsin; hash o şablonla üretilen içeriğin özetidir.
+ * Eski 3 segmentli `/og/u/:username/<hash>.png` deseni server tarafında
+ * güncel şablonun URL'ine 302 ile taşınır (kırılmaz).
+ */
+export function ogImagePath(username: string, template: OgTemplate, hash: string): string {
+  return `/og/u/${username}/${template}/${hash}.png`;
 }

@@ -3,7 +3,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { createDb, profile } from "@caka/db";
-import { layoutIssues, profileLayoutSchema, themeSchema } from "@caka/shared";
+import {
+  layoutIssues,
+  ogTemplateSchema,
+  parseProfileLayout,
+  profileLayoutSchema,
+  themeSchema,
+} from "@caka/shared";
 import { getSession } from "./auth";
 import { hasSameOrigin, readLimitedJson } from "./request";
 
@@ -17,8 +23,14 @@ const publishSchema = z.object({
   version: z.number().int().min(1),
 });
 
+const ogSettingsSchema = z.object({
+  ogTemplate: ogTemplateSchema,
+  // null = avatar kullan (varsayılan); dolu = layout'taki görsel bloğu.
+  ogPhotoAssetId: z.string().uuid().nullable(),
+});
+
 // /api/profile altına mount edilir: PUT /layout (taslağa kaydet),
-// POST /publish (taslağı canlıya al).
+// POST /publish (taslağı canlıya al), PUT /og (paylaşım görseli ayarları).
 export const layoutApi = new Hono<{ Bindings: Env }>();
 
 // Taslak/yayınla modeli: editör kayıtları taslağa yazılır; yayınlanmış
@@ -59,6 +71,58 @@ layoutApi.put("/layout", async (c) => {
       return c.json({ error: "Sayfa verisi çok büyük" }, 413);
     }
     return c.json({ error: "Sayfa kaydedilemedi" }, 400);
+  }
+});
+
+// Paylaşım görseli ayarları (Ayarlar sayfası): şablon + fotoğraf kaynağı.
+// Layout'tan bağımsız iki küçük alan olduğu için optimistic locking yok;
+// yalnızca oturum sahibinin kendi profil satırı güncellenir (where userId).
+layoutApi.put("/og", async (c) => {
+  if (!hasSameOrigin(c.req.raw)) {
+    return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+  }
+  const session = await getSession(c.env, c.req.raw);
+  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+
+  try {
+    const body = ogSettingsSchema.safeParse(await readLimitedJson(c.req.raw, 4 * 1024));
+    if (!body.success) {
+      return c.json({ error: "Ayar verisi geçersiz", issues: body.error.issues }, 400);
+    }
+    const db = createDb(c.env.DB);
+    // Fotoğraf kaynağı ancak kullanıcının KENDİ layout'undaki bir görsel
+    // bloğu olabilir; rastgele assetId yazımı burada kesilir. (Asset sonradan
+    // layout'tan silinirse okuma tarafı sessizce avatara düşer.)
+    if (body.data.ogPhotoAssetId !== null) {
+      const row = await db.query.profile.findFirst({
+        columns: { layout: true },
+        where: eq(profile.userId, session.user.id),
+      });
+      if (!row) return c.json({ error: "Profil bulunamadı" }, 404);
+      const blocks = parseProfileLayout(row.layout)?.blocks ?? [];
+      const inLayout = blocks.some(
+        (block) => block.type === "image" && block.data.assetId === body.data.ogPhotoAssetId,
+      );
+      if (!inLayout) {
+        return c.json({ error: "Seçilen görsel sayfanda bulunamadı" }, 400);
+      }
+    }
+    const updated = await db
+      .update(profile)
+      .set({
+        ogTemplate: body.data.ogTemplate,
+        ogPhotoAssetId: body.data.ogPhotoAssetId,
+        updatedAt: new Date(),
+      })
+      .where(eq(profile.userId, session.user.id))
+      .returning({ id: profile.id });
+    if (!updated.length) return c.json({ error: "Profil bulunamadı" }, 404);
+    return c.json({ ok: true });
+  } catch (error) {
+    if (error instanceof Error && error.message === "body_too_large") {
+      return c.json({ error: "Ayar verisi çok büyük" }, 413);
+    }
+    return c.json({ error: "Ayarlar kaydedilemedi" }, 400);
   }
 });
 

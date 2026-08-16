@@ -21,16 +21,20 @@ Kalan: Cloudflare panelinden **zone seviyesinde** bir rate limit kuralı
 (`/og/u/*` yoluna, IP başına makul bir eşik). Terraform/wrangler ile değil,
 dashboard → Security → WAF → Rate limiting rules.
 
-## 2. Ayarlar sayfası + og:image şablon seçimi (Faz 2)
+**Eşiği seçerken:** `/ayarlar` sayfası tek açılışta 6 önizleme isteği atıyor
+(her şablon için bir tane). Eşik bunu meşru trafik saymalı, yoksa kullanıcı
+kendi ayar sayfasında rate limit yer.
 
-`profile.ogTemplate` kolonu ve `ogTemplateSchema` (p1–p6) hazır, 6 şablon
-üretiliyor; ama seçim arayüzü yok — şu an herkes varsayılan `p1` (Portre)
-alıyor.
+## 2. `/ayarlar` önizlemeleri tam boy PNG çekiyor
 
-Yapılacak: `/ayarlar` route'u (`ayarlar` ve `settings` zaten
-`RESERVED_USERNAMES`'te) + paneldeki "Ayarlar — Yakında" maddesini gerçek
-linke çevir + 6 şablonu küçük önizlemeyle seçtir. Önizleme için gerçek
-`/og/u/...` URL'i kullanılabilir.
+Şablon ızgarasındaki 6 önizleme ~110 px kutuda gösteriliyor ama 1200×630
+üretiliyor. Soğuk önbellekte sayfa açılışı 6 tam render demek (her biri
+satori + resvg). Bir kez üretildikten sonra `immutable` cache'e düşüyor, o
+yüzden acil değil.
+
+Yapılacak (istenirse): ızgara önizlemelerini IntersectionObserver ile gerçekten
+ertele ya da küçük boyutlu bir önizleme varyantı üret (URL desenine boyut
+segmenti eklemek gerekir; cache girdisi ikiye çıkar).
 
 ## 3. `github_calendar` satır temizliği
 

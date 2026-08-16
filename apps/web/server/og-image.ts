@@ -1,20 +1,24 @@
 /**
  * Kullanıcıya özel og:image üretimi + önbelleği (KTD7 tabanı, hash'li URL).
  *
- * URL şeması: /og/u/<username>/<hash>.png — hash, görseli etkileyen profil
- * içeriğinin (şablon + ad + bio + görsel id'leri + bağlantı başlıkları) kısa
- * özetidir. İçerik değişince URL değişir; sosyal ağ scraper'ları yeni görseli
- * kendiliğinden çeker (cache invalidation bedava). Eski hash'li istekler
- * güncel URL'e 302 döner, eski paylaşımlar kırılmaz.
+ * URL şeması: /og/u/<username>/<template>/<hash>.png — şablon URL'dedir ki
+ * Ayarlar sayfası 6 şablonu da gerçek render'la gösterebilsin; hash, o
+ * şablonla üretilen görseli etkileyen profil içeriğinin (şablon + ad + bio +
+ * fotoğraf kaynağı + bağlantı başlıkları) kısa özetidir. İçerik değişince URL
+ * değişir; sosyal ağ scraper'ları yeni görseli kendiliğinden çeker (cache
+ * invalidation bedava). Eski hash'li istekler güncel URL'e 302 döner; eski
+ * 3 segmentli `/og/u/<username>/<hash>.png` deseni de (sosyal ağlarca
+ * önbelleğe alındı) seçili şablonun güncel URL'ine 302 ile taşınır.
  *
  * Plandan bilinçli sapma: KTD6/KTD7 `/:username/og.png` + 1 saatlik Cache API
  * öngörüyordu; hash'li URL immutable cache'e izin verdiği için bu yol seçildi.
  * R2'ye YAZILMAZ: üretim ~40 ms (ucuz) ve Değişmez #9 (düz UUID anahtar)
  * türetilmiş görsel saklamayı zorlaştırır.
  *
- * Saf yardımcılar (hash, bayt parser'ları) `@caka/shared/og-image`'da yaşar
- * ve orada test edilir; raster katmanı (`./og-render`, WASM + fontlar) yalnız
- * cache miss'te dinamik import edilir — SSR/auth istekleri o yükü taşımaz.
+ * Saf yardımcılar (hash, bayt parser'ları, fotoğraf önceliği)
+ * `@caka/shared/og-image`'da yaşar ve orada test edilir; raster katmanı
+ * (`./og-render`, WASM + fontlar) yalnız cache miss'te dinamik import edilir —
+ * SSR/auth istekleri o yükü taşımaz.
  */
 import { Hono } from "hono";
 
@@ -23,8 +27,11 @@ import {
   normalizeOgTemplate,
   normalizeUsername,
   ogImagePath,
+  ogTemplateSchema,
   parseProfileLayout,
+  resolveOgPhotoAssetId,
   type OgProfileData,
+  type OgTemplate,
 } from "@caka/shared";
 import { resolveUsername } from "./profile";
 
@@ -35,10 +42,18 @@ interface OgProfileSource {
   username: string;
   layout: string;
   ogTemplate: string;
+  ogPhotoAssetId: string | null;
 }
 
-/** Profil satırından og görselini etkileyen alanları çıkarır. */
-export function extractOgProfileData(row: OgProfileSource): OgProfileData {
+/**
+ * Profil satırından og görselini etkileyen alanları çıkarır. `template`
+ * verilirse profildeki seçim yerine o şablon kullanılır (Ayarlar önizlemeleri
+ * 6 şablonun URL'ini de bu yolla üretir).
+ */
+export function extractOgProfileData(
+  row: OgProfileSource,
+  template?: OgTemplate,
+): OgProfileData {
   const layout = parseProfileLayout(row.layout);
   const blocks = layout?.blocks ?? [];
   const profileBlock = blocks.find((block) => block.type === "profile");
@@ -48,11 +63,9 @@ export function extractOgProfileData(row: OgProfileSource): OgProfileData {
   const avatarAssetId =
     (profileBlock?.type === "profile" ? profileBlock.data.avatarAssetId : undefined) ??
     null;
-  const firstImage = blocks.find(
-    (block) => block.type === "image" && block.data.assetId,
+  const imageAssetIds = blocks.flatMap((block) =>
+    block.type === "image" && block.data.assetId ? [block.data.assetId] : [],
   );
-  const imageAssetId =
-    firstImage?.type === "image" ? (firstImage.data.assetId ?? null) : null;
   const linkTitles = blocks.flatMap((block) => {
     if (block.type === "link" && block.data.title) return [block.data.title];
     if (block.type === "social") {
@@ -62,29 +75,68 @@ export function extractOgProfileData(row: OgProfileSource): OgProfileData {
     return [];
   });
   return {
-    template: normalizeOgTemplate(row.ogTemplate),
+    template: template ?? normalizeOgTemplate(row.ogTemplate),
     name,
     title,
     username: row.username,
-    photoAssetId: imageAssetId ?? avatarAssetId,
+    // Öncelik: kullanıcının seçtiği görsel bloğu → avatar → ilk görsel bloğu.
+    // Avatar önde çünkü "kişinin kendisi" olan tek alan o; rastgele bir görsel
+    // bloğu (masa/oda fotoğrafı) kişinin fotoğrafı sayılamaz.
+    photoAssetId: resolveOgPhotoAssetId({
+      selectedAssetId: row.ogPhotoAssetId,
+      avatarAssetId,
+      imageAssetIds,
+    }),
     avatarAssetId,
     linkTitles,
   };
 }
 
-/** Loader'ın meta için kullandığı güncel og:image yolu. */
+/** Verilen şablon için güncel og:image yolu (hash dahil). */
+export async function ogImagePathForTemplate(
+  row: OgProfileSource,
+  template: OgTemplate,
+): Promise<string> {
+  const data = extractOgProfileData(row, template);
+  return ogImagePath(data.username, template, await computeOgHash(data));
+}
+
+/** Loader'ın meta için kullandığı güncel og:image yolu (seçili şablon). */
 export async function ogImagePathForProfile(row: OgProfileSource): Promise<string> {
-  const data = extractOgProfileData(row);
-  return ogImagePath(data.username, await computeOgHash(data));
+  return ogImagePathForTemplate(row, normalizeOgTemplate(row.ogTemplate));
 }
 
 const HASH_FILE_PATTERN = /^([0-9a-f]{16})\.png$/;
 
 export const ogImageApi = new Hono<{ Bindings: Env }>();
 
+/**
+ * Eski 3 segmentli desen (`/og/u/:username/<hash>.png`, şablonsuz): sosyal
+ * ağlar bu URL'leri çoktan önbelleğe aldı — kırma, seçili şablonun güncel
+ * URL'ine 302 dön (Değişmez #10 ruhu: 301 süresiz cache'lenir, kullanma).
+ * Hono'da bu route 4 segmentli olanla çakışmaz; `:file` tek segment eşler.
+ */
 ogImageApi.get("/u/:username/:file", async (c) => {
+  if (!HASH_FILE_PATTERN.test(c.req.param("file"))) return c.notFound();
+  const username = normalizeUsername(c.req.param("username"));
+  let resolved = await resolveUsername(c.env, username);
+  if (resolved.kind === "redirect") {
+    resolved = await resolveUsername(c.env, resolved.to);
+  }
+  if (resolved.kind !== "profile") {
+    return c.redirect(FALLBACK_OG_IMAGE, 302);
+  }
+  return c.redirect(await ogImagePathForProfile(resolved.profile), 302);
+});
+
+ogImageApi.get("/u/:username/:template/:file", async (c) => {
   const fileMatch = HASH_FILE_PATTERN.exec(c.req.param("file"));
   if (!fileMatch) return c.notFound();
+  // Şablon segmenti KATI doğrulanır (normalize edilmez): bilinmeyen değer
+  // p1'e sessizce düşseydi kanonik cache anahtarı yanlış içerikle dolardı.
+  const templateParsed = ogTemplateSchema.safeParse(c.req.param("template"));
+  if (!templateParsed.success) return c.notFound();
+  const template = templateParsed.data;
   const requestedHash = fileMatch[1];
   const username = normalizeUsername(c.req.param("username"));
 
@@ -98,7 +150,7 @@ ogImageApi.get("/u/:username/:file", async (c) => {
   // tetikleyebilir ve cache'i çöple doldurur.
   const cache = (caches as unknown as { default: Cache }).default;
   const canonicalUrl = new URL(c.req.url);
-  canonicalUrl.pathname = ogImagePath(username, requestedHash);
+  canonicalUrl.pathname = ogImagePath(username, template, requestedHash);
   canonicalUrl.search = "";
   const cacheKey = new Request(canonicalUrl.toString());
   const cached = await cache.match(cacheKey);
@@ -113,12 +165,17 @@ ogImageApi.get("/u/:username/:file", async (c) => {
     return c.redirect(FALLBACK_OG_IMAGE, 302);
   }
 
-  const data = extractOgProfileData(resolved.profile);
+  // Şablon URL'den gelir (profildeki seçim değil): Ayarlar 6 şablonu da
+  // gerçek render'la göstersin diye her şablonun kendi kararlı URL'i var.
+  const data = extractOgProfileData(resolved.profile, template);
   const currentHash = await computeOgHash(data);
   if (currentHash !== requestedHash || resolved.profile.username !== username) {
-    // Eski paylaşım: güncel görsele yönlendir. 302 + kısa cache (Değişmez #10
-    // ruhu: 301 süresiz cache'lenir, kullanma).
-    return c.redirect(ogImagePath(resolved.profile.username, currentHash), 302);
+    // Eski paylaşım: aynı şablonun güncel görseline yönlendir. 302 + kısa
+    // cache (Değişmez #10 ruhu: 301 süresiz cache'lenir, kullanma).
+    return c.redirect(
+      ogImagePath(resolved.profile.username, template, currentHash),
+      302,
+    );
   }
 
   try {

@@ -8,6 +8,7 @@ import {
   OG_IMAGE_MAX_UNPARSED_BYTES,
   ogImagePath,
   pngSize,
+  resolveOgPhotoAssetId,
   type OgProfileData,
 } from "./og-image";
 
@@ -132,8 +133,11 @@ describe("computeOgHash", () => {
     expect(b).toBe(a);
   });
 
+  // Şablon ve fotoğraf kaynağı hash'e MUTLAKA girmeli: URL immutable
+  // cache'lendiği için hash değişmezse seçim değişikliği asla görünmez.
   const patches: [string, Partial<OgProfileData>][] = [
     ["template", { template: "p2" }],
+    ["template p4", { template: "p4" }],
     ["name", { name: "Grace Hopper" }],
     ["title", { title: "Amiral" }],
     ["username", { username: "grace" }],
@@ -157,7 +161,50 @@ describe("computeOgHash", () => {
 });
 
 describe("ogImagePath", () => {
-  it("hash'li kanonik yolu üretir", () => {
-    expect(ogImagePath("ada", "0123456789abcdef")).toBe("/og/u/ada/0123456789abcdef.png");
+  it("şablonlu + hash'li kanonik yolu üretir", () => {
+    expect(ogImagePath("ada", "p1", "0123456789abcdef")).toBe(
+      "/og/u/ada/p1/0123456789abcdef.png",
+    );
+    expect(ogImagePath("ada", "p6", "0123456789abcdef")).toBe(
+      "/og/u/ada/p6/0123456789abcdef.png",
+    );
+  });
+});
+
+describe("resolveOgPhotoAssetId", () => {
+  const avatar = "avatar-1";
+  const images = ["img-1", "img-2"];
+
+  it("seçim yokken avatarı tercih eder (görsel bloğu olsa bile)", () => {
+    expect(
+      resolveOgPhotoAssetId({ selectedAssetId: null, avatarAssetId: avatar, imageAssetIds: images }),
+    ).toBe(avatar);
+  });
+
+  it("layout'ta duran seçili görsel bloğunu kullanır", () => {
+    expect(
+      resolveOgPhotoAssetId({ selectedAssetId: "img-2", avatarAssetId: avatar, imageAssetIds: images }),
+    ).toBe("img-2");
+  });
+
+  it("seçili asset layout'tan silinmişse sessizce avatara düşer", () => {
+    expect(
+      resolveOgPhotoAssetId({ selectedAssetId: "gone", avatarAssetId: avatar, imageAssetIds: images }),
+    ).toBe(avatar);
+  });
+
+  it("avatar yoksa ilk görsel bloğuna düşer", () => {
+    expect(
+      resolveOgPhotoAssetId({ selectedAssetId: null, avatarAssetId: null, imageAssetIds: images }),
+    ).toBe("img-1");
+    expect(
+      resolveOgPhotoAssetId({ selectedAssetId: "gone", avatarAssetId: null, imageAssetIds: images }),
+    ).toBe("img-1");
+  });
+
+  it("hiç kaynak yoksa null döner (monogram)", () => {
+    expect(
+      resolveOgPhotoAssetId({ selectedAssetId: null, avatarAssetId: null, imageAssetIds: [] }),
+    ).toBeNull();
   });
 });

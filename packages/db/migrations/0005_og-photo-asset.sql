@@ -1,0 +1,1 @@
+ALTER TABLE `profile` ADD `og_photo_asset_id` text;
