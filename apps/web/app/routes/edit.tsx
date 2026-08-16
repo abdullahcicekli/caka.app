@@ -15,8 +15,9 @@ import {
   Type,
   X,
 } from "lucide-react";
-import { Link, redirect } from "react-router";
+import { redirect } from "react-router";
 
+import { EditorDashboard } from "~/components/editor/dashboard";
 import { BlockGallery, type GalleryPick } from "~/components/editor/gallery";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { ProfileBlockCard } from "~/components/profile-block";
@@ -194,7 +195,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [device, setDevice] = useState<EditorDevice>("desktop");
   const [saveState, setSaveState] = useState<SaveState>("saved");
-  const [panel, setPanel] = useState<"theme" | "gallery" | null>(null);
+  const [panel, setPanel] = useState<"theme" | "gallery" | "dashboard" | null>(null);
   const versionRef = useRef(loaderData.version);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const firstRender = useRef(true);
@@ -327,9 +328,14 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="editor-shell">
-      <Link to={`/${loaderData.username}`} className="editor-back" aria-label="Profiline dön">
+      <button
+        type="button"
+        className="editor-back"
+        aria-label="Hesap panelini aç"
+        onClick={() => setPanel(panel === "dashboard" ? null : "dashboard")}
+      >
         <ChevronLeft size={20} />
-      </Link>
+      </button>
       <a
         className="editor-address-pill"
         href={`/${loaderData.username}`}
@@ -450,6 +456,15 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       ) : null}
 
       {panel === "gallery" ? <BlockGallery onPick={addFromGallery} onClose={() => setPanel(null)} /> : null}
+
+      {panel === "dashboard" ? (
+        <EditorDashboard
+          username={loaderData.username}
+          layout={layout}
+          theme={theme}
+          onClose={() => setPanel(null)}
+        />
+      ) : null}
 
       {selected ? (
         <Inspector
