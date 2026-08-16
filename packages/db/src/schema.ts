@@ -26,6 +26,10 @@ export const profile = sqliteTable(
     username: text("username").notNull().unique(),
     theme: text("theme").notNull().default("light"),
     layout: text("layout").notNull(),
+    // Taslak/yayınla modeli: editör taslağa yazar, "yayınla" layout/theme'e
+    // kopyalar. null = bekleyen taslak yok (yayınlanmış hâl güncel).
+    draftLayout: text("draft_layout"),
+    draftTheme: text("draft_theme"),
     version: integer("version").notNull().default(1),
     onboardingData: text("onboarding_data").notNull().default("{}"),
     onboardingCompletedAt: integer("onboarding_completed_at", {

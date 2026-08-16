@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "cloudflare:workers";
 import {
+  AlertTriangle,
   ChevronLeft,
   ExternalLink,
   ImageIcon,
@@ -10,12 +11,13 @@ import {
   Monitor,
   Palette,
   Plus,
+  Send,
   Smartphone,
   Trash2,
   Type,
   X,
 } from "lucide-react";
-import { Link, redirect, useSearchParams } from "react-router";
+import { Link, redirect, useNavigate, useSearchParams } from "react-router";
 
 import { BlockGallery, type GalleryPick } from "~/components/editor/gallery";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
@@ -25,8 +27,10 @@ import { onboardingPlatforms, onboardingTemplates, platformById } from "~/conten
 import { noIndexMeta } from "~/lib/seo";
 import {
   GRID_COLUMNS,
+  blockIssue,
   createBlockId,
   detectSocialFromUrl,
+  layoutIssues,
   ensureLayoutPositions,
   normalizeTheme,
   parseProfileLayout,
@@ -54,26 +58,32 @@ export async function loader({ request }: Route.LoaderArgs) {
   const profile = await getProfileByUserId(env, session.user.id);
   if (!profile) throw redirect("/onboarding");
   if (!profile.onboardingCompletedAt) throw redirect("/onboarding/kurulum/profil");
-  const layout = parseProfileLayout(profile.layout);
-  if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
+  const published = parseProfileLayout(profile.layout);
+  if (!published) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
+  // Editör her zaman taslağı açar; taslak yoksa yayınlanmış hâlden devam eder.
+  const draft = profile.draftLayout ? parseProfileLayout(profile.draftLayout) : null;
   return {
     username: profile.username,
-    layout: ensureLayoutPositions(layout),
-    theme: normalizeTheme(profile.theme),
+    layout: ensureLayoutPositions(draft ?? published),
+    theme: normalizeTheme(draft ? (profile.draftTheme ?? profile.theme) : profile.theme),
     version: profile.version,
+    hasDraft: Boolean(draft),
   };
 }
 
 type SaveState = "saved" | "saving" | "error" | "conflict";
 
+// Yeni bloklar BOŞ doğar: örnek metin gömülürse kullanıcı yazmaya başlayınca
+// başta kalıyor. Eksik alanlar "Aksiyon gerekli" rozetiyle işaretlenir ve
+// yayınlamayı bloklar (blockIssue).
 function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
-  if (type === "link") return { id, type, size: "1x1", data: { title: "Yeni bağlantı", url: "" } };
+  if (type === "link") return { id, type, size: "1x1", data: { title: "", url: "" } };
   if (type === "social") return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "" } };
-  if (type === "text") return { id, type, size: "2x1", data: { text: "Yeni metin bloğu" } };
-  if (type === "image") return { id, type, size: "2x1", data: { title: "Görsel", url: "" } };
-  if (type === "status") return { id, type, size: "2x1", data: { text: "Yeni duyuru", url: "" } };
-  return { id, type: "profile", size: "1x1", data: { name: "Adın", title: "Kısa açıklaman" } };
+  if (type === "text") return { id, type, size: "2x1", data: { text: "" } };
+  if (type === "image") return { id, type, size: "2x1", data: { title: "", url: "" } };
+  if (type === "status") return { id, type, size: "2x1", data: { text: "", url: "" } };
+  return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
 }
 
 function Inspector({
@@ -170,7 +180,7 @@ function Inspector({
                 ))}
               </select>
             </label>
-            <label>Bağlantı
+            <label>Bağlantı ya da kullanıcı adı
               <input
                 value={socialLink}
                 placeholder={platformById(block.data.platform).placeholder}
@@ -179,6 +189,10 @@ function Inspector({
                   applySocialLink(event.target.value);
                 }}
               />
+              <small className="inspector-hint">
+                Profil bağlantısını yapıştırabilir ya da sadece kullanıcı adını yazabilirsin —
+                ikisini de anlıyoruz.
+              </small>
             </label>
           </>
         ) : null}
@@ -231,6 +245,21 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const [device, setDevice] = useState<EditorDevice>("desktop");
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [panel, setPanel] = useState<"theme" | "gallery" | null>(null);
+  // Yayın durumu: taslak canlıdan farklıysa "Bitir ve yayınla" beklenir.
+  const [hasDraft, setHasDraft] = useState(loaderData.hasDraft);
+  const [publishing, setPublishing] = useState(false);
+  // Eksik blok rozetleri her zaman görünür (boş kutu tıklanabilir/anlaşılır
+  // olsun diye). Toplu "Aksiyon gerekli" paneli ise yalnız yayın denendikten
+  // sonra açılır ve kullanıcı eksikleri kapattıkça kendiliğinden kaybolur.
+  const [publishTried, setPublishTried] = useState(false);
+  const navigate = useNavigate();
+
+  // Gerçek telefonda editör mobil düzeni yönetmeli. Aksi hâlde sürükleme
+  // masaüstü (lg) konumlarına yazılır, telefondan bakan ziyaretçi ise sm
+  // konumlarını görür — kullanıcının yaptığı düzen "kaybolmuş" görünür.
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 640px)").matches) setDevice("mobile");
+  }, []);
 
   // Açık popover (tema/galeri) dışarı tıklayınca veya Escape ile kapanır.
   // Araç çubuğu hariç: oradaki butonlar kendi aç/kapa davranışını yönetir.
@@ -288,33 +317,146 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
 
+  // Otomatik kaydetme TASLAĞA yazar; canlı sayfa yalnız "yayınla" ile değişir.
+  const latestRef = useRef({ layout, theme });
+  const saveTimerRef = useRef<number | null>(null);
+  // Yayın sürerken autosave devreye girmemeli: araya giren PUT versiyonu
+  // kaydırıp publish'i 409'a düşürür, kullanıcı ise sayfadan ayrılmış olur.
+  const publishingRef = useRef(false);
+  // Yayın sürerken yapılan düzenleme kaydedilmeden kalmasın: bayrakla işaretle,
+  // yayın bitince (422/no-op dallarında editörde kalınır) taslağı tekrar yaz.
+  const dirtyWhilePublishingRef = useRef(false);
+  useEffect(() => {
+    latestRef.current = { layout, theme };
+  }, [layout, theme]);
+
+  function queueSave(): Promise<boolean> {
+    let ok = false;
+    saveQueueRef.current = saveQueueRef.current.then(async () => {
+      try {
+        const response = await fetch("/api/profile/layout", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...latestRef.current, version: versionRef.current }),
+        });
+        const result = (await response.json()) as { version?: number };
+        if (response.status === 409) return setSaveState("conflict");
+        if (!response.ok || !result.version) return setSaveState("error");
+        versionRef.current = result.version;
+        setSaveState("saved");
+        setHasDraft(true);
+        ok = true;
+      } catch {
+        setSaveState("error");
+      }
+    });
+    return saveQueueRef.current.then(() => ok);
+  }
+
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
     if (saveState === "conflict") return;
+    if (publishingRef.current) {
+      dirtyWhilePublishingRef.current = true;
+      return;
+    }
     setSaveState("saving");
-    const timer = window.setTimeout(() => {
-      saveQueueRef.current = saveQueueRef.current.then(async () => {
-        try {
-          const response = await fetch("/api/profile/layout", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ layout, theme, version: versionRef.current }),
-          });
-          const result = (await response.json()) as { version?: number };
-          if (response.status === 409) return setSaveState("conflict");
-          if (!response.ok || !result.version) return setSaveState("error");
-          versionRef.current = result.version;
-          setSaveState("saved");
-        } catch {
-          setSaveState("error");
-        }
-      });
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null;
+      void queueSave();
     }, 800);
-    return () => window.clearTimeout(timer);
+    return () => {
+      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız içerik değişince
   }, [layout, theme]);
+
+  // Yayına engel olan eksik bloklar (boş sosyal kutu, metinsiz blok…).
+  const issues = useMemo(() => (publishTried ? layoutIssues(layout) : []), [publishTried, layout]);
+
+  function focusBlock(id: string) {
+    setSelectedId(id);
+    window.setTimeout(() => {
+      // Profil kartı grid'de değil, sol/üst kimlik alanındadır.
+      const target =
+        document.querySelector(`.editor-grid-stack [gs-id="${id}"]`) ??
+        document.querySelector(".editor-profile-identity");
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  }
+
+  function removeBlock(id: string) {
+    setLayout((current) => ({
+      ...current,
+      blocks: current.blocks.filter((block) => block.id !== id),
+    }));
+    setSelectedId(null);
+  }
+
+  async function publish() {
+    if (publishing) return;
+    // Bekleyen debounce'u iptal et, taslağı kesinleştir, sonra yayınla.
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    setPublishing(true);
+    publishingRef.current = true;
+    const stop = () => {
+      publishingRef.current = false;
+      setPublishing(false);
+      // Yayın sürerken yazılanlar effect tarafından atlandı; şimdi kaydet.
+      if (dirtyWhilePublishingRef.current) {
+        dirtyWhilePublishingRef.current = false;
+        setSaveState("saving");
+        void queueSave();
+      }
+    };
+    const saved = await queueSave();
+    if (!saved) return stop();
+    try {
+      const response = await fetch("/api/profile/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version: versionRef.current }),
+      });
+      const result = (await response.json()) as {
+        version?: number;
+        published?: boolean;
+        issues?: { blockId: string; label: string; message: string }[];
+      };
+      if (response.status === 422) {
+        stop();
+        setPublishTried(true);
+        if (result.issues?.[0]) focusBlock(result.issues[0].blockId);
+        return;
+      }
+      if (response.status === 409) {
+        stop();
+        return setSaveState("conflict");
+      }
+      if (!response.ok || !result.version) {
+        stop();
+        return setSaveState("error");
+      }
+      versionRef.current = result.version;
+      setPublishTried(false);
+      setHasDraft(false);
+      // Yayınlanacak yeni bir şey yoktu: sayfa zaten canlı, editörde kal.
+      if (result.published === false) return stop();
+      // Yayın sonrası doğrudan sayfanın kendisine (önizlemeye) geçilir.
+      // stop() önce çağrılır: yönlendirme gerçekleşmezse editör kilitli kalmasın.
+      stop();
+      void navigate(`/${loaderData.username}`);
+    } catch {
+      stop();
+      setSaveState("error");
+    }
+  }
 
   // og:image çekimi: bağlantısı olup görseli olmayan sosyal bloklar için
   // (yeni eklenen, bağlantısı değişen ya da onboarding'den görselsiz gelen).
@@ -454,16 +596,61 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       <Link to="/dashboard" className="editor-back" aria-label="Panele dön">
         <ChevronLeft size={20} />
       </Link>
-      <a
-        className="editor-address-pill"
-        href={`/${loaderData.username}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <span className={`save-dot is-${saveState}`} aria-hidden />
-        caka.app/{loaderData.username}
-        <ExternalLink size={13} aria-hidden />
-      </a>
+      <div className="editor-topbar">
+        <a
+          className="editor-address-pill"
+          href={`/${loaderData.username}`}
+          target="_blank"
+          rel="noreferrer"
+          title={hasDraft ? "Yayınlanmamış değişiklikler var" : "Yayındaki sayfan"}
+        >
+          <span className={`save-dot is-${saveState}`} aria-hidden />
+          caka.app/{loaderData.username}
+          {hasDraft ? <span className="draft-chip">Taslak</span> : null}
+          <ExternalLink size={13} aria-hidden />
+        </a>
+        <button
+          type="button"
+          className="editor-publish"
+          onClick={() => void publish()}
+          disabled={publishing || !hasDraft}
+        >
+          <Send size={15} aria-hidden />
+          {publishing ? "Yayınlanıyor…" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
+        </button>
+      </div>
+
+      {issues.length ? (
+        <div className="editor-issue-panel" role="alert">
+          <strong>
+            <AlertTriangle size={15} aria-hidden /> Aksiyon gerekli
+          </strong>
+          <p>Şu bloklar tamamlanmadan sayfan yayınlanamaz. Doldur ya da kaldır:</p>
+          <ul>
+            {issues.map((issue) => (
+              <li key={issue.blockId}>
+                <span>
+                  <b>{issue.label}</b> — {issue.message}
+                </span>
+                <button type="button" onClick={() => focusBlock(issue.blockId)}>
+                  Düzelt
+                </button>
+                {/* Profil kartı zorunludur (düzende tam bir tane); kaldırılamaz. */}
+                {issue.blockId === profileBlock?.id ? null : (
+                  <button
+                    type="button"
+                    className="is-remove"
+                    onClick={() => removeBlock(issue.blockId)}
+                  >
+                    Kaldır
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {saveState === "conflict" || saveState === "error" ? (
         <div className="editor-alert" role="alert">
           {saveState === "conflict" ? (
@@ -484,7 +671,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <div className="editor-profile-layout">
           {profileBlock ? (
             <div
-              className={`profile-identity editor-profile-identity ${selectedId === profileBlock.id ? "is-selected" : ""}`}
+              className={`profile-identity editor-profile-identity ${selectedId === profileBlock.id ? "is-selected" : ""} ${blockIssue(profileBlock) ? "is-incomplete" : ""}`}
               role="button"
               tabIndex={0}
               aria-label="Genel profil bilgilerini düzenle"
@@ -497,7 +684,14 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               {selectedId === profileBlock.id ? <span className="selected-label">Genel bilgi</span> : null}
             </div>
           ) : null}
-          <div className="editor-grid-area">
+          {/* Düzenleme modunda kart tıklaması bloğu seçer, bağlantıyı AÇMAZ:
+              kullanıcı düzenlemek için tıklıyor, hedef siteye gitmek için değil. */}
+          <div
+            className="editor-grid-area"
+            onClickCapture={(event) => {
+              if ((event.target as Element).closest("a")) event.preventDefault();
+            }}
+          >
             <EditorGrid
               blocks={bentoBlocks}
               device={device}
@@ -510,6 +704,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               onSelect={setSelectedId}
               onChange={applyGridChange}
               onManual={markSmManual}
+              issueOf={blockIssue}
               onRemove={(id) => {
                 setLayout((current) => ({
                   ...current,
@@ -527,8 +722,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     onChange={(doc, plain) =>
                       updateSelected(
                         block.type === "status"
-                          ? { doc, text: (plain.trim() || "Duyuru").slice(0, 140) }
-                          : { doc, text: (plain.trim() || "Metin").slice(0, 280) },
+                          ? { doc, text: plain.trim().slice(0, 140) }
+                          : { doc, text: plain.trim().slice(0, 280) },
                       )
                     }
                     onClose={() => setSelectedId(null)}

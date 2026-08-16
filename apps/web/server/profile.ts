@@ -200,6 +200,10 @@ export async function completeOnboarding(
       onboardingCompletedAt: new Date(),
       layout: JSON.stringify(result.layout),
       theme: result.theme,
+      // Yayınlanmış hâl baştan kurulduğu için bayat taslak temizlenir;
+      // aksi hâlde sonraki "yayınla" onboarding çıktısını geri alırdı.
+      draftLayout: null,
+      draftTheme: null,
       version: sql`${profile.version} + 1`,
       updatedAt: new Date(),
     })
@@ -263,7 +267,7 @@ export async function claimUsername(
 export async function ensureProfileAvatar(
   env: Env,
   user: { id: string; image?: string | null },
-  row: { id: string; layout: string },
+  row: { id: string; layout: string; draftLayout?: string | null },
 ): Promise<string | null> {
   if (!user.image) return null;
   try {
@@ -277,10 +281,31 @@ export async function ensureProfileAvatar(
     if (!avatarAssetId) return null;
 
     block.data = { ...block.data, avatarAssetId };
+
+    // Bekleyen taslak varsa oradaki profil bloğuna da aynı avatar yazılır;
+    // yoksa sonraki yayın avatarı geri silerdi. Best-effort: taslak
+    // bozuksa dokunulmaz.
+    let draftUpdate: { draftLayout: string } | undefined;
+    if (row.draftLayout) {
+      try {
+        const draft = JSON.parse(row.draftLayout) as {
+          blocks?: { type?: string; data?: Record<string, unknown> }[];
+        };
+        const draftBlock = draft.blocks?.find((b) => b.type === "profile");
+        if (draftBlock && !draftBlock.data?.avatarAssetId) {
+          draftBlock.data = { ...draftBlock.data, avatarAssetId };
+          draftUpdate = { draftLayout: JSON.stringify(draft) };
+        }
+      } catch {
+        // Taslak çözümlemesi başarısızsa yalnızca yayınlanmış hâl onarılır.
+      }
+    }
+
     await createDb(env.DB)
       .update(profile)
       .set({
         layout: JSON.stringify(layout),
+        ...draftUpdate,
         version: sql`${profile.version} + 1`,
       })
       .where(eq(profile.id, row.id));

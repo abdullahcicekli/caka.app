@@ -40,19 +40,29 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
     const content = ogImage ? (
       <>
         <span className="social-head">{head}</span>
-        <img className="social-og" src={ogImage} alt="" loading="lazy" />
+        <img className="social-og" src={ogImage} alt="" loading="lazy" draggable={false} />
       </>
     ) : (
       head
     );
     const className = `profile-block profile-block-social${ogImage ? " has-og" : ""}`;
-    return block.data.url ? (
-      <a className={className} href={block.data.url} target="_blank" rel="noreferrer">
-        {content}
-      </a>
-    ) : (
-      <article className={className}>{content}</article>
-    );
+    if (block.data.url) {
+      return (
+        <a className={className} href={block.data.url} target="_blank" rel="noreferrer">
+          {content}
+        </a>
+      );
+    }
+    // E-posta platformu http(s) URL üretmez (KTD8); adres biçimi doğrulanmışsa
+    // mailto: bağlantısı bizim ürettiğimiz sabit şemadır, kullanıcı metni değil.
+    if (block.data.platform === "email" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(block.data.handle)) {
+      return (
+        <a className={className} href={`mailto:${encodeURIComponent(block.data.handle)}`}>
+          {content}
+        </a>
+      );
+    }
+    return <article className={className}>{content}</article>;
   }
 
   if (block.type === "link") {
@@ -75,7 +85,7 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
 
   if (block.type === "image") {
     const content = block.data.assetId ? (
-      <img src={`/i/${block.data.assetId}`} alt={block.data.title} />
+      <img src={`/i/${block.data.assetId}`} alt={block.data.title} draggable={false} />
     ) : (
       <span className="profile-image-placeholder">{block.data.title || "Görsel ekle"}</span>
     );

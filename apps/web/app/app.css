@@ -27,6 +27,9 @@
   --color-mor: #5b2aa5;
   --color-sinir: #e6e6e1;
 
+  /* Editör uyarısı: yayına engel olan eksik blokların çerçevesi/rozeti */
+  --color-uyari: #d97706;
+
   /* Türetilmiş: lime blok üzerindeki kontrast rengi (landing mockup'ından örneklendi).
      Favicon asset'lerinin zemini #3554ec'dir; token mavisi kılavuzu izler. */
   --color-kirec-koyu: #233917;
@@ -796,6 +799,14 @@
 .rich-editor-inline .tiptap ol { list-style: decimal; }
 .rich-editor-inline .tiptap blockquote { margin: 0 0 10px; border-left: 3px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 30%, transparent); padding-left: 12px; font-style: italic; }
 .rich-editor-inline .tiptap a { text-decoration: underline; text-underline-offset: 2px; }
+/* Tiptap Placeholder: yalnız boş ilk satırda görünür, yazmaya başlayınca gider */
+.rich-editor-inline .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 42%, transparent);
+}
 .inline-text-toolbar {
   position: absolute;
   top: -52px;
@@ -872,6 +883,29 @@
   text-transform: var(--profile-title-case, none);
 }
 
+/* Public profil: sahip için sağ üstte sabit hızlı menü tetikleyicisi (kalem).
+   Dokunma hedefi 44px; safe-area payı çentikli telefonlar için. Dropdown
+   içeriği (radix portal) z-50'dedir; tetikleyici kartların üstünde kalır. */
+.owner-quick-menu {
+  position: fixed;
+  z-index: 40;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  right: calc(env(safe-area-inset-right, 0px) + 16px);
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-murekkep);
+  color: white;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-murekkep) 30%, transparent);
+  cursor: pointer;
+  transition: background 130ms ease, scale 130ms ease;
+}
+.owner-quick-menu:hover { background: color-mix(in srgb, var(--color-murekkep) 88%, white); }
+.owner-quick-menu:active { scale: 0.94; }
+
 /* Editör kabuğu: tuval sayfanın kendisidir; tüm kontroller yüzer (own.page
    referansı). Üstte geri + adres pili, altta ortada araç çubuğu. */
 .editor-shell { position: relative; min-height: 100svh; background: var(--color-zemin); }
@@ -893,11 +927,16 @@
 }
 .editor-back:hover { background: var(--color-zemin); }
 
-.editor-address-pill {
+.editor-topbar {
   position: fixed;
   z-index: 30;
   top: 18px;
   right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.editor-address-pill {
   display: flex;
   min-height: 44px;
   align-items: center;
@@ -917,6 +956,61 @@
 .save-dot.is-saving { background: var(--color-kirec); animation: save-pulse 1s ease infinite; }
 .save-dot.is-error, .save-dot.is-conflict { background: var(--color-destructive); }
 @keyframes save-pulse { 50% { opacity: .35; } }
+
+.draft-chip {
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: color-mix(in srgb, var(--color-uyari) 15%, transparent);
+  color: var(--color-uyari);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Yayınla: canlıya geçiren tek aksiyon; taslak yokken pasif ("Yayında") */
+.editor-publish {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 0 20px;
+  background: var(--color-murekkep);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgb(17 17 22 / 0.12);
+}
+.editor-publish:hover:not(:disabled) { opacity: .88; }
+.editor-publish:disabled {
+  border: 1px solid var(--color-sinir);
+  background: white;
+  color: color-mix(in srgb, var(--color-murekkep) 45%, transparent);
+  box-shadow: none;
+}
+
+/* "Aksiyon gerekli": yayını engelleyen eksik blokların listesi */
+.editor-issue-panel {
+  position: fixed;
+  z-index: 60;
+  top: 74px;
+  right: 18px;
+  width: min(360px, calc(100vw - 36px));
+  border: 1px solid color-mix(in srgb, var(--color-uyari) 45%, transparent);
+  border-radius: var(--radius-xl);
+  padding: 14px 16px;
+  background: white;
+  box-shadow: 0 12px 32px rgb(17 17 22 / 0.14);
+}
+.editor-issue-panel strong { display: flex; align-items: center; gap: 7px; color: var(--color-uyari); font-size: 13px; }
+.editor-issue-panel > p { margin: 6px 0 10px; color: color-mix(in srgb, var(--color-murekkep) 62%, transparent); font-size: 12.5px; line-height: 1.45; }
+.editor-issue-panel ul { display: flex; flex-direction: column; gap: 6px; }
+.editor-issue-panel li { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--color-sinir); padding-top: 8px; font-size: 12.5px; }
+.editor-issue-panel li > span { flex: 1; min-width: 0; }
+.editor-issue-panel li button { flex: none; border-radius: 999px; padding: 4px 11px; background: var(--color-murekkep); color: white; font-size: 11.5px; font-weight: 600; }
+.editor-issue-panel li button.is-remove { background: var(--color-zemin); color: var(--color-murekkep); }
+.editor-issue-panel li button:hover { opacity: .85; }
+
+.editor-profile-identity.is-incomplete { outline: 2px dashed var(--color-uyari); outline-offset: 3px; border-radius: var(--radius-2xl); }
 
 .editor-alert {
   position: fixed;
@@ -1094,7 +1188,36 @@
 .dash-page-list em { margin-left: auto; border-radius: 999px; padding: 3px 9px; background: var(--color-zemin); font-size: 10px; font-style: normal; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .dash-sidebar > footer { display: flex; margin-top: auto; border-top: 1px solid var(--color-sinir); padding-top: 14px; }
 
+/* Sidebar hesap menüsü: avatar + ad + adres, menü yukarı açılır */
+.dash-account-trigger {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  text-align: left;
+  transition: background-color .15s ease;
+}
+.dash-account-trigger:hover,
+.dash-account-trigger[data-state="open"] { background: var(--color-zemin); }
+.dash-account-trigger > svg { flex: none; color: color-mix(in srgb, var(--color-murekkep) 45%, transparent); }
+.dash-account-labels { display: grid; min-width: 0; flex: 1; }
+.dash-account-labels strong { overflow: hidden; font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.dash-account-labels small { overflow: hidden; color: color-mix(in srgb, var(--color-murekkep) 50%, transparent); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+
 .dash-main { display: flex; align-items: center; justify-content: center; gap: 24px; flex-direction: column; padding: 44px 24px; }
+.dash-draft-note {
+  border: 1px solid color-mix(in srgb, var(--color-uyari) 40%, transparent);
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: color-mix(in srgb, var(--color-uyari) 10%, white);
+  color: var(--color-uyari);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+}
 .dash-actions { display: flex; gap: 10px; }
 .dash-actions > * { display: flex; min-height: 44px; align-items: center; gap: 8px; border: 1px solid var(--color-sinir); border-radius: 999px; padding: 0 20px; background: white; font-size: 14px; font-weight: 500; }
 .dash-actions > .dash-edit { border-color: var(--color-murekkep); background: var(--color-murekkep); color: white; }
@@ -1199,6 +1322,36 @@
 }
 .editor-grid-stack .editor-block:active { cursor: grabbing; }
 .editor-grid-stack .editor-block.is-selected { outline-color: var(--color-murekkep); }
+/* Eksik blok: yayına engel — kesikli uyarı çerçevesi + "aksiyon gerekli" rozeti */
+.editor-grid-stack .editor-block.is-incomplete { outline: 2px dashed var(--color-uyari); outline-offset: 3px; }
+.editor-grid-stack .editor-block.is-incomplete.is-selected { outline-style: solid; }
+/* Dokunmatik: basılı tutma tamamlandı, blok artık taşınabilir (grid.tsx ekler) */
+.editor-grid-stack .editor-block.is-drag-armed {
+  transform: scale(1.02);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--color-murekkep) 28%, transparent);
+  transition: transform 130ms ease, box-shadow 130ms ease;
+}
+.block-issue-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: inline-flex;
+  max-width: calc(100% - 16px);
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--color-uyari);
+  color: white;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
 .editor-grid-stack .grid-stack-placeholder > .placeholder-content {
   border: 1px dashed color-mix(in srgb, var(--profile-text) 35%, transparent);
   border-radius: var(--radius-2xl);
@@ -1247,6 +1400,16 @@
 /* Hover olmayan (dokunmatik) cihazlarda tutamaçlar her zaman görünür */
 @media (hover: none) {
   .editor-grid-stack .grid-stack-item > .ui-resizable-handle { opacity: 1; scale: 1; }
+  /* Basılı tutma sırasında iOS metin seçimi/callout tetiklenmesin
+     (tuval içi düzenlenen blok hariç — orada caret/seçim gerekli) */
+  .editor-grid-stack .editor-block:not(.is-editing) {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Android'de user-select görsellerin uzun-basma menüsünü engellemez;
+     görsel dokunuşu hiç almasın (kart zaten tıklanabilir sarmalayıcı). */
+  .editor-grid-stack .editor-block:not(.is-editing) img { pointer-events: none; }
 }
 .selected-label { position: absolute; top: 8px; left: 8px; z-index: 2; border-radius: 5px; padding: 2px 6px; background: var(--color-murekkep); color: white; font-size: 10px; }
 .editor-add-tile { display: flex; width: 100%; min-height: 64px; margin-top: 12px; align-items: center; justify-content: center; border: 1px dashed color-mix(in srgb, var(--profile-text) 24%, transparent); border-radius: var(--radius-2xl); flex-direction: row; gap: 7px; color: var(--profile-muted); font-size: 12px; }
@@ -1275,6 +1438,7 @@
 .inspector-fields label, .inspector-fields fieldset { display: flex; gap: 8px; flex-direction: column; font-size: 12px; font-weight: 500; }
 .inspector-fields input, .inspector-fields textarea, .inspector-fields select { min-height: 42px; border: 1px solid var(--color-sinir); border-radius: var(--radius-lg); padding: 9px 11px; background: white; outline: none; font-size: 13px; font-weight: 400; }
 .inspector-fields textarea { min-height: 78px; resize: vertical; }
+.inspector-hint { margin-top: -2px; color: color-mix(in srgb, var(--color-murekkep) 52%, transparent); font-size: 11.5px; font-weight: 400; line-height: 1.45; }
 .inspector-upload { position: relative; display: flex; min-height: 88px; align-items: center; justify-content: center; border: 1px dashed var(--color-sinir); border-radius: var(--radius-lg); flex-direction: column; gap: 6px; color: color-mix(in srgb, var(--color-murekkep) 56%, transparent); font-size: 11px; font-weight: 400; overflow: hidden; }
 .inspector-upload input { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
 .inspector-fields input:focus, .inspector-fields textarea:focus, .inspector-fields select:focus { border-color: var(--color-murekkep); }
@@ -1295,7 +1459,10 @@
   .editor-profile-layout { grid-template-columns: 1fr; gap: 28px; }
   .editor-profile-identity { position: static; }
   .editor-toolbar { bottom: 12px; overflow-x: auto; }
-  .editor-address-pill { max-width: 56vw; overflow: hidden; white-space: nowrap; font-size: 12px; }
+  .editor-topbar { left: 72px; right: 12px; gap: 8px; justify-content: flex-end; }
+  .editor-address-pill { min-width: 0; max-width: 44vw; overflow: hidden; padding: 0 12px; white-space: nowrap; font-size: 12px; }
+  .editor-publish { flex: none; min-height: 40px; padding: 0 14px; font-size: 12px; }
+  .editor-issue-panel { top: 68px; right: 12px; left: 12px; width: auto; }
   .editor-inspector { bottom: 84px; width: calc(100vw - 16px); max-height: 62svh; }
   .block-gallery { bottom: 84px; width: calc(100vw - 16px); }
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }

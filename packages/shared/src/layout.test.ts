@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   PROFILE_BIO_MAX,
+  blockIssue,
   detectSocialFromUrl,
   ensureLayoutPositions,
+  layoutIssues,
   placeNewBlock,
   profileLayoutSchema,
   sizeFromDims,
@@ -193,6 +195,88 @@ describe("detectSocialFromUrl", () => {
   it("bilinmeyen host ve düz kullanıcı adı için null döner", () => {
     expect(detectSocialFromUrl("https://ornek.dev/ben")).toBeNull();
     expect(detectSocialFromUrl("teknofest")).toBeNull();
+  });
+});
+
+describe("blockIssue", () => {
+  it("taslak şeması boş alanlı blokları kabul eder", () => {
+    expect(() =>
+      profileLayoutSchema.parse({
+        version: 1,
+        blocks: [
+          { id: "blk_p", type: "profile", data: { name: "", title: "" } },
+          { id: "blk_1", type: "link", data: { title: "", url: "" } },
+          { id: "blk_2", type: "text", data: { text: "" } },
+        ],
+      }),
+    ).not.toThrow();
+  });
+
+  it("eksik alanlar için Türkçe mesaj, tamam bloklar için null döner", () => {
+    const parsed = profileLayoutSchema.parse({
+      version: 1,
+      blocks: [
+        { id: "blk_p", type: "profile", data: { name: "", title: "" } },
+        { id: "blk_link", type: "link", data: { title: "", url: "" } },
+        { id: "blk_link2", type: "link", data: { title: "", url: "caka.app" } },
+        { id: "blk_social", type: "social", data: { platform: "x", handle: "", url: "", label: "" } },
+        { id: "blk_text", type: "text", data: { text: "" } },
+        { id: "blk_status", type: "status", data: { text: "" } },
+        { id: "blk_image", type: "image", data: {} },
+      ],
+    });
+    const byId = new Map(parsed.blocks.map((block) => [block.id, block]));
+    expect(blockIssue(byId.get("blk_p")!)).toBe("Adını gir");
+    expect(blockIssue(byId.get("blk_link")!)).toBe("Bağlantı adresi gir");
+    expect(blockIssue(byId.get("blk_link2")!)).toBe("Başlık gir");
+    expect(blockIssue(byId.get("blk_social")!)).toBe("Bağlantı ya da kullanıcı adı gir");
+    expect(blockIssue(byId.get("blk_text")!)).toBe("Metin yaz");
+    expect(blockIssue(byId.get("blk_status")!)).toBe("Duyuru metni yaz");
+    expect(blockIssue(byId.get("blk_image")!)).toBe("Görsel yükle");
+    expect(blockIssue({ ...profileBlock })).toBeNull();
+  });
+
+  // socialUrl("email", …) http(s) URL üretmez (KTD8); e-posta bloğu yalnız
+  // handle ile dolar ve yayın kilitlenmemeli.
+  it("http(s) URL üretmeyen platformda dolu handle yeterlidir", () => {
+    const parsed = profileLayoutSchema.parse({
+      version: 1,
+      blocks: [
+        { ...profileBlock },
+        {
+          id: "blk_mail",
+          type: "social",
+          data: { platform: "email", handle: "merhaba@caka.app", url: "", label: "E-posta" },
+        },
+      ],
+    });
+    const mail = parsed.blocks.find((block) => block.id === "blk_mail")!;
+    expect(blockIssue(mail)).toBeNull();
+    expect(layoutIssues(parsed)).toEqual([]);
+  });
+});
+
+describe("layoutIssues", () => {
+  it("eksik blokları etiketiyle listeler, tam düzen için boş döner", () => {
+    const incomplete = profileLayoutSchema.parse({
+      version: 1,
+      blocks: [
+        { ...profileBlock },
+        { id: "blk_1", type: "link", data: { title: "", url: "" } },
+      ],
+    });
+    expect(layoutIssues(incomplete)).toEqual([
+      { blockId: "blk_1", label: "Bağlantı", message: "Bağlantı adresi gir" },
+    ]);
+
+    const complete = profileLayoutSchema.parse({
+      version: 1,
+      blocks: [
+        { ...profileBlock },
+        { id: "blk_1", type: "link", data: { title: "Portfolyo", url: "caka.app" } },
+      ],
+    });
+    expect(layoutIssues(complete)).toEqual([]);
   });
 });
 

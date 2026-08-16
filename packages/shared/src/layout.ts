@@ -155,7 +155,7 @@ const profileCardSchema = z.object({
   ...blockBase,
   type: z.literal("profile"),
   data: z.object({
-    name: z.string().trim().min(1).max(PROFILE_NAME_MAX),
+    name: z.string().trim().max(PROFILE_NAME_MAX).default(""),
     title: z.string().trim().max(PROFILE_BIO_MAX),
     avatarAssetId: z.string().uuid().optional(),
   }),
@@ -179,7 +179,7 @@ const linkBlockSchema = z.object({
   ...blockBase,
   type: z.literal("link"),
   data: z.object({
-    title: z.string().trim().min(1).max(60),
+    title: z.string().trim().max(60).default(""),
     url: optionalHttpUrlSchema,
   }),
 });
@@ -197,7 +197,7 @@ const textBlockSchema = z.object({
   ...blockBase,
   type: z.literal("text"),
   data: z.object({
-    text: z.string().trim().min(1).max(280),
+    text: z.string().trim().max(280).default(""),
     doc: richDocSchema,
   }),
 });
@@ -216,7 +216,7 @@ const statusBlockSchema = z.object({
   ...blockBase,
   type: z.literal("status"),
   data: z.object({
-    text: z.string().trim().min(1).max(140),
+    text: z.string().trim().max(140).default(""),
     url: optionalHttpUrlSchema.default(""),
     doc: richDocSchema,
   }),
@@ -259,6 +259,52 @@ export function parseProfileLayout(value: string): ProfileLayout | null {
 
 export function createBlockId(): string {
   return `blk_${crypto.randomUUID().slice(0, 8)}`;
+}
+
+// Taslak/yayınla modeli: şema yarım bloklara izin verir (taslak kaydı),
+// yayın öncesi eksikler aşağıdaki kurallarla yüzeye çıkarılır.
+const BLOCK_TYPE_LABELS: Record<ProfileBlock["type"], string> = {
+  profile: "Profil",
+  social: "Sosyal medya",
+  link: "Bağlantı",
+  text: "Metin",
+  image: "Görsel",
+  status: "Duyuru",
+};
+
+export type BlockIssue = { blockId: string; label: string; message: string };
+
+/** Blok yayına hazır mı? Değilse kullanıcıya gösterilecek Türkçe mesaj. */
+export function blockIssue(block: ProfileBlock): string | null {
+  switch (block.type) {
+    case "profile":
+      return block.data.name ? null : "Adını gir";
+    case "social":
+      // E-posta gibi bazı platformlarda http(s) URL üretilmez (KTD8: kullanıcı
+      // URL'leri yalnız http(s)); orada dolu `handle` yeterli sayılır.
+      return block.data.url || block.data.handle
+        ? null
+        : "Bağlantı ya da kullanıcı adı gir";
+    case "link":
+      if (!block.data.url) return "Bağlantı adresi gir";
+      return block.data.title ? null : "Başlık gir";
+    case "text":
+      return block.data.text ? null : "Metin yaz";
+    case "status":
+      return block.data.text ? null : "Duyuru metni yaz";
+    case "image":
+      return block.data.assetId ? null : "Görsel yükle";
+  }
+}
+
+/** Yayın öncesi eksik blokların listesi; boşsa yayınlanabilir. */
+export function layoutIssues(layout: ProfileLayout): BlockIssue[] {
+  return layout.blocks.flatMap((block) => {
+    const message = blockIssue(block);
+    return message
+      ? [{ blockId: block.id, label: BLOCK_TYPE_LABELS[block.type], message }]
+      : [];
+  });
 }
 
 export type BentoBlockType = Exclude<ProfileBlock["type"], "profile">;

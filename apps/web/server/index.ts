@@ -22,7 +22,8 @@ honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
 );
 
 honoApp.route("/api/onboarding", onboardingApi);
-honoApp.route("/api/profile/layout", layoutApi);
+// layoutApi: PUT /api/profile/layout (taslak kaydı) + POST /api/profile/publish
+honoApp.route("/api/profile", layoutApi);
 honoApp.route("/api/og-image", ogApi);
 
 /**

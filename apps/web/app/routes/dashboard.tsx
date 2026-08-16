@@ -15,9 +15,14 @@ import { Link, NavLink, redirect } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
 import { ProfileCanvas } from "~/components/profile-block";
-import { SignOutLink } from "~/components/sign-out-link";
+import { SidebarUserMenu } from "~/components/user-menu";
 import { noIndexMeta } from "~/lib/seo";
-import { ensureLayoutPositions, normalizeTheme, parseProfileLayout } from "@caka/shared";
+import {
+  ensureLayoutPositions,
+  normalizeTheme,
+  parseProfileLayout,
+  type ProfileBlock,
+} from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/dashboard";
@@ -34,15 +39,27 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!profile.onboardingCompletedAt) throw redirect("/onboarding/kurulum/profil");
   const layout = parseProfileLayout(profile.layout);
   if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
+  // Hesap menüsünün adı/avatarı profil bloğundan gelir; ek sorgu gerekmez.
+  const card = layout.blocks.find(
+    (block): block is Extract<ProfileBlock, { type: "profile" }> => block.type === "profile",
+  );
   return {
     username: profile.username,
     layout: ensureLayoutPositions(layout),
     theme: normalizeTheme(profile.theme),
+    // Önizleme yayındaki hâli gösterir; taslak varsa kullanıcı uyarılır.
+    // Ölçüt editörle (routes/edit.tsx) aynı olmalı: okunamayan taslak yok sayılır.
+    hasDraft: profile.draftLayout ? parseProfileLayout(profile.draftLayout) !== null : false,
+    account: {
+      name: card?.data.name || profile.username,
+      username: profile.username,
+      avatarUrl: card?.data.avatarAssetId ? `/i/${card.data.avatarAssetId}` : null,
+    },
   };
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { username, layout, theme } = loaderData;
+  const { username, layout, theme, account, hasDraft } = loaderData;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -95,11 +112,16 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </section>
 
         <footer>
-          <SignOutLink />
+          <SidebarUserMenu user={account} />
         </footer>
       </aside>
 
       <section className="dash-main">
+        {hasDraft ? (
+          <p className="dash-draft-note">
+            Yayınlanmamış değişikliklerin var — aşağıdaki önizleme yayındaki hâli gösteriyor.
+          </p>
+        ) : null}
         <div className="dash-actions">
           <Link className="dash-edit" to="/edit">
             <Pencil size={16} /> Sayfayı düzenle

@@ -2,6 +2,7 @@
 // doğrudan bloğun içine mount edilir, biçimlendirme araç çubuğu bloğun
 // altında yüzer. Çıktı Tiptap JSON'u olarak bloğa yazılır; public render
 // allowlist'li RichTextView ile yapılır.
+import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Bold, Check, Italic, Link2, List, ListOrdered, Quote } from "lucide-react";
@@ -44,6 +45,11 @@ export function InlineTextEditor({
         code: false,
         horizontalRule: false,
         link: { openOnClick: false, autolink: true },
+      }),
+      // Gerçek placeholder: boşken görünür, ilk karakterde kaybolur. Blok
+      // içeriği olarak örnek metin YAZILMAZ (yoksa yazının başında kalır).
+      Placeholder.configure({
+        placeholder: variant === "status" ? "Duyurunu yaz…" : "Bir şeyler yaz…",
       }),
     ],
     content: (doc as object) ?? docFromPlainText(fallbackText),
