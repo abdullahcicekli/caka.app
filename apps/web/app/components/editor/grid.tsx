@@ -173,6 +173,28 @@ export function EditorGrid({
     let startY = 0;
     let armedContent: HTMLElement | null = null;
 
+    // Gridstack'in dokunuş/fare kilitleri modül-global statik alanlardır ve
+    // yarım kalan bir etkileşimden (ör. OS gesture'ı iptal etti) bayat true
+    // kalabilir. Bayat `DDTouch.touchHandled`, boyutlandırma tutamacının
+    // touchstart'ını SESSİZCE yutar (dd-touch.js: `if (touchHandled) return`)
+    // — tutamaçlar görünür ama resize hiç başlamaz. Her yeni dokunuşta sıfırla.
+    // `DDManager` gridstack barrel'ından re-export edilir (dist/gridstack.js:
+    // `export * from './dd-manager'`), o yüzden ana giriş noktasından alınır —
+    // tekil örnek garanti. `DDTouch` barrel'da yok; derin import şart. Derin yol
+    // güvenli: gridstack package.json'unda `exports` alanı olmadığı için
+    // `gridstack/dist/dd-touch`, gridstack'in kendi relative importuyla aynı
+    // dosyaya çözülür (üretim bundle'ında tek paylaşılan chunk olduğu doğrulandı).
+    let locks: { touch?: { touchHandled?: boolean }; manager?: { mouseHandled?: boolean } } = {};
+    void Promise.all([import("gridstack/dist/dd-touch"), import("gridstack")]).then(
+      ([touch, gridstack]) => {
+        locks = { touch: touch.DDTouch, manager: gridstack.DDManager };
+      },
+    );
+    const clearStaleLocks = () => {
+      if (locks.touch) locks.touch.touchHandled = false;
+      if (locks.manager) delete locks.manager.mouseHandled;
+    };
+
     const cancelHold = () => {
       if (holdTimer !== null) {
         window.clearTimeout(holdTimer);
@@ -190,12 +212,18 @@ export function EditorGrid({
       if (!event.isTrusted) return;
       cancelHold();
       disarm();
+      // Çok parmak (pinch/zoom): kilitlere dokunma ve kolu KURMA — yoksa
+      // kullanıcı yakınlaştırırken bekleyen touchstart dispatch edilip blok
+      // sürüklenmeye başlar. Kol iptali yukarıda zaten yapıldı.
       if (event.touches.length > 1) return;
       const target = event.target instanceof Element ? event.target : null;
       const item = target?.closest<HTMLElement>(".grid-stack-item") ?? null;
       if (!item || !container.contains(item)) return;
-      // Boyutlandırma tutamaçları küçük ve bilinçli hedefler; beklemeden çalışsın
-      // (dd-resizable-handle kendi touchend'ini kaydeder, kilit bırakmaz).
+      // Yeni ve tek parmaklı bir dokunuş: bu noktada süren bir sürükleme/resize
+      // yok, bayat kilitler temizlenebilir.
+      clearStaleLocks();
+      // Boyutlandırma tutamaçları küçük ve bilinçli hedefler; beklemeden
+      // çalışsın — event'i olduğu gibi gridstack'e bırak.
       if (target?.closest(".ui-resizable-handle")) return;
       // Tuval içi metin düzenlenen blok zaten kilitli; dokunuşlar caret içindir.
       // gs-id attribute'u kullanılır: senkron efektinin removeAll penceresinde
