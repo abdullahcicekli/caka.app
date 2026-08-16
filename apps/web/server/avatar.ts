@@ -11,7 +11,7 @@ const ALLOWED_AVATAR_HOSTS = /(^|\.)googleusercontent\.com$/;
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 5000;
 
-function sniffImageType(bytes: Uint8Array): string | null {
+export function sniffImageType(bytes: Uint8Array): string | null {
   if (bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
     return "image/jpeg";
   if (

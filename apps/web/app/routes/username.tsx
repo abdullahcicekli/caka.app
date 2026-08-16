@@ -1,10 +1,15 @@
 import { env } from "cloudflare:workers";
 import { Link, data, redirect } from "react-router";
 
-import { ProfileAvatar } from "~/components/profile-avatar";
+import { ProfileCanvas } from "~/components/profile-block";
 import { SignOutLink } from "~/components/sign-out-link";
 import { parseSeedProfile } from "~/lib/profile-view";
-import { normalizeUsername } from "@caka/shared";
+import {
+  normalizeUsername,
+  parseProfileLayout,
+  validateUsername,
+  type ProfileTheme,
+} from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
@@ -20,8 +25,21 @@ export function meta({ loaderData }: Route.MetaArgs) {
   ];
 }
 
+/** 404 türleri: sistem/rezerve yol ≠ alınabilir boş adres (UX ayrımı). */
+type NotFoundKind = "no_page" | "unclaimed" | "broken";
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const username = normalizeUsername(params.username ?? "");
+
+  // Rezerve veya biçimsiz yollar (edit, settings, admin, "ali veli"…) adres
+  // DEĞİLDİR — "bu adres boşta, kap!" göstermek yanlış; düz 404 verilir.
+  if (!validateUsername(username).ok) {
+    throw data(
+      { kind: "no_page" satisfies NotFoundKind, username },
+      { status: 404 },
+    );
+  }
+
   const resolved = await resolveUsername(env, username);
 
   if (resolved.kind === "redirect") {
@@ -32,7 +50,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     });
   }
   if (resolved.kind === "not_found") {
-    throw data({ username }, { status: 404 });
+    throw data(
+      { kind: "unclaimed" satisfies NotFoundKind, username },
+      { status: 404 },
+    );
   }
 
   // Normalize edilmemiş URL'i kanonik hale yönlendir (/John -> /john)
@@ -41,43 +62,74 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const p = resolved.profile;
   const seed = parseSeedProfile(p.layout);
+  const layout = parseProfileLayout(p.layout);
+  if (!layout)
+    throw data(
+      { kind: "broken" satisfies NotFoundKind, username },
+      { status: 404 },
+    );
   const session = await getSession(env, request);
   return {
     username: p.username,
     name: seed.name ?? p.username,
     avatarUrl: seed.avatarUrl,
     theme: p.theme,
+    layout,
     isOwner: session?.user.id === p.userId,
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
-  const { name, username, avatarUrl, isOwner } = loaderData;
+  const { username, isOwner, layout, theme } = loaderData;
   return (
-    <main className="flex min-h-svh flex-col items-center bg-zemin px-6 pt-20 pb-10">
-      <div className="flex w-full max-w-md flex-col items-center text-center">
-        <ProfileAvatar name={name} avatarUrl={avatarUrl} className="size-24 text-3xl" />
-        <h1 className="mt-5 text-2xl font-bold">{name}</h1>
-        <p className="mt-1 text-murekkep/50">@{username}</p>
-      </div>
-      <footer className="mt-auto flex flex-col items-center gap-4 pt-16">
+    <main className="relative min-h-svh">
+      <ProfileCanvas layout={layout} theme={theme as ProfileTheme} />
+      <footer className="fixed right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 p-2 shadow-sm backdrop-blur">
         <Link
           to="/"
-          className="rounded-full bg-white px-4 py-2 text-sm font-medium text-murekkep/70 shadow-sm hover:text-murekkep"
+          className="rounded-full px-3 py-2 text-sm font-medium text-murekkep/70 hover:text-murekkep"
         >
-          ⌘ Caka ile yapıldı
+          ⌘ Caka
         </Link>
-        {isOwner ? <SignOutLink /> : null}
+        {isOwner ? <Link to="/edit" className="rounded-full bg-murekkep px-4 py-2 text-sm text-white">Düzenle</Link> : null}
+        {isOwner ? <SignOutLink className="px-2" /> : null}
       </footer>
     </main>
   );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  const username =
+  const info =
     error && typeof error === "object" && "data" in error
-      ? ((error.data as { username?: string })?.username ?? "")
-      : "";
+      ? (error.data as { kind?: string; username?: string })
+      : {};
+  const username = info.username ?? "";
+
+  // Yalnızca geçerli ve gerçekten boş adresler "kap!" CTA'sı görür;
+  // sistem/rezerve yollar ve bozuk profiller düz hata sayfası alır.
+  if (info.kind !== "unclaimed") {
+    const broken = info.kind === "broken";
+    return (
+      <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
+        <p className="text-sm font-medium tracking-widest text-murekkep/40">404</p>
+        <h1 className="mt-2 text-3xl font-bold">
+          {broken ? "Bu sayfa görüntülenemiyor" : "Sayfa bulunamadı"}
+        </h1>
+        <p className="mt-3 max-w-sm text-murekkep/60">
+          {broken
+            ? "Bir şeyler ters gitti; daha sonra tekrar dene."
+            : "Aradığın sayfa yok ya da taşınmış olabilir."}
+        </p>
+        <Link
+          to="/"
+          className="mt-8 rounded-full bg-murekkep px-8 py-3.5 font-medium text-white hover:bg-murekkep/85"
+        >
+          Ana sayfaya dön
+        </Link>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
       <h1 className="text-3xl font-bold">Bu adres boşta</h1>

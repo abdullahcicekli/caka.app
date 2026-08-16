@@ -30,7 +30,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (existing) {
     // Girişten dönen mevcut kullanıcı — avatarsız kalmışsa onar, sayfasına git.
     await ensureProfileAvatar(env, session.user, existing);
-    throw redirect(`/${existing.username}`, {
+    throw redirect(existing.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil", {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
     });
   }
@@ -44,7 +44,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
     });
   }
-  throw redirect("/onboarding/hazir", {
+  throw redirect("/onboarding/kurulum/profil", {
     headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
   });
 }

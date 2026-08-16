@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { validateUsername } from "@caka/shared";
 import { getAuth } from "./auth";
 import { isUsernameAvailable } from "./profile";
+import { layoutApi } from "./layout-api";
+import { onboardingApi } from "./onboarding-api";
 
 // Hono, Worker'ın API yüzeyini taşır (KTD2): /api/*, /i/* ve /:username/og.png
 // buraya düşer; SSR sayfaları React Router handler'ında kalır.
@@ -14,6 +16,9 @@ honoApp.get("/api/health", (c) => c.json({ ok: true }));
 honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
   getAuth(c.env).handler(c.req.raw),
 );
+
+honoApp.route("/api/onboarding", onboardingApi);
+honoApp.route("/api/profile/layout", layoutApi);
 
 /**
  * Canlı adres kontrolü — yalnızca tavsiye niteliğinde (R2); garanti claim'de.

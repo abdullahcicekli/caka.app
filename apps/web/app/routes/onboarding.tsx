@@ -28,7 +28,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
   if (!session) return { authed: false };
   const existing = await getProfileByUserId(env, session.user.id);
-  if (existing) throw redirect(`/${existing.username}`);
+  if (existing) {
+    throw redirect(
+      existing.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil",
+    );
+  }
   return { authed: true };
 }
 
@@ -39,7 +43,7 @@ export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const result = await claimUsername(env, session.user, String(form.get("u") ?? ""));
   if (!result.ok) return data({ error: result.error }, { status: 409 });
-  throw redirect("/onboarding/hazir");
+  throw redirect("/onboarding/kurulum/profil");
 }
 
 type Availability =
@@ -99,6 +103,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
       : null;
 
   const ready = availability.state === "available";
+  const hasError = availability.state === "unavailable" || takenError !== null;
   const username = ready ? availability.username : null;
 
   function startSocialSignup(provider: SocialProvider) {
@@ -125,7 +130,11 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
         >
           <div
             className={`flex items-center rounded-full border bg-zemin py-3 pr-2 pl-6 transition-colors ${
-              ready ? "border-murekkep bg-white" : "border-transparent"
+              ready
+                ? "border-murekkep bg-white"
+                : hasError
+                  ? "border-destructive bg-white ring-2 ring-destructive/15"
+                  : "border-transparent"
             }`}
           >
             <span className="text-murekkep/50">caka.app&thinsp;/&thinsp;</span>
@@ -137,7 +146,10 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}
-              className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:text-murekkep/35"
+              aria-invalid={hasError || undefined}
+              className={`min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:text-murekkep/35 ${
+                hasError ? "text-destructive" : ""
+              }`}
             />
             <button
               type="submit"
@@ -152,15 +164,15 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
           </div>
         </form>
 
-        <p className="mt-3 h-5 text-sm" aria-live="polite">
+        <p className="mt-3 h-5 text-sm font-medium" aria-live="polite">
           {takenError ? (
-            <span className="text-red-600">{takenError}</span>
+            <span className="text-destructive">⚠ {takenError}</span>
           ) : availability.state === "available" ? (
             <span className="text-cam">✓ bu adres boşta</span>
           ) : availability.state === "unavailable" ? (
-            <span className="text-murekkep/60">{availability.message}</span>
+            <span className="text-destructive">⚠ {availability.message}</span>
           ) : availability.state === "checking" ? (
-            <span className="text-murekkep/40">kontrol ediliyor…</span>
+            <span className="font-normal text-murekkep/40">kontrol ediliyor…</span>
           ) : null}
         </p>
 

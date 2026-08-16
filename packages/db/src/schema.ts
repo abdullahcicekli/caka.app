@@ -27,6 +27,10 @@ export const profile = sqliteTable(
     theme: text("theme").notNull().default("light"),
     layout: text("layout").notNull(),
     version: integer("version").notNull().default(1),
+    onboardingData: text("onboarding_data").notNull().default("{}"),
+    onboardingCompletedAt: integer("onboarding_completed_at", {
+      mode: "timestamp_ms",
+    }),
     usernameChangedAt: integer("username_changed_at", { mode: "timestamp_ms" }),
     createdAt: timestampMs("created_at"),
     updatedAt: timestampMs("updated_at"),

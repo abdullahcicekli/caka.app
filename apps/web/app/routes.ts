@@ -7,6 +7,8 @@ export default [
   route("onboarding", "routes/onboarding.tsx"),
   route("onboarding/tamamla", "routes/onboarding.tamamla.tsx"),
   route("onboarding/hazir", "routes/onboarding.hazir.tsx"),
+  route("onboarding/kurulum/:step", "routes/onboarding.kurulum.tsx"),
   route("login", "routes/login.tsx"),
+  route("edit", "routes/edit.tsx"),
   route(":username", "routes/username.tsx"),
 ] satisfies RouteConfig;

@@ -18,7 +18,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
   if (!session) return null;
   const profile = await getProfileByUserId(env, session.user.id);
-  throw redirect(profile ? `/${profile.username}` : "/onboarding");
+  throw redirect(
+    profile
+      ? profile.onboardingCompletedAt
+        ? "/edit"
+        : "/onboarding/kurulum/profil"
+      : "/onboarding",
+  );
 }
 
 export default function Login() {

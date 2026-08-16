@@ -18,6 +18,8 @@ const pillVariants = cva(
         heroDark: "bg-kirec-koyu text-white hover:bg-kirec-koyu/90",
         /** Mavi blok üzerindeki CTA: kireç zemin */
         lime: "bg-kirec text-murekkep hover:bg-kirec/90",
+        /** Cam blok üzerindeki CTA: seftali zemin */
+        seftali: "bg-seftali text-seftali-koyu hover:bg-seftali/90",
       },
     },
     defaultVariants: { variant: "ink" },

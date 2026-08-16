@@ -1,10 +1,15 @@
 import { env } from "cloudflare:workers";
 
 import type { Route } from "./+types/home";
+import { AudienceSection } from "~/components/landing/audience-section";
 import { CtaSection } from "~/components/landing/cta-section";
+import { FaqSection } from "~/components/landing/faq-section";
 import { Hero } from "~/components/landing/hero";
 import { MinutesSection } from "~/components/landing/minutes-section";
 import { Navbar } from "~/components/landing/navbar";
+import { ProofSection } from "~/components/landing/proof-section";
+import { QuoteSection } from "~/components/landing/quote-section";
+import { ShareSection } from "~/components/landing/share-section";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { landing } from "~/content/landing";
@@ -56,6 +61,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <main>
         <Hero hero={landing.hero} />
         <MinutesSection minutes={landing.minutes} />
+        <ShareSection share={landing.share} />
+        <AudienceSection audience={landing.audience} />
+        <ProofSection proof={landing.proof} />
+        <QuoteSection quote={landing.quote} />
+        <FaqSection faq={landing.faq} />
         <CtaSection cta={landing.closingCta} />
       </main>
       <SiteFooter footer={landing.footer} />

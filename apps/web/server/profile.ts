@@ -1,8 +1,42 @@
 import { and, eq, gt, sql } from "drizzle-orm";
 
 import { createDb, profile, usernameRedirect } from "@caka/db";
-import { validateUsername } from "@caka/shared";
+import {
+  createBlockId,
+  parseProfileLayout,
+  PROFILE_BIO_MAX,
+  profileLayoutSchema,
+  type ProfileLayout,
+  type ProfileTheme,
+  type SocialPlatform,
+  validateUsername,
+} from "@caka/shared";
 import { copyGoogleAvatar } from "./avatar";
+
+export interface OnboardingLink {
+  platform: SocialPlatform;
+  value: string;
+}
+
+export interface OnboardingData {
+  name?: string;
+  bio?: string;
+  avatarAssetId?: string;
+  platforms?: SocialPlatform[];
+  purposes?: string[];
+  discovery?: string;
+  template?: string;
+  links?: OnboardingLink[];
+}
+
+export function parseOnboardingData(value: string): OnboardingData {
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? (parsed as OnboardingData) : {};
+  } catch {
+    return {};
+  }
+}
 
 /** Adres kullanılabilir mi? Profil kaydı + süresi geçmemiş devir kilidi bakılır. */
 export async function isUsernameAvailable(env: Env, username: string) {
@@ -42,6 +76,7 @@ function buildSeedLayout(name: string, avatarAssetId: string | null) {
           sm: { x: 0, y: 0, w: 2, h: 2 },
         },
         smManual: false,
+        size: "1x1",
         data: {
           name: name.slice(0, 60),
           title: "",
@@ -50,6 +85,139 @@ function buildSeedLayout(name: string, avatarAssetId: string | null) {
       },
     ],
   };
+}
+
+const PLATFORM_LABELS: Record<SocialPlatform, string> = {
+  instagram: "Instagram",
+  x: "X",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  linkedin: "LinkedIn",
+  facebook: "Facebook",
+  twitch: "Twitch",
+  dribbble: "Dribbble",
+  github: "GitHub",
+  threads: "Threads",
+  website: "Web sitesi",
+  email: "E-posta",
+};
+
+function socialUrl(platform: SocialPlatform, value: string): string {
+  const clean = value.trim().replace(/^@/, "");
+  if (!clean) return "";
+  if (platform === "website") return clean;
+  if (platform === "email") return "";
+  const bases: Partial<Record<SocialPlatform, string>> = {
+    instagram: "https://instagram.com/",
+    x: "https://x.com/",
+    tiktok: "https://tiktok.com/@",
+    youtube: "https://youtube.com/@",
+    linkedin: "https://linkedin.com/in/",
+    facebook: "https://facebook.com/",
+    twitch: "https://twitch.tv/",
+    dribbble: "https://dribbble.com/",
+    github: "https://github.com/",
+    threads: "https://threads.net/@",
+  };
+  return `${bases[platform] ?? ""}${clean}`;
+}
+
+function templateTheme(template?: string): ProfileTheme {
+  if (template === "gece") return "dark";
+  if (template === "orman") return "forest";
+  if (template === "pudra") return "rose";
+  return "light";
+}
+
+export function buildOnboardingLayout(
+  data: OnboardingData,
+  fallback: { name: string; avatarAssetId?: string },
+): { layout: ProfileLayout; theme: ProfileTheme } {
+  const profileBlock = {
+    id: createBlockId(),
+    type: "profile" as const,
+    size: "1x1" as const,
+    data: {
+      name: (data.name || fallback.name || "Caka").slice(0, 60),
+      title: (data.bio ?? "").slice(0, PROFILE_BIO_MAX),
+      ...(data.avatarAssetId || fallback.avatarAssetId
+        ? { avatarAssetId: data.avatarAssetId || fallback.avatarAssetId }
+        : {}),
+    },
+  };
+  const socialBlocks = (data.links ?? [])
+    .filter((item) => item.value.trim())
+    .slice(0, 12)
+    .map((item) => ({
+      id: createBlockId(),
+      type: "social" as const,
+      size: "1x1" as const,
+      data: {
+        platform: item.platform,
+        handle: item.value.trim(),
+        url: socialUrl(item.platform, item.value),
+        label: PLATFORM_LABELS[item.platform],
+      },
+    }));
+  const purposeStatus = data.purposes?.includes("projects")
+    ? [{
+        id: createBlockId(),
+        type: "status" as const,
+        size: "2x1" as const,
+        data: { text: "Yeni işler ve projeler burada.", url: "" },
+      }]
+    : [];
+  const parsed = profileLayoutSchema.parse({
+    version: 1,
+    blocks: [profileBlock, ...socialBlocks, ...purposeStatus],
+  });
+  return { layout: parsed, theme: templateTheme(data.template) };
+}
+
+export async function updateOnboardingData(
+  env: Env,
+  userId: string,
+  patch: OnboardingData,
+) {
+  const db = createDb(env.DB);
+  const row = await getProfileByUserId(env, userId);
+  if (!row) return null;
+  const merged = { ...parseOnboardingData(row.onboardingData), ...patch };
+  await db
+    .update(profile)
+    .set({ onboardingData: JSON.stringify(merged), updatedAt: new Date() })
+    .where(eq(profile.userId, userId));
+  return merged;
+}
+
+export async function completeOnboarding(
+  env: Env,
+  user: { id: string; name: string },
+  patch: OnboardingData,
+) {
+  const row = await getProfileByUserId(env, user.id);
+  if (!row) return null;
+  const data = { ...parseOnboardingData(row.onboardingData), ...patch };
+  const current = parseProfileLayout(row.layout);
+  const currentProfile = current?.blocks.find((block) => block.type === "profile");
+  const fallbackAvatar =
+    currentProfile?.type === "profile" ? currentProfile.data.avatarAssetId : undefined;
+  const result = buildOnboardingLayout(data, {
+    name: user.name,
+    avatarAssetId: fallbackAvatar,
+  });
+  await createDb(env.DB)
+    .update(profile)
+    .set({
+      onboardingData: JSON.stringify(data),
+      onboardingCompletedAt: new Date(),
+      layout: JSON.stringify(result.layout),
+      theme: result.theme,
+      version: sql`${profile.version} + 1`,
+      updatedAt: new Date(),
+    })
+    .where(eq(profile.userId, user.id));
+  return { ...result, data };
 }
 
 export type ClaimResult =
