@@ -603,20 +603,30 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           target="_blank"
           rel="noreferrer"
           title={hasDraft ? "Yayınlanmamış değişiklikler var" : "Yayındaki sayfan"}
+          aria-label={`caka.app/${loaderData.username} — ${hasDraft ? "taslak var" : "yayında"}`}
         >
           <span className={`save-dot is-${saveState}`} aria-hidden />
-          caka.app/{loaderData.username}
-          {hasDraft ? <span className="draft-chip">Taslak</span> : null}
-          <ExternalLink size={13} aria-hidden />
+          {/* Dar ekranda adres gizlenir; yalnız nokta + durum metni kalır (CSS) */}
+          <span className="address-host" aria-hidden>caka.app/{loaderData.username}</span>
+          {hasDraft ? <span className="draft-chip" aria-hidden>Taslak</span> : null}
+          <span className="address-status" aria-hidden>{hasDraft ? "Taslak" : "Yayında"}</span>
+          <ExternalLink size={13} aria-hidden className="address-open" />
         </a>
         <button
           type="button"
           className="editor-publish"
           onClick={() => void publish()}
           disabled={publishing || !hasDraft}
+          aria-label={publishing ? "Yayınlanıyor" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
         >
           <Send size={15} aria-hidden />
-          {publishing ? "Yayınlanıyor…" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
+          {/* Mobilde kısa etiket görünür ("Yayınla"); erişilebilir ad aria-label'da */}
+          <span className="publish-label" aria-hidden>
+            {publishing ? "Yayınlanıyor…" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
+          </span>
+          <span className="publish-label-short" aria-hidden>
+            {publishing ? "Yayınlanıyor…" : hasDraft ? "Yayınla" : "Yayında"}
+          </span>
         </button>
       </div>
 

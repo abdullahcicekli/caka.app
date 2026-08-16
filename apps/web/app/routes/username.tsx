@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { LayoutDashboard, Pencil } from "lucide-react";
 import { Link, data, redirect } from "react-router";
 
+import { logoBlack } from "~/assets/brand";
 import { ProfileCanvas } from "~/components/profile-block";
 import {
   DropdownMenu,
@@ -143,12 +144,14 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
   return (
     <main className="relative min-h-svh">
       <ProfileCanvas layout={layout} theme={theme} />
-      {/* Sahip: sağ üstte sabit kalem menüsü (WhatsApp tarzı hızlı erişim) */}
+      {/* Marka rozeti sağ üstte: sahip için hızlı menü (Düzenle/Panel),
+          ziyaretçi için ana sayfa bağlantısı. Logo beyaz yuvarlak zemin
+          üzerinde durur; koyu/açık her temada okunur. */}
       {isOwner ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label="Sayfa menüsü" className="owner-quick-menu">
-              <Pencil size={18} aria-hidden />
+            <button type="button" aria-label="Caka menüsü" className="brand-corner">
+              <img src={logoBlack} alt="" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={8} className="w-40">
@@ -164,15 +167,11 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : null}
-      <footer className="fixed right-4 bottom-4 rounded-full bg-white/90 p-1 shadow-sm backdrop-blur">
-        <Link
-          to="/"
-          className="block rounded-full px-3 py-2 text-sm font-medium text-murekkep/70 hover:text-murekkep"
-        >
-          ⌘ Caka
+      ) : (
+        <Link to="/" aria-label="Caka — ana sayfa" className="brand-corner">
+          <img src={logoBlack} alt="Caka" />
         </Link>
-      </footer>
+      )}
     </main>
   );
 }

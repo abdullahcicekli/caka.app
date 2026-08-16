@@ -667,11 +667,13 @@
   --profile-cta-text: #0b1b10;
 }
 
+/* background-attachment: fixed BİLEREK yok: iOS Safari'de bozuk çiziliyor
+   (degrade kayboluyor/tekrarlıyor). Degrade elemanla birlikte kayar; uzun
+   sayfada kök zemin (html[data-profile-theme]) tema rengini sürdürür. */
 .profile-canvas {
   min-height: 100svh;
   background-color: var(--profile-bg);
   background-image: var(--profile-bg-image, none);
-  background-attachment: fixed;
   color: var(--profile-text);
   padding: clamp(56px, 8vw, 104px) clamp(20px, 5vw, 72px);
 }
@@ -883,10 +885,12 @@
   text-transform: var(--profile-title-case, none);
 }
 
-/* Public profil: sahip için sağ üstte sabit hızlı menü tetikleyicisi (kalem).
+/* Public profil: sağ üstte sabit marka rozeti — sahip için menü tetikleyicisi
+   (Düzenle/Panel), ziyaretçi için ana sayfa bağlantısı. Logo beyaz yuvarlak
+   zemin üzerinde durur; koyu/açık her temada okunur, tema koşulu gerekmez.
    Dokunma hedefi 44px; safe-area payı çentikli telefonlar için. Dropdown
    içeriği (radix portal) z-50'dedir; tetikleyici kartların üstünde kalır. */
-.owner-quick-menu {
+.brand-corner {
   position: fixed;
   z-index: 40;
   top: calc(env(safe-area-inset-top, 0px) + 16px);
@@ -896,19 +900,27 @@
   height: 44px;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--color-sinir);
   border-radius: 999px;
-  background: var(--color-murekkep);
-  color: white;
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-murekkep) 30%, transparent);
+  background: white;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-murekkep) 22%, transparent);
   cursor: pointer;
-  transition: background 130ms ease, scale 130ms ease;
+  transition: scale 130ms ease;
 }
-.owner-quick-menu:hover { background: color-mix(in srgb, var(--color-murekkep) 88%, white); }
-.owner-quick-menu:active { scale: 0.94; }
+.brand-corner img { width: 22px; height: 22px; object-fit: contain; }
+.brand-corner:active { scale: 0.94; }
 
 /* Editör kabuğu: tuval sayfanın kendisidir; tüm kontroller yüzer (own.page
-   referansı). Üstte geri + adres pili, altta ortada araç çubuğu. */
-.editor-shell { position: relative; min-height: 100svh; background: var(--color-zemin); }
+   referansı). Üstte geri + adres pili, altta ortada araç çubuğu.
+   overflow-x: clip — gridstack sürükleme/tutamaç taşmaları sayfayı yatayda
+   kaydırmasın (clip, hidden'ın aksine scroll container oluşturmaz; sticky
+   profil kimliği çalışmayı sürdürür). */
+.editor-shell {
+  position: relative;
+  min-height: 100svh;
+  background: var(--color-zemin);
+  overflow-x: clip;
+}
 
 .editor-back {
   position: fixed;
@@ -951,6 +963,8 @@
   box-shadow: 0 4px 16px rgb(17 17 22 / 0.06);
 }
 .editor-address-pill:hover { background: var(--color-zemin); }
+/* Dar ekranda adres yerine görünen durum metni; masaüstünde gizli */
+.editor-address-pill .address-status { display: none; }
 .save-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--color-sinir); }
 .save-dot.is-saved { background: var(--color-cam); }
 .save-dot.is-saving { background: var(--color-kirec); animation: save-pulse 1s ease infinite; }
@@ -980,6 +994,8 @@
   font-weight: 600;
   box-shadow: 0 4px 16px rgb(17 17 22 / 0.12);
 }
+/* Mobilde görünen kısa etiket ("Yayınla"); masaüstünde tam metin */
+.editor-publish .publish-label-short { display: none; }
 .editor-publish:hover:not(:disabled) { opacity: .88; }
 .editor-publish:disabled {
   border: 1px solid var(--color-sinir);
@@ -1253,13 +1269,13 @@
 .dashboard-preview .profile-grid-item.size-2x1, .dashboard-preview .profile-grid-item.size-2x2 { grid-column: span 2; }
 .dashboard-preview .profile-grid-item.has-pos { grid-column: var(--sm-col); grid-row: var(--sm-row); }
 
-/* Tuval: sayfanın kendisi */
+/* Tuval: sayfanın kendisi. background-attachment: fixed bilerek yok
+   (iOS Safari'de bozuk — bkz. .profile-canvas notu). */
 .editor-page {
   min-height: 100svh;
   padding: 96px clamp(20px, 5vw, 48px) 170px;
   background-color: var(--profile-bg);
   background-image: var(--profile-bg-image, none);
-  background-attachment: fixed;
   color: var(--profile-text);
 }
 
@@ -1455,13 +1471,33 @@
 }
 
 @media (max-width: 640px) {
-  .editor-page { padding: 84px 14px 160px; }
+  /* Üst boşluk üst çubuğun gerçek yüksekliğini izler: top 12 + 44 buton + 16 pay */
+  /* Üst çubuk: 12px offset + 44px yükseklik = 56px; üzerine 32px nefes payı.
+     env(...) bugün 0'dır (viewport-fit=cover yok) — taban değer tek başına
+     doğru olmalı; çentik payı yalnız ileride viewport-fit açılırsa eklenir. */
+  .editor-page { padding: calc(env(safe-area-inset-top, 0px) + 88px) 18px 160px; }
   .editor-profile-layout { grid-template-columns: 1fr; gap: 28px; }
   .editor-profile-identity { position: static; }
   .editor-toolbar { bottom: 12px; overflow-x: auto; }
-  .editor-topbar { left: 72px; right: 12px; gap: 8px; justify-content: flex-end; }
-  .editor-address-pill { min-width: 0; max-width: 44vw; overflow: hidden; padding: 0 12px; white-space: nowrap; font-size: 12px; }
-  .editor-publish { flex: none; min-height: 40px; padding: 0 14px; font-size: 12px; }
+  .editor-back {
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    left: calc(env(safe-area-inset-left, 0px) + 12px);
+  }
+  /* Dar ekranda pil "Taslak/Yayında"ya, yayınla butonu "Yayınla"ya küçülür;
+     üç öğe tek satıra kesilmeden sığar. Dokunma hedefleri 44px kalır. */
+  .editor-topbar {
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    gap: 8px;
+  }
+  .editor-address-pill { padding: 0 14px; font-size: 12.5px; white-space: nowrap; }
+  .editor-address-pill .address-host,
+  .editor-address-pill .draft-chip,
+  .editor-address-pill .address-open { display: none; }
+  .editor-address-pill .address-status { display: inline; }
+  .editor-publish { flex: none; padding: 0 16px; font-size: 12.5px; white-space: nowrap; }
+  .editor-publish .publish-label { display: none; }
+  .editor-publish .publish-label-short { display: inline; }
   .editor-issue-panel { top: 68px; right: 12px; left: 12px; width: auto; }
   .editor-inspector { bottom: 84px; width: calc(100vw - 16px); max-height: 62svh; }
   .block-gallery { bottom: 84px; width: calc(100vw - 16px); }
@@ -1475,6 +1511,14 @@
 html,
 body {
   @apply bg-zemin text-murekkep antialiased;
+}
+
+/* Public profil: kök zemin de tema rengiyle boyanır (root.tsx html'e
+   data-profile-theme basar); iOS overscroll/esneme açık renkli şerit
+   göstermez. Diğer sayfalarda attribute olmadığından zemin bg-zemin kalır. */
+html[data-profile-theme],
+html[data-profile-theme] body {
+  background-color: var(--profile-bg);
 }
 
 /* Tailwind v4 varsayılanı cursor:default — tıklanabilir her şey pointer olsun */
