@@ -11,7 +11,7 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 | `pnpm dev` | Vite + Miniflare (lokal D1/R2); port 5173 doluysa 5174'e kayar |
 | `pnpm typecheck` | Her değişiklikten sonra çalıştır; temiz olmalı |
 | `pnpm test` | Vitest (`packages/shared`) |
-| `pnpm deploy` | Build + bekleyen D1 migration'larını `--remote` uygula + `wrangler deploy` → caka.app. `pnpm --filter @caka/web run deploy` ile aynı; **`run` sözcüğü şart** (pnpm'in rezerve `deploy` komutu script'i gölgeler) |
+| `pnpm --filter @caka/web run deploy` | **Prod'a çıkışın tek yolu** (Değişmez #11): build + bekleyen D1 migration'larını `--remote` uygula + `wrangler deploy` → caka.app. **`run` sözcüğü şart:** pnpm'in rezerve `deploy` komutu script'i gölgeler; çıplak `pnpm deploy` kökte `ERR_PNPM_NOTHING_TO_DEPLOY` verir |
 | `pnpm exec wrangler d1 migrations apply caka-db --local` | `apps/web` içinden; şema değişince |
 | `pnpm exec wrangler types` | `wrangler.jsonc` değişince Env tiplerini yeniden üret |
 
@@ -53,6 +53,14 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
    üretme. Asset silme yalnızca hesap silmede yapılır.
 10. **Adres değişikliği semantiği:** eski adres 30 gün 302 yönlendirir ve
     kilitlidir (`username_redirect`). 301 KULLANMA (tarayıcı süresiz cache'ler).
+11. **Deploy = migration + deploy, her seferinde.** Prod'a çıkış yalnız
+    `pnpm --filter @caka/web run deploy` ile yapılır; script `build → wrangler
+    d1 migrations apply caka-db --remote → wrangler deploy` sırasını izler
+    (`CI=1` onay sorusunu atlar) ve bekleyen migration yoksa apply adımı zaten
+    no-op'tur. **Çıplak `wrangler deploy` ÇALIŞTIRMA** — şema değişikliğini
+    atlar ve prod'u kodun beklediği tablolar olmadan bırakır (bu daha önce
+    kayıt akışını kırdı). Migration'ı elle uyguladıysan bile deploy'u yine bu
+    script'le yap.
 
 ## Sık yapılan işler
 
