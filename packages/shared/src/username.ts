@@ -72,10 +72,54 @@ const RESERVED_GROUPS: Record<string, readonly string[]> = {
     "trademark", "subscription", "subscriptions", "plan", "plans", "upgrade",
     "downgrade", "terms", "privacy", "legal",
   ],
-  // G. Saldırgan / kötüye kullanım (kısa çekirdek; uzun kuyruk şikayet akışına)
+  // G. Saldırgan / kötüye kullanım (genişletilmiş çekirdek; uzun kuyruk şikayet akışına)
   abuse: [
-    "porn", "xxx", "sex", "fuck", "nigger", "faggot", "nazi", "rape",
-    "amk", "siktir", "yarrak", "orospu", "ibne", "pezevenk", "gavat", "pic",
+    // evrensel
+    "porn", "porno", "xxx", "sex", "seks", "fuck", "bitch", "cunt", "dick",
+    "asshole", "whore", "slut", "nigger", "faggot", "nazi", "hitler", "rape",
+    "penis", "vagina", "vajina",
+    // türkçe argo (ascii biçimler)
+    "amk", "amq", "aminakoyim", "amina-koyim", "amcik", "siktir", "hassiktir",
+    "siktir-git", "siktirgit", "sikik", "sikko", "sikerim", "ananisikeyim",
+    "yarrak", "yarak", "yarram", "orospu", "orospucocugu", "orospu-cocugu",
+    "kahpe", "kaltak", "surtuk", "pust", "ibne", "ibnelik", "yavsak",
+    "pezevenk", "gavat", "godos", "dallama", "serefsiz", "gotveren", "pic",
+    "piclik",
+  ],
+  // G2. Türk siyasetinin bilinen figürleri + kurum/parti taklidi.
+  // Kural: tam ad ve bilinen tekil biçimler engelli; yaygın soyadı/kelimeler
+  // (ozel, gul, yildirim, yavas...) tek başına SERBESTTİR — meşru kullanıcıları vurur.
+  politics: [
+    // kurucu / tarihî liderler
+    "ataturk", "kemalataturk", "mustafakemal", "mustafakemalataturk",
+    "gazimustafakemal", "ismetinonu", "inonu", "adnanmenderes", "menderes",
+    "suleymandemirel", "turgutozal", "ozal", "bulentecevit", "ecevit",
+    "necmettinerbakan", "erbakan", "alparslanturkes", "turkes",
+    // güncel siyaset
+    "erdogan", "rterdogan", "tayyiperdogan", "receptayyiperdogan",
+    "recep-tayyip-erdogan", "emineerdogan", "abdullahgul", "binaliyildirim",
+    "ahmetdavutoglu", "davutoglu", "kilicdaroglu", "kemalkilicdaroglu",
+    "ekremimamoglu", "imamoglu", "ozgurozel", "devletbahceli", "bahceli",
+    "meralaksener", "aksener", "mansuryavas", "selahattindemirtas",
+    "abdullahocalan", "ocalan", "fetullahgulen", "fethullahgulen", "feto",
+    // parti / kurum / makam
+    "akparti", "akp", "chp", "mhp", "iyiparti", "hdp", "demparti", "tbmm",
+    "cumhurbaskani", "cumhurbaskanligi", "basbakan", "basbakanlik",
+    "milletvekili", "belediyebaskani",
+  ],
+  // G3. Dinî kutsal varlıklar ve saygı biçimleri.
+  // Kural: düz kişi adları (muhammed, ali, omer, ayse, hasan, huseyin,
+  // ebubekir, osman, fatima...) SERBESTTİR — bunlar yaygın Türk isimleridir.
+  // Engellenen: kutsal varlık adları, peygamber unvanları ve "hz"/"hazreti"
+  // önekli her biçim (aşağıdaki RESERVED_PREFIXES kuralı; hzmuhammed,
+  // hazreti-omer vb. alay/taklit vektörünü kapatır).
+  religious: [
+    "allah", "allahcc", "cenabiallah", "tanri", "rabbim",
+    "peygamber", "peygamberimiz", "peygamberefendimiz", "prophet",
+    "prophetmuhammad", "rasulullah", "resulullah", "resulallah",
+    "muhammedsav", "muhammed-sav", "muhammedmustafa-sav",
+    "kuran", "kurankerim", "kuranikerim", "kuran-i-kerim",
+    "efendimiz-sav", "sallallahualeyhivesellem",
   ],
   // H. Türkçe karşılıklar (route/auth/yasal/altyapı)
   turkish: [
@@ -103,8 +147,14 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set(
   Object.values(RESERVED_GROUPS).flat(),
 );
 
-/** Marka koruması: `caka` ile başlayan her ad rezervedir (cakateam, caka-app…). */
-const BRAND_PREFIX = "caka";
+/**
+ * Önek kuralları (exact-match'in tek istisnaları):
+ * - `caka`: marka koruması (cakateam, caka-app…)
+ * - `hz`, `hazreti`: dinî saygı önekiyle ad alma/alay vektörü (hzmuhammed,
+ *   hz-ali, hazretiomer…). Düz isimler serbest kalır; meşru bir kullanıcı
+ *   adının bu öneklerle başlaması pratikte görülmez.
+ */
+const RESERVED_PREFIXES = ["caka", "hz", "hazreti"] as const;
 
 export type UsernameError = "too_short" | "too_long" | "invalid_chars" | "reserved";
 
@@ -125,7 +175,10 @@ export function validateUsername(input: string): UsernameResult {
   if (username.length < USERNAME_MIN) return { ok: false, error: "too_short" };
   if (username.length > USERNAME_MAX) return { ok: false, error: "too_long" };
   if (!USERNAME_PATTERN.test(username)) return { ok: false, error: "invalid_chars" };
-  if (RESERVED_USERNAMES.has(username) || username.startsWith(BRAND_PREFIX)) {
+  if (
+    RESERVED_USERNAMES.has(username) ||
+    RESERVED_PREFIXES.some((prefix) => username.startsWith(prefix))
+  ) {
     return { ok: false, error: "reserved" };
   }
   return { ok: true, username };

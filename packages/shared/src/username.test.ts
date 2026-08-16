@@ -57,10 +57,66 @@ describe("validateUsername", () => {
     },
   );
 
-  it.each(["administrator99", "supportteam", "editcim", "apici"])(
-    "rezerve kökün türevlerine izin verir (exact-match): %s",
-    (u) => {
-      expect(validateUsername(u).ok).toBe(true);
-    },
-  );
+  it.each([
+    "erdogan",
+    "receptayyiperdogan",
+    "ataturk",
+    "mustafakemal",
+    "kilicdaroglu",
+    "imamoglu",
+    "bahceli",
+    "feto",
+    "akparti",
+    "cumhurbaskani",
+  ])("siyasi figür/kurum taklidini reddeder: %s", (u) => {
+    expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+  });
+
+  it.each([
+    "allah",
+    "peygamber",
+    "rasulullah",
+    "kuran",
+    "muhammedsav",
+    "hzmuhammed",
+    "hz-ali",
+    "hazreti-omer",
+    "hazretiosman",
+  ])("dinî kutsal ad/saygı biçimini reddeder: %s", (u) => {
+    expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+  });
+
+  it.each([
+    "orospucocugu",
+    "hassiktir",
+    "yarak",
+    "kahpe",
+  ])("argoyu reddeder: %s", (u) => {
+    expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+  });
+
+  it.each([
+    // düz kişi adları serbest (dinî figür adları dahil — yaygın Türk isimleri)
+    "muhammed",
+    "ali",
+    "omer",
+    "ayse",
+    "ebubekir",
+    "hasan",
+    "huseyin",
+    "fatima",
+    // yaygın soyadı/kelimeler tek başına serbest
+    "ozel",
+    "gul",
+    "yildirim",
+    "yavas",
+    "demirtas",
+    // rezerve kökün türevleri (exact-match felsefesi)
+    "administrator99",
+    "supportteam",
+    "editcim",
+    "apici",
+  ])("meşru adlara izin verir: %s", (u) => {
+    expect(validateUsername(u).ok).toBe(true);
+  });
 });
