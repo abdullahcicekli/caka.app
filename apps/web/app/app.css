@@ -33,10 +33,6 @@
 
   /* Türetilmiş: mor blok üzerindeki açık lila başlık rengi (footer mockup'ı) */
   --color-mor-acik: #e2caed;
-  --color-orman: #173f32;
-  --color-orman-acik: #2f6a55;
-  --color-pudra: #f1dfda;
-  --color-pudra-koyu: #875f5b;
 
   /* Landing bölümleri (referans tasarım) */
   --color-cam-acik: #cfe3df;      /* cam blok üzerindeki gövde metni */
@@ -435,13 +431,14 @@
 
 .template-grid {
   display: grid;
-  width: min(900px, 100%);
+  width: min(560px, 100%);
   margin: 30px auto 20px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
 .template-grid button {
+  position: relative;
   display: flex;
   min-height: 260px;
   align-items: center;
@@ -454,11 +451,28 @@
 }
 
 .template-grid button:hover { transform: translateY(-3px); }
-.template-grid button.is-selected { outline: 3px double currentColor; outline-offset: 4px; }
+/* Seçim göstergesi temadan bağımsız: sabit murekkep halka + köşe rozeti
+   (currentColor koyu şablonlarda beyaz sayfa zemininde kayboluyordu). */
+.template-grid button.is-selected { outline: 3px solid var(--color-murekkep); outline-offset: 4px; }
+.template-check {
+  position: absolute;
+  z-index: 2;
+  top: -13px;
+  right: -13px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 12px;
+  background: var(--color-murekkep);
+  color: white;
+  box-shadow: 0 2px 10px rgb(17 17 22 / 0.22);
+  animation: template-check-in 150ms ease;
+}
+@keyframes template-check-in { from { opacity: 0; scale: .7; } }
 .template-grid .template-dark { background: var(--color-murekkep); color: white; }
 .template-grid .template-light { background: var(--color-zemin); }
-.template-grid .template-forest { background: var(--color-orman); color: white; }
-.template-grid .template-rose { background: var(--color-pudra); color: var(--color-pudra-koyu); }
 .template-avatar { display: grid; width: 50px; height: 50px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: color-mix(in srgb, currentColor 14%, transparent); object-fit: cover; font-weight: 700; }
 .template-grid strong { margin-top: 14px; }
 .template-grid small { margin: 5px 0 18px; opacity: .65; }
@@ -565,24 +579,6 @@
   --profile-muted: color-mix(in srgb, white 58%, transparent);
   --profile-accent: var(--color-kirec);
   --profile-accent-text: var(--color-kirec-koyu);
-}
-
-[data-profile-theme="forest"] {
-  --profile-bg: var(--color-orman);
-  --profile-card: var(--color-orman-acik);
-  --profile-text: white;
-  --profile-muted: color-mix(in srgb, white 66%, transparent);
-  --profile-accent: var(--color-kirec);
-  --profile-accent-text: var(--color-kirec-koyu);
-}
-
-[data-profile-theme="rose"] {
-  --profile-bg: var(--color-pudra);
-  --profile-card: white;
-  --profile-text: var(--color-pudra-koyu);
-  --profile-muted: color-mix(in srgb, var(--color-pudra-koyu) 62%, transparent);
-  --profile-accent: var(--color-erik);
-  --profile-accent-text: white;
 }
 
 .profile-canvas {
@@ -816,8 +812,6 @@
 .theme-popover button.is-active .swatch { outline-color: var(--color-mavi); }
 .theme-popover .template-dark { background: var(--color-murekkep); }
 .theme-popover .template-light { background: white; }
-.theme-popover .template-forest { background: var(--color-orman); }
-.theme-popover .template-rose { background: var(--color-pudra); }
 
 /* Blok galerisi modalı */
 .block-gallery-backdrop {
@@ -1010,55 +1004,39 @@
   border-radius: var(--radius-2xl);
   background: color-mix(in srgb, var(--profile-text) 6%, transparent);
 }
-/* Resize tutamacı: avatar-edit-badge ile aynı dil — murekkep zemin + beyaz
-   ikon + beyaz kenarlık; marka rengi sabit olduğundan her temada görünür. */
-.editor-grid-stack .grid-stack-item > .ui-resizable-se {
-  width: 30px;
-  height: 30px;
-  right: calc(var(--gs-item-margin-right) + 8px);
-  bottom: calc(var(--gs-item-margin-bottom) + 8px);
-  border: 3px solid white;
-  border-radius: 12px;
-  background: var(--color-murekkep) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7 17 17"/><path d="M7 11V7h4"/><path d="M17 13v4h-4"/></svg>') center / 15px 15px no-repeat;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.28);
-  transform: none;
-  cursor: nwse-resize;
-  opacity: 0;
-  scale: .82;
-  transition: opacity 150ms ease, scale 150ms ease;
-}
 /* Kenar tutamaçları: kenar ortasında, kartın sınırına yarı taşan hap biçimi.
-   Rozetle aynı dil — murekkep zemin + beyaz kenarlık. */
+   Avatar-edit-badge ile aynı dil — murekkep zemin + beyaz kenarlık;
+   marka rengi sabit olduğundan her temada görünür. */
 .editor-grid-stack .grid-stack-item > .ui-resizable-n,
 .editor-grid-stack .grid-stack-item > .ui-resizable-s,
 .editor-grid-stack .grid-stack-item > .ui-resizable-e,
 .editor-grid-stack .grid-stack-item > .ui-resizable-w {
-  border: 3px solid white;
+  border: 2px solid white;
   border-radius: 999px;
   background: var(--color-murekkep);
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.28);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.22);
   opacity: 0;
   scale: .82;
   transition: opacity 150ms ease, scale 150ms ease;
 }
 .editor-grid-stack .grid-stack-item > .ui-resizable-n,
 .editor-grid-stack .grid-stack-item > .ui-resizable-s {
-  width: 44px;
-  height: 16px;
-  left: calc(50% - 22px);
+  width: 34px;
+  height: 11px;
+  left: calc(50% - 17px);
   right: auto;
 }
-.editor-grid-stack .grid-stack-item > .ui-resizable-n { top: calc(var(--gs-item-margin-top) - 8px); }
-.editor-grid-stack .grid-stack-item > .ui-resizable-s { bottom: calc(var(--gs-item-margin-bottom) - 8px); }
+.editor-grid-stack .grid-stack-item > .ui-resizable-n { top: calc(var(--gs-item-margin-top) - 5px); }
+.editor-grid-stack .grid-stack-item > .ui-resizable-s { bottom: calc(var(--gs-item-margin-bottom) - 5px); }
 .editor-grid-stack .grid-stack-item > .ui-resizable-e,
 .editor-grid-stack .grid-stack-item > .ui-resizable-w {
-  width: 16px;
-  height: 44px;
-  top: calc(50% - 22px);
+  width: 11px;
+  height: 34px;
+  top: calc(50% - 17px);
   bottom: auto;
 }
-.editor-grid-stack .grid-stack-item > .ui-resizable-e { right: calc(var(--gs-item-margin-right) - 8px); }
-.editor-grid-stack .grid-stack-item > .ui-resizable-w { left: calc(var(--gs-item-margin-left) - 8px); }
+.editor-grid-stack .grid-stack-item > .ui-resizable-e { right: calc(var(--gs-item-margin-right) - 5px); }
+.editor-grid-stack .grid-stack-item > .ui-resizable-w { left: calc(var(--gs-item-margin-left) - 5px); }
 .editor-grid-stack .grid-stack-item:hover > .ui-resizable-handle,
 .editor-grid-stack .grid-stack-item:focus-within > .ui-resizable-handle,
 .editor-grid-stack .grid-stack-item.ui-resizable-resizing > .ui-resizable-handle,

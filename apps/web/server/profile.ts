@@ -123,10 +123,7 @@ function socialUrl(platform: SocialPlatform, value: string): string {
 }
 
 function templateTheme(template?: string): ProfileTheme {
-  if (template === "gece") return "dark";
-  if (template === "orman") return "forest";
-  if (template === "pudra") return "rose";
-  return "light";
+  return template === "gece" ? "dark" : "light";
 }
 
 export function buildOnboardingLayout(

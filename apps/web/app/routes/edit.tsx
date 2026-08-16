@@ -27,6 +27,7 @@ import {
   GRID_COLUMNS,
   createBlockId,
   ensureLayoutPositions,
+  normalizeTheme,
   parseProfileLayout,
   placeNewBlock,
   sizeFromDims,
@@ -56,7 +57,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return {
     username: profile.username,
     layout: ensureLayoutPositions(layout),
-    theme: profile.theme as ProfileTheme,
+    theme: normalizeTheme(profile.theme),
     version: profile.version,
   };
 }

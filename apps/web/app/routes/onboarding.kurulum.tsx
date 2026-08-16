@@ -547,6 +547,11 @@ function TemplateStep({
             className={`${template.className} ${selected === template.id ? "is-selected" : ""}`}
             onClick={() => setSelected(template.id)}
           >
+            {selected === template.id ? (
+              <span className="template-check" aria-hidden>
+                <Check size={17} strokeWidth={3} />
+              </span>
+            ) : null}
             <ProfileAvatar name={name} avatarUrl={avatarUrl} className="template-avatar" />
             <strong>{name.split(" ")[0]}</strong>
             <small>Tasarım · İstanbul</small>

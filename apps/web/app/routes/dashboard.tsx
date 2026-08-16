@@ -22,11 +22,7 @@ import { logoBlack } from "~/assets/brand";
 import { ProfileCanvas } from "~/components/profile-block";
 import { SignOutLink } from "~/components/sign-out-link";
 import { noIndexMeta } from "~/lib/seo";
-import {
-  ensureLayoutPositions,
-  parseProfileLayout,
-  type ProfileTheme,
-} from "@caka/shared";
+import { ensureLayoutPositions, normalizeTheme, parseProfileLayout } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/dashboard";
@@ -46,7 +42,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return {
     username: profile.username,
     layout: ensureLayoutPositions(layout),
-    theme: profile.theme as ProfileTheme,
+    theme: normalizeTheme(profile.theme),
   };
 }
 

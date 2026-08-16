@@ -3,8 +3,15 @@ import { z } from "zod";
 export const PROFILE_NAME_MAX = 60;
 export const PROFILE_BIO_MAX = 160;
 
-export const themeSchema = z.enum(["light", "dark", "forest", "rose"]);
+export const themeSchema = z.enum(["light", "dark"]);
 export type ProfileTheme = z.infer<typeof themeSchema>;
+
+/** DB'den okunan temayı doğrular; kaldırılan temalar (forest/rose) ve
+ * bilinmeyen değerler "light"a düşer. */
+export function normalizeTheme(value: string): ProfileTheme {
+  const parsed = themeSchema.safeParse(value);
+  return parsed.success ? parsed.data : "light";
+}
 
 export const blockSizeSchema = z.enum(["1x1", "2x1", "2x2"]);
 export type BlockSize = z.infer<typeof blockSizeSchema>;

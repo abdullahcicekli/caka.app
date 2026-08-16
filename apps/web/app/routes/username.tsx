@@ -13,9 +13,9 @@ import {
 import {
   normalizeUsername,
   ensureLayoutPositions,
+  normalizeTheme,
   parseProfileLayout,
   validateUsername,
-  type ProfileTheme,
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { resolveUsername } from "../../server/profile";
@@ -126,7 +126,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
     ogImage: pickRandomOgImage(),
-    theme: p.theme,
+    theme: normalizeTheme(p.theme),
     layout: ensureLayoutPositions(layout),
     isOwner: session?.user.id === p.userId,
   };
@@ -136,7 +136,7 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
   const { username, isOwner, layout, theme } = loaderData;
   return (
     <main className="relative min-h-svh">
-      <ProfileCanvas layout={layout} theme={theme as ProfileTheme} />
+      <ProfileCanvas layout={layout} theme={theme} />
       <footer className="fixed right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 p-2 shadow-sm backdrop-blur">
         <Link
           to="/"
