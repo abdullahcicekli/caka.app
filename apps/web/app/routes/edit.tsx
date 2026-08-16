@@ -23,7 +23,6 @@ import { ProfileBlockCard } from "~/components/profile-block";
 import { onboardingTemplates, platformById } from "~/content/onboarding";
 import { noIndexMeta } from "~/lib/seo";
 import {
-  BLOCK_GRID_LIMITS,
   GRID_COLUMNS,
   createBlockId,
   ensureLayoutPositions,
@@ -33,7 +32,6 @@ import {
   sizeFromDims,
   sizeToDims,
   withDerivedSmPositions,
-  type BlockSize,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
@@ -77,13 +75,11 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
 function Inspector({
   block,
   update,
-  resize,
   remove,
   close,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
-  resize: (size: BlockSize) => void;
   remove: () => void;
   close: () => void;
 }) {
@@ -169,16 +165,6 @@ function Inspector({
             <label>Duyuru<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
-        ) : null}
-        {block.type !== "profile" ? (
-          <fieldset>
-            <legend>Boyut</legend>
-            <div className="size-picker">
-              {(["1x1", "2x1", "2x2"] as BlockSize[]).map((size) => (
-                <button key={size} type="button" className={block.size === size ? "is-active" : ""} onClick={() => resize(size)}>{size.replace("x", "×")}</button>
-              ))}
-            </div>
-          </fieldset>
         ) : null}
       </div>
       <footer>
@@ -325,25 +311,6 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     });
   }
 
-  function resizeSelected(size: BlockSize) {
-    setLayout((current) => {
-      const blocks = current.blocks.map((block) => {
-        if (block.id !== selectedId || block.type === "profile" || !block.pos) return block;
-        const limits = BLOCK_GRID_LIMITS[block.type];
-        const dims = sizeToDims(size);
-        const w = Math.min(Math.max(dims.w, limits.minW), limits.maxW);
-        const h = Math.min(Math.max(dims.h, limits.minH), limits.maxH);
-        const x = Math.min(block.pos.lg.x, GRID_COLUMNS.lg - w);
-        return {
-          ...block,
-          size: sizeFromDims(w, h),
-          pos: { ...block.pos, lg: { ...block.pos.lg, x, w, h } },
-        } as ProfileBlock;
-      });
-      return { ...current, blocks: withDerivedSmPositions(blocks) };
-    });
-  }
-
   return (
     <main className="editor-shell">
       <Link to="/dashboard" className="editor-back" aria-label="Panele dön">
@@ -474,7 +441,6 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <Inspector
           block={selected}
           update={updateSelected}
-          resize={resizeSelected}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));

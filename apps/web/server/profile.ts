@@ -6,6 +6,7 @@ import {
   parseProfileLayout,
   PROFILE_BIO_MAX,
   profileLayoutSchema,
+  themeSchema,
   type ProfileLayout,
   type ProfileTheme,
   type SocialPlatform,
@@ -123,7 +124,10 @@ function socialUrl(platform: SocialPlatform, value: string): string {
 }
 
 function templateTheme(template?: string): ProfileTheme {
-  return template === "gece" ? "dark" : "light";
+  if (template === "gece") return "dark";
+  // Yeni şablon id'leri tema id'siyle birebir aynı (lavanta, ufuk, neon, zumrut)
+  const parsed = themeSchema.safeParse(template);
+  return parsed.success ? parsed.data : "light";
 }
 
 export function buildOnboardingLayout(

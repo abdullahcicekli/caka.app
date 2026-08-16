@@ -20,7 +20,9 @@ export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://cdn.fontshare.com", crossOrigin: "anonymous" },
   {
     rel: "stylesheet",
-    href: "https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap",
+    // Clash Display yalnız Ufuk temasının başlıklarında kullanılır; tarayıcı
+    // font dosyasını sayfada o aile gerçekten kullanılmadıkça indirmez.
+    href: "https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=clash-display@600&display=swap",
   },
 ];
 

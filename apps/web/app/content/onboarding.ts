@@ -46,6 +46,10 @@ export const onboardingTemplates: {
 }[] = [
   { id: "gece", label: "Gece", theme: "dark", className: "template-dark" },
   { id: "sade", label: "Sade", theme: "light", className: "template-light" },
+  { id: "lavanta", label: "Lavanta", theme: "lavanta", className: "template-lavanta" },
+  { id: "ufuk", label: "Ufuk", theme: "ufuk", className: "template-ufuk" },
+  { id: "neon", label: "Neon", theme: "neon", className: "template-neon" },
+  { id: "zumrut", label: "Zümrüt", theme: "zumrut", className: "template-zumrut" },
 ];
 
 export function platformById(id: SocialPlatform) {

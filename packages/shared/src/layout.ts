@@ -3,7 +3,7 @@ import { z } from "zod";
 export const PROFILE_NAME_MAX = 60;
 export const PROFILE_BIO_MAX = 160;
 
-export const themeSchema = z.enum(["light", "dark"]);
+export const themeSchema = z.enum(["light", "dark", "lavanta", "ufuk", "neon", "zumrut"]);
 export type ProfileTheme = z.infer<typeof themeSchema>;
 
 /** DB'den okunan temayı doğrular; kaldırılan temalar (forest/rose) ve
