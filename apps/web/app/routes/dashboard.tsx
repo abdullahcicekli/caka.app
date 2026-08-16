@@ -1,22 +1,17 @@
-// Dashboard: sol side panel (blok ekleme kısayolları + sayfa menüsü) ve
-// ortada telefon çerçevesinde canlı sayfa önizlemesi. Blok kısayolları
-// editöre derin bağlantıyla gider (/edit?add=..., /edit?panel=theme).
+// Dashboard: sol side panelde sayfa menüsü, ortada telefon çerçevesinde
+// canlı sayfa önizlemesi.
 import { useEffect, useState } from "react";
 import { env } from "cloudflare:workers";
 import {
-  AtSign,
   BarChart3,
   Check,
   Copy,
   ExternalLink,
-  ImageIcon,
-  Link2,
-  Palette,
+  Files,
   Pencil,
   Settings,
-  Type,
 } from "lucide-react";
-import { Link, redirect } from "react-router";
+import { Link, NavLink, redirect } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
 import { ProfileCanvas } from "~/components/profile-block";
@@ -45,13 +40,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     theme: normalizeTheme(profile.theme),
   };
 }
-
-const BLOCK_SHORTCUTS = [
-  { add: "link", label: "Bağlantı", icon: Link2 },
-  { add: "social", label: "Sosyal medya", icon: AtSign },
-  { add: "text", label: "Metin", icon: Type },
-  { add: "image", label: "Görsel", icon: ImageIcon },
-] as const;
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const { username, layout, theme } = loaderData;
@@ -93,22 +81,10 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </header>
 
         <section>
-          <h2 className="dash-section-label">Blok ekle</h2>
-          <div className="dash-block-list">
-            {BLOCK_SHORTCUTS.map((item) => (
-              <Link key={item.add} to={`/edit?add=${item.add}`}>
-                <item.icon size={17} /> {item.label}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="dash-section-label">Sayfa</h2>
           <div className="dash-page-list">
-            <Link to="/edit?panel=theme">
-              <Palette size={17} /> Tema
-            </Link>
+            <NavLink to="/dashboard">
+              <Files size={17} /> Sayfalar
+            </NavLink>
             <button type="button" disabled>
               <BarChart3 size={17} /> Analitik <em>Yakında</em>
             </button>

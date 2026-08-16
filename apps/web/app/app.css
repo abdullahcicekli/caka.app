@@ -387,6 +387,8 @@
 .platform-facebook { background: #0866ff; color: white; }
 .platform-twitch { background: #9146ff; color: white; }
 .platform-dribbble { background: #ea4c89; color: white; }
+/* Nsosyal: marka logosundaki yatay camgöbeği→mavi gradyan */
+.platform-nsosyal { background: linear-gradient(90deg, #08cce1 0%, #304ffe 100%); color: white; }
 .platform-website { background: #315bf5; color: white; }
 .platform-email { background: #5f6672; color: white; }
 .platform-link { border: 1px solid var(--color-sinir); background: white; }
@@ -749,6 +751,11 @@
 }
 .profile-block-social { align-items: center; gap: 13px; padding: 18px; }
 .profile-block-social > span:last-child { display: flex; min-width: 0; flex-direction: column; }
+/* og:image önizlemesi: 1x1'den büyük sosyal kartlarda başlığın altını doldurur */
+.profile-block-social.has-og { align-items: stretch; flex-direction: column; gap: 12px; }
+.profile-block-social .social-head { display: flex; min-width: 0; align-items: center; gap: 13px; }
+.profile-block-social .social-head > span:last-child { display: flex; min-width: 0; flex-direction: column; }
+.profile-block-social .social-og { width: 100%; min-height: 0; flex: 1; border-radius: var(--radius-lg); object-fit: cover; }
 .profile-block-social strong { font-size: 15px; }
 .profile-block-social small { overflow: hidden; color: var(--profile-card-muted, var(--profile-muted)); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .profile-block-link { justify-content: center; padding: 18px; flex-direction: column; }
@@ -766,6 +773,82 @@
 .profile-block-link strong { margin-top: auto; }
 .profile-block-link small { overflow: hidden; color: var(--profile-card-muted, var(--profile-muted)); text-overflow: ellipsis; white-space: nowrap; }
 .profile-block-text { align-items: center; padding: 22px; font-size: 19px; font-weight: 500; }
+/* Zengin metin (Tiptap JSON → RichTextView) kart içinde akış halinde durur */
+.profile-block-text .rich-text { width: 100%; min-width: 0; align-self: stretch; overflow: hidden; font-weight: 400; font-size: 16px; line-height: 1.5; }
+.rich-text p { margin: 0; }
+.rich-text p + p, .rich-text p + ul, .rich-text p + ol, .rich-text ul + p, .rich-text ol + p, .rich-text blockquote + p, .rich-text p + blockquote { margin-top: 10px; }
+.rich-text ul, .rich-text ol { margin: 0; padding-left: 22px; }
+.rich-text ul { list-style: disc; }
+.rich-text ol { list-style: decimal; }
+.rich-text blockquote { margin: 0; border-left: 3px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 30%, transparent); padding-left: 12px; font-style: italic; }
+.rich-text a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Metin bloğu tuval içi düzenleme: kart görünümü korunur, Tiptap içeride,
+   biçimlendirme araç çubuğu kartın altında yüzer. */
+/* .profile-block'un overflow:hidden'ı yüzen araç çubuğunu kırpmasın */
+.rich-editor-inline { position: relative; align-items: stretch; cursor: text; overflow: visible; }
+.rich-editor-inline .rich-editor-content { display: flex; width: 100%; min-width: 0; }
+.rich-editor-inline .tiptap { width: 100%; min-width: 0; outline: none; font-size: 16px; font-weight: 400; line-height: 1.5; }
+.rich-editor-inline .tiptap p { margin: 0 0 10px; }
+.rich-editor-inline .tiptap > :last-child { margin-bottom: 0; }
+.rich-editor-inline .tiptap ul, .rich-editor-inline .tiptap ol { margin: 0 0 10px; padding-left: 22px; }
+.rich-editor-inline .tiptap ul { list-style: disc; }
+.rich-editor-inline .tiptap ol { list-style: decimal; }
+.rich-editor-inline .tiptap blockquote { margin: 0 0 10px; border-left: 3px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 30%, transparent); padding-left: 12px; font-style: italic; }
+.rich-editor-inline .tiptap a { text-decoration: underline; text-underline-offset: 2px; }
+.inline-text-toolbar {
+  position: absolute;
+  top: -52px;
+  left: 50%;
+  /* Resize tutamaçlarının (gridstack z:100) da üstünde, en önde durur */
+  z-index: 110;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  border: 1px solid var(--color-sinir);
+  border-radius: 12px;
+  background: white;
+  padding: 5px 6px;
+  box-shadow: 0 12px 34px rgb(17 17 22 / 0.16);
+  translate: -50% 0;
+  cursor: default;
+}
+.inline-text-toolbar button { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; color: color-mix(in srgb, var(--color-murekkep) 62%, transparent); }
+.inline-text-toolbar button:hover { background: var(--color-zemin); color: var(--color-murekkep); }
+.inline-text-toolbar button.is-active { background: var(--color-murekkep); color: white; }
+.inline-text-toolbar .sep { width: 1px; height: 18px; margin: 0 4px; background: var(--color-sinir); }
+/* Araç çubuğu kartın dışına taştığı için düzenleme sırasında taşma serbest.
+   z-index komşu kartların üstünde ama popover/dialog katmanının (39+) altında
+   kalır — galeri açıkken düzenlenen blok ve tutamaçları öne çıkmasın. */
+/* Gridstack'in item-content'e verdiği overflow-y:auto'yu ez: blok içinde
+   scrollbar asla çıkmaz, taşan içerik kırpılır; düzenlemede taşma serbest
+   (yüzen araç çubuğu kartın dışında durur). */
+.editor-grid-stack.grid-stack .grid-stack-item > .editor-block { overflow: hidden; }
+.editor-grid-stack.grid-stack .grid-stack-item > .editor-block.is-editing { overflow: visible; cursor: text; }
+.editor-grid-stack .grid-stack-item:has(> .editor-block.is-editing) { z-index: 20; }
+/* Seçili blokta sağ üstte silme rozeti (metin/duyuru için modal açılmıyor) */
+.block-delete-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 10px;
+  background: var(--color-murekkep);
+  color: white;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.25);
+  transition: background 120ms ease;
+}
+.block-delete-badge:hover { background: #b91c1c; }
+/* Duyuru kartı gövdesi zengin metinde normal ağırlığa düşer ki kalın/italik
+   biçimlendirme fark edilsin; eski düz metinli duyurular 700 kalır. */
+.profile-block-status .rich-text,
+.rich-editor-inline.profile-block-status .tiptap { font-weight: 400; }
+.rich-editor-inline.profile-block-status { cursor: text; }
 .profile-block-image img { width: 100%; height: 100%; object-fit: cover; }
 .profile-image-placeholder {
   display: grid;
@@ -936,25 +1019,24 @@
 .theme-popover .template-zumrut { background: linear-gradient(135deg, #0d1615 40%, #4ade80); }
 
 /* Blok galerisi modalı */
-.block-gallery-backdrop {
+/* Blok galerisi: tema popover'ı gibi araç çubuğunun üstünde açılır */
+.block-gallery {
   position: fixed;
   z-index: 50;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px 20px 96px;
-  background: rgb(17 17 22 / 0.30);
-}
-.block-gallery {
+  bottom: 92px;
+  left: 50%;
   display: flex;
-  width: min(660px, 100%);
-  max-height: min(620px, 84svh);
+  width: min(620px, calc(100vw - 24px));
+  max-height: min(540px, 62svh);
   flex-direction: column;
   gap: 14px;
+  translate: -50% 0;
+  border: 1px solid var(--color-sinir);
   border-radius: 24px;
-  padding: 20px;
+  padding: 18px;
   background: white;
-  box-shadow: 0 32px 90px rgb(17 17 22 / 0.28);
+  box-shadow: 0 24px 70px rgb(17 17 22 / 0.24);
+  animation: inspector-in 170ms cubic-bezier(.32,.72,.35,1);
 }
 .gallery-search { display: flex; min-height: 52px; align-items: center; gap: 11px; border-radius: 999px; padding: 0 19px; background: var(--color-zemin); color: color-mix(in srgb, var(--color-murekkep) 55%, transparent); }
 .gallery-search input { flex: 1; min-width: 0; background: transparent; outline: none; color: var(--color-murekkep); font-size: 15px; }
@@ -1004,24 +1086,10 @@
 .dash-address span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dash-address button { display: grid; width: 30px; height: 30px; flex: none; place-items: center; border-radius: 8px; color: color-mix(in srgb, var(--color-murekkep) 55%, transparent); }
 .dash-address button:hover { background: var(--color-zemin); color: var(--color-murekkep); }
-.dash-section-label { margin: 0 2px 12px; color: color-mix(in srgb, var(--color-murekkep) 50%, transparent); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.dash-block-list { display: flex; flex-direction: column; gap: 10px; }
-.dash-block-list a {
-  display: flex;
-  min-height: 47px;
-  align-items: center;
-  gap: 11px;
-  border: 1px solid var(--color-sinir);
-  border-radius: var(--radius-xl);
-  padding: 0 14px;
-  background: white;
-  font-size: 14px;
-  font-weight: 500;
-}
-.dash-block-list a:hover { border-color: var(--color-murekkep); }
 .dash-page-list { display: flex; flex-direction: column; gap: 2px; }
 .dash-page-list > * { display: flex; min-height: 42px; align-items: center; gap: 11px; border-radius: var(--radius-lg); padding: 0 10px; font-size: 14px; text-align: left; }
 .dash-page-list a:hover { background: var(--color-zemin); }
+.dash-page-list a[aria-current="page"] { font-weight: 700; }
 .dash-page-list button:disabled { color: color-mix(in srgb, var(--color-murekkep) 42%, transparent); cursor: default; }
 .dash-page-list em { margin-left: auto; border-radius: 999px; padding: 3px 9px; background: var(--color-zemin); font-size: 10px; font-style: normal; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .dash-sidebar > footer { display: flex; margin-top: auto; border-top: 1px solid var(--color-sinir); padding-top: 14px; }
@@ -1114,6 +1182,14 @@
 /* Gridstack editör alanı */
 .editor-grid-area { min-width: 0; }
 .editor-grid-stack { width: 100%; }
+/* Yeni blok scrollIntoView ile getirildiğinde üstteki yüzen kontrollerin
+   altında kalmasın */
+.editor-grid-stack .grid-stack-item { scroll-margin-top: 120px; }
+/* Gridstack tutamaçları varsayılan z-index 100/101 ile global katmanda yüzer
+   ve dialog/araç çubuğunun üstüne çıkar; item'ı kendi stacking context'ine
+   alıp tutamacı kart içinde tut. */
+.editor-grid-stack .grid-stack-item { isolation: isolate; }
+.editor-grid-stack .grid-stack-item > .ui-resizable-handle { z-index: 3; }
 .editor-grid-stack .editor-block {
   border-radius: var(--radius-2xl);
   cursor: grab;
@@ -1221,7 +1297,7 @@
   .editor-toolbar { bottom: 12px; overflow-x: auto; }
   .editor-address-pill { max-width: 56vw; overflow: hidden; white-space: nowrap; font-size: 12px; }
   .editor-inspector { bottom: 84px; width: calc(100vw - 16px); max-height: 62svh; }
-  .block-gallery-backdrop { padding: 12px 12px 84px; align-items: end; }
+  .block-gallery { bottom: 84px; width: calc(100vw - 16px); }
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 138px; }
   .profile-grid-item.size-1x1 { grid-column: span 1; }

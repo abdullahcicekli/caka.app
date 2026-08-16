@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
+import { RichTextView } from "~/components/rich-text";
 import { platformById } from "~/content/onboarding";
 import { ProfileAvatar } from "./profile-avatar";
 
@@ -23,7 +24,9 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
 
   if (block.type === "social") {
     const platform = platformById(block.data.platform);
-    const content = (
+    // og görseli her boyutta saklanır; yalnız 1x1'den büyük kartlarda gösterilir.
+    const ogImage = block.size !== "1x1" ? block.data.ogImage : "";
+    const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
           <SocialIcon platform={platform.id} width={18} height={18} strokeWidth={2.2} />
@@ -34,12 +37,21 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
         </span>
       </>
     );
+    const content = ogImage ? (
+      <>
+        <span className="social-head">{head}</span>
+        <img className="social-og" src={ogImage} alt="" loading="lazy" />
+      </>
+    ) : (
+      head
+    );
+    const className = `profile-block profile-block-social${ogImage ? " has-og" : ""}`;
     return block.data.url ? (
-      <a className="profile-block profile-block-social" href={block.data.url} target="_blank" rel="noreferrer">
+      <a className={className} href={block.data.url} target="_blank" rel="noreferrer">
         {content}
       </a>
     ) : (
-      <article className="profile-block profile-block-social">{content}</article>
+      <article className={className}>{content}</article>
     );
   }
 
@@ -54,7 +66,11 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
   }
 
   if (block.type === "text") {
-    return <article className="profile-block profile-block-text">{block.data.text}</article>;
+    return (
+      <article className="profile-block profile-block-text">
+        {block.data.doc ? <RichTextView doc={block.data.doc} /> : block.data.text}
+      </article>
+    );
   }
 
   if (block.type === "image") {
@@ -70,12 +86,13 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
     );
   }
 
+  const statusContent = block.data.doc ? <RichTextView doc={block.data.doc} /> : block.data.text;
   return block.data.url ? (
     <a className="profile-block profile-block-status" href={block.data.url} target="_blank" rel="noreferrer">
-      {block.data.text}
+      {statusContent}
     </a>
   ) : (
-    <article className="profile-block profile-block-status">{block.data.text}</article>
+    <article className="profile-block profile-block-status">{statusContent}</article>
   );
 }
 

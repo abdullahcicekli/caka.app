@@ -19,22 +19,26 @@ import { Link, redirect, useSearchParams } from "react-router";
 
 import { BlockGallery, type GalleryPick } from "~/components/editor/gallery";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
+import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
-import { onboardingTemplates, platformById } from "~/content/onboarding";
+import { onboardingPlatforms, onboardingTemplates, platformById } from "~/content/onboarding";
 import { noIndexMeta } from "~/lib/seo";
 import {
   GRID_COLUMNS,
   createBlockId,
+  detectSocialFromUrl,
   ensureLayoutPositions,
   normalizeTheme,
   parseProfileLayout,
   placeNewBlock,
   sizeFromDims,
   sizeToDims,
+  socialUrl,
   withDerivedSmPositions,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
+  type SocialPlatform,
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
@@ -65,7 +69,7 @@ type SaveState = "saved" | "saving" | "error" | "conflict";
 function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
   if (type === "link") return { id, type, size: "1x1", data: { title: "Yeni bağlantı", url: "" } };
-  if (type === "social") return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram" } };
+  if (type === "social") return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "" } };
   if (type === "text") return { id, type, size: "2x1", data: { text: "Yeni metin bloğu" } };
   if (type === "image") return { id, type, size: "2x1", data: { title: "Görsel", url: "" } };
   if (type === "status") return { id, type, size: "2x1", data: { text: "Yeni duyuru", url: "" } };
@@ -84,6 +88,39 @@ function Inspector({
   close: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
+  // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
+  const [socialLink, setSocialLink] = useState(() =>
+    block.type === "social" ? block.data.url || block.data.handle : "",
+  );
+  useEffect(() => {
+    setSocialLink(block.type === "social" ? block.data.url || block.data.handle : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız blok değişince
+  }, [block.id]);
+
+  // Yapıştırılan URL'den platform + kullanıcı adını çıkarır (nsosyal.com/ad
+  // gibi); düz kullanıcı adı yazıldıysa URL'yi platform tabanından üretir.
+  function applySocialLink(value: string) {
+    if (block.type !== "social") return;
+    const detected = detectSocialFromUrl(value);
+    if (detected?.handle) {
+      const config = platformById(detected.platform);
+      update({
+        platform: detected.platform,
+        label: config.label,
+        handle: detected.handle,
+        url: detected.url,
+        ogImage: "",
+      });
+      return;
+    }
+    if (block.data.platform === "website") {
+      update({ handle: "", url: value, ogImage: "" });
+      return;
+    }
+    const handle = value.trim().replace(/^@/, "");
+    update({ handle, url: socialUrl(block.data.platform, value), ogImage: "" });
+  }
 
   async function uploadImage(file: File) {
     setUploading(true);
@@ -119,17 +156,30 @@ function Inspector({
               <select
                 value={block.data.platform}
                 onChange={(event) => {
-                  const config = platformById(event.target.value as typeof block.data.platform);
-                  update({ platform: config.id, label: config.label });
+                  const config = platformById(event.target.value as SocialPlatform);
+                  update({
+                    platform: config.id,
+                    label: config.label,
+                    url: socialUrl(config.id, block.data.handle),
+                    ogImage: "",
+                  });
                 }}
               >
-                {(["instagram", "x", "tiktok", "youtube", "linkedin", "github", "website"] as const).map((id) => (
-                  <option key={id} value={id}>{platformById(id).label}</option>
+                {onboardingPlatforms.map((platform) => (
+                  <option key={platform.id} value={platform.id}>{platform.label}</option>
                 ))}
               </select>
             </label>
-            <label>Kullanıcı adı<input value={block.data.handle} onChange={(event) => update({ handle: event.target.value })} /></label>
-            <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
+            <label>Bağlantı
+              <input
+                value={socialLink}
+                placeholder={platformById(block.data.platform).placeholder}
+                onChange={(event) => {
+                  setSocialLink(event.target.value);
+                  applySocialLink(event.target.value);
+                }}
+              />
+            </label>
           </>
         ) : null}
         {block.type === "link" ? (
@@ -138,7 +188,6 @@ function Inspector({
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
         ) : null}
-        {block.type === "text" ? <label>Metin<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label> : null}
         {block.type === "image" ? (
           <>
             <label>Görsel
@@ -182,6 +231,52 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const [device, setDevice] = useState<EditorDevice>("desktop");
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [panel, setPanel] = useState<"theme" | "gallery" | null>(null);
+
+  // Açık popover (tema/galeri) dışarı tıklayınca veya Escape ile kapanır.
+  // Araç çubuğu hariç: oradaki butonlar kendi aç/kapa davranışını yönetir.
+  useEffect(() => {
+    if (!panel) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest(".editor-popover, .editor-toolbar, .editor-add-tile")) return;
+      setPanel(null);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPanel(null);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [panel]);
+
+  // Seçili blok (ve onunla açılan dialog/inline editör) dışarı tıklanınca
+  // veya Escape ile kapanır. Blokların, inspector'ın, yüzen araç çubuğunun
+  // ve editör kontrollerinin içi "dışarısı" sayılmaz.
+  useEffect(() => {
+    if (!selectedId) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (
+        target?.closest(
+          ".grid-stack-item, .editor-profile-identity, .editor-inspector, .inline-text-toolbar, .editor-toolbar, .editor-popover, .editor-add-tile",
+        )
+      )
+        return;
+      setSelectedId(null);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedId(null);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [selectedId]);
   const [searchParams, setSearchParams] = useSearchParams();
   const versionRef = useRef(loaderData.version);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -221,6 +316,41 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     return () => window.clearTimeout(timer);
   }, [layout, theme]);
 
+  // og:image çekimi: bağlantısı olup görseli olmayan sosyal bloklar için
+  // (yeni eklenen, bağlantısı değişen ya da onboarding'den görselsiz gelen).
+  // Görsel her boyutta çekilip saklanır; kart büyütülünce hazır olur.
+  const ogAttemptedRef = useRef(new Set<string>());
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      for (const block of layout.blocks) {
+        if (block.type !== "social" || !block.data.url || block.data.ogImage) continue;
+        const key = `${block.id}|${block.data.url}`;
+        if (ogAttemptedRef.current.has(key)) continue;
+        ogAttemptedRef.current.add(key);
+        const { id } = block;
+        const url = block.data.url;
+        void fetch(`/api/og-image?url=${encodeURIComponent(url)}`)
+          .then((response) =>
+            response.ok ? (response.json() as Promise<{ image?: string | null }>) : null,
+          )
+          .then((result) => {
+            const image = result?.image;
+            if (!image) return;
+            setLayout((current) => ({
+              ...current,
+              blocks: current.blocks.map((item) =>
+                item.id === id && item.type === "social" && item.data.url === url
+                  ? ({ ...item, data: { ...item.data, ogImage: image } } as ProfileBlock)
+                  : item,
+              ),
+            }));
+          })
+          .catch(() => {});
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [layout.blocks]);
+
   function insertBlock(block: ProfileBlock) {
     setLayout((current) => {
       const { w, h } = sizeToDims(block.size);
@@ -233,6 +363,14 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     });
     setSelectedId(block.id);
     setPanel(null);
+    // Yeni blok grid'in altına eklenir ve düzenleme dialogu açılır; blok
+    // dialogun arkasında kalmasın diye görünür alana kaydırılır (gridstack
+    // konumu bir sonraki efektte uyguladığı için kısa gecikmeyle).
+    window.setTimeout(() => {
+      document
+        .querySelector(`.editor-grid-stack [gs-id="${block.id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
   }
 
   function add(type: ProfileBlock["type"]) {
@@ -263,7 +401,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       id: createBlockId(),
       type: "social",
       size: "1x1",
-      data: { platform: pick.platform, handle: "", url: "", label: config.label },
+      data: { platform: pick.platform, handle: "", url: "", label: config.label, ogImage: "" },
     });
   }
 
@@ -364,9 +502,41 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               blocks={bentoBlocks}
               device={device}
               selectedId={selectedId}
+              editingId={
+                selected && (selected.type === "text" || selected.type === "status")
+                  ? selected.id
+                  : null
+              }
               onSelect={setSelectedId}
               onChange={applyGridChange}
               onManual={markSmManual}
+              onRemove={(id) => {
+                setLayout((current) => ({
+                  ...current,
+                  blocks: current.blocks.filter((item) => item.id !== id),
+                }));
+                setSelectedId(null);
+              }}
+              renderBlock={(block) =>
+                (block.type === "text" || block.type === "status") && selectedId === block.id ? (
+                  <InlineTextEditor
+                    key={block.id}
+                    variant={block.type}
+                    doc={block.data.doc}
+                    fallbackText={block.data.text}
+                    onChange={(doc, plain) =>
+                      updateSelected(
+                        block.type === "status"
+                          ? { doc, text: (plain.trim() || "Duyuru").slice(0, 140) }
+                          : { doc, text: (plain.trim() || "Metin").slice(0, 280) },
+                      )
+                    }
+                    onClose={() => setSelectedId(null)}
+                  />
+                ) : (
+                  <ProfileBlockCard block={block} />
+                )
+              }
             />
             <button type="button" className="editor-add-tile" onClick={() => setPanel("gallery")}>
               <Plus size={20} /> Blok ekle
@@ -420,7 +590,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       </nav>
 
       {panel === "theme" ? (
-        <div className="theme-popover" role="group" aria-label="Tema seç">
+        <div className="theme-popover editor-popover" role="group" aria-label="Tema seç">
           {onboardingTemplates.map((template) => (
             <button
               key={template.id}
@@ -435,9 +605,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         </div>
       ) : null}
 
-      {panel === "gallery" ? <BlockGallery onPick={addFromGallery} onClose={() => setPanel(null)} /> : null}
+      {panel === "gallery" ? <BlockGallery onPick={addFromGallery} /> : null}
 
-      {selected ? (
+      {/* Metin ve duyuru blokları dialog yerine tuvalde düzenlenir (InlineTextEditor). */}
+      {selected && selected.type !== "text" && selected.type !== "status" ? (
         <Inspector
           block={selected}
           update={updateSelected}

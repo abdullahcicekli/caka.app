@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   PROFILE_BIO_MAX,
+  detectSocialFromUrl,
   ensureLayoutPositions,
   placeNewBlock,
   profileLayoutSchema,
   sizeFromDims,
   sizeToDims,
+  socialUrl,
   withDerivedSmPositions,
   type ProfileBlock,
   type ProfileLayout,
@@ -158,5 +160,48 @@ describe("grid position helpers", () => {
   it("places new blocks into the first free desktop slot", () => {
     const blocks = [bento("a", { x: 0, y: 0, w: 4, h: 1 }), bento("b", { x: 0, y: 1, w: 2, h: 1 })];
     expect(placeNewBlock(blocks, 2, 1)).toEqual({ x: 2, y: 1, w: 2, h: 1 });
+  });
+});
+
+describe("detectSocialFromUrl", () => {
+  it("nsosyal profil bağlantısından platform + kullanıcı adı çıkarır", () => {
+    expect(detectSocialFromUrl("https://nsosyal.com/teknofest")).toEqual({
+      platform: "nsosyal",
+      handle: "teknofest",
+      url: "https://nsosyal.com/teknofest",
+    });
+  });
+
+  it("şemasız ve @'li bağlantıları normalize eder", () => {
+    expect(detectSocialFromUrl("tiktok.com/@gdh")).toMatchObject({
+      platform: "tiktok",
+      handle: "gdh",
+    });
+  });
+
+  it("linkedin /in/ ve /company/ yollarından kullanıcı adı çıkarır", () => {
+    expect(detectSocialFromUrl("https://www.linkedin.com/in/ada-lovelace")).toMatchObject({
+      platform: "linkedin",
+      handle: "ada-lovelace",
+    });
+    expect(detectSocialFromUrl("https://linkedin.com/company/acme")).toMatchObject({
+      platform: "linkedin",
+      handle: "acme",
+    });
+  });
+
+  it("bilinmeyen host ve düz kullanıcı adı için null döner", () => {
+    expect(detectSocialFromUrl("https://ornek.dev/ben")).toBeNull();
+    expect(detectSocialFromUrl("teknofest")).toBeNull();
+  });
+});
+
+describe("socialUrl", () => {
+  it("nsosyal kullanıcı adından profil bağlantısı üretir", () => {
+    expect(socialUrl("nsosyal", "@teknofest")).toBe("https://nsosyal.com/teknofest");
+  });
+
+  it("email için bağlantı üretmez", () => {
+    expect(socialUrl("email", "merhaba@caka.app")).toBe("");
   });
 });

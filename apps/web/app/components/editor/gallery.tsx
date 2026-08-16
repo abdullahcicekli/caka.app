@@ -1,7 +1,8 @@
 // Blok galerisi: arama + kategori çipleriyle eklenebilir blok kataloğu.
 // Sosyal platform kartları marka tonlarını (platform-*) kullanır; içerik
-// blokları nötr kartlardır. Seçim yapınca blok eklenir ve modal kapanır.
-import { useEffect, useMemo, useState } from "react";
+// blokları nötr kartlardır. Araç çubuğunun üstünde popover olarak açılır;
+// dışarı tıklama/Escape ile kapanma editördeki ortak panel handler'ındadır.
+import { useMemo, useState } from "react";
 import { ImageIcon, Link2, Megaphone, Search, Type, X } from "lucide-react";
 
 import { SocialIcon } from "~/components/icons/social";
@@ -25,23 +26,9 @@ const CONTENT_ITEMS: {
   { type: "status", label: "Duyuru", icon: Megaphone },
 ];
 
-export function BlockGallery({
-  onPick,
-  onClose,
-}: {
-  onPick: (pick: GalleryPick) => void;
-  onClose: () => void;
-}) {
+export function BlockGallery({ onPick }: { onPick: (pick: GalleryPick) => void }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   const needle = query.trim().toLocaleLowerCase("tr");
   const matches = (label: string) => !needle || label.toLocaleLowerCase("tr").includes(needle);
@@ -58,13 +45,7 @@ export function BlockGallery({
   const showContent = category !== "social" && contentItems.length > 0;
 
   return (
-    <div
-      className="block-gallery-backdrop"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="block-gallery" role="dialog" aria-modal="true" aria-label="Blok galerisi">
+    <div className="block-gallery editor-popover" role="dialog" aria-label="Blok galerisi">
         <label className="gallery-search">
           <Search size={19} aria-hidden />
           <input
@@ -135,7 +116,6 @@ export function BlockGallery({
             <p className="gallery-empty">“{query}” için sonuç yok.</p>
           ) : null}
         </div>
-      </div>
     </div>
   );
 }

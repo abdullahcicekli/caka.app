@@ -85,6 +85,14 @@ function ThreadsIcon(props: IconProps) {
   );
 }
 
+function NsosyalIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden width="16" height="16" {...props}>
+      <path d="M5 21V3h4.2l5.6 10.5V3H19v18h-4.2L9.2 10.5V21H5Z" />
+    </svg>
+  );
+}
+
 const ICONS: Record<SocialPlatform, ComponentType<IconProps>> = {
   github: GitHubIcon,
   x: XIcon,
@@ -96,6 +104,7 @@ const ICONS: Record<SocialPlatform, ComponentType<IconProps>> = {
   twitch: TwitchIcon,
   dribbble: DribbbleIcon,
   threads: ThreadsIcon,
+  nsosyal: NsosyalIcon,
   website: Globe2,
   email: Mail,
 };

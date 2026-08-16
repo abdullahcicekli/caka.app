@@ -4,6 +4,7 @@ import { validateUsername } from "@caka/shared";
 import { getAuth } from "./auth";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
+import { ogApi } from "./og";
 import { onboardingApi } from "./onboarding-api";
 import { seoRoutes } from "./seo";
 
@@ -22,6 +23,7 @@ honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
 
 honoApp.route("/api/onboarding", onboardingApi);
 honoApp.route("/api/profile/layout", layoutApi);
+honoApp.route("/api/og-image", ogApi);
 
 /**
  * Canlı adres kontrolü — yalnızca tavsiye niteliğinde (R2); garanti claim'de.

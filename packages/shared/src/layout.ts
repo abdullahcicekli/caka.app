@@ -54,6 +54,7 @@ export const socialPlatformSchema = z.enum([
   "dribbble",
   "github",
   "threads",
+  "nsosyal",
   "website",
   "email",
 ]);
@@ -88,6 +89,68 @@ const optionalHttpUrlSchema = z
     return normalized;
   });
 
+// Platform → profil URL tabanı; kullanıcı adından bağlantı üretir
+// (onboarding kurulumunda ve editörde aynı kaynaktan kullanılır).
+const SOCIAL_URL_BASES: Partial<Record<SocialPlatform, string>> = {
+  instagram: "https://instagram.com/",
+  x: "https://x.com/",
+  tiktok: "https://tiktok.com/@",
+  youtube: "https://youtube.com/@",
+  linkedin: "https://linkedin.com/in/",
+  facebook: "https://facebook.com/",
+  twitch: "https://twitch.tv/",
+  dribbble: "https://dribbble.com/",
+  github: "https://github.com/",
+  threads: "https://threads.net/@",
+  nsosyal: "https://nsosyal.com/",
+};
+
+export function socialUrl(platform: SocialPlatform, value: string): string {
+  const clean = value.trim().replace(/^@/, "");
+  if (!clean) return "";
+  if (platform === "website") return clean;
+  if (platform === "email") return "";
+  return `${SOCIAL_URL_BASES[platform] ?? ""}${clean}`;
+}
+
+const SOCIAL_URL_HOSTS: [RegExp, SocialPlatform][] = [
+  [/(^|\.)instagram\.com$/, "instagram"],
+  [/(^|\.)(x|twitter)\.com$/, "x"],
+  [/(^|\.)tiktok\.com$/, "tiktok"],
+  [/(^|\.)(youtube\.com|youtu\.be)$/, "youtube"],
+  [/(^|\.)linkedin\.com$/, "linkedin"],
+  [/(^|\.)facebook\.com$/, "facebook"],
+  [/(^|\.)twitch\.tv$/, "twitch"],
+  [/(^|\.)dribbble\.com$/, "dribbble"],
+  [/(^|\.)github\.com$/, "github"],
+  [/(^|\.)threads\.(net|com)$/, "threads"],
+  [/(^|\.)nsosyal\.com$/, "nsosyal"],
+];
+
+/** Yapıştırılan bağlantıdan platform + kullanıcı adını çıkarır (editör
+ * importu): "https://nsosyal.com/teknofest" → { nsosyal, teknofest }.
+ * Bilinen bir platform değilse null döner. */
+export function detectSocialFromUrl(
+  value: string,
+): { platform: SocialPlatform; handle: string; url: string } | null {
+  const normalized = normalizeHttpUrl(value);
+  if (!normalized) return null;
+  const url = new URL(normalized);
+  const match = SOCIAL_URL_HOSTS.find(([host]) => host.test(url.hostname.toLowerCase()));
+  if (!match) return null;
+  const platform = match[1];
+  const segments = url.pathname
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => decodeURIComponent(segment));
+  let handle = segments[0] ?? "";
+  // linkedin.com/in/<ad> ve linkedin.com/company/<ad> biçimleri
+  if (platform === "linkedin") {
+    handle = segments[0] === "in" || segments[0] === "company" ? (segments[1] ?? "") : "";
+  }
+  return { platform, handle: handle.replace(/^@/, ""), url: normalized };
+}
+
 const profileCardSchema = z.object({
   ...blockBase,
   type: z.literal("profile"),
@@ -106,6 +169,9 @@ const socialBlockSchema = z.object({
     handle: z.string().trim().max(120),
     url: optionalHttpUrlSchema,
     label: z.string().trim().max(60),
+    // Bağlantının og:image önizlemesi; her zaman çekilip saklanır,
+    // yalnız 1x1'den büyük kartlarda gösterilir.
+    ogImage: optionalHttpUrlSchema.default(""),
   }),
 });
 
@@ -118,10 +184,22 @@ const linkBlockSchema = z.object({
   }),
 });
 
+// Tiptap JSON dokümanı; HTML olarak değil, allowlist'li RichTextView ile
+// render edilir (XSS yüzeyi yok). Boyut sınırı serileştirilmiş halde.
+const richDocSchema = z
+  .unknown()
+  .optional()
+  .refine((value) => value === undefined || JSON.stringify(value).length <= 8192, {
+    message: "Metin içeriği çok uzun",
+  });
+
 const textBlockSchema = z.object({
   ...blockBase,
   type: z.literal("text"),
-  data: z.object({ text: z.string().trim().min(1).max(280) }),
+  data: z.object({
+    text: z.string().trim().min(1).max(280),
+    doc: richDocSchema,
+  }),
 });
 
 const imageBlockSchema = z.object({
@@ -140,6 +218,7 @@ const statusBlockSchema = z.object({
   data: z.object({
     text: z.string().trim().min(1).max(140),
     url: optionalHttpUrlSchema.default(""),
+    doc: richDocSchema,
   }),
 });
 
@@ -191,8 +270,8 @@ export const BLOCK_GRID_LIMITS: Record<
   { minW: number; minH: number; maxW: number; maxH: number }
 > = {
   link: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
-  social: { minW: 1, minH: 1, maxW: 2, maxH: 2 },
-  text: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
+  social: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
+  text: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
   image: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
   status: { minW: 1, minH: 1, maxW: 4, maxH: 1 },
 };

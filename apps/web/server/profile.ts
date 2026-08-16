@@ -6,6 +6,7 @@ import {
   parseProfileLayout,
   PROFILE_BIO_MAX,
   profileLayoutSchema,
+  socialUrl,
   themeSchema,
   type ProfileLayout,
   type ProfileTheme,
@@ -13,6 +14,7 @@ import {
   validateUsername,
 } from "@caka/shared";
 import { copyGoogleAvatar } from "./avatar";
+import { enrichSocialOgImages } from "./og";
 
 export interface OnboardingLink {
   platform: SocialPlatform;
@@ -99,29 +101,10 @@ const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   dribbble: "Dribbble",
   github: "GitHub",
   threads: "Threads",
+  nsosyal: "Nsosyal",
   website: "Web sitesi",
   email: "E-posta",
 };
-
-function socialUrl(platform: SocialPlatform, value: string): string {
-  const clean = value.trim().replace(/^@/, "");
-  if (!clean) return "";
-  if (platform === "website") return clean;
-  if (platform === "email") return "";
-  const bases: Partial<Record<SocialPlatform, string>> = {
-    instagram: "https://instagram.com/",
-    x: "https://x.com/",
-    tiktok: "https://tiktok.com/@",
-    youtube: "https://youtube.com/@",
-    linkedin: "https://linkedin.com/in/",
-    facebook: "https://facebook.com/",
-    twitch: "https://twitch.tv/",
-    dribbble: "https://dribbble.com/",
-    github: "https://github.com/",
-    threads: "https://threads.net/@",
-  };
-  return `${bases[platform] ?? ""}${clean}`;
-}
 
 function templateTheme(template?: string): ProfileTheme {
   if (template === "gece") return "dark";
@@ -207,6 +190,9 @@ export async function completeOnboarding(
     name: user.name,
     avatarAssetId: fallbackAvatar,
   });
+  // Sosyal blokların og görselleri best-effort doldurulur; çekilemeyenler
+  // editör ilk açıldığında yeniden denenir.
+  result.layout = await enrichSocialOgImages(result.layout);
   await createDb(env.DB)
     .update(profile)
     .set({

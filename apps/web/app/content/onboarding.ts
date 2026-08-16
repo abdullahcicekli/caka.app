@@ -6,6 +6,7 @@ export const onboardingPlatforms: {
   tone: string;
   placeholder: string;
 }[] = [
+  { id: "nsosyal", label: "Nsosyal", tone: "platform-nsosyal", placeholder: "kullaniciadi" },
   { id: "instagram", label: "Instagram", tone: "platform-instagram", placeholder: "@kullaniciadi" },
   { id: "x", label: "X", tone: "platform-x", placeholder: "@kullaniciadi" },
   { id: "tiktok", label: "TikTok", tone: "platform-tiktok", placeholder: "@kullaniciadi" },
