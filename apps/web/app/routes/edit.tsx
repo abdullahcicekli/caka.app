@@ -15,9 +15,8 @@ import {
   Type,
   X,
 } from "lucide-react";
-import { redirect } from "react-router";
+import { Link, redirect, useSearchParams } from "react-router";
 
-import { EditorDashboard } from "~/components/editor/dashboard";
 import { BlockGallery, type GalleryPick } from "~/components/editor/gallery";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { ProfileBlockCard } from "~/components/profile-block";
@@ -195,7 +194,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [device, setDevice] = useState<EditorDevice>("desktop");
   const [saveState, setSaveState] = useState<SaveState>("saved");
-  const [panel, setPanel] = useState<"theme" | "gallery" | "dashboard" | null>(null);
+  const [panel, setPanel] = useState<"theme" | "gallery" | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const versionRef = useRef(loaderData.version);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const firstRender = useRef(true);
@@ -251,6 +251,23 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   function add(type: ProfileBlock["type"]) {
     insertBlock(defaultBlock(type));
   }
+
+  // Dashboard kısayolları: /edit?add=link|social|text|image|status bloğu
+  // hemen ekler (social galeriyi açar); /edit?panel=theme|gallery paneli açar.
+  // Parametreler işlendikten sonra URL'den temizlenir.
+  useEffect(() => {
+    const addParam = searchParams.get("add");
+    const panelParam = searchParams.get("panel");
+    if (!addParam && !panelParam) return;
+    if (addParam === "link" || addParam === "text" || addParam === "image" || addParam === "status") {
+      add(addParam);
+    } else if (addParam === "social") {
+      setPanel("gallery");
+    }
+    if (panelParam === "theme" || panelParam === "gallery") setPanel(panelParam);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız ilk yüklemede
+  }, []);
 
   function addFromGallery(pick: GalleryPick) {
     if (pick.kind === "content") return add(pick.type);
@@ -328,14 +345,9 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="editor-shell">
-      <button
-        type="button"
-        className="editor-back"
-        aria-label="Hesap panelini aç"
-        onClick={() => setPanel(panel === "dashboard" ? null : "dashboard")}
-      >
+      <Link to="/dashboard" className="editor-back" aria-label="Panele dön">
         <ChevronLeft size={20} />
-      </button>
+      </Link>
       <a
         className="editor-address-pill"
         href={`/${loaderData.username}`}
@@ -456,15 +468,6 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       ) : null}
 
       {panel === "gallery" ? <BlockGallery onPick={addFromGallery} onClose={() => setPanel(null)} /> : null}
-
-      {panel === "dashboard" ? (
-        <EditorDashboard
-          username={loaderData.username}
-          layout={layout}
-          theme={theme}
-          onClose={() => setPanel(null)}
-        />
-      ) : null}
 
       {selected ? (
         <Inspector

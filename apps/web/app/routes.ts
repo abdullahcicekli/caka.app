@@ -10,5 +10,6 @@ export default [
   route("onboarding/kurulum/:step", "routes/onboarding.kurulum.tsx"),
   route("login", "routes/login.tsx"),
   route("edit", "routes/edit.tsx"),
+  route("dashboard", "routes/dashboard.tsx"),
   route(":username", "routes/username.tsx"),
 ] satisfies RouteConfig;
