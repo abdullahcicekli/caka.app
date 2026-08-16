@@ -1,8 +1,14 @@
 import { env } from "cloudflare:workers";
+import { LayoutDashboard, Pencil } from "lucide-react";
 import { Link, data, redirect } from "react-router";
 
 import { ProfileCanvas } from "~/components/profile-block";
-import { SignOutLink } from "~/components/sign-out-link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { parseSeedProfile } from "~/lib/profile-view";
 import {
   absoluteSiteUrl,
@@ -137,15 +143,35 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
   return (
     <main className="relative min-h-svh">
       <ProfileCanvas layout={layout} theme={theme} />
-      <footer className="fixed right-4 bottom-4 flex items-center gap-3 rounded-full bg-white/90 p-2 shadow-sm backdrop-blur">
+      {/* Sahip: sağ üstte sabit kalem menüsü (WhatsApp tarzı hızlı erişim) */}
+      {isOwner ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" aria-label="Sayfa menüsü" className="owner-quick-menu">
+              <Pencil size={18} aria-hidden />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={8} className="w-40">
+            <DropdownMenuItem asChild>
+              <Link to="/edit">
+                <Pencil /> Düzenle
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard">
+                <LayoutDashboard /> Panel
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
+      <footer className="fixed right-4 bottom-4 rounded-full bg-white/90 p-1 shadow-sm backdrop-blur">
         <Link
           to="/"
-          className="rounded-full px-3 py-2 text-sm font-medium text-murekkep/70 hover:text-murekkep"
+          className="block rounded-full px-3 py-2 text-sm font-medium text-murekkep/70 hover:text-murekkep"
         >
           ⌘ Caka
         </Link>
-        {isOwner ? <Link to="/edit" className="rounded-full bg-murekkep px-4 py-2 text-sm text-white">Düzenle</Link> : null}
-        {isOwner ? <SignOutLink className="px-2" /> : null}
       </footer>
     </main>
   );
