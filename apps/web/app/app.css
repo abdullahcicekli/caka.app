@@ -780,6 +780,34 @@
   border-radius: var(--radius-2xl);
   background: color-mix(in srgb, var(--profile-text) 6%, transparent);
 }
+/* Resize tutamacı: avatar-edit-badge ile aynı dil — murekkep zemin + beyaz
+   ikon + beyaz kenarlık; marka rengi sabit olduğundan her temada görünür. */
+.editor-grid-stack .grid-stack-item > .ui-resizable-se {
+  width: 30px;
+  height: 30px;
+  right: calc(var(--gs-item-margin-right) + 8px);
+  bottom: calc(var(--gs-item-margin-bottom) + 8px);
+  border: 3px solid white;
+  border-radius: 12px;
+  background: var(--color-murekkep) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7 17 17"/><path d="M7 11V7h4"/><path d="M17 13v4h-4"/></svg>') center / 15px 15px no-repeat;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.28);
+  transform: none;
+  cursor: nwse-resize;
+  opacity: 0;
+  scale: .82;
+  transition: opacity 150ms ease, scale 150ms ease;
+}
+.editor-grid-stack .grid-stack-item:hover > .ui-resizable-se,
+.editor-grid-stack .grid-stack-item:focus-within > .ui-resizable-se,
+.editor-grid-stack .grid-stack-item.ui-resizable-resizing > .ui-resizable-se,
+.editor-grid-stack .grid-stack-item:has(> .editor-block.is-selected) > .ui-resizable-se {
+  opacity: 1;
+  scale: 1;
+}
+/* Hover olmayan (dokunmatik) cihazlarda tutamaç her zaman görünür */
+@media (hover: none) {
+  .editor-grid-stack .grid-stack-item > .ui-resizable-se { opacity: 1; scale: 1; }
+}
 .selected-label { position: absolute; top: 8px; left: 8px; z-index: 2; border-radius: 5px; padding: 2px 6px; background: var(--color-murekkep); color: white; font-size: 10px; }
 .editor-add-tile { display: flex; width: 100%; min-height: 64px; margin-top: 12px; align-items: center; justify-content: center; border: 1px dashed color-mix(in srgb, var(--profile-text) 24%, transparent); border-radius: var(--radius-2xl); flex-direction: row; gap: 7px; color: var(--profile-muted); font-size: 12px; }
 

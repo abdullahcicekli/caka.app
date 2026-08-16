@@ -68,6 +68,9 @@ export function EditorGrid({
             animate: true,
             float: false,
             resizable: { handles: "se" },
+            // Tutamaç görünürlüğü CSS'te yönetilir (hover/seçim animasyonu);
+            // gridstack'in display:none tabanlı autohide'ı animasyonu keser.
+            alwaysShowResizeHandle: true,
           },
           containerRef.current,
         );
