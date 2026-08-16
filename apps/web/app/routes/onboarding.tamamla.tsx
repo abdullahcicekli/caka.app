@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { redirect } from "react-router";
 
+import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import {
   claimUsername,
@@ -11,6 +12,10 @@ import type { Route } from "./+types/onboarding.tamamla";
 
 const CLAIM_COOKIE = "caka_claim";
 const CLEAR_CLAIM_COOKIE = `${CLAIM_COOKIE}=; Path=/; Max-Age=0`;
+
+export function meta({}: Route.MetaArgs) {
+  return noIndexMeta("Hesabın hazırlanıyor — Caka");
+}
 
 function readClaimCookie(request: Request): string | null {
   const header = request.headers.get("Cookie") ?? "";

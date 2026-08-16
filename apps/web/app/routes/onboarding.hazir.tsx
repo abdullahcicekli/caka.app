@@ -4,12 +4,13 @@ import { Link, redirect } from "react-router";
 import { ProfileAvatar } from "~/components/profile-avatar";
 import { SignOutLink } from "~/components/sign-out-link";
 import { parseSeedProfile } from "~/lib/profile-view";
+import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/onboarding.hazir";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Sayfan hazır — Caka" }];
+  return noIndexMeta("Sayfan hazır — Caka");
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

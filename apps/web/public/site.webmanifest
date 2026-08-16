@@ -1,10 +1,10 @@
 {
   "name": "Caka",
   "short_name": "Caka",
-  "description": "Bio linkin, kendi mini siten olsun — sürükle-bırak grid ile profil sayfanı kur, yayınla, paylaş.",
+  "description": "Ürettiklerini, bağlantılarını ve projelerini tek bir kişisel sayfada bir araya getir.",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#3554ec",
+  "theme_color": "#2A55F5",
   "background_color": "#ffffff",
   "icons": [
     {

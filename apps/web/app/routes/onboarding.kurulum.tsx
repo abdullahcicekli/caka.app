@@ -29,6 +29,7 @@ import {
   platformById,
 } from "~/content/onboarding";
 import { parseSeedProfile } from "~/lib/profile-view";
+import { noIndexMeta } from "~/lib/seo";
 import {
   PROFILE_BIO_MAX,
   PROFILE_NAME_MAX,
@@ -96,7 +97,7 @@ function readText(value: FormDataEntryValue | null) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Sayfanı hazırla — Caka" }];
+  return noIndexMeta("Sayfanı hazırla — Caka");
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {

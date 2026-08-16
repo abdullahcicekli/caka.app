@@ -17,6 +17,10 @@ export default {
       pathname === "/api" ||
       pathname.startsWith("/api/") ||
       pathname.startsWith("/i/") ||
+      pathname === "/sitemap.xml" ||
+      pathname.startsWith("/sitemaps/") ||
+      pathname === "/robots.txt" ||
+      pathname === "/llms.txt" ||
       OG_IMAGE_PATH.test(pathname)
     ) {
       return honoApp.fetch(request, env, ctx);

@@ -21,6 +21,7 @@ import { logoBlack } from "~/assets/brand";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { ProfileBlockCard } from "~/components/profile-block";
 import { onboardingTemplates, platformById } from "~/content/onboarding";
+import { noIndexMeta } from "~/lib/seo";
 import {
   BLOCK_GRID_LIMITS,
   GRID_COLUMNS,
@@ -41,7 +42,7 @@ import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Editör — Caka" }];
+  return noIndexMeta("Editör — Caka");
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

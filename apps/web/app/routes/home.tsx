@@ -14,23 +14,73 @@ import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { landing } from "~/content/landing";
 import { parseSeedProfile } from "~/lib/profile-view";
+import {
+  DEFAULT_DESCRIPTION,
+  SITE_URL,
+  absoluteSiteUrl,
+  buildSeoMeta,
+  pickRandomOgImage,
+} from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import { ensureProfileAvatar, getProfileByUserId } from "../../server/profile";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Caka — sana göre bir bio linki" },
-    {
-      name: "description",
-      content:
-        "Instagram, TikTok ve YouTube profillerindeki tek link; paylaştığın, ürettiğin ve sattığın her şeyi bir araya getirsin.",
+export function meta({ loaderData }: Route.MetaArgs) {
+  const title = "Caka — sana göre bir kişisel sayfa";
+  return buildSeoMeta({
+    title,
+    description: DEFAULT_DESCRIPTION,
+    image: loaderData?.ogImage,
+    imageAlt: "Caka ile kişisel sayfanı oluştur",
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": `${SITE_URL}/#organization`,
+          name: "Caka",
+          url: SITE_URL,
+          logo: {
+            "@type": "ImageObject",
+            url: absoluteSiteUrl("/android-chrome-512x512.png"),
+            width: 512,
+            height: 512,
+          },
+          sameAs: landing.footer.social.map((item) => item.href),
+        },
+        {
+          "@type": "FAQPage",
+          "@id": `${SITE_URL}/#faq`,
+          url: `${SITE_URL}/#sss`,
+          name: landing.faq.title,
+          inLanguage: "tr-TR",
+          isPartOf: { "@id": `${SITE_URL}/#website` },
+          mainEntity: landing.faq.items.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.answer,
+            },
+          })),
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${SITE_URL}/#website`,
+          url: `${SITE_URL}/`,
+          name: "Caka",
+          description: DEFAULT_DESCRIPTION,
+          inLanguage: "tr-TR",
+          publisher: { "@id": `${SITE_URL}/#organization` },
+        },
+      ],
     },
-  ];
+  });
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const ogImage = pickRandomOgImage();
   const session = await getSession(env, request);
-  if (!session) return { user: null };
+  if (!session) return { user: null, ogImage };
 
   const profile = await getProfileByUserId(env, session.user.id);
   // Avatarsız kalmış eski kayıtları girişte kendiliğinden onarır.
@@ -46,7 +96,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       session.user.image ??
       null,
   };
-  return { user };
+  return { user, ogImage };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

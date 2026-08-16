@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { signInWithSocial, type SocialProvider } from "~/lib/auth-client";
+import { noIndexMeta } from "~/lib/seo";
 import { USERNAME_ERROR_MESSAGES, validateUsername } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { claimUsername, getProfileByUserId } from "../../server/profile";
@@ -21,7 +22,7 @@ import type { Route } from "./+types/onboarding";
 export const CLAIM_COOKIE = "caka_claim";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Adresini al — Caka" }];
+  return noIndexMeta("Adresini al — Caka");
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

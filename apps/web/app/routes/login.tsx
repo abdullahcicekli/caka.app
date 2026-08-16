@@ -6,12 +6,13 @@ import creatorSelin from "~/assets/landing/creator-selin.webp";
 import { AppleIcon } from "~/components/icons/apple";
 import { GoogleIcon } from "~/components/icons/google";
 import { signInWithSocial } from "~/lib/auth-client";
+import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/login";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Giriş yap — Caka" }];
+  return noIndexMeta("Giriş yap — Caka");
 }
 
 export async function loader({ request }: Route.LoaderArgs) {

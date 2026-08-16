@@ -5,6 +5,12 @@ import { ProfileCanvas } from "~/components/profile-block";
 import { SignOutLink } from "~/components/sign-out-link";
 import { parseSeedProfile } from "~/lib/profile-view";
 import {
+  absoluteSiteUrl,
+  buildSeoMeta,
+  noIndexMeta,
+  pickRandomOgImage,
+} from "~/lib/seo";
+import {
   normalizeUsername,
   ensureLayoutPositions,
   parseProfileLayout,
@@ -16,13 +22,43 @@ import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Caka" }];
+  if (!loaderData) return noIndexMeta("Sayfa bulunamadı — Caka");
+  const title = `${loaderData.name} — @${loaderData.username} | Caka`;
+  const canonical = absoluteSiteUrl(`/${loaderData.username}`);
+  const person: Record<string, unknown> = {
+    "@type": "Person",
+    "@id": `${canonical}#person`,
+    name: loaderData.name,
+    alternateName: `@${loaderData.username}`,
+    description: loaderData.description,
+    url: canonical,
+  };
+  if (loaderData.avatarUrl) person.image = absoluteSiteUrl(loaderData.avatarUrl);
+  if (loaderData.sameAs.length > 0) person.sameAs = loaderData.sameAs;
+
   return [
-    { title: `${loaderData.name} — @${loaderData.username} | Caka` },
-    {
-      name: "description",
-      content: `${loaderData.name} — caka.app/${loaderData.username}`,
-    },
+    ...buildSeoMeta({
+      title,
+      description: loaderData.description,
+      path: `/${loaderData.username}`,
+      image: loaderData.ogImage,
+      imageAlt: `${loaderData.name} adlı Caka profilinin paylaşım görseli`,
+      type: "profile",
+      schema: {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "@id": `${canonical}#profile-page`,
+        url: canonical,
+        name: title,
+        description: loaderData.description,
+        dateCreated: loaderData.createdAt,
+        dateModified: loaderData.updatedAt,
+        inLanguage: "tr-TR",
+        mainEntity: person,
+        isPartOf: { "@id": "https://caka.app/#website" },
+      },
+    }),
+    { property: "profile:username", content: loaderData.username },
   ];
 }
 
@@ -70,10 +106,26 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       { status: 404 },
     );
   const session = await getSession(env, request);
+  const profileCard = layout.blocks.find((block) => block.type === "profile");
+  const name = seed.name ?? p.username;
+  const description =
+    (profileCard?.type === "profile" ? profileCard.data.title.trim() : "") ||
+    `${name} adlı kişinin bağlantıları, projeleri ve ürettikleri.`;
+  const sameAs = [
+    ...layout.blocks.flatMap((block) => {
+      if (block.type === "social" || block.type === "link") return [block.data.url];
+      return [];
+    }),
+  ].filter((url, index, values) => /^https?:\/\//.test(url) && values.indexOf(url) === index);
   return {
     username: p.username,
-    name: seed.name ?? p.username,
+    name,
+    description,
     avatarUrl: seed.avatarUrl,
+    sameAs,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+    ogImage: pickRandomOgImage(),
     theme: p.theme,
     layout: ensureLayoutPositions(layout),
     isOwner: session?.user.id === p.userId,

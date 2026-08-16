@@ -5,10 +5,13 @@ import { getAuth } from "./auth";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
 import { onboardingApi } from "./onboarding-api";
+import { seoRoutes } from "./seo";
 
-// Hono, Worker'ın API yüzeyini taşır (KTD2): /api/*, /i/* ve /:username/og.png
-// buraya düşer; SSR sayfaları React Router handler'ında kalır.
+// Hono; API, R2 görselleri ve makine-okur SEO endpointlerini taşır. SSR
+// sayfaları React Router handler'ında kalır.
 export const honoApp = new Hono<{ Bindings: Env }>();
+
+honoApp.route("/", seoRoutes);
 
 honoApp.get("/api/health", (c) => c.json({ ok: true }));
 
