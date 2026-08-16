@@ -5,12 +5,9 @@ export const SITE_URL = "https://caka.app";
 export const DEFAULT_DESCRIPTION =
   "Ürettiklerini, bağlantılarını ve projelerini tek bir kişisel sayfada bir araya getir.";
 
-const OG_IMAGES = [
-  "/og/caka-og-01.png",
-  "/og/caka-og-02.png",
-  "/og/caka-og-04.png",
-  "/og/caka-og-05.png",
-] as const;
+// Varsayılan paylaşım görselleri (landing ve profil dışı sayfalar). Profil
+// sayfaları kendi üretilen görselini kullanır (server/og-image.ts).
+const OG_IMAGES = ["/og/caka-og-bento-A.png", "/og/caka-og-bento-B.png"] as const;
 
 export type JsonLd = Record<string, unknown>;
 

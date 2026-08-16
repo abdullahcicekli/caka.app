@@ -36,7 +36,7 @@ import {
 import { resolveUsername } from "./profile";
 
 /** Üretim başarısız olursa dönülen sabit marka görseli — sayfa og:image'siz kalmaz. */
-const FALLBACK_OG_IMAGE = "/og/caka-og-01.png";
+const FALLBACK_OG_IMAGE = "/og/caka-og-bento-A.png";
 
 interface OgProfileSource {
   username: string;
