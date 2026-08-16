@@ -18,11 +18,19 @@ import {
 import { Link, redirect } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
+import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { ProfileBlockCard } from "~/components/profile-block";
 import { onboardingTemplates, platformById } from "~/content/onboarding";
 import {
+  BLOCK_GRID_LIMITS,
+  GRID_COLUMNS,
   createBlockId,
+  ensureLayoutPositions,
   parseProfileLayout,
+  placeNewBlock,
+  sizeFromDims,
+  sizeToDims,
+  withDerivedSmPositions,
   type BlockSize,
   type ProfileBlock,
   type ProfileLayout,
@@ -46,7 +54,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
   return {
     username: profile.username,
-    layout,
+    layout: ensureLayoutPositions(layout),
     theme: profile.theme as ProfileTheme,
     version: profile.version,
   };
@@ -67,11 +75,13 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
 function Inspector({
   block,
   update,
+  resize,
   remove,
   close,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
+  resize: (size: BlockSize) => void;
   remove: () => void;
   close: () => void;
 }) {
@@ -163,7 +173,7 @@ function Inspector({
             <legend>Boyut</legend>
             <div className="size-picker">
               {(["1x1", "2x1", "2x2"] as BlockSize[]).map((size) => (
-                <button key={size} type="button" className={block.size === size ? "is-active" : ""} onClick={() => update({ size } as never)}>{size.replace("x", "×")}</button>
+                <button key={size} type="button" className={block.size === size ? "is-active" : ""} onClick={() => resize(size)}>{size.replace("x", "×")}</button>
               ))}
             </div>
           </fieldset>
@@ -181,9 +191,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const [layout, setLayout] = useState<ProfileLayout>(loaderData.layout);
   const [theme, setTheme] = useState<ProfileTheme>(loaderData.theme);
   const [selectedId, setSelectedId] = useState<string | null>(layout.blocks[0]?.id ?? null);
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [device, setDevice] = useState<EditorDevice>("desktop");
   const [saveState, setSaveState] = useState<SaveState>("saved");
-  const [draggedId, setDraggedId] = useState<string | null>(null);
   const versionRef = useRef(loaderData.version);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const firstRender = useRef(true);
@@ -224,7 +233,15 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   function add(type: ProfileBlock["type"]) {
     const block = defaultBlock(type);
-    setLayout((current) => ({ ...current, blocks: [...current.blocks, block] }));
+    setLayout((current) => {
+      const { w, h } = sizeToDims(block.size);
+      const lg = placeNewBlock(current.blocks, w, h);
+      const positioned = {
+        ...block,
+        pos: { lg, sm: { ...lg, w: Math.min(w, GRID_COLUMNS.sm) } },
+      } as ProfileBlock;
+      return { ...current, blocks: withDerivedSmPositions([...current.blocks, positioned]) };
+    });
     setSelectedId(block.id);
   }
 
@@ -233,21 +250,61 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       ...current,
       blocks: current.blocks.map((block) => {
         if (block.id !== selectedId) return block;
-        if ("size" in patch) return { ...block, size: patch.size as BlockSize };
         return { ...block, data: { ...block.data, ...patch } } as ProfileBlock;
       }),
     }));
   }
 
-  function moveBefore(targetId: string) {
-    if (!draggedId || draggedId === targetId) return;
+  function applyGridChange(updates: GridUpdate[], changeDevice: EditorDevice) {
     setLayout((current) => {
-      const source = current.blocks.find((block) => block.id === draggedId);
-      if (!source) return current;
-      const blocks = current.blocks.filter((block) => block.id !== draggedId);
-      const targetIndex = blocks.findIndex((block) => block.id === targetId);
-      blocks.splice(Math.max(0, targetIndex), 0, source);
+      const key = changeDevice === "mobile" ? "sm" : "lg";
+      let changed = false;
+      let blocks = current.blocks.map((block) => {
+        const update = updates.find((item) => item.id === block.id);
+        if (!update || block.type === "profile" || !block.pos) return block;
+        const prev = block.pos[key];
+        if (prev.x === update.x && prev.y === update.y && prev.w === update.w && prev.h === update.h) {
+          return block;
+        }
+        changed = true;
+        const pos = { ...block.pos, [key]: { x: update.x, y: update.y, w: update.w, h: update.h } };
+        const size = changeDevice === "desktop" ? sizeFromDims(update.w, update.h) : block.size;
+        return { ...block, pos, size } as ProfileBlock;
+      });
+      if (!changed) return current;
+      // R7: desktop değişikliği smManual olmayan blokların mobilini yeniden türetir.
+      if (changeDevice === "desktop") blocks = withDerivedSmPositions(blocks);
       return { ...current, blocks };
+    });
+  }
+
+  function markSmManual(id: string) {
+    setLayout((current) => {
+      const block = current.blocks.find((item) => item.id === id);
+      if (!block || block.smManual) return current;
+      return {
+        ...current,
+        blocks: current.blocks.map((item) => (item.id === id ? { ...item, smManual: true } : item)),
+      };
+    });
+  }
+
+  function resizeSelected(size: BlockSize) {
+    setLayout((current) => {
+      const blocks = current.blocks.map((block) => {
+        if (block.id !== selectedId || block.type === "profile" || !block.pos) return block;
+        const limits = BLOCK_GRID_LIMITS[block.type];
+        const dims = sizeToDims(size);
+        const w = Math.min(Math.max(dims.w, limits.minW), limits.maxW);
+        const h = Math.min(Math.max(dims.h, limits.minH), limits.maxH);
+        const x = Math.min(block.pos.lg.x, GRID_COLUMNS.lg - w);
+        return {
+          ...block,
+          size: sizeFromDims(w, h),
+          pos: { ...block.pos, lg: { ...block.pos.lg, x, w, h } },
+        } as ProfileBlock;
+      });
+      return { ...current, blocks: withDerivedSmPositions(blocks) };
     });
   }
 
@@ -301,22 +358,15 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               {selectedId === profileBlock.id ? <span className="selected-label">Genel bilgi</span> : null}
             </div>
           ) : null}
-          <div className="editor-grid">
-            {bentoBlocks.map((block) => (
-              <div
-                key={block.id}
-                draggable
-                className={`editor-grid-item size-${block.size} ${selectedId === block.id ? "is-selected" : ""}`}
-                onDragStart={() => setDraggedId(block.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => moveBefore(block.id)}
-                onDragEnd={() => setDraggedId(null)}
-                onClick={() => setSelectedId(block.id)}
-              >
-                <ProfileBlockCard block={block} />
-                {selectedId === block.id ? <span className="selected-label">{block.type}</span> : null}
-              </div>
-            ))}
+          <div className="editor-grid-area">
+            <EditorGrid
+              blocks={bentoBlocks}
+              device={device}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onChange={applyGridChange}
+              onManual={markSmManual}
+            />
             <button type="button" className="editor-add-tile" onClick={() => add("link")}><Plus size={20} /> Blok ekle</button>
           </div>
         </div>
@@ -326,6 +376,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <Inspector
           block={selected}
           update={updateSelected}
+          resize={resizeSelected}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));

@@ -15,12 +15,23 @@ const gridPositionSchema = z.object({
   w: z.number().int().min(1).max(4),
   h: z.number().int().min(1).max(4),
 });
+export type GridPosition = z.infer<typeof gridPositionSchema>;
+
+// R7: desktop 4 kolon, mobil 2 kolon.
+export const GRID_COLUMNS = { lg: 4, sm: 2 } as const;
 
 const blockBase = {
   id: z.string().min(1).max(64),
   size: blockSizeSchema.default("1x1"),
   pos: z
-    .object({ lg: gridPositionSchema, sm: gridPositionSchema })
+    .object({
+      lg: gridPositionSchema.refine((p) => p.x + p.w <= GRID_COLUMNS.lg, {
+        message: "Blok desktop kolonlarının dışına taşıyor",
+      }),
+      sm: gridPositionSchema.refine((p) => p.x + p.w <= GRID_COLUMNS.sm, {
+        message: "Blok mobil kolonlarının dışına taşıyor",
+      }),
+    })
     .optional(),
   smManual: z.boolean().optional(),
 };
@@ -162,4 +173,107 @@ export function parseProfileLayout(value: string): ProfileLayout | null {
 
 export function createBlockId(): string {
   return `blk_${crypto.randomUUID().slice(0, 8)}`;
+}
+
+export type BentoBlockType = Exclude<ProfileBlock["type"], "profile">;
+
+// R6: blok tipi başına grid min/maks boyutları — editörde gridstack
+// constraint'i, sunucuda doğrulama olarak aynı kaynaktan uygulanır.
+export const BLOCK_GRID_LIMITS: Record<
+  BentoBlockType,
+  { minW: number; minH: number; maxW: number; maxH: number }
+> = {
+  link: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
+  social: { minW: 1, minH: 1, maxW: 2, maxH: 2 },
+  text: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
+  image: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
+  status: { minW: 1, minH: 1, maxW: 4, maxH: 1 },
+};
+
+export function sizeToDims(size: BlockSize): { w: number; h: number } {
+  const [w, h] = size.split("x");
+  return { w: Number(w), h: Number(h) };
+}
+
+export function sizeFromDims(w: number, h: number): BlockSize {
+  if (w >= 2 && h >= 2) return "2x2";
+  if (w >= 2) return "2x1";
+  return "1x1";
+}
+
+// İlk sığan hücreyi satır-öncelikli tarar (okuma sırası).
+function firstFit(
+  occupied: GridPosition[],
+  w: number,
+  h: number,
+  columns: number,
+): { x: number; y: number } {
+  const width = Math.min(w, columns);
+  const overlaps = (x: number, y: number) =>
+    occupied.some((p) => x < p.x + p.w && p.x < x + width && y < p.y + p.h && p.y < y + h);
+  for (let y = 0; ; y += 1) {
+    for (let x = 0; x + width <= columns; x += 1) {
+      if (!overlaps(x, y)) return { x, y };
+    }
+  }
+}
+
+// Yeni blok için desktop yerleşiminde ilk boş konumu döner.
+export function placeNewBlock(
+  blocks: ProfileBlock[],
+  w: number,
+  h: number,
+): GridPosition {
+  const occupied = blocks.flatMap((block) =>
+    block.type !== "profile" && block.pos ? [block.pos.lg] : [],
+  );
+  const { x, y } = firstFit(occupied, w, h, GRID_COLUMNS.lg);
+  return { x, y, w: Math.min(w, GRID_COLUMNS.lg), h };
+}
+
+// R7: mobil yerleşim, smManual olmayan bloklar için desktop'tan türetilir —
+// genişlik 2'ye kırpılır, desktop okuma sırasına (y, sonra x) göre dizilir.
+// smManual bloklar sabit engel olarak korunur.
+export function withDerivedSmPositions<T extends ProfileBlock>(blocks: T[]): T[] {
+  const positioned = blocks.filter(
+    (block): block is T & { pos: { lg: GridPosition; sm: GridPosition } } =>
+      block.type !== "profile" && block.pos !== undefined,
+  );
+  const occupied = positioned
+    .filter((block) => block.smManual)
+    .map((block) => block.pos.sm);
+  const auto = positioned
+    .filter((block) => !block.smManual)
+    .sort((a, b) => a.pos.lg.y - b.pos.lg.y || a.pos.lg.x - b.pos.lg.x);
+  const derived = new Map<string, GridPosition>();
+  for (const block of auto) {
+    const w = Math.min(block.pos.lg.w, GRID_COLUMNS.sm);
+    const h = block.pos.lg.h;
+    const { x, y } = firstFit(occupied, w, h, GRID_COLUMNS.sm);
+    const pos = { x, y, w, h };
+    occupied.push(pos);
+    derived.set(block.id, pos);
+  }
+  return blocks.map((block) => {
+    const sm = derived.get(block.id);
+    return sm && block.pos ? { ...block, pos: { ...block.pos, sm } } : block;
+  });
+}
+
+// pos alanı olmayan (eski) bloklara size'dan konum türetir; sm'i R7 kuralıyla
+// tamamlar. Idempotent — pos'u tam layoutlarda değişiklik yapmaz (smManual
+// olmayan bloklarda sm her zaman lg'den yeniden türetilir).
+export function ensureLayoutPositions(layout: ProfileLayout): ProfileLayout {
+  const occupied = layout.blocks.flatMap((block) =>
+    block.type !== "profile" && block.pos ? [block.pos.lg] : [],
+  );
+  const blocks = layout.blocks.map((block) => {
+    if (block.type === "profile" || block.pos) return block;
+    const { w, h } = sizeToDims(block.size);
+    const { x, y } = firstFit(occupied, w, h, GRID_COLUMNS.lg);
+    const lg = { x, y, w: Math.min(w, GRID_COLUMNS.lg), h };
+    occupied.push(lg);
+    return { ...block, pos: { lg, sm: { ...lg, w: Math.min(w, GRID_COLUMNS.sm) } } };
+  });
+  return { ...layout, blocks: withDerivedSmPositions(blocks) };
 }

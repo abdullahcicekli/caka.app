@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
@@ -96,11 +98,28 @@ export function ProfileCanvas({
           {profileBlock ? <ProfileBlockCard block={profileBlock} /> : null}
         </aside>
         <section className="profile-grid" aria-label="Bağlantılar ve içerikler">
-          {bentoBlocks.map((block) => (
-            <div key={block.id} className={`profile-grid-item size-${block.size}`}>
-              <ProfileBlockCard block={block} />
-            </div>
-          ))}
+          {bentoBlocks.map((block) => {
+            const pos = block.pos;
+            // pos varsa editörle birebir aynı hücrelere yerleştir (KTD13);
+            // pos'suz eski kayıtlar size-* sınıflarıyla akışta kalır.
+            const style = pos
+              ? ({
+                  "--lg-col": `${pos.lg.x + 1} / span ${pos.lg.w}`,
+                  "--lg-row": `${pos.lg.y + 1} / span ${pos.lg.h}`,
+                  "--sm-col": `${pos.sm.x + 1} / span ${pos.sm.w}`,
+                  "--sm-row": `${pos.sm.y + 1} / span ${pos.sm.h}`,
+                } as CSSProperties)
+              : undefined;
+            return (
+              <div
+                key={block.id}
+                className={`profile-grid-item size-${block.size} ${pos ? "has-pos" : ""}`}
+                style={style}
+              >
+                <ProfileBlockCard block={block} />
+              </div>
+            );
+          })}
         </section>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { SignOutLink } from "~/components/sign-out-link";
 import { parseSeedProfile } from "~/lib/profile-view";
 import {
   normalizeUsername,
+  ensureLayoutPositions,
   parseProfileLayout,
   validateUsername,
   type ProfileTheme,
@@ -74,7 +75,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     name: seed.name ?? p.username,
     avatarUrl: seed.avatarUrl,
     theme: p.theme,
-    layout,
+    layout: ensureLayoutPositions(layout),
     isOwner: session?.user.id === p.userId,
   };
 }

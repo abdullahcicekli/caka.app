@@ -608,8 +608,7 @@
   min-width: 0;
 }
 
-.profile-grid,
-.editor-grid {
+.profile-grid {
   display: grid;
   width: 100%;
   margin: 0;
@@ -619,11 +618,13 @@
   gap: 12px;
 }
 
-.profile-grid-item,
-.editor-grid-item { min-width: 0; }
-.profile-grid-item.size-1x1, .editor-grid-item.size-1x1 { grid-column: span 2; grid-row: span 1; }
-.profile-grid-item.size-2x1, .editor-grid-item.size-2x1 { grid-column: span 4; grid-row: span 1; }
-.profile-grid-item.size-2x2, .editor-grid-item.size-2x2 { grid-column: span 4; grid-row: span 2; }
+.profile-grid-item { min-width: 0; }
+/* pos'suz eski kayıtlar için akış tabanlı boyut sınıfları */
+.profile-grid-item.size-1x1 { grid-column: span 2; grid-row: span 1; }
+.profile-grid-item.size-2x1 { grid-column: span 4; grid-row: span 1; }
+.profile-grid-item.size-2x2 { grid-column: span 4; grid-row: span 2; }
+/* pos'lu bloklar editörle birebir aynı hücrelere oturur (KTD13) */
+.profile-grid-item.has-pos { grid-column: var(--lg-col); grid-row: var(--lg-row); }
 
 .profile-block {
   display: flex;
@@ -761,15 +762,26 @@
   gap: 28px;
 }
 .editor-workspace.is-mobile .editor-profile-identity { position: static; }
-.editor-workspace.is-mobile .editor-grid { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.editor-workspace.is-mobile .editor-grid-item.size-1x1 { grid-column: span 1; }
-.editor-workspace.is-mobile .editor-grid-item.size-2x1,
-.editor-workspace.is-mobile .editor-grid-item.size-2x2 { grid-column: span 2; }
-.editor-grid-item { position: relative; cursor: grab; }
-.editor-grid-item:active { cursor: grabbing; }
-.editor-grid-item.is-selected { outline: 2px solid var(--color-murekkep); outline-offset: 3px; border-radius: var(--radius-2xl); }
-.selected-label { position: absolute; top: -22px; left: 0; border-radius: 5px; padding: 2px 6px; background: var(--color-murekkep); color: white; font-size: 10px; }
-.editor-add-tile { display: flex; min-height: 156px; grid-column: span 2; align-items: center; justify-content: center; border: 1px dashed color-mix(in srgb, var(--profile-text) 24%, transparent); border-radius: var(--radius-2xl); flex-direction: column; gap: 7px; color: var(--profile-muted); font-size: 12px; }
+
+/* Gridstack editör alanı */
+.editor-grid-area { min-width: 0; }
+.editor-grid-stack { width: 100%; }
+.editor-grid-stack .editor-block {
+  border-radius: var(--radius-2xl);
+  cursor: grab;
+  overflow: hidden;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+}
+.editor-grid-stack .editor-block:active { cursor: grabbing; }
+.editor-grid-stack .editor-block.is-selected { outline-color: var(--color-murekkep); }
+.editor-grid-stack .grid-stack-placeholder > .placeholder-content {
+  border: 1px dashed color-mix(in srgb, var(--profile-text) 35%, transparent);
+  border-radius: var(--radius-2xl);
+  background: color-mix(in srgb, var(--profile-text) 6%, transparent);
+}
+.selected-label { position: absolute; top: 8px; left: 8px; z-index: 2; border-radius: 5px; padding: 2px 6px; background: var(--color-murekkep); color: white; font-size: 10px; }
+.editor-add-tile { display: flex; width: 100%; min-height: 64px; margin-top: 12px; align-items: center; justify-content: center; border: 1px dashed color-mix(in srgb, var(--profile-text) 24%, transparent); border-radius: var(--radius-2xl); flex-direction: row; gap: 7px; color: var(--profile-muted); font-size: 12px; }
 
 .editor-inspector {
   display: flex;
@@ -824,12 +836,10 @@
   .editor-workspace { min-height: calc(100svh - 64px); padding: 24px 14px 94px; }
   .editor-profile-layout { grid-template-columns: 1fr; gap: 28px; }
   .editor-profile-identity { position: static; }
-  .editor-grid, .editor-workspace.is-mobile .editor-grid { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 138px; }
-  .editor-grid-item.size-1x1 { grid-column: span 1; }
-  .editor-grid-item.size-2x1, .editor-grid-item.size-2x2 { grid-column: span 2; }
   .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 138px; }
   .profile-grid-item.size-1x1 { grid-column: span 1; }
   .profile-grid-item.size-2x1, .profile-grid-item.size-2x2 { grid-column: span 2; }
+  .profile-grid-item.has-pos { grid-column: var(--sm-col); grid-row: var(--sm-row); }
 }
 
 html,
