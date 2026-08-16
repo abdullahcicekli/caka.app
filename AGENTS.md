@@ -21,6 +21,8 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
   (R/KTD/U kimlikleri oradan gelir). Plan gövdesine ilerleme/durum YAZMA;
   ilerleme git'ten türetilir.
 - Mimari özet: `ARCHITECTURE.md`. Çelişki görürsen plan kazanır.
+- Ertelenmiş açık işler: `docs/backlog.md`. Bir madde bitince oradan **silinir**
+  (durum git'ten okunur, "yapıldı" yazılmaz).
 
 ## Değişmezler (bozma)
 
