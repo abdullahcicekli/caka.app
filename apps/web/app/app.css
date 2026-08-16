@@ -388,7 +388,12 @@
 }
 
 .platform-mark svg { display: block; }
-.platform-instagram { background: linear-gradient(135deg, #f58529 0%, #dd2a7b 48%, #8134af 100%); color: white; }
+/* Instagram'ın kendi marka gradyanı: sol alttan çıkan sarı → turuncu → pembe
+   → mor. Düz 135° linear'da sarı hiç görünmüyordu, ikon soluk kalıyordu. */
+.platform-instagram {
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+  color: white;
+}
 .platform-x, .platform-github, .platform-tiktok, .platform-threads { background: #111116; color: white; }
 .platform-youtube { background: #ff0000; color: white; }
 .platform-linkedin { background: #0a66c2; color: white; }
