@@ -32,10 +32,35 @@ describe("validateUsername", () => {
     },
   );
 
-  it.each(["edit", "ONBOARDING", "Api", "caka", "admin"])(
-    "rezerve adresi reddeder: %s",
+  it.each([
+    "edit",
+    "ONBOARDING",
+    "Api",
+    "caka",
+    "admin",
+    "settings",
+    "giris",
+    "ayarlar",
+    "postmaster",
+    "billing",
+    "kvkk",
+    "null",
+    "www",
+  ])("rezerve adresi reddeder: %s", (u) => {
+    expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+  });
+
+  it.each(["cakateam", "caka-resmi", "cakahq"])(
+    "marka prefix'ini reddeder: %s",
     (u) => {
       expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+    },
+  );
+
+  it.each(["administrator99", "supportteam", "editcim", "apici"])(
+    "rezerve kökün türevlerine izin verir (exact-match): %s",
+    (u) => {
+      expect(validateUsername(u).ok).toBe(true);
     },
   );
 });
