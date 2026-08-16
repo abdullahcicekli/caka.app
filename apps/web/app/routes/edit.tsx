@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "cloudflare:workers";
 import {
-  BarChart3,
-  Eye,
+  ChevronLeft,
+  ExternalLink,
   ImageIcon,
+  LayoutGrid,
   Link2,
+  Megaphone,
   Monitor,
   Palette,
   Plus,
-  Settings,
   Smartphone,
   Trash2,
   Type,
-  Users,
   X,
 } from "lucide-react";
 import { Link, redirect } from "react-router";
 
-import { logoBlack } from "~/assets/brand";
+import { BlockGallery, type GalleryPick } from "~/components/editor/gallery";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { ProfileBlockCard } from "~/components/profile-block";
 import { onboardingTemplates, platformById } from "~/content/onboarding";
@@ -66,7 +66,7 @@ type SaveState = "saved" | "saving" | "error" | "conflict";
 function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
   if (type === "link") return { id, type, size: "1x1", data: { title: "Yeni bağlantı", url: "" } };
-  if (type === "social") return { id, type, size: "1x1", data: { platform: "instagram", handle: "@kullaniciadi", url: "https://instagram.com/", label: "Instagram" } };
+  if (type === "social") return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram" } };
   if (type === "text") return { id, type, size: "2x1", data: { text: "Yeni metin bloğu" } };
   if (type === "image") return { id, type, size: "2x1", data: { title: "Görsel", url: "" } };
   if (type === "status") return { id, type, size: "2x1", data: { text: "Yeni duyuru", url: "" } };
@@ -191,9 +191,10 @@ function Inspector({
 export default function Editor({ loaderData }: Route.ComponentProps) {
   const [layout, setLayout] = useState<ProfileLayout>(loaderData.layout);
   const [theme, setTheme] = useState<ProfileTheme>(loaderData.theme);
-  const [selectedId, setSelectedId] = useState<string | null>(layout.blocks[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [device, setDevice] = useState<EditorDevice>("desktop");
   const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [panel, setPanel] = useState<"theme" | "gallery" | null>(null);
   const versionRef = useRef(loaderData.version);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const firstRender = useRef(true);
@@ -232,8 +233,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     return () => window.clearTimeout(timer);
   }, [layout, theme]);
 
-  function add(type: ProfileBlock["type"]) {
-    const block = defaultBlock(type);
+  function insertBlock(block: ProfileBlock) {
     setLayout((current) => {
       const { w, h } = sizeToDims(block.size);
       const lg = placeNewBlock(current.blocks, w, h);
@@ -244,6 +244,22 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       return { ...current, blocks: withDerivedSmPositions([...current.blocks, positioned]) };
     });
     setSelectedId(block.id);
+    setPanel(null);
+  }
+
+  function add(type: ProfileBlock["type"]) {
+    insertBlock(defaultBlock(type));
+  }
+
+  function addFromGallery(pick: GalleryPick) {
+    if (pick.kind === "content") return add(pick.type);
+    const config = platformById(pick.platform);
+    insertBlock({
+      id: createBlockId(),
+      type: "social",
+      size: "1x1",
+      data: { platform: pick.platform, handle: "", url: "", label: config.label },
+    });
   }
 
   function updateSelected(patch: Record<string, unknown>) {
@@ -311,38 +327,36 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="editor-shell">
-      <header className="editor-topbar">
-        <div className="editor-address"><img src={logoBlack} alt="Caka" /><span>caka.app/{loaderData.username}</span><span className={`save-dot is-${saveState}`} /> <small>{saveState === "saved" ? "Kaydedildi" : saveState === "saving" ? "Kaydediliyor" : saveState === "conflict" ? "Başka yerde düzenlendi" : "Kaydedilemedi"}</small></div>
-        <div className="editor-actions">
-          <div className="device-switch">
-            <button type="button" className={device === "desktop" ? "is-active" : ""} onClick={() => setDevice("desktop")} aria-label="Masaüstü görünümü"><Monitor size={17} /></button>
-            <button type="button" className={device === "mobile" ? "is-active" : ""} onClick={() => setDevice("mobile")} aria-label="Mobil görünüm"><Smartphone size={16} /></button>
-          </div>
-          <Link to={`/${loaderData.username}`} target="_blank"><Eye size={16} /> Önizle</Link>
-          <Link className="publish-button" to={`/${loaderData.username}`} target="_blank">Yayınla</Link>
+      <Link to={`/${loaderData.username}`} className="editor-back" aria-label="Profiline dön">
+        <ChevronLeft size={20} />
+      </Link>
+      <a
+        className="editor-address-pill"
+        href={`/${loaderData.username}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <span className={`save-dot is-${saveState}`} aria-hidden />
+        caka.app/{loaderData.username}
+        <ExternalLink size={13} aria-hidden />
+      </a>
+      {saveState === "conflict" || saveState === "error" ? (
+        <div className="editor-alert" role="alert">
+          {saveState === "conflict" ? (
+            <>
+              Sayfa başka bir yerde düzenlendi.
+              <button type="button" onClick={() => window.location.reload()}>Yenile</button>
+            </>
+          ) : (
+            "Kaydedilemedi — bağlantını kontrol et."
+          )}
         </div>
-      </header>
+      ) : null}
 
-      <aside className="editor-sidebar">
-        <h2>Blok ekle</h2>
-        <button type="button" onClick={() => add("link")}><Link2 size={17} /> Bağlantı</button>
-        <button type="button" onClick={() => add("social")}><Users size={17} /> Sosyal medya</button>
-        <button type="button" onClick={() => add("text")}><Type size={17} /> Metin</button>
-        <button type="button" onClick={() => add("image")}><ImageIcon size={17} /> Görsel</button>
-        <hr />
-        <h2>Sayfa</h2>
-        <button
-          type="button"
-          onClick={() => {
-            const themes = onboardingTemplates.map((item) => item.theme);
-            setTheme(themes[(themes.indexOf(theme) + 1) % themes.length]!);
-          }}
-        ><Palette size={17} /> Tema</button>
-        <button type="button"><BarChart3 size={17} /> Analitik</button>
-        <button type="button"><Settings size={17} /> Ayarlar</button>
-      </aside>
-
-      <section className={`editor-workspace is-${device}`} data-profile-theme={theme}>
+      <section
+        className={`editor-page ${device === "mobile" ? "is-mobile" : ""}`}
+        data-profile-theme={theme}
+      >
         <div className="editor-profile-layout">
           {profileBlock ? (
             <div
@@ -368,10 +382,74 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               onChange={applyGridChange}
               onManual={markSmManual}
             />
-            <button type="button" className="editor-add-tile" onClick={() => add("link")}><Plus size={20} /> Blok ekle</button>
+            <button type="button" className="editor-add-tile" onClick={() => setPanel("gallery")}>
+              <Plus size={20} /> Blok ekle
+            </button>
           </div>
         </div>
       </section>
+
+      <nav className="editor-toolbar" aria-label="Editör araçları">
+        <button
+          type="button"
+          data-tooltip="Tema"
+          aria-label="Tema"
+          className={panel === "theme" ? "is-active" : ""}
+          onClick={() => setPanel(panel === "theme" ? null : "theme")}
+        >
+          <Palette size={19} />
+        </button>
+        <span className="toolbar-sep" aria-hidden />
+        <button type="button" data-tooltip="Bağlantı ekle" aria-label="Bağlantı ekle" onClick={() => add("link")}>
+          <Link2 size={19} />
+        </button>
+        <button type="button" data-tooltip="Metin ekle" aria-label="Metin ekle" onClick={() => add("text")}>
+          <Type size={19} />
+        </button>
+        <button type="button" data-tooltip="Duyuru ekle" aria-label="Duyuru ekle" onClick={() => add("status")}>
+          <Megaphone size={18} />
+        </button>
+        <button type="button" data-tooltip="Görsel ekle" aria-label="Görsel ekle" onClick={() => add("image")}>
+          <ImageIcon size={19} />
+        </button>
+        <button
+          type="button"
+          data-tooltip="Blok galerisi"
+          aria-label="Blok galerisi"
+          className={panel === "gallery" ? "is-active" : ""}
+          onClick={() => setPanel(panel === "gallery" ? null : "gallery")}
+        >
+          <LayoutGrid size={19} />
+        </button>
+        <span className="toolbar-sep" aria-hidden />
+        <button
+          type="button"
+          data-tooltip={device === "desktop" ? "Mobil önizleme" : "Masaüstü görünümü"}
+          aria-label={device === "desktop" ? "Mobil önizleme" : "Masaüstü görünümü"}
+          className={device === "mobile" ? "is-active" : ""}
+          onClick={() => setDevice(device === "desktop" ? "mobile" : "desktop")}
+        >
+          {device === "desktop" ? <Smartphone size={18} /> : <Monitor size={19} />}
+        </button>
+      </nav>
+
+      {panel === "theme" ? (
+        <div className="theme-popover" role="group" aria-label="Tema seç">
+          {onboardingTemplates.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              className={theme === template.theme ? "is-active" : ""}
+              onClick={() => setTheme(template.theme)}
+            >
+              <span className={`swatch ${template.className}`} aria-hidden />
+              {template.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {panel === "gallery" ? <BlockGallery onPick={addFromGallery} onClose={() => setPanel(null)} /> : null}
 
       {selected ? (
         <Inspector
