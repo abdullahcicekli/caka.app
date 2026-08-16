@@ -5,11 +5,14 @@ import type { LandingContent } from "~/content/landing";
 
 type ClaimContent = LandingContent["hero"]["claim"];
 
-/**
- * Adres kapma formu: beyaz hap input + koyu CTA.
- * Şimdilik /login'e taşır; onboarding geldiğinde `action` içerikten değişir.
- */
-export function ClaimForm({ claim }: { claim: ClaimContent }) {
+interface ClaimFormProps {
+  claim: ClaimContent;
+  /** Bulunduğu renk bloğuna göre CTA varyantı (lime blokta koyu, mor blokta lime). */
+  buttonVariant?: "heroDark" | "lime";
+}
+
+/** Adres kapma formu: beyaz hap input + blok rengine uygun CTA. */
+export function ClaimForm({ claim, buttonVariant = "heroDark" }: ClaimFormProps) {
   return (
     <Form
       method="get"
@@ -28,7 +31,7 @@ export function ClaimForm({ claim }: { claim: ClaimContent }) {
           className="min-w-0 flex-1 bg-transparent font-medium text-murekkep outline-none placeholder:font-medium placeholder:text-murekkep"
         />
       </label>
-      <PillButton type="submit" variant="heroDark" className="shrink-0">
+      <PillButton type="submit" variant={buttonVariant} className="shrink-0">
         {claim.cta}
       </PillButton>
     </Form>

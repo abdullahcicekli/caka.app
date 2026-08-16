@@ -24,6 +24,17 @@ export interface MarqueeItem {
   caption: string;
 }
 
+export interface FooterColumn {
+  title: string;
+  links: readonly Cta[];
+}
+
+export interface SocialLink {
+  platform: "github" | "x" | "instagram";
+  href: string;
+  label: string;
+}
+
 export const landing = {
   nav: {
     items: [
@@ -58,6 +69,62 @@ export const landing = {
     title: "Caka sayfanı\ndakikalar içinde kur",
     body: "Sosyal hesaplarını, sitelerini, projelerini ve mağazanı tek bağlantıda topla. Her detayı kendin ayarla ya da hazır temayla başla.",
     cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
+  },
+  closingCta: {
+    title: "İnternetteki kendi\nköşeni bugün aç",
+    claim: {
+      domain: "caka.app/",
+      placeholder: "adin",
+      cta: "Ücretsiz başla",
+      action: "/onboarding",
+    },
+  },
+  footer: {
+    columns: [
+      {
+        title: "Ürün",
+        links: [
+          { label: "Nasıl çalışır", href: "#urun" },
+          { label: "Şablonlar", href: "#sablonlar" },
+          { label: "Örnekler", href: "#ornekler" },
+          { label: "Fiyat", href: "#fiyat" },
+        ],
+      },
+      {
+        title: "Kaynaklar",
+        links: [
+          { label: "SSS", href: "#sss" },
+          { label: "Destek", href: "mailto:destek@caka.app" },
+          { label: "Blog", href: "#blog" },
+        ],
+      },
+      {
+        title: "Şirket",
+        links: [
+          { label: "Hakkımızda", href: "#hakkimizda" },
+          { label: "İletişim", href: "mailto:merhaba@caka.app" },
+          { label: "Kariyer", href: "#kariyer" },
+        ],
+      },
+      {
+        title: "Yasal",
+        links: [
+          { label: "Gizlilik", href: "#gizlilik" },
+          { label: "Kullanım Şartları", href: "#kosullar" },
+          { label: "Çerezler", href: "#cerezler" },
+        ],
+      },
+    ] satisfies FooterColumn[],
+    social: [
+      { platform: "github", href: "https://github.com/caka-app", label: "GitHub" },
+      { platform: "x", href: "https://x.com/cakaapp", label: "X" },
+      {
+        platform: "instagram",
+        href: "https://instagram.com/caka.app",
+        label: "Instagram",
+      },
+    ] satisfies SocialLink[],
+    copyright: `© ${new Date().getFullYear()}`,
   },
 } as const;
 

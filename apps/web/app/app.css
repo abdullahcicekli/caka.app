@@ -31,6 +31,9 @@
      Favicon asset'lerinin zemini #3554ec'dir; token mavisi kılavuzu izler. */
   --color-kirec-koyu: #233917;
 
+  /* Türetilmiş: mor blok üzerindeki açık lila başlık rengi (footer mockup'ı) */
+  --color-mor-acik: #e2caed;
+
   /* Kılavuz radius'ları birebir (shadcn'in oransal ölçeğini sabitler) */
   --radius-lg: 8px;
   --radius-xl: 12px;

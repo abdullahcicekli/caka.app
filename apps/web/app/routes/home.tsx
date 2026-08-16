@@ -1,9 +1,11 @@
 import { env } from "cloudflare:workers";
 
 import type { Route } from "./+types/home";
+import { CtaSection } from "~/components/landing/cta-section";
 import { Hero } from "~/components/landing/hero";
 import { MinutesSection } from "~/components/landing/minutes-section";
 import { Navbar } from "~/components/landing/navbar";
+import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { landing } from "~/content/landing";
 import { parseSeedProfile } from "~/lib/profile-view";
@@ -54,7 +56,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <main>
         <Hero hero={landing.hero} />
         <MinutesSection minutes={landing.minutes} />
+        <CtaSection cta={landing.closingCta} />
       </main>
+      <SiteFooter footer={landing.footer} />
     </div>
   );
 }
