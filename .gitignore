@@ -2,3 +2,7 @@
 node_modules/
 *.tsbuildinfo
 *.log
+
+# Node/wrangler'ın depo köküne bıraktığı önbellekler
+node-compile-cache/
+update-check/
