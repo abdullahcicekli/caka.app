@@ -240,9 +240,19 @@ export async function claimUsername(
       layout: JSON.stringify(buildSeedLayout(user.name, avatarAssetId)),
     });
     return { ok: true, username: result.username };
-  } catch {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
     // Unique ihlali: kontrol ile insert arasında başkası kaptı (AE1).
-    return { ok: false, error: "taken" };
+    if (msg.includes("UNIQUE constraint failed: profile.username")) {
+      return { ok: false, error: "taken" };
+    }
+    // Çift gönderim: aynı kullanıcının profili zaten var — başarı say.
+    if (msg.includes("UNIQUE constraint failed: profile.user_id")) {
+      const existing = await getProfileByUserId(env, user.id);
+      if (existing) return { ok: true, username: existing.username };
+    }
+    // Diğer hatalar (ör. şema uyumsuzluğu) "taken" maskesi takmasın.
+    throw err;
   }
 }
 

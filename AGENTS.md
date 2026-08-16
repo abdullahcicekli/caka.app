@@ -11,7 +11,7 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 | `pnpm dev` | Vite + Miniflare (lokal D1/R2); port 5173 doluysa 5174'e kayar |
 | `pnpm typecheck` | Her değişiklikten sonra çalıştır; temiz olmalı |
 | `pnpm test` | Vitest (`packages/shared`) |
-| `pnpm deploy` | Build + `wrangler deploy` → caka.app. `pnpm --filter @caka/web run deploy` ile aynı; **`run` sözcüğü şart** (pnpm'in rezerve `deploy` komutu script'i gölgeler) |
+| `pnpm deploy` | Build + bekleyen D1 migration'larını `--remote` uygula + `wrangler deploy` → caka.app. `pnpm --filter @caka/web run deploy` ile aynı; **`run` sözcüğü şart** (pnpm'in rezerve `deploy` komutu script'i gölgeler) |
 | `pnpm exec wrangler d1 migrations apply caka-db --local` | `apps/web` içinden; şema değişince |
 | `pnpm exec wrangler types` | `wrangler.jsonc` değişince Env tiplerini yeniden üret |
 
@@ -60,7 +60,8 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
   listeye ekle + gerekiyorsa footer/nav linkini `content/landing.ts`'te güncelle.
   Public pazarlama sayfalarına `SiteFooter` eklenir; `/:username` sayfalarına eklenmez.
 - **DB değişikliği:** `packages/db/src/schema.ts` → `apps/web` içinde
-  `pnpm exec drizzle-kit generate --name <ad>` → `--local` ve `--remote` apply.
+  `pnpm exec drizzle-kit generate --name <ad>` → `--local` apply; `--remote`
+  apply artık `pnpm deploy` içinde otomatik (elle de çalıştırılabilir).
 - **Loader'da env:** `import { env } from "cloudflare:workers"`; sunucu yardımcıları
   `apps/web/server/`'da yaşar (route dosyasına iş mantığı yazma).
 - **Oturum okuma:** `getSession(env, request)` (`server/auth.ts`);

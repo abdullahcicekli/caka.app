@@ -50,15 +50,15 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let message = "Bir şeyler ters gitti";
+  let details = "Beklenmeyen bir hata oluştu. Lütfen tekrar dene.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? "Sayfa bulunamadı" : "Bir şeyler ters gitti";
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? "Aradığın sayfa yok ya da taşınmış olabilir."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
@@ -67,8 +67,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
+      <h1 className="text-2xl font-bold">{message}</h1>
+      <p className="mt-2">{details}</p>
+      <a href="/" className="mt-6 inline-block font-medium underline">
+        Ana sayfaya dön
+      </a>
       {stack && (
         <pre className="w-full p-4 overflow-x-auto">
           <code>{stack}</code>

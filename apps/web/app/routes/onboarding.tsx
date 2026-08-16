@@ -42,7 +42,14 @@ export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(env, request);
   if (!session) throw redirect("/onboarding");
   const form = await request.formData();
-  const result = await claimUsername(env, session.user, String(form.get("u") ?? ""));
+  let result;
+  try {
+    result = await claimUsername(env, session.user, String(form.get("u") ?? ""));
+  } catch (err) {
+    // Beklenmeyen hata sayfayı 500'e düşürmesin; satır içi Türkçe mesaj göster.
+    console.error("claim failed:", err instanceof Error ? err.message : err);
+    return data({ error: "hata" as const }, { status: 500 });
+  }
   if (!result.ok) return data({ error: result.error }, { status: 409 });
   throw redirect("/onboarding/kurulum/profil");
 }
@@ -101,7 +108,9 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
   const takenError =
     params.get("error") === "taken" || actionData?.error === "taken"
       ? "Bu adres az önce alındı, başka bir tane dene"
-      : null;
+      : params.get("error") === "hata" || actionData?.error === "hata"
+        ? "Bir şeyler ters gitti, lütfen tekrar dene"
+        : null;
 
   const ready = availability.state === "available";
   const hasError = availability.state === "unavailable" || takenError !== null;

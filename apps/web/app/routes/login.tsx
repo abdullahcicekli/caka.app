@@ -19,12 +19,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
   if (!session) return null;
   const profile = await getProfileByUserId(env, session.user.id);
+  // Oturum var ama profil yoksa yönlendirme yapma: /onboarding'den gelen
+  // "giriş yap" tıklaması sessiz bir döngüye girmesin, kullanıcı isterse
+  // farklı hesapla giriş yapabilsin.
+  if (!profile) return null;
   throw redirect(
-    profile
-      ? profile.onboardingCompletedAt
-        ? "/edit"
-        : "/onboarding/kurulum/profil"
-      : "/onboarding",
+    profile.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil",
   );
 }
 

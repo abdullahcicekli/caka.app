@@ -43,7 +43,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   const desired = readClaimCookie(request);
   if (!desired) throw redirect("/onboarding");
 
-  const result = await claimUsername(env, session.user, desired);
+  let result;
+  try {
+    result = await claimUsername(env, session.user, desired);
+  } catch (err) {
+    // Beklenmeyen hata (ör. DB): çerezi temizleyip Türkçe mesajla geri dön;
+    // aksi halde her yenilemede aynı 500 tekrar eder. PII loglanmaz.
+    console.error("claim failed:", err instanceof Error ? err.message : err);
+    throw redirect(`/onboarding?error=hata&u=${encodeURIComponent(desired)}`, {
+      headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
+    });
+  }
   if (!result.ok) {
     throw redirect(`/onboarding?error=taken&u=${encodeURIComponent(desired)}`, {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
