@@ -4,10 +4,56 @@ import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
 import { RichTextView } from "~/components/rich-text";
+import {
+  githubDayTitle,
+  githubFootHint,
+  githubHeatmapAriaLabel,
+  githubTotalLine,
+} from "~/content/github";
 import { platformById } from "~/content/onboarding";
+import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
 import { ProfileAvatar } from "./profile-avatar";
 
-export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
+function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
+  return (
+    <>
+      {/* role="img": grid SR'a tek etiketle okunur, tek tek kareler gürültü
+          yapmaz. 52+ haftanın tamamı DOM'a basılır; kart genişliğine göre
+          fazlası container query ile gizlenir (JS ölçümü/hydration derdi yok). */}
+      <span className="gh-heatmap" role="img" aria-label={githubHeatmapAriaLabel(calendar.total)}>
+        {calendar.weeks.map((week, index) => (
+          <span className="gh-week" key={index}>
+            {week.days.map((day, dayIndex) => (
+              // key sıradan gelir: bozuk payload'da date boş/tekrarlı
+              // olabilir; hafta 7 günlük sabit dizidir, sıra kararlıdır.
+              <i
+                key={dayIndex}
+                className="gh-day"
+                data-level={day.level}
+                title={githubDayTitle(day.count, day.date)}
+              />
+            ))}
+          </span>
+        ))}
+      </span>
+      {/* Kartın tamamı zaten bir <a> (mobil UX: her yeri tıklanabilir); içine
+          ikinci bir <a> koymak geçersiz HTML olur. İpucu bu yüzden bağlantı
+          değil, aynı hizada duran soluk bir metindir. */}
+      <span className="gh-foot" aria-hidden>
+        <span>{githubTotalLine(calendar.total)}</span>
+        <span className="gh-foot-hint">{githubFootHint}</span>
+      </span>
+    </>
+  );
+}
+
+export function ProfileBlockCard({
+  block,
+  githubCalendars,
+}: {
+  block: ProfileBlock;
+  githubCalendars?: GithubCalendarMap;
+}) {
   if (block.type === "profile") {
     return (
       <article className="profile-block profile-block-profile">
@@ -24,8 +70,15 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
 
   if (block.type === "social") {
     const platform = platformById(block.data.platform);
+    // GitHub kartında görsel odak katkı grafiğidir: takvim verisi varsa
+    // ogImage hiç basılmaz. Veri yoksa (token yok / hata / bilinmeyen
+    // kullanıcı) kart eski davranışına döner.
+    const calendar =
+      block.data.platform === "github" && block.data.handle
+        ? githubCalendars?.[githubLoginKey(block.data.handle)]
+        : undefined;
     // og görseli her boyutta saklanır; yalnız 1x1'den büyük kartlarda gösterilir.
-    const ogImage = block.size !== "1x1" ? block.data.ogImage : "";
+    const ogImage = block.size !== "1x1" && !calendar ? block.data.ogImage : "";
     const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
@@ -37,7 +90,12 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
         </span>
       </>
     );
-    const content = ogImage ? (
+    const content = calendar ? (
+      <>
+        <span className="social-head">{head}</span>
+        <GithubHeatmap calendar={calendar} />
+      </>
+    ) : ogImage ? (
       <>
         <span className="social-head">{head}</span>
         <img className="social-og" src={ogImage} alt="" loading="lazy" draggable={false} />
@@ -45,7 +103,7 @@ export function ProfileBlockCard({ block }: { block: ProfileBlock }) {
     ) : (
       head
     );
-    const className = `profile-block profile-block-social${ogImage ? " has-og" : ""}`;
+    const className = `profile-block profile-block-social${ogImage ? " has-og" : ""}${calendar ? " has-gh" : ""}`;
     if (block.data.url) {
       return (
         <a className={className} href={block.data.url} target="_blank" rel="noreferrer">
@@ -110,10 +168,13 @@ export function ProfileCanvas({
   layout,
   theme,
   compact = false,
+  githubCalendars,
 }: {
   layout: ProfileLayout;
   theme: ProfileTheme;
   compact?: boolean;
+  /** login → GitHub katkı takvimi (loader doldurur; yoksa özellik kapalı) */
+  githubCalendars?: GithubCalendarMap;
 }) {
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
@@ -143,7 +204,7 @@ export function ProfileCanvas({
                 className={`profile-grid-item size-${block.size} ${pos ? "has-pos" : ""}`}
                 style={style}
               >
-                <ProfileBlockCard block={block} />
+                <ProfileBlockCard block={block} githubCalendars={githubCalendars} />
               </div>
             );
           })}

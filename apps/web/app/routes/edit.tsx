@@ -45,6 +45,7 @@ import {
   type SocialPlatform,
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
+import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 
@@ -62,12 +63,15 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!published) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
   // Editör her zaman taslağı açar; taslak yoksa yayınlanmış hâlden devam eder.
   const draft = profile.draftLayout ? parseProfileLayout(profile.draftLayout) : null;
+  const layout = ensureLayoutPositions(draft ?? published);
   return {
     username: profile.username,
-    layout: ensureLayoutPositions(draft ?? published),
+    layout,
     theme: normalizeTheme(draft ? (profile.draftTheme ?? profile.theme) : profile.theme),
     version: profile.version,
     hasDraft: Boolean(draft),
+    // Editör WYSIWYG kalsın: GitHub kartı canlıdaki heatmap'iyle görünür.
+    githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
   };
 }
 
@@ -739,7 +743,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     onClose={() => setSelectedId(null)}
                   />
                 ) : (
-                  <ProfileBlockCard block={block} />
+                  <ProfileBlockCard block={block} githubCalendars={loaderData.githubCalendars} />
                 )
               }
             />

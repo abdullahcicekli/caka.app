@@ -22,6 +22,13 @@
       "when": 1786908841194,
       "tag": "0002_draft-layout",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1786916606370,
+      "tag": "0003_github-calendar",
+      "breakpoints": true
     }
   ]
 }

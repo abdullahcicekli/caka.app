@@ -59,6 +59,20 @@ export const usernameRedirect = sqliteTable(
 );
 
 /**
+ * GitHub katkı takvimi önbelleği. Login başına TEK global kayıt: Cache API
+ * colo-başına çalıştığı için bilerek D1 seçildi — GitHub token bütçesi kolo
+ * sayısıyla çarpılmaz. `payload` normalize edilmiş takvim JSON'u; kullanıcı
+ * yoksa null (negatif önbellek). `fetchedAt` başarılı/başarısız son deneme
+ * zamanıdır; bayatlık eşiği uygulama katmanındadır (server/github.ts).
+ */
+export const githubCalendar = sqliteTable("github_calendar", {
+  /** Küçük harfe normalize edilmiş GitHub login'i */
+  login: text("login").primaryKey(),
+  payload: text("payload"),
+  fetchedAt: timestampMs("fetched_at"),
+});
+
+/**
  * R2 nesne envanteri (R16/R17). `id` aynı zamanda düz R2 anahtarıdır (KTD10).
  * Temizlik yalnızca hesap silmede; kayıt sırasında diff/silme yapılmaz.
  */

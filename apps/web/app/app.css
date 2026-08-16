@@ -30,6 +30,11 @@
   /* Editör uyarısı: yayına engel olan eksik blokların çerçevesi/rozeti */
   --color-uyari: #d97706;
 
+  /* GitHub katkı grafiği taban yeşili (GitHub'ın kendi yeşiline yakın).
+     4 kademe + boş kare bu tek token'dan kart zeminiyle color-mix'lenerek
+     türetilir; böylece 6 profil temasının hepsinde okunur kalır. */
+  --color-gh: #2ea043;
+
   /* Türetilmiş: lime blok üzerindeki kontrast rengi (landing mockup'ından örneklendi).
      Favicon asset'lerinin zemini #3554ec'dir; token mavisi kılavuzu izler. */
   --color-kirec-koyu: #233917;
@@ -763,6 +768,107 @@
 .profile-block-social .social-og { width: 100%; min-height: 0; flex: 1; border-radius: var(--radius-lg); object-fit: cover; }
 .profile-block-social strong { font-size: 15px; }
 .profile-block-social small { overflow: hidden; color: var(--profile-card-muted, var(--profile-muted)); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+
+/* GitHub katkı grafiği (heatmap). Kart bir boyut konteyneridir: görünen hafta
+   sayısı ve kare boyutu kartın KENDİ ölçüsünden türetilir — JS ölçümü yok,
+   hydration kayması yok. 52+ haftanın tamamı DOM'dadır; en yeni haftalar
+   listenin SONUNDA olduğundan fazlası nth-last-child ile baştan gizlenir. */
+.profile-block-social.has-gh {
+  container-type: size;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 10px;
+  /* Tek satırlık bento kartına (156px) baş + 7 sıra kare sığsın diye dikey
+     dolgu hafifçe kısılır; kart yüksekliği DEĞİŞMEZ. */
+  padding-block: 14px;
+}
+.profile-block-social.has-gh .social-head { flex: none; }
+.profile-block-social.has-gh .gh-heatmap {
+  display: flex;
+  min-height: 0;
+  justify-content: flex-start;
+  margin-top: auto;
+  gap: 3px;
+}
+.profile-block-social.has-gh .gh-week {
+  display: flex;
+  min-width: 8px;
+  max-width: 8px; /* tek satırlık kartta 7 sıra ancak 8px kareyle sığar */
+  flex: 1 1 8px;
+  flex-direction: column;
+  gap: 3px;
+}
+.profile-block-social.has-gh .gh-day {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  /* Boş gün: kart zeminine az yeşil karışır — her temada zeminden seçilir */
+  background: color-mix(in srgb, var(--color-gh) 14%, var(--profile-card));
+}
+.profile-block-social.has-gh .gh-day[data-level="1"] { background: color-mix(in srgb, var(--color-gh) 38%, var(--profile-card)); }
+.profile-block-social.has-gh .gh-day[data-level="2"] { background: color-mix(in srgb, var(--color-gh) 58%, var(--profile-card)); }
+.profile-block-social.has-gh .gh-day[data-level="3"] { background: color-mix(in srgb, var(--color-gh) 80%, var(--profile-card)); }
+.profile-block-social.has-gh .gh-day[data-level="4"] { background: var(--color-gh); }
+
+/* Alt satır: düşük kontrastlı toplam + "GitHub ↗" ipucu. Yalnız 2+ satırlık
+   kartlarda görünür (tek satıra sığmıyor). Kart bir <a> olduğundan ipucu
+   bağlantı değildir (iç içe <a> geçersiz) — tıklama kartın tamamından çalışır. */
+.profile-block-social.has-gh .gh-foot {
+  display: none;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  flex: none;
+  flex-direction: row;
+  gap: 12px;
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 11px;
+  white-space: nowrap;
+}
+.profile-block-social.has-gh .gh-foot > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.profile-block-social.has-gh .gh-foot .gh-foot-hint { flex: none; }
+
+/* Görünen hafta sayısı kart içi genişliğe göre (content-box):
+   <150px → 10 hafta (mobil 1x1 emniyeti; 13 hafta 8px kareyle 140px ister),
+   ≥150px → 13 · ≥300px → 26 · ≥620px → 52. En yeni haftalar hep görünür. */
+.profile-block-social.has-gh .gh-week:nth-last-child(n + 11) { display: none; }
+@container (min-width: 150px) {
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 11) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 14) { display: none; }
+}
+@container (min-width: 300px) {
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 14) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 27) { display: none; }
+}
+@container (min-width: 620px) {
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 27) { display: flex; }
+  /* GraphQL 53. (kısmi) haftayı da döndürebilir; 52'den eskisi gizli kalır */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 53) { display: none; }
+}
+
+/* 2+ satırlık kartta dikey alan var: kareler 12px'e kadar büyür, alt satır
+   (toplam + ipucu) görünür olur. 200px eşiği tek satır (~126px içerik) ile
+   çift satır (~296px) arasını ayırır. */
+@container (min-height: 200px) {
+  .profile-block-social.has-gh { gap: 12px; padding-block: 18px; }
+  .profile-block-social.has-gh .gh-week { max-width: 12px; }
+  .profile-block-social.has-gh .gh-foot { display: flex; }
+}
+
+/* Dar kartta heatmap HİÇ gösterilmez, kart sade GitHub kartına (ikon + ad)
+   döner — kırpılmış yarım grid en kötü seçenek. Gerekli içerik yüksekliği:
+   36 (platform-mark) + 10 (gap) + 7×8px kare + 6×3px boşluk = 74 → toplam
+   120px. Container query content-box ölçer; tek satırlık kartların içerik
+   yükseklikleri: masaüstü 156−28−2 = 126 (sığar), mobil 138−28−2 = 108 ve
+   dashboard önizleme 120−28−2 = 90 (sığmaz) → eşik 119px. Kare 8px'in
+   altına düşürülmez (spec alt sınırı). */
+@container (max-height: 119px) {
+  .profile-block-social.has-gh { align-items: center; flex-direction: row; padding-block: 18px; }
+  .profile-block-social.has-gh .social-head { flex: 1; }
+  .profile-block-social.has-gh .gh-heatmap,
+  .profile-block-social.has-gh .gh-foot { display: none; }
+}
 .profile-block-link { justify-content: center; padding: 18px; flex-direction: column; }
 /* Bağlantı oku tema CTA renginde "buton" çipi olur */
 .profile-block-link > span {

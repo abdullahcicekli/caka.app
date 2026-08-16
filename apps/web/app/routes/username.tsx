@@ -25,6 +25,7 @@ import {
   validateUsername,
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
+import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
 
@@ -136,14 +137,16 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     theme: normalizeTheme(p.theme),
     layout: ensureLayoutPositions(layout),
     isOwner: session?.user.id === p.userId,
+    // GitHub katkı grafikleri: D1 önbelleğinden okunur; token yoksa boş.
+    githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
-  const { username, isOwner, layout, theme } = loaderData;
+  const { username, isOwner, layout, theme, githubCalendars } = loaderData;
   return (
     <main className="relative min-h-svh">
-      <ProfileCanvas layout={layout} theme={theme} />
+      <ProfileCanvas layout={layout} theme={theme} githubCalendars={githubCalendars} />
       {/* Marka rozeti sağ üstte: sahip için hızlı menü (Düzenle/Panel),
           ziyaretçi için ana sayfa bağlantısı. Logo beyaz yuvarlak zemin
           üzerinde durur; koyu/açık her temada okunur. */}

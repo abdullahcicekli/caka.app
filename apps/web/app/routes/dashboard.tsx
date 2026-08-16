@@ -24,6 +24,7 @@ import {
   type ProfileBlock,
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
+import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/dashboard";
 
@@ -50,6 +51,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Önizleme yayındaki hâli gösterir; taslak varsa kullanıcı uyarılır.
     // Ölçüt editörle (routes/edit.tsx) aynı olmalı: okunamayan taslak yok sayılır.
     hasDraft: profile.draftLayout ? parseProfileLayout(profile.draftLayout) !== null : false,
+    // Önizlemedeki GitHub kartları da canlı sayfayla aynı grafiği göstersin.
+    githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
     account: {
       name: card?.data.name || profile.username,
       username: profile.username,
@@ -59,7 +62,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { username, layout, theme, account, hasDraft } = loaderData;
+  const { username, layout, theme, account, hasDraft, githubCalendars } = loaderData;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -132,7 +135,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="dashboard-preview" aria-hidden>
           <div className="dashboard-preview-scale">
-            <ProfileCanvas layout={layout} theme={theme} compact />
+            <ProfileCanvas layout={layout} theme={theme} compact githubCalendars={githubCalendars} />
           </div>
         </div>
       </section>
