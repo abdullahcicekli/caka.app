@@ -1,0 +1,21 @@
+// U19 bu dosyayı doldurur; çerez tablosu `COOKIE_INVENTORY`'den (KTD21)
+// beslenecek. Yer tutucu işareti bilinçlidir — bkz.
+// `content/legal/gizlilik.ts` başındaki not.
+import type { LegalSection } from "@caka/shared";
+
+export const cerezPolitikasiSections: LegalSection[] = [
+  {
+    id: "hazirlaniyor",
+    heading: "Metin hazırlanıyor",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: [
+          "Çerez politikasının gövdesi henüz yazılmadı: ",
+          "[ÇEREZ POLİTİKASI GÖVDESİ]",
+          ".",
+        ],
+      },
+    ],
+  },
+];

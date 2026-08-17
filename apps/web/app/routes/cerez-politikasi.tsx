@@ -1,32 +1,39 @@
-// Çerez Politikası. Şimdilik iskelet: gövde metni U19'da gelir.
-import { Navbar } from "~/components/landing/navbar";
-import { SiteFooter } from "~/components/landing/site-footer";
-import { landing } from "~/content/landing";
+// Çerez Politikası. Kabuk `LegalPage`, gövde metni
+// `content/legal/cerez-politikasi.ts` (U19 doldurur).
+import { env } from "cloudflare:workers";
+import { LEGAL_DOCUMENTS } from "@caka/shared";
+
+import { LegalPage, legalPlaceholderGate } from "~/components/legal-page";
+import { cerezPolitikasiSections } from "~/content/legal/cerez-politikasi";
 import { buildSeoMeta } from "~/lib/seo";
+import { getNavUser } from "../../server/nav-user";
 import type { Route } from "./+types/cerez-politikasi";
+
+const doc = LEGAL_DOCUMENTS["cerez-politikasi"];
 
 export function meta({}: Route.MetaArgs) {
   return buildSeoMeta({
     title: "Çerez Politikası — Caka",
     description:
       "Caka'nın kullandığı çerezler: adı, amacı, kategorisi, süresi ve birinci/üçüncü taraf bilgisi.",
-    path: "/cerez-politikasi",
+    path: doc.path,
   });
 }
 
-export default function CerezPolitikasi() {
+export async function loader({ request }: Route.LoaderArgs) {
+  // R33: doldurulmamış alan varsa prod'da 404 atar, dev'de uyarı döner.
+  const warnings = legalPlaceholderGate(doc, cerezPolitikasiSections);
+  const user = await getNavUser(env, request);
+  return { user, warnings };
+}
+
+export default function CerezPolitikasi({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="bg-kirec">
-      <Navbar items={landing.nav.items} login={landing.nav.login} cta={landing.nav.cta} />
-      <main className="mx-auto max-w-3xl px-6 py-20 sm:px-10">
-        <h1 className="text-3xl font-semibold text-murekkep sm:text-4xl">
-          Çerez Politikası
-        </h1>
-        <p className="mt-6 text-lg text-murekkep/70">
-          Bu sayfanın metni hazırlanıyor.
-        </p>
-      </main>
-      <SiteFooter footer={landing.footer} />
-    </div>
+    <LegalPage
+      document={doc}
+      sections={cerezPolitikasiSections}
+      warnings={loaderData.warnings}
+      user={loaderData.user}
+    />
   );
 }
