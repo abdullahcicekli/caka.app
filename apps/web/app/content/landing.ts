@@ -33,7 +33,7 @@ export interface FooterColumn {
 }
 
 export interface SocialLink {
-  platform: "github" | "x" | "instagram";
+  platform: "github" | "instagram";
   href: string;
   label: string;
 }
@@ -135,7 +135,7 @@ export const landing = {
       {
         question: "İçeriğimi dışa aktarabilir veya hesabımı silebilir miyim?",
         answer:
-          "İkisi de şu an panelden kendi başına yapılmıyor. Verilerinin bir kopyasını istemek veya hesabının silinmesini talep etmek için KVKK m.11 kapsamında destek@caka.app adresine yazman yeterli.",
+          "İkisi de şu an panelden kendi başına yapılmıyor. Verilerinin bir kopyasını istemek veya hesabının silinmesini talep etmek için KVKK m.11 kapsamında hello@caka.app adresine yazman yeterli.",
         link: { label: "Gizlilik Metni", href: "/gizlilik" },
       },
     ] satisfies readonly FaqItem[],
@@ -150,16 +150,16 @@ export const landing = {
     },
   },
   footer: {
-    // Yalnızca çalışan hedefler: tek gerçek anchor (#urun), iki gerçek posta
-    // kutusu ve üç yayındaki hukuki route (R23). Sütun sayısı azaldığı için
-    // tek bağlantılı sütunlar "Caka" altında birleştirildi.
+    // Yalnızca çalışan hedefler: tek gerçek anchor (#urun), tek gerçek posta
+    // kutusu (hello@caka.app) ve üç yayındaki hukuki route (R23).
+    // `destek@` ve `merhaba@` yönlendirilmiyordu; iki ölü bağlantı yerine tek
+    // çalışan iletişim adresi bırakıldı.
     columns: [
       {
         title: "Caka",
         links: [
           { label: "Nasıl çalışır", href: "#urun" },
-          { label: "Destek", href: "mailto:destek@caka.app" },
-          { label: "İletişim", href: "mailto:merhaba@caka.app" },
+          { label: "İletişim", href: "mailto:hello@caka.app" },
         ],
       },
       {
@@ -171,9 +171,16 @@ export const landing = {
         ],
       },
     ] satisfies FooterColumn[],
+    // Yalnızca var olduğu doğrulanmış hesaplar. `github.com/caka-app` ve
+    // `x.com/cakaapp` 404 dönüyordu: ilki gerçek depoyla değiştirildi,
+    // ikincisi kaldırıldı. Bu liste `home.tsx`'teki Organization
+    // şemasının `sameAs` alanını da besler — ölü hesap ilan edilmemeli.
     social: [
-      { platform: "github", href: "https://github.com/caka-app", label: "GitHub" },
-      { platform: "x", href: "https://x.com/cakaapp", label: "X" },
+      {
+        platform: "github",
+        href: "https://github.com/abdullahcicekli/caka.app",
+        label: "GitHub",
+      },
       {
         platform: "instagram",
         href: "https://instagram.com/caka.app",

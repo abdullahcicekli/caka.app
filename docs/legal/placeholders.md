@@ -15,20 +15,7 @@ yazılmaz (`AGENTS.md`, durum git'ten okunur).
 
 ---
 
-## 1. Şirket kimliği — sen doldurabilirsin
-
-Bunlar hukuki yorum gerektirmiyor; işletmenin gerçek bilgileri.
-
-| Alan | Nerede | Ne gerekiyor |
-|---|---|---|
-| `[VERİ SORUMLUSU UNVANI]` | `gizlilik.ts` §1 (2 yer), `kullanim-kosullari.ts` §1 | Şahıs işletmesiyse ad-soyad, şirketse tam ticari unvan. Footer'daki copyright satırı da bunu kullanacak (U26). |
-| `[VERGİ / MERSİS NO]` | `gizlilik.ts` §1 | Vergi numarası; şirketse MERSİS numarası da. |
-| `[POSTA ADRESİ]` | `gizlilik.ts` §1 | KVKK m.10 veri sorumlusu kimliği için tebligata elverişli adres. |
-| `[KVKK BAŞVURU E-POSTASI]` | `gizlilik.ts` §1, §8, §10; `cerez-politikasi.ts` §7 | İlgili kişi başvurularının düşeceği kutu. Ayrı bir adres (`kvkk@caka.app`) mı yoksa `destek@caka.app` mi — karar senin, ama kutu **gerçekten okunmalı**: metin 30 gün içinde yanıt taahhüdü veriyor. |
-| `[İHLAL BİLDİRİM E-POSTASI]` | `kullanim-kosullari.ts` §5, §7, §8, §14 | Telif/içerik ihlali bildirimleri ve hesap askıya alma itirazları. `[KVKK BAŞVURU E-POSTASI]` ile aynı kutu olabilir; ayrı olması daha derli toplu. |
-| `[YAŞ SINIRI]` | `gizlilik.ts` §10, `kullanim-kosullari.ts` §2 | Asgari kullanım yaşı. Tek karar, iki belgede kullanılıyor. |
-
-## 2. Hukuki inceleme gerektirenler — avukat (OQ3)
+## 1. Hukuki inceleme gerektirenler — avukat (OQ3)
 
 Bunları kendimiz yazmadık. Sorumluluk sınırı ve yetki kaydı kullanıcıyı
 doğrudan bağlayan maddeler; taslak üretip "avukat sonra bakar" demek, yanlış
@@ -40,7 +27,27 @@ maddenin yayına çıkma riskini taşır.
 | `[UYGULANACAK HUKUK VE YETKİLİ MAHKEME — AVUKAT İNCELEMESİ]` | `kullanim-kosullari.ts` §13 | Tüketici hakem heyeti ve tüketici mahkemesi yolları saklı tutuldu. |
 | `[SAKLAMA SÜRELERİ]` | `gizlilik.ts` §7 | Repodan bilinen teknik süreler (30 günlük adres yönlendirmesi, 7 günlük oturum, 6/24 saatlik GitHub önbelleği) zaten yazılı. Eksik olan: hesap kapandıktan sonra veri ve yedeklerin ne kadar tutulacağı, fatura/kayıt yükümlülükleri. |
 
-## 3. Yurt dışına aktarım — sözleşme süreci (OQ2a)
+### Açık uyum boşluğu: veri sorumlusunun kimliği
+
+Bu bir köşeli parantez alanı değil — yayın kapısını tetiklemez — ama avukatın
+bilmesi gereken bilinçli bir eksiktir.
+
+KVKK m.10 ve Aydınlatma Tebliği m.5, veri sorumlusunun **kimliğinin**
+bildirilmesini arar. Yayındaki metin veri sorumlusu olarak yalnızca
+**caka.app**'i gösteriyor; oysa bir alan adı ne gerçek ne tüzel kişidir.
+Sebebi şu: Caka'nın arkasında bugün kurulmuş bir tüzel kişilik, ticari faaliyet
+veya sicil kaydı yok, sahibi de kişisel adını ve ev adresini yayınlamamayı
+tercih etti. Uydurma bir unvan yazmak yerine `gizlilik.ts` §1 bu eksiği açıkça
+kabul ediyor ve iletişimi tek çalışan kutuya (`hello@caka.app`) bağlıyor.
+
+**Ne zaman çözülmeli:** ticarileşmeden önce ya da en geç onunla birlikte. O
+noktada bir tüzel kişilik (veya şahıs işletmesi) kurulacak ve 6563 sayılı
+Kanun'un m.3 tanıtıcı bilgi yükümlülükleri de devreye girecek: unvan, MERSİS
+numarası, tebligata elverişli adres ve iletişim bilgilerinin sitede
+gösterilmesi. Aynı bilgiler `gizlilik.ts` §1 tablosuna ve
+`kullanim-kosullari.ts` §1'e girer.
+
+## 2. Yurt dışına aktarım — sözleşme süreci (OQ2a)
 
 | Alan | Nerede | Not |
 |---|---|---|

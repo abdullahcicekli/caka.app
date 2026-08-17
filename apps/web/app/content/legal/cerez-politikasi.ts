@@ -549,7 +549,7 @@ export const cerezPolitikasiSections: LegalSection[] = [
           { kind: "strong", text: "Sorular ve başvurular. " },
           "Çerezler hakkındaki sorularını ve kişisel verilerine ilişkin " +
             "taleplerini ",
-          { kind: "strong", text: "[KVKK BAŞVURU E-POSTASI]" },
+          { kind: "strong", text: "hello@caka.app" },
           " adresine yazabilirsin. Başvurunun nasıl işlediği ve KVKK m.11 " +
             "kapsamındaki hakların ",
           {

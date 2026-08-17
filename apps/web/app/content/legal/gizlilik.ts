@@ -22,25 +22,43 @@ export const gizlilikSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           "Bu metin, Caka'yı (caka.app) kullanırken kişisel verilerinin nasıl " +
-            "işlendiğini anlatır. 6698 sayılı Kişisel Verilerin Korunması " +
-            "Kanunu (KVKK) anlamında veri sorumlusu, Caka'yı işleten ",
-          { kind: "strong", text: "[VERİ SORUMLUSU UNVANI]" },
-          " tüzel kişiliğidir.",
+            "işlendiğini anlatır. Caka bir şirket değil, ",
+          { kind: "strong", text: "açık kaynaklı kişisel bir projedir" },
+          ". Siteyi caka.app olarak işletiyoruz; verinin hangi amaçla ve nasıl " +
+            "işleneceğine karar veren de biziz. 6698 sayılı Kişisel Verilerin " +
+            "Korunması Kanunu (KVKK) anlamında veri sorumlusu sıfatı buradan " +
+            "doğar ve bu metindeki taahhütlerin muhatabı biziz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Eksik olanı da olduğu gibi yazalım. " },
+          "KVKK m.10, veri sorumlusunun ",
+          { kind: "strong", text: "kimliğinin" },
+          " bildirilmesini ister; bir alan adı ise ne gerçek ne de tüzel " +
+            "kişidir. Caka'nın arkasında bugün kurulmuş bir tüzel kişilik yok, " +
+            "ticari bir faaliyet ve buna bağlı bir sicil kaydı da yok. Bu " +
+            "yüzden aşağıda bir unvan, vergi veya MERSİS numarası " +
+            "göremezsin: olmayan bir şirketin bilgisini uydurmaktansa eksiği " +
+            "söylemeyi seçtik. Yani bu bölüm, m.10'daki kimlik bilgisini " +
+            "bugün karşılamıyor; ürün ticarileştiğinde ve bir tüzel kişilik " +
+            "kurulduğunda burası o bilgiyle güncellenecektir. Bu arada " +
+            "başvurularının düşeceği kutu gerçek ve okunuyor.",
         ],
       },
       {
         kind: "table",
         columns: ["Bilgi", "Değer"],
         rows: [
-          [["Unvan"], ["[VERİ SORUMLUSU UNVANI]"]],
-          [["Vergi / MERSİS numarası"], ["[VERGİ / MERSİS NO]"]],
-          [["Posta adresi"], ["[POSTA ADRESİ]"]],
-          [["KVKK başvuru e-postası"], ["[KVKK BAŞVURU E-POSTASI]"]],
+          [["Siteyi işleten"], ["caka.app — açık kaynaklı kişisel proje"]],
+          [["İletişim ve KVKK başvuru adresi"], ["hello@caka.app"]],
           [["Web sitesi"], ["caka.app"]],
         ],
         caption:
-          "Köşeli parantez içindeki alanlar yayın öncesi doldurulur; " +
-          "doldurulmadan bu sayfa yayına alınmaz.",
+          "Caka'ya ulaşmanın tek yolu bu e-posta adresidir; ilgili kişi " +
+          "başvuruları da aynı kutuya düşer. Posta adresi yayınlamıyoruz, " +
+          "çünkü ortada bir işyeri değil kişisel bir ev adresi olurdu.",
       },
       {
         kind: "paragraph",
@@ -662,7 +680,7 @@ export const gizlilikSections: LegalSection[] = [
         text: [
           { kind: "strong", text: "Başvuru. " },
           "Taleplerini ",
-          { kind: "strong", text: "[KVKK BAŞVURU E-POSTASI]" },
+          { kind: "strong", text: "hello@caka.app" },
           " adresine yazarak iletebilirsin. Başvurunu en geç 30 gün içinde " +
             "sonuçlandırırız. Başkasının verisine erişimi önlemek için " +
             "kimliğini doğrulamamız gerekebilir; bunun için hesabına kayıtlı " +
@@ -734,40 +752,11 @@ export const gizlilikSections: LegalSection[] = [
   },
 
   /* ---------------------------------------------------------------- *
-   * 10. Çocukların gizliliği
-   * ---------------------------------------------------------------- */
-  {
-    id: "cocuklarin-gizliligi",
-    heading: "10. Çocukların gizliliği",
-    blocks: [
-      {
-        kind: "paragraph",
-        text: [
-          "Caka'da hesap açmak için en az ",
-          { kind: "strong", text: "[YAŞ SINIRI]" },
-          " yaşında olman gerekir. Bu yaşın altındaki bir çocuğun verisini " +
-            "bilerek işlemiyoruz.",
-        ],
-      },
-      {
-        kind: "paragraph",
-        text: [
-          "Yaş sınırının altındaki bir çocuğa ait bir hesap veya profil " +
-            "olduğunu fark edersen ",
-          { kind: "strong", text: "[KVKK BAŞVURU E-POSTASI]" },
-          " adresine yaz; incelemesini yapar ve gerekiyorsa hesabı ve " +
-            "verileri sileriz.",
-        ],
-      },
-    ],
-  },
-
-  /* ---------------------------------------------------------------- *
-   * 11. Değişiklikler
+   * 10. Değişiklikler
    * ---------------------------------------------------------------- */
   {
     id: "degisiklikler",
-    heading: "11. Bu metindeki değişiklikler",
+    heading: "10. Bu metindeki değişiklikler",
     blocks: [
       {
         kind: "paragraph",

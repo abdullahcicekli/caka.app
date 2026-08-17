@@ -24,9 +24,13 @@ export const kullanimKosullariSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Bu koşullar, Caka'yı (caka.app) işleten ",
-          { kind: "strong", text: "[VERİ SORUMLUSU UNVANI]" },
-          " ile Caka'yı kullanan sen arasındaki sözleşmedir. Metinde ",
+          "Bu koşullar, Caka'yı (caka.app) işleten bizimle Caka'yı kullanan " +
+            "sen arasındaki sözleşmedir. Caka bir şirket değil, açık " +
+            "kaynaklı kişisel bir projedir; arkasında bugün kurulmuş bir " +
+            "tüzel kişilik yoktur ve bu yüzden burada bir ticari unvan " +
+            "yazmıyoruz. Bize ",
+          { kind: "strong", text: "hello@caka.app" },
+          " adresinden ulaşırsın. Metinde ",
           { kind: "strong", text: "“biz”" },
           " Caka'yı işleteni, ",
           { kind: "strong", text: "“sen”" },
@@ -98,12 +102,10 @@ export const kullanimKosullariSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Hesap açmak için en az ",
-          { kind: "strong", text: "[YAŞ SINIRI]" },
-          " yaşında olman gerekir. Hesabın altında yapılan her işlemden — " +
-            "cihazını veya sağlayıcı hesabını başkasına açık bırakman dâhil — " +
-            "sen sorumlusun. Hesabının izinsiz kullanıldığını fark edersen " +
-            "önce sağlayıcı hesabının oturumlarını kapat, sonra bize haber ver.",
+          "Hesabın altında yapılan her işlemden — cihazını veya sağlayıcı " +
+            "hesabını başkasına açık bırakman dâhil — sen sorumlusun. " +
+            "Hesabının izinsiz kullanıldığını fark edersen önce sağlayıcı " +
+            "hesabının oturumlarını kapat, sonra bize haber ver.",
         ],
       },
       {
@@ -362,7 +364,7 @@ export const kullanimKosullariSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           "Bir güvenlik açığı bulursan kötüye kullanmak yerine ",
-          { kind: "strong", text: "[İHLAL BİLDİRİM E-POSTASI]" },
+          { kind: "strong", text: "hello@caka.app" },
           " adresine yaz. İyi niyetle bildirilen açıklar için sana karşı " +
             "işlem başlatmayız.",
         ],
@@ -501,7 +503,7 @@ export const kullanimKosullariSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           "Bir kararın yanlış olduğunu düşünüyorsan ",
-          { kind: "strong", text: "[İHLAL BİLDİRİM E-POSTASI]" },
+          { kind: "strong", text: "hello@caka.app" },
           " adresine itiraz edebilirsin. İtirazını inceler ve yanıtlarız; " +
             "haksız bulduğumuz bir kaldırmayı geri alırız.",
         ],
@@ -521,7 +523,7 @@ export const kullanimKosullariSections: LegalSection[] = [
         text: [
           "Bir Caka profilinde hukuka aykırı içerik, taklit, telif ihlali " +
             "veya kimlik avı gördüysen ",
-          { kind: "strong", text: "[İHLAL BİLDİRİM E-POSTASI]" },
+          { kind: "strong", text: "hello@caka.app" },
           " adresine yaz. Bildirimini hızlı değerlendirebilmemiz için şunları " +
             "yazmanı rica ederiz:",
         ],
@@ -878,7 +880,7 @@ export const kullanimKosullariSections: LegalSection[] = [
           { kind: "strong", text: "Bize nasıl ulaşırsın. " },
           "İçerik ihlali bildirimleri, kaldırma itirazları ve bu koşullara " +
             "ilişkin sorular için ",
-          { kind: "strong", text: "[İHLAL BİLDİRİM E-POSTASI]" },
+          { kind: "strong", text: "hello@caka.app" },
           " adresine yazabilirsin. Kişisel verilerinle ilgili başvurular " +
             "için ",
           {
