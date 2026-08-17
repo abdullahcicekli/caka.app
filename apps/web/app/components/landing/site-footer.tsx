@@ -1,8 +1,9 @@
 import { Link } from "react-router";
 
+import type { LegalDocumentId } from "@caka/shared";
 import { logoBlackText } from "~/assets/brand";
 import { SocialIcon } from "~/components/icons/social";
-import type { LandingContent } from "~/content/landing";
+import type { LandingContent, LegalAwareLink } from "~/content/landing";
 
 const LINK_CLASS = "text-[15px] text-murekkep hover:opacity-70";
 
@@ -42,8 +43,20 @@ function FooterLink({
 /**
  * Public sayfaların ortak footer'ı (kullanıcı profil sayfaları hariç).
  * Üst köşeleri yuvarlak beyaz kart, bir üstteki renk bloğunun üzerine biner.
+ *
+ * `publishedLegal` loader'dan gelir: yayına hazır olmayan hukuki belgeye giden
+ * bağlantılar (R33 kapısı onları prod'da 404'lüyor) gösterilmez.
  */
-export function SiteFooter({ footer }: { footer: LandingContent["footer"] }) {
+export function SiteFooter({
+  footer,
+  publishedLegal,
+}: {
+  footer: LandingContent["footer"];
+  publishedLegal: readonly LegalDocumentId[];
+}) {
+  const isVisible = (link: LegalAwareLink) =>
+    !link.legalDocument || publishedLegal.includes(link.legalDocument);
+
   return (
     <footer className="relative -mt-8 rounded-t-[2.5rem] bg-white">
       <div className="mx-auto max-w-7xl px-6 pt-14 pb-10 sm:px-10">
@@ -51,26 +64,32 @@ export function SiteFooter({ footer }: { footer: LandingContent["footer"] }) {
             wrap eden esnek yerleşim, sütun eklenip çıktığında boş track
             bırakmaz. */}
         <div className="flex flex-wrap gap-x-16 gap-y-10 sm:gap-x-24">
-          {footer.columns.map((column) => (
-            <nav key={column.title} aria-label={column.title}>
-              <h3 className="text-xs font-medium tracking-widest text-murekkep/50 uppercase">
-                {column.title}
-              </h3>
-              <ul className="mt-4 space-y-3">
-                {column.links.map((link) => (
-                  <li key={link.label}>
-                    <FooterLink href={link.href} label={link.label} />
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
+          {footer.columns.map((column) => {
+            const links = column.links.filter(isVisible);
+            // Tek bağlantısı da yayında değilse sütun başlığı tek başına
+            // kalmasın (bugün "Yasal" için mümkün).
+            if (links.length === 0) return null;
+            return (
+              <nav key={column.title} aria-label={column.title}>
+                <h3 className="text-xs font-medium tracking-widest text-murekkep/50 uppercase">
+                  {column.title}
+                </h3>
+                <ul className="mt-4 space-y-3">
+                  {links.map((link) => (
+                    <li key={link.label}>
+                      <FooterLink href={link.href} label={link.label} />
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            );
+          })}
         </div>
 
         {/* Güven alanı: her ifade kanıt sayfasına gider (R50). Rozet gibi
             görünmemesi bilinçli — çerçeve ve ikon yok, düz bağlantı. */}
         <ul className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2">
-          {footer.trust.map((item) => (
+          {footer.trust.filter(isVisible).map((item) => (
             <li key={item.label}>
               <FooterLink
                 href={item.href}

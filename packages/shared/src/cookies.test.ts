@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  COOKIE_CATEGORIES,
   COOKIE_INVENTORY,
-  COOKIE_PARTIES,
   COOKIE_STORAGE_KINDS,
+  COOKIE_STORAGE_LABELS,
   cookieTableRows,
   type CookieEntry,
 } from "./cookies";
+
+const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
 
 describe("çerez envanteri", () => {
   it("her girdinin amacı doludur", () => {
@@ -16,29 +17,24 @@ describe("çerez envanteri", () => {
     }
   });
 
-  it("her girdinin kategorisi bilinen birliğe aittir", () => {
-    for (const entry of COOKIE_INVENTORY) {
-      expect(COOKIE_CATEGORIES, entry.name).toContain(entry.category);
-    }
-  });
-
-  it("her girdinin tarafı bilinen birliğe aittir", () => {
-    for (const entry of COOKIE_INVENTORY) {
-      expect(COOKIE_PARTIES, entry.name).toContain(entry.party);
-    }
-  });
-
   it("aynı ad iki kez geçmez", () => {
     const names = COOKIE_INVENTORY.map((entry) => entry.name);
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it("üçüncü taraf çerezlerde sağlayıcı doludur", () => {
-    // Envanter `as const` olduğu için literal tiplere daralır; kural bugün
-    // envanterde üçüncü taraf çerez olmasa da geçerli olsun diye genişletilir.
-    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
-    for (const entry of entries.filter((entry) => entry.party === "üçüncü")) {
-      expect(entry.provider.trim(), entry.name).not.toBe("");
+  it("envanterde rıza gerektiren girdi yoktur", () => {
+    // Tripwire: `zorunlu` dışı bir kategori eklendiği anda kırılır. O girdi
+    // rıza akışı ister (KTD21, AGENTS.md) — bugün ürün böyle bir akış taşımıyor,
+    // kategoriyi sessizce genişletmek politikayı yanlışlar.
+    expect(entries.filter((entry) => entry.category !== "zorunlu")).toEqual([]);
+  });
+
+  it("envanterde üçüncü taraf girdi yoktur", () => {
+    // Aynı gerekçe: bugün cihaza yazan tek taraf Caka. Üçüncü taraf bir girdi
+    // eklendiğinde bu test kırılır ve sağlayıcı adı ile rıza kararı zorunlu olur.
+    expect(entries.filter((entry) => entry.party === "üçüncü")).toEqual([]);
+    for (const entry of entries) {
+      expect(entry.provider, entry.name).toBe("Caka");
     }
   });
 
@@ -48,18 +44,29 @@ describe("çerez envanteri", () => {
     }
   });
 
-  it("belirtilen depolama türü bilinen birliğe aittir", () => {
-    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
-    for (const entry of entries) {
-      if (entry.storage === undefined) continue;
-      expect(COOKIE_STORAGE_KINDS, entry.name).toContain(entry.storage);
-    }
+  it("envanter AGENTS.md'nin saydığı her depolama türünü ifade edebilir", () => {
+    // Katkıcı `localStorage` veya IndexedDB girdisi eklerken tip hatasına
+    // çarpmamalı; aksi hâlde ucuz çıkış yolu girdiyi yanlış türle etiketlemek olur.
+    expect([...COOKIE_STORAGE_KINDS]).toEqual([
+      "cookie",
+      "localStorage",
+      "sessionStorage",
+      "indexedDB",
+    ]);
+  });
+
+  it("her depolama türünün Türkçe/teknik etiketi doludur ve tekildir", () => {
+    const labels = COOKIE_STORAGE_KINDS.map((kind) => {
+      const label = COOKIE_STORAGE_LABELS[kind];
+      expect(label?.trim(), kind).not.toBe("");
+      return label;
+    });
+    expect(new Set(labels).size).toBe(labels.length);
   });
 
   it("kaydırma konumu girdisi sessionStorage olarak işaretlidir", () => {
     // AE9 / KTD31: `<ScrollRestoration />` cihaza yazan tek çerez dışı
     // girdidir; envanterden düşerse politika tablosu da sessizce yanlışlanır.
-    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
     const scroll = entries.find(
       (entry) => entry.name === "react-router-scroll-positions",
     );
@@ -69,7 +76,6 @@ describe("çerez envanteri", () => {
   });
 
   it("çerez dışı girdiler dışında her şey çerezdir", () => {
-    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
     const cookies = entries.filter(
       (entry) => (entry.storage ?? "cookie") === "cookie",
     );
@@ -78,8 +84,40 @@ describe("çerez envanteri", () => {
 });
 
 describe("cookieTableRows", () => {
-  it("her envanter girdisi için bir satır üretir", () => {
-    expect(cookieTableRows()).toHaveLength(COOKIE_INVENTORY.length);
+  it("satırlar envanterin adlarını ve sırasını korur", () => {
+    expect(cookieTableRows().map((row) => row.name)).toEqual(
+      COOKIE_INVENTORY.map((entry) => entry.name),
+    );
+  });
+
+  it("hiçbir tablo hücresi boş kalmaz", () => {
+    // Politika tablosunda boş hücre, okuyucuya "bilgi yok" der. Envantere
+    // eksik alanla girdi eklendiğinde burada kırılır.
+    for (const row of cookieTableRows()) {
+      for (const [field, value] of Object.entries(row)) {
+        expect(value.trim(), `${row.name}.${field}`).not.toBe("");
+      }
+    }
+  });
+
+  it("her depolama türü tabloda kendi etiketiyle görünür", () => {
+    const rows = cookieTableRows(
+      COOKIE_STORAGE_KINDS.map((kind) => ({
+        name: `test_${kind}`,
+        storage: kind,
+        category: "zorunlu",
+        purpose: "Test amaçlı",
+        lifetime: "1 gün",
+        party: "birinci",
+        provider: "Caka",
+      })),
+    );
+    expect(rows.map((row) => row.storage)).toEqual([
+      "Çerez",
+      "localStorage",
+      "sessionStorage",
+      "IndexedDB",
+    ]);
   });
 
   it("kategori ve tarafı Türkçe etikete çevirir", () => {

@@ -4,7 +4,10 @@ import {
   LEGAL_DOCUMENTS,
   LEGAL_DOCUMENT_IDS,
   LEGAL_DOCUMENT_LIST,
+  classifyLegalDocument,
   collectLegalLinks,
+  collectLegalMetaStrings,
+  collectLegalScanStrings,
   collectLegalStrings,
   findBrokenLegalLinks,
   findLegalPlaceholders,
@@ -13,6 +16,7 @@ import {
   hasLegalPlaceholder,
   isSafeLegalHref,
   legalPlainText,
+  type LegalDocumentMeta,
   type LegalSection,
 } from "./legal";
 
@@ -199,6 +203,87 @@ describe("placeholder kapısı", () => {
     ];
     expect(findLegalPlaceholders(sections)).toEqual(["[ADRES]"]);
   });
+
+  it("bağlantı hedefindeki doldurulmamış alanı yakalar", () => {
+    // Görünen metin tertemiz; kaçak yalnızca `href`'te. Tarama `href`'i
+    // görmezse okuyucuya tıklanınca 404 olan bir başvuru yolu gösterilir.
+    const sections: LegalSection[] = [
+      {
+        id: "basvuru",
+        heading: "Başvuru",
+        blocks: [
+          {
+            kind: "paragraph",
+            text: [
+              "Başvurunu ",
+              { kind: "link", text: "başvuru formu", href: "/basvuru-[TBD]" },
+              " ile ilet.",
+            ],
+          },
+          {
+            kind: "paragraph",
+            text: [
+              { kind: "link", text: "KVKK formu", href: "https://caka.app/[KVKK-FORM]" },
+            ],
+          },
+        ],
+      },
+    ];
+    expect(hasLegalPlaceholder(sections)).toBe(true);
+    expect(findLegalPlaceholders(sections).sort()).toEqual([
+      "[KVKK-FORM]",
+      "[TBD]",
+    ]);
+  });
+
+  it("tarama metni bağlantı hedefini içerir, görünen metin toplama değişmez", () => {
+    const sections: LegalSection[] = [
+      {
+        id: "amac",
+        heading: "Amaç",
+        blocks: [
+          {
+            kind: "paragraph",
+            text: [{ kind: "link", text: "form", href: "/basvuru-[TBD]" }],
+          },
+        ],
+      },
+    ];
+    expect(collectLegalStrings(sections)).toEqual(["Amaç", "form"]);
+    expect(collectLegalScanStrings(sections)).toContain("/basvuru-[TBD]");
+  });
+
+  it("künyedeki doldurulmamış alanı yakalar", () => {
+    const doc: LegalDocumentMeta = {
+      ...LEGAL_DOCUMENTS.gizlilik,
+      title: "Gizlilik Metni [TASLAK]",
+    };
+    const temiz: LegalSection[] = [
+      { id: "amac", heading: "Amaç", blocks: [] },
+    ];
+    // Bölümler tertemiz: künye taranmazsa kapı açık kalır.
+    expect(findLegalPlaceholders(temiz)).toEqual([]);
+    expect(
+      findLegalPlaceholders(temiz, collectLegalMetaStrings(doc)),
+    ).toEqual(["[TASLAK]"]);
+  });
+
+  it("künye taraması sürüm ve gezinme etiketini de kapsar", () => {
+    const doc: LegalDocumentMeta = {
+      ...LEGAL_DOCUMENTS.gizlilik,
+      navLabel: "[ETİKET]",
+      version: "[SÜRÜM]",
+    };
+    expect(collectLegalMetaStrings(doc)).toContain("[ETİKET]");
+    expect(collectLegalMetaStrings(doc)).toContain("[SÜRÜM]");
+  });
+
+  it("yayındaki künyelerde doldurulmamış alan yoktur", () => {
+    for (const doc of LEGAL_DOCUMENT_LIST) {
+      expect(findLegalPlaceholders([], collectLegalMetaStrings(doc)), doc.id)
+        .toEqual([]);
+    }
+  });
 });
 
 describe("bölüm id bütünlüğü", () => {
@@ -213,6 +298,48 @@ describe("bölüm id bütünlüğü", () => {
   it("boş id'yi bildirir", () => {
     const sections: LegalSection[] = [{ id: "  ", heading: "Adsız", blocks: [] }];
     expect(findLegalSectionIssues(sections)).toHaveLength(1);
+  });
+
+  function tableSection(rows: LegalSection["blocks"][number]): LegalSection {
+    return { id: "envanter", heading: "Envanter", blocks: [rows] };
+  }
+
+  it("sütun sayısına uymayan tablo satırını bildirir", () => {
+    const eksik = tableSection({
+      kind: "table",
+      columns: ["Ad", "Amaç", "Ömür"],
+      rows: [
+        [["session"], ["oturum"], ["7 gün"]],
+        [["state"], ["csrf"]], // bir hücre eksik → sütunlar kayar
+      ],
+    });
+    const issues = findLegalSectionIssues([eksik]);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("satır 2");
+    expect(issues[0]).toContain("2 hücre");
+    expect(issues[0]).toContain("3 sütun");
+  });
+
+  it("fazla hücreli satırı da bildirir", () => {
+    const fazla = tableSection({
+      kind: "table",
+      columns: ["Ad", "Amaç"],
+      rows: [[["session"], ["oturum"], ["fazlalık"]]],
+    });
+    expect(findLegalSectionIssues([fazla])).toHaveLength(1);
+  });
+
+  it("sütunlarla uyumlu tabloyu sorunsuz sayar", () => {
+    const uyumlu = tableSection({
+      kind: "table",
+      caption: "Çerez envanteri",
+      columns: ["Ad", "Amaç"],
+      rows: [
+        [["session"], ["oturum"]],
+        [["state"], ["csrf"]],
+      ],
+    });
+    expect(findLegalSectionIssues([uyumlu])).toEqual([]);
   });
 });
 
@@ -268,10 +395,34 @@ describe("bağlantı bütünlüğü", () => {
   it("hukuki olmayan iç yollar ve dış bağlantılar doğrulanmaz", () => {
     const sections = [
       paragraph("giris", "/login"),
+      paragraph("ayarlar", "/ayarlar"),
+      paragraph("gelecek", "/cerez-tercihleri"),
       paragraph("kvkk", "https://www.kvkk.gov.tr/"),
       paragraph("posta", "mailto:merhaba@caka.app"),
     ];
     expect(findBrokenLegalLinks({ gizlilik: sections })).toEqual([]);
+  });
+
+  it.each(["/gizlilik-metni", "/kullanim", "/cerez-politikasi/ek"])(
+    "hukuki yola benzeyip çözülmeyen iç yolu bildirir: %s",
+    (href) => {
+      const broken = findBrokenLegalLinks({
+        gizlilik: [paragraph("yanlis", href)],
+      });
+      expect(broken).toHaveLength(1);
+      expect(broken[0]).toContain("hedef belge çözümlenemedi");
+      expect(broken[0]).toContain(href);
+    },
+  );
+
+  it("yalnız istenen belgenin bağlantıları taranır", () => {
+    const gizlilik = [paragraph("iyi", "#iyi"), { id: "iyi", heading: "İyi", blocks: [] }];
+    const cerez = [paragraph("kotu", "#olmayan")];
+    const registry = { gizlilik, "cerez-politikasi": cerez };
+    expect(findBrokenLegalLinks(registry)).toHaveLength(1);
+    expect(
+      findBrokenLegalLinks(registry, { documents: ["gizlilik"] }),
+    ).toEqual([]);
   });
 
   it("izin verilmeyen protokol kırık sayılır", () => {
@@ -288,5 +439,169 @@ describe("bağlantı bütünlüğü", () => {
     expect(isSafeLegalHref("mailto:merhaba@caka.app")).toBe(true);
     expect(isSafeLegalHref("javascript:alert(1)")).toBe(false);
     expect(isSafeLegalHref("data:text/html,x")).toBe(false);
+    // Protokol-göreli hedef iç yol DEĞİLDİR: `<Link to="//evil.com">` siteden
+    // çıkar ve `rel` taşımaz. Ters eğik çizgi tarayıcıda eğik çizgiye
+    // normalize olduğu için aynı kapıyı açar.
+    expect(isSafeLegalHref("//evil.com")).toBe(false);
+    expect(isSafeLegalHref("//evil.com/gizlilik")).toBe(false);
+    expect(isSafeLegalHref("/\\evil.com")).toBe(false);
+  });
+
+  it("protokol-göreli hedef kırık sayılır", () => {
+    const broken = findBrokenLegalLinks({
+      gizlilik: [paragraph("kotu", "//evil.com")],
+    });
+    expect(broken).toHaveLength(1);
+    expect(broken[0]).toContain("izin verilmeyen hedef");
+  });
+});
+
+describe("classifyLegalDocument", () => {
+  const doc = LEGAL_DOCUMENTS.gizlilik;
+
+  it("temiz belgede engel de uyarı da yoktur", () => {
+    const sections: LegalSection[] = [
+      {
+        id: "amac",
+        heading: "Amaç",
+        blocks: [{ kind: "paragraph", text: ["Bu metin hazırdır."] }],
+      },
+    ];
+    expect(classifyLegalDocument(doc, sections)).toEqual({
+      blocking: [],
+      warnings: [],
+      blocked: false,
+    });
+  });
+
+  it("doldurulmamış alan engelleyicidir, uyarı listesine düşmez", () => {
+    const sections: LegalSection[] = [
+      {
+        id: "veri-sorumlusu",
+        heading: "Veri sorumlusu",
+        blocks: [{ kind: "paragraph", text: ["[VERİ SORUMLUSU UNVANI]"] }],
+      },
+    ];
+    const status = classifyLegalDocument(doc, sections);
+    expect(status.blocked).toBe(true);
+    expect(status.blocking).toEqual([
+      "Doldurulmamış alan: [VERİ SORUMLUSU UNVANI]",
+    ]);
+    expect(status.warnings).toEqual([]);
+  });
+
+  it("künyedeki doldurulmamış alan da yayını engeller", () => {
+    const taslak = { ...doc, title: "Gizlilik [TASLAK]" };
+    const sections: LegalSection[] = [
+      { id: "amac", heading: "Amaç", blocks: [] },
+    ];
+    const status = classifyLegalDocument(taslak, sections);
+    expect(status.blocked).toBe(true);
+    expect(status.blocking).toEqual(["Doldurulmamış alan: [TASLAK]"]);
+  });
+
+  it("bölüm ve bağlantı sorunları uyarıdır, yayını engellemez", () => {
+    const sections: LegalSection[] = [
+      { id: "haklar", heading: "Haklar", blocks: [] },
+      {
+        id: "haklar",
+        heading: "Haklar (tekrar)",
+        blocks: [
+          {
+            kind: "paragraph",
+            text: [{ kind: "link", text: "bak", href: "#olmayan" }],
+          },
+        ],
+      },
+    ];
+    const status = classifyLegalDocument(doc, sections);
+    expect(status.blocked).toBe(false);
+    expect(status.blocking).toEqual([]);
+    expect(status.warnings).toHaveLength(2);
+  });
+
+  it("engel ve uyarı bir arada bulunabilir", () => {
+    const sections: LegalSection[] = [
+      {
+        id: "",
+        heading: "Adsız",
+        blocks: [{ kind: "paragraph", text: ["[ADRES]"] }],
+      },
+      {
+        id: "iletisim",
+        heading: "İletişim",
+        blocks: [
+          {
+            kind: "paragraph",
+            text: [{ kind: "link", text: "bak", href: "#yok" }],
+          },
+        ],
+      },
+    ];
+    const status = classifyLegalDocument(doc, sections);
+    expect(status.blocked).toBe(true);
+    expect(status.blocking).toEqual(["Doldurulmamış alan: [ADRES]"]);
+    expect(status.warnings).toHaveLength(2);
+    expect(status.warnings.some((w) => w.includes("Bölüm id'si boş"))).toBe(true);
+    expect(status.warnings.some((w) => w.includes("#yok"))).toBe(true);
+  });
+
+  it("belgeler arası bağlantıyı verilen kayıt üzerinden çözer", () => {
+    const gizlilik: LegalSection[] = [
+      {
+        id: "cerezler",
+        heading: "Çerezler",
+        blocks: [
+          {
+            kind: "paragraph",
+            text: [
+              {
+                kind: "link",
+                text: "envanter",
+                href: "/cerez-politikasi#envanter",
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const cerez: LegalSection[] = [
+      { id: "envanter", heading: "Envanter", blocks: [] },
+    ];
+
+    expect(
+      classifyLegalDocument(doc, gizlilik, { "cerez-politikasi": cerez })
+        .warnings,
+    ).toEqual([]);
+
+    const kirik: LegalSection[] = [
+      { id: "baska", heading: "Başka", blocks: [] },
+    ];
+    expect(
+      classifyLegalDocument(doc, gizlilik, { "cerez-politikasi": kirik })
+        .warnings,
+    ).toHaveLength(1);
+  });
+
+  it("başka belgenin sorunlarını bu belgeye yazmaz", () => {
+    const gizlilik: LegalSection[] = [
+      { id: "amac", heading: "Amaç", blocks: [] },
+    ];
+    const bozukCerez: LegalSection[] = [
+      {
+        id: "envanter",
+        heading: "Envanter",
+        blocks: [
+          {
+            kind: "paragraph",
+            text: [{ kind: "link", text: "bak", href: "#olmayan" }],
+          },
+        ],
+      },
+    ];
+    const status = classifyLegalDocument(doc, gizlilik, {
+      "cerez-politikasi": bozukCerez,
+    });
+    expect(status.warnings).toEqual([]);
   });
 });

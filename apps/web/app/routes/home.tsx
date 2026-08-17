@@ -10,6 +10,7 @@ import { Navbar } from "~/components/landing/navbar";
 import { ShareSection } from "~/components/landing/share-section";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
+import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "~/content/legal";
 import { landing } from "~/content/landing";
 import { parseSeedProfile } from "~/lib/profile-view";
 import {
@@ -77,8 +78,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const ogImage = pickRandomOgImage();
+  // Footer ve SSS yalnız yayındaki hukuki belgeleri reklam eder (R33).
+  const publishedLegal = PUBLISHED_LEGAL_DOCUMENT_IDS;
   const session = await getSession(env, request);
-  if (!session) return { user: null, ogImage };
+  if (!session) return { user: null, ogImage, publishedLegal };
 
   const profile = await getProfileByUserId(env, session.user.id);
   // Avatarsız kalmış eski kayıtları girişte kendiliğinden onarır.
@@ -94,7 +97,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       session.user.image ??
       null,
   };
-  return { user, ogImage };
+  return { user, ogImage, publishedLegal };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
@@ -111,10 +114,16 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <MinutesSection minutes={landing.minutes} />
         <ShareSection share={landing.share} />
         <AudienceSection audience={landing.audience} />
-        <FaqSection faq={landing.faq} />
+        <FaqSection
+          faq={landing.faq}
+          publishedLegal={loaderData.publishedLegal}
+        />
         <CtaSection cta={landing.closingCta} />
       </main>
-      <SiteFooter footer={landing.footer} />
+      <SiteFooter
+        footer={landing.footer}
+        publishedLegal={loaderData.publishedLegal}
+      />
     </div>
   );
 }

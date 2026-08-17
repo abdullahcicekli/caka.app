@@ -1,65 +1,28 @@
 // KTD22: Üç hukuki sayfanın ortak kabuğu. Metin taşımaz — bölümler
 // `app/content/legal/` altındaki içerik modüllerinden gelir (Değişmez #5).
 //
-// İki iş yapar:
-//  1. Yapılandırılmış bölümleri okunur biçimde render eder (sınırlı okuma
-//     genişliği, yatay kaydırılabilir tablo).
-//  2. R33 placeholder kapısını işletir: doldurulmamış `[...]` alanı kalmışsa
-//     prod'da sayfa 404 döner, dev/lokalde görünür uyarıyla render edilir.
+// Yalnızca render eder: yapılandırılmış bölümleri okunur biçimde gösterir
+// (sınırlı okuma genişliği, yatay kaydırılabilir tablo). R33 yayın kapısı
+// sunucu tarafındadır (`server/legal.ts`) ve loader'dan çağrılır.
 import type { ReactNode } from "react";
-import { Link, data } from "react-router";
+import { Link } from "react-router";
 
 import { Navbar } from "~/components/landing/navbar";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { landing } from "~/content/landing";
 import {
-  LEGAL_DOCUMENT_LIST,
-  findBrokenLegalLinks,
-  findLegalPlaceholders,
-  findLegalSectionIssues,
+  LEGAL_DOCUMENTS,
   formatLegalDate,
   isSafeLegalHref,
   type LegalBlock,
   type LegalCell,
+  type LegalDocumentId,
   type LegalDocumentMeta,
   type LegalInline,
   type LegalRichText,
   type LegalSection,
 } from "@caka/shared";
-
-/* ------------------------------------------------------------------ *
- * R33 — placeholder kapısı
- * ------------------------------------------------------------------ */
-
-/**
- * Loader'da çağrılır. Ortam ayrımı için deponun zaten kullandığı Vite sinyali
- * kullanılır (`root.tsx` `import.meta.env.DEV`, `workers/app.ts`
- * `import.meta.env.MODE`); ayrı bir env değişkeni icat edilmedi.
- *
- * - **Prod build** (`import.meta.env.PROD`): doldurulmamış alan varsa 404.
- * - **Dev / lokal**: sayfa render edilir, dönen uyarı listesi `LegalPage`
- *   tarafından görünür bir kutuda gösterilir.
- *
- * Kırık iç bağlantı ve bozuk bölüm `id`'si prod'u karartmaz (metin yine de
- * okunur); yalnız dev uyarısı olarak yüzeye çıkar ve testte kırılır.
- */
-export function legalPlaceholderGate(
-  doc: LegalDocumentMeta,
-  sections: readonly LegalSection[],
-): string[] {
-  const placeholders = findLegalPlaceholders(sections);
-
-  if (placeholders.length > 0 && import.meta.env.PROD) {
-    throw data({ kind: "legal_placeholder", document: doc.id }, { status: 404 });
-  }
-
-  return [
-    ...placeholders.map((hit) => `Doldurulmamış alan: ${hit}`),
-    ...findLegalSectionIssues(sections),
-    ...findBrokenLegalLinks({ [doc.id]: sections }),
-  ];
-}
 
 /* ------------------------------------------------------------------ *
  * Satır içi render
@@ -137,7 +100,7 @@ function TableBlock({
       {/* Depoda hazır duyarlı tablo deseni yoktu; kapsayıcı + min genişlik +
           dar ekranda görünen kaydırma ipucu bu sayfalarda standart olsun. */}
       <div className="overflow-x-auto rounded-xl border border-sinir bg-white">
-        <table className="w-full min-w-[38rem] border-collapse text-left text-sm">
+        <table className="w-full min-w-152 border-collapse text-left text-sm">
           <thead>
             <tr>
               {columns.map((column) => (
@@ -250,8 +213,23 @@ function DevWarnings({ warnings }: { warnings: readonly string[] }) {
   );
 }
 
-function LegalDocumentNav({ currentId }: { currentId: string }) {
-  const others = LEGAL_DOCUMENT_LIST.filter((doc) => doc.id !== currentId);
+/**
+ * Belgeler arası şerit. Yalnız **yayındaki** belgeleri listeler: kapının
+ * prod'da 404 verdiği bir belgeye buradan bağlanmak ölü bağlantı üretirdi.
+ * Liste `loaderData` ile gelir (bkz. `app/content/legal/index.ts`).
+ */
+function LegalDocumentNav({
+  currentId,
+  publishedLegal,
+}: {
+  currentId: LegalDocumentId;
+  publishedLegal: readonly LegalDocumentId[];
+}) {
+  const others = publishedLegal
+    .filter((id) => id !== currentId)
+    .map((id) => LEGAL_DOCUMENTS[id]);
+  if (others.length === 0) return null;
+
   return (
     <nav aria-label="Diğer hukuki belgeler" className="mt-16 border-t border-sinir pt-8">
       <p className="text-xs font-medium tracking-widest text-murekkep/40 uppercase">
@@ -278,6 +256,8 @@ export type LegalPageProps = {
   sections: readonly LegalSection[];
   /** `legalPlaceholderGate` çıktısı; prod'da her zaman boştur. */
   warnings?: readonly string[];
+  /** Yayındaki hukuki belgeler; footer ve belgeler arası şerit bunu reklam eder. */
+  publishedLegal: readonly LegalDocumentId[];
   user: SessionUser | null;
 };
 
@@ -285,6 +265,7 @@ export function LegalPage({
   document: doc,
   sections,
   warnings = [],
+  publishedLegal,
   user,
 }: LegalPageProps) {
   return (
@@ -313,9 +294,9 @@ export function LegalPage({
           ))}
         </div>
 
-        <LegalDocumentNav currentId={doc.id} />
+        <LegalDocumentNav currentId={doc.id} publishedLegal={publishedLegal} />
       </main>
-      <SiteFooter footer={landing.footer} />
+      <SiteFooter footer={landing.footer} publishedLegal={publishedLegal} />
     </div>
   );
 }

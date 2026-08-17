@@ -14,18 +14,34 @@ export type NavUser = {
   avatarUrl: string | null;
 };
 
+/**
+ * Navbar'ın kullanıcı menüsünü göstermesi tamamen kozmetik bir ayrıntı; bunun
+ * için yapılan oturum okuması ve D1 sorgusu bir uyum sayfasını 500'e
+ * düşürmemeli. Hata hâlinde anonim navbar'a inilir ve olay loglanır: sayfa
+ * (hukuki metin) okunur kalır.
+ */
 export async function getNavUser(
   env: Env,
   request: Request,
 ): Promise<NavUser | null> {
-  const session = await getSession(env, request);
-  if (!session) return null;
+  try {
+    const session = await getSession(env, request);
+    if (!session) return null;
 
-  const profile = await getProfileByUserId(env, session.user.id);
-  const seed = profile ? parseSeedProfile(profile.layout) : null;
-  return {
-    name: session.user.name,
-    username: profile?.username ?? null,
-    avatarUrl: seed?.avatarUrl ?? session.user.image ?? null,
-  };
+    const profile = await getProfileByUserId(env, session.user.id);
+    const seed = profile ? parseSeedProfile(profile.layout) : null;
+    return {
+      name: session.user.name,
+      username: profile?.username ?? null,
+      avatarUrl: seed?.avatarUrl ?? session.user.image ?? null,
+    };
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        message: "nav user lookup failed",
+        error: String(error),
+      }),
+    );
+    return null;
+  }
 }

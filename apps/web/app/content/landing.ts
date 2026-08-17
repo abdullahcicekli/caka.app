@@ -1,3 +1,5 @@
+import type { LegalDocumentId } from "@caka/shared";
+
 import creatorElif from "~/assets/landing/creator-elif.webp";
 import creatorKerem from "~/assets/landing/creator-kerem.webp";
 import creatorNaz from "~/assets/landing/creator-naz.webp";
@@ -20,6 +22,16 @@ export interface Cta {
 }
 
 /**
+ * Hukuki bir belgeye giden bağlantı. `legalDocument` doluysa bağlantı yalnız
+ * o belge yayındayken gösterilir: kapı (R33) doldurulmamış `[...]` alanı olan
+ * belgeyi prod'da 404'ler, onu reklam eden yüzey de susmalıdır. Yayın listesi
+ * `loaderData` ile gelir (bkz. `app/content/legal/index.ts`).
+ */
+export interface LegalAwareLink extends Cta {
+  legalDocument?: LegalDocumentId;
+}
+
+/**
  * Hero'daki akan vitrin kartı. Tamamen dekoratiftir; gerçek bir kullanıcıyı
  * temsil etmediği için görselin üzerinde isim/unvan yazısı taşımaz.
  */
@@ -31,14 +43,11 @@ export interface MarqueeItem {
  * Footer'daki güven ifadesi. Her biri kanıtına bağlanır: okuyucu iddiayı
  * doğrulayabilmeli, yoksa rozet olur (R49/R50).
  */
-export interface TrustItem {
-  label: string;
-  href: string;
-}
+export type TrustItem = LegalAwareLink;
 
 export interface FooterColumn {
   title: string;
-  links: readonly Cta[];
+  links: readonly LegalAwareLink[];
 }
 
 export interface SocialLink {
@@ -69,7 +78,7 @@ export interface FaqItem {
   question: string;
   answer: string;
   /** Cevabın dayandığı sayfaya isteğe bağlı bağlantı. */
-  link?: Cta;
+  link?: LegalAwareLink;
 }
 
 export interface FaqSection {
@@ -79,7 +88,10 @@ export interface FaqSection {
 
 export const landing = {
   nav: {
-    items: [{ label: "Ürün", href: "#urun" }] satisfies NavItem[],
+    // Anchor mutlak yolla yazılır: navbar üç hukuki sayfada da render ediliyor,
+    // `#urun` bölümü ise yalnız ana sayfada var. Çıplak `#urun` oralarda hiçbir
+    // yere gitmeyen ölü bağlantı olurdu.
+    items: [{ label: "Ürün", href: "/#urun" }] satisfies NavItem[],
     login: { label: "Giriş yap", href: "/login" } satisfies Cta,
     cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
   },
@@ -145,7 +157,11 @@ export const landing = {
         question: "İçeriğimi dışa aktarabilir veya hesabımı silebilir miyim?",
         answer:
           "İkisi de şu an panelden kendi başına yapılmıyor. Verilerinin bir kopyasını istemek veya hesabının silinmesini talep etmek için KVKK m.11 kapsamında hello@caka.app adresine yazman yeterli.",
-        link: { label: "Gizlilik Metni", href: "/gizlilik" },
+        link: {
+          label: "Gizlilik Metni",
+          href: "/gizlilik",
+          legalDocument: "gizlilik",
+        },
       },
     ] satisfies readonly FaqItem[],
   } satisfies FaqSection,
@@ -159,24 +175,40 @@ export const landing = {
     },
   },
   footer: {
-    // Yalnızca çalışan hedefler: tek gerçek anchor (#urun), tek gerçek posta
-    // kutusu (hello@caka.app) ve üç yayındaki hukuki route (R23).
-    // `destek@` ve `merhaba@` yönlendirilmiyordu; iki ölü bağlantı yerine tek
-    // çalışan iletişim adresi bırakıldı.
+    // Yalnızca çalışan hedefler: tek gerçek anchor (/#urun — footer hukuki
+    // sayfalarda da render edildiği için mutlak yolla), tek gerçek posta
+    // kutusu (hello@caka.app) ve hukuki route'lar (R23). `destek@` ve
+    // `merhaba@` yönlendirilmiyordu; iki ölü bağlantı yerine tek çalışan
+    // iletişim adresi bırakıldı.
+    //
+    // "Yasal" sütunundaki üç bağlantı `legalDocument` ile işaretli: belge
+    // yayına hazır değilken (R33 kapısı 404 veriyorken) sütundan düşerler.
     columns: [
       {
         title: "Caka",
         links: [
-          { label: "Nasıl çalışır", href: "#urun" },
+          { label: "Nasıl çalışır", href: "/#urun" },
           { label: "İletişim", href: "mailto:hello@caka.app" },
         ],
       },
       {
         title: "Yasal",
         links: [
-          { label: "Gizlilik", href: "/gizlilik" },
-          { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
-          { label: "Çerez Politikası", href: "/cerez-politikasi" },
+          {
+            label: "Gizlilik",
+            href: "/gizlilik",
+            legalDocument: "gizlilik",
+          },
+          {
+            label: "Kullanım Koşulları",
+            href: "/kullanim-kosullari",
+            legalDocument: "kullanim-kosullari",
+          },
+          {
+            label: "Çerez Politikası",
+            href: "/cerez-politikasi",
+            legalDocument: "cerez-politikasi",
+          },
         ],
       },
     ] satisfies FooterColumn[],
@@ -207,8 +239,11 @@ export const landing = {
       {
         // packages/shared/src/cookies.ts envanteriyle kanıtlanıyor: tanımlı
         // tek kategori "zorunlu". Ölçüm çerezsiz, tarayıcıda doğrulandı.
+        // İddia kanıtıyla birlikte durur: Çerez Politikası yayında değilse
+        // ifade de gösterilmez, yoksa kanıtsız rozet olur (R50).
         label: "Reklam ve analitik çerezi kullanmıyoruz",
         href: "/cerez-politikasi",
+        legalDocument: "cerez-politikasi",
       },
       {
         // MIT lisanslı public depo; yukarıdaki iddia dahil her şey kodda

@@ -195,6 +195,31 @@ export function collectLegalStrings(
   return out;
 }
 
+/**
+ * Placeholder taramasının gördüğü string'ler: ziyaretçiye görünen metinlere
+ * ek olarak bağlantı **hedefleri**. `inlineText` bir bağlantıyı `text`'ine
+ * indirger; hedefteki doldurulmamış alan (`/basvuru-[TBD]`) yalnız görünen
+ * metne bakılırsa kapıdan geçer. Render bu fonksiyonu kullanmaz — çıktı
+ * yalnızca tarama içindir, `collectLegalStrings` olduğu gibi kalır.
+ */
+export function collectLegalScanStrings(
+  sections: readonly LegalSection[],
+): string[] {
+  return [
+    ...collectLegalStrings(sections),
+    ...collectLegalLinks(sections).map((link) => link.href),
+  ];
+}
+
+/**
+ * Belge künyesindeki taranabilir string'ler. Künye bölümlerin dışında yaşar
+ * ama `<h1>`, SEO başlığı, gezinme şeridi ve tarih satırı olarak render edilir;
+ * oradaki bir `[TBD]` bölümler tertemizken bile yayına sızar.
+ */
+export function collectLegalMetaStrings(doc: LegalDocumentMeta): string[] {
+  return [doc.title, doc.navLabel, doc.version, doc.updatedAt, doc.path];
+}
+
 /** Belgedeki tüm bağlantılar (bağlam etiketiyle birlikte). */
 export function collectLegalLinks(
   sections: readonly LegalSection[],
@@ -241,16 +266,24 @@ export function findPlaceholdersInText(value: string): string[] {
 /** Metinde doldurulmamış alan var mı (kapının yüklem hâli). */
 export function hasLegalPlaceholder(
   sections: readonly LegalSection[],
+  extraStrings: readonly string[] = [],
 ): boolean {
-  return findLegalPlaceholders(sections).length > 0;
+  return findLegalPlaceholders(sections, extraStrings).length > 0;
 }
 
-/** Belgede kalan tüm doldurulmamış alanlar; tekilleştirilmiş. */
+/**
+ * Belgede kalan tüm doldurulmamış alanlar; tekilleştirilmiş.
+ *
+ * Tarama bölüm metinlerini **ve** bağlantı hedeflerini kapsar. Künye gibi
+ * bölümlerin dışında kalan string'ler `extraStrings` ile verilir
+ * (`collectLegalMetaStrings`).
+ */
 export function findLegalPlaceholders(
   sections: readonly LegalSection[],
+  extraStrings: readonly string[] = [],
 ): string[] {
   const found = new Set<string>();
-  for (const value of collectLegalStrings(sections)) {
+  for (const value of [...collectLegalScanStrings(sections), ...extraStrings]) {
     for (const hit of findPlaceholdersInText(value)) found.add(hit);
   }
   return [...found];
@@ -260,8 +293,18 @@ export function findLegalPlaceholders(
  * Bağlantı bütünlüğü
  * ------------------------------------------------------------------ */
 
+/**
+ * Protokol-göreli hedef: `//evil.com` ve tarayıcının ters eğik çizgiyi eğik
+ * çizgiye normalize etmesiyle aynı kapıya çıkan `/\evil.com`. İkisi de iç yol
+ * gibi okunur ama site dışına gider.
+ */
+const PROTOCOL_RELATIVE_PATTERN = /^[/\\][/\\]/;
+
 /** Bağlantıda izin verilen protokoller (`rich-text.tsx` ile aynı allowlist). */
 export function isSafeLegalHref(href: string): boolean {
+  // Tek eğik çizgi kısayolundan ÖNCE elenir: aksi hâlde `//evil.com` iç yol
+  // sayılıp `<Link>` ile, yani `rel` olmadan, site dışına gezinir.
+  if (PROTOCOL_RELATIVE_PATTERN.test(href)) return false;
   if (href.startsWith("#") || href.startsWith("/")) return true;
   try {
     const url = new URL(href);
@@ -285,8 +328,11 @@ const PATH_TO_DOCUMENT_ID = new Map<string, LegalDocumentId>(
 );
 
 /**
- * Bölüm `id`'lerinin kendi içindeki sorunları: boş ya da tekrar eden `id`.
- * Kırık `#bolum-id` bağlantılarının sessizce oluşmasını engeller.
+ * Bölümlerin kendi içindeki yapı sorunları:
+ * - boş ya da tekrar eden `id` (kırık `#bolum-id` bağlantısı üretir)
+ * - tablo satırının hücre sayısının sütun sayısıyla uyuşmaması (eksik hücre
+ *   sütunları kaydırır, fazlası başlıksız bir sütun doğurur — ikisi de
+ *   hukuki tabloyu sessizce yanlış okutur)
  */
 export function findLegalSectionIssues(
   sections: readonly LegalSection[],
@@ -297,25 +343,74 @@ export function findLegalSectionIssues(
     const id = section.id.trim();
     if (id === "") {
       issues.push(`Bölüm id'si boş: "${section.heading}"`);
-      continue;
+    } else {
+      if (seen.has(id)) issues.push(`Bölüm id'si tekrar ediyor: "${id}"`);
+      seen.add(id);
     }
-    if (seen.has(id)) issues.push(`Bölüm id'si tekrar ediyor: "${id}"`);
-    seen.add(id);
+
+    const label = id === "" ? section.heading : id;
+    for (const block of section.blocks) {
+      if (block.kind !== "table") continue;
+      block.rows.forEach((row, index) => {
+        if (row.length === block.columns.length) return;
+        issues.push(
+          `Tablo satırı sütun sayısıyla uyuşmuyor: "${label}" ` +
+            `satır ${index + 1} — ${row.length} hücre, ` +
+            `${block.columns.length} sütun`,
+        );
+      });
+    }
   }
   return issues;
+}
+
+const LEGAL_PATH_SLUGS: readonly string[] = LEGAL_DOCUMENT_LIST.map((doc) =>
+  doc.path.replace(/^\//, ""),
+);
+
+/** Önek karşılaştırmasının anlamlı sayılması için en kısa ortak uzunluk. */
+const LEGAL_PATH_NEAR_MISS_MIN = 4;
+
+/**
+ * Çözümlenemeyen bir iç yol "hukuki belge yolu gibi mi görünüyor?"
+ *
+ * Kural: yolun ilk segmenti kayıtlı bir belge slug'ıyla önek ilişkisindeyse
+ * (biri diğeriyle başlıyorsa) yazım hatası sayılır ve raporlanır —
+ * `/gizlilik-metni`, `/kullanim` gibi. Aksi hâlde gerçekten hukuki olmayan bir
+ * iç yoldur (`/login`, `/ayarlar`) ve doğrulanamayacağı için sessizce geçilir.
+ *
+ * Kural bilinçli olarak önek ilişkisiyle sınırlı: harf düşmesi (`/gizllik`)
+ * yakalanmaz. Amaç, hukuki yol yazarken yapılan yakın-ıska hatalarını
+ * yüzeye çıkarmak; uygulamanın route tablosunu buradan taklit etmek değil.
+ */
+function looksLikeLegalPath(rawPath: string): boolean {
+  const segment = rawPath.replace(/^\//, "").split("/")[0] ?? "";
+  if (segment === "") return false;
+  return LEGAL_PATH_SLUGS.some(
+    (slug) =>
+      (segment.length >= LEGAL_PATH_NEAR_MISS_MIN && slug.startsWith(segment)) ||
+      (slug.length >= LEGAL_PATH_NEAR_MISS_MIN && segment.startsWith(slug)),
+  );
 }
 
 /**
  * Kırık iç bağlantıları bulur. Doğrulananlar:
  * - `#bolum-id` → aynı belgede o bölüm var mı
  * - `/gizlilik#bolum-id` → hedef belge kayıtlıysa o bölüm var mı
- * - `/bilinmeyen-hukuki-yol` → hukuki belge yolları arasında geçerli mi
- * - protokol allowlist'i (`javascript:` gibi hedefler kırık sayılır)
+ * - `/gizlilik-metni` → hukuki belge yoluna benzeyip hiçbirine çözülmeyen iç
+ *   yol (`:username` catch-all'una düşüp 404 olurdu)
+ * - protokol allowlist'i (`javascript:`, `//evil.com` kırık sayılır)
  *
- * Hukuki olmayan iç yollar (`/login` gibi) ve dış bağlantılar doğrulanamaz;
- * sessizce geçilir.
+ * Hukuki belge yoluna benzemeyen iç yollar (`/login`) ve dış bağlantılar
+ * doğrulanamaz; sessizce geçilir. Ayrım için bkz. `looksLikeLegalPath`.
+ *
+ * `options.documents` verilirse yalnız o belgelerdeki bağlantılar taranır;
+ * çözümleme yine tüm `registry` üzerinden yapılır.
  */
-export function findBrokenLegalLinks(registry: LegalSectionRegistry): string[] {
+export function findBrokenLegalLinks(
+  registry: LegalSectionRegistry,
+  options?: { readonly documents?: readonly LegalDocumentId[] },
+): string[] {
   const idsByDocument = new Map<LegalDocumentId, Set<string>>();
   for (const id of LEGAL_DOCUMENT_IDS) {
     const sections = registry[id];
@@ -324,8 +419,9 @@ export function findBrokenLegalLinks(registry: LegalSectionRegistry): string[] {
     }
   }
 
+  const scanned = options?.documents ?? LEGAL_DOCUMENT_IDS;
   const broken: string[] = [];
-  for (const documentId of LEGAL_DOCUMENT_IDS) {
+  for (const documentId of scanned) {
     const sections = registry[documentId];
     if (!sections) continue;
 
@@ -342,10 +438,12 @@ export function findBrokenLegalLinks(registry: LegalSectionRegistry): string[] {
       const [rawPath, hash] = splitHref(href);
       const targetId = rawPath === "" ? documentId : PATH_TO_DOCUMENT_ID.get(rawPath);
 
-      if (rawPath !== "" && !targetId) continue; // hukuki olmayan iç yol
       if (!targetId) {
-        broken.push(`${where}: hedef belge çözümlenemedi "${href}"`);
-        continue;
+        // Hukuki yola benziyor ama hiçbirine çözülmüyor → yazım hatası.
+        if (looksLikeLegalPath(rawPath)) {
+          broken.push(`${where}: hedef belge çözümlenemedi "${href}"`);
+        }
+        continue; // aksi hâlde hukuki olmayan iç yol; doğrulanamaz
       }
       if (!hash) continue;
 
@@ -363,4 +461,56 @@ function splitHref(href: string): [path: string, hash: string] {
   const index = href.indexOf("#");
   if (index < 0) return [href, ""];
   return [href.slice(0, index), href.slice(index + 1)];
+}
+
+/* ------------------------------------------------------------------ *
+ * R33 — yayına hazırlık sınıflandırması
+ * ------------------------------------------------------------------ */
+
+/**
+ * Bir belgenin yayına hazırlık durumu.
+ *
+ * Ayrım hukuki: **doldurulmamış alan** yayını engeller — okuyucuya
+ * `[VERİ SORUMLUSU UNVANI]` gösteren bir aydınlatma metni aydınlatma değildir,
+ * sayfa prod'da 404 dönmelidir. Bozuk bölüm `id`'si, uyumsuz tablo satırı ve
+ * kırık iç bağlantı ise metni yanlışlamaz; okunabilirliği düşürür. Onlar
+ * yalnız geliştirmede yüzeye çıkar ve testte kırılır.
+ */
+export type LegalDocumentStatus = {
+  /** Yayını engelleyen bulgular (yalnızca doldurulmamış alanlar). */
+  blocking: string[];
+  /** Yayını engellemeyen, dev'de gösterilen bulgular. */
+  warnings: string[];
+  /** `blocking.length > 0` — kapının yüklem hâli. */
+  blocked: boolean;
+};
+
+/**
+ * Kapının saf karar mantığı. Render katmanı bunun üstünde ince bir uyarlayıcı
+ * olmalı: `blocked && PROD` → 404, aksi hâlde `[...blocking, ...warnings]`
+ * dev kutusuna gider.
+ *
+ * `registry` verilmezse yalnız bu belge çözümlenir; belgeler arası
+ * (`/gizlilik#bolum`) bağlantıların doğrulanması için tüm kayıt geçilmelidir.
+ * Taranan bağlantılar her hâlükârda yalnız bu belgeninkilerdir.
+ */
+export function classifyLegalDocument(
+  doc: LegalDocumentMeta,
+  sections: readonly LegalSection[],
+  registry: LegalSectionRegistry = {},
+): LegalDocumentStatus {
+  const resolved: LegalSectionRegistry = { ...registry, [doc.id]: sections };
+  const placeholders = findLegalPlaceholders(
+    sections,
+    collectLegalMetaStrings(doc),
+  );
+
+  return {
+    blocking: placeholders.map((hit) => `Doldurulmamış alan: ${hit}`),
+    warnings: [
+      ...findLegalSectionIssues(sections),
+      ...findBrokenLegalLinks(resolved, { documents: [doc.id] }),
+    ],
+    blocked: placeholders.length > 0,
+  };
 }

@@ -2,6 +2,7 @@ import { count, desc, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { createDb, profile } from "@caka/db";
+import { PUBLISHED_LEGAL_DOCUMENTS } from "../app/content/legal";
 import { SITE_URL } from "../app/lib/seo";
 
 const SITEMAP_PAGE_SIZE = 45_000;
@@ -74,13 +75,16 @@ seoRoutes.get("/sitemap.xml", async (c) => {
   return c.body(sitemapIndex(locations), 200, XML_HEADERS);
 });
 
+// Hukuki yollar elle yazılmaz: künyeden türetilir (yeniden adlandırılan bir
+// route sitemap'te 404 bırakamaz) ve yalnız yayındaki belgeler listelenir —
+// R33 kapısının 404'lediği bir belgeyi arama motoruna göndermek yanlış.
 seoRoutes.get("/sitemaps/core.xml", (c) =>
   c.body(
     urlset([
       { loc: `${SITE_URL}/` },
-      { loc: `${SITE_URL}/gizlilik` },
-      { loc: `${SITE_URL}/kullanim-kosullari` },
-      { loc: `${SITE_URL}/cerez-politikasi` },
+      ...PUBLISHED_LEGAL_DOCUMENTS.map((doc) => ({
+        loc: `${SITE_URL}${doc.path}`,
+      })),
     ]),
     200,
     XML_HEADERS,

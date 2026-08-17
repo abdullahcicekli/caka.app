@@ -22,13 +22,27 @@ export const COOKIE_CATEGORY_LABELS: Record<CookieCategory, string> = {
   zorunlu: "Zorunlu",
 };
 
-/** Girdinin cihazda nerede durduğu. Varsayılan `cookie`. */
-export const COOKIE_STORAGE_KINDS = ["cookie", "sessionStorage"] as const;
+/**
+ * Girdinin cihazda nerede durduğu. Varsayılan `cookie`.
+ *
+ * Birlik, AGENTS.md'nin envantere girmesini şart koştuğu her depolama türünü
+ * karşılar (çerez, `localStorage`, `sessionStorage`, IndexedDB). Bugün yalnız
+ * ikisi kullanılıyor; kalanlar burada duruyor ki doğru olanı yapan katkıcı tip
+ * hatasına çarpıp girdisini yanlış türle etiketlemek zorunda kalmasın.
+ */
+export const COOKIE_STORAGE_KINDS = [
+  "cookie",
+  "localStorage",
+  "sessionStorage",
+  "indexedDB",
+] as const;
 export type CookieStorageKind = (typeof COOKIE_STORAGE_KINDS)[number];
 
 export const COOKIE_STORAGE_LABELS: Record<CookieStorageKind, string> = {
   cookie: "Çerez",
+  localStorage: "localStorage",
   sessionStorage: "sessionStorage",
+  indexedDB: "IndexedDB",
 };
 
 export const DEFAULT_COOKIE_STORAGE: CookieStorageKind = "cookie";

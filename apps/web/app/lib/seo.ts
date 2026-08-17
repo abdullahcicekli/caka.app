@@ -16,6 +16,15 @@ export function absoluteSiteUrl(path = "/"): string {
 }
 
 /**
+ * Sabit marka paylaşım görseli. `pickRandomOgImage()` her çağrıda başka bir
+ * görsel seçtiği için `meta()` içinden çağrılamaz: sunucu ve istemci bağımsız
+ * seçer, `og:image` hidrasyonda değişir. Pazarlama dışı sayfalar (hukuki
+ * metinler) çeşitlemeden fayda görmez; sabit görsel hem deterministik hem de
+ * loader'dan veri taşımayı gerektirmez.
+ */
+export const STATIC_OG_IMAGE = absoluteSiteUrl(OG_IMAGES[0]);
+
+/**
  * Her SSR meta isteğinde başka bir varsayılan paylaşım görseli seçer. Sosyal
  * ağların aynı sayfa URL'si için tuttuğu cache'i ayırmak üzere kısa bir sürüm
  * anahtarı da eklenir.

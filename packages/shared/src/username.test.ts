@@ -1,6 +1,13 @@
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
-import { normalizeUsername, validateUsername } from "./username";
+import {
+  RESERVED_USERNAMES,
+  normalizeUsername,
+  validateUsername,
+} from "./username";
 
 describe("normalizeUsername", () => {
   it("kırpar ve küçük harfe çevirir", () => {
@@ -50,21 +57,13 @@ describe("validateUsername", () => {
     expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
   });
 
-  // Hukuki sayfa slug'ları: `apps/web/app/routes.ts`'te route olarak kayıtlı
-  // (veya ileride açılacak) adlar kullanıcı adı olarak kapılamamalı — aksi
-  // hâlde route eklemek o profili yönlendirmesiz karartır (Değişmez #1).
-  // Not: route tablosu ile rezerve listenin tam senkron testi burada mümkün
-  // değil; `packages/shared`, `apps/web/app/routes.ts`'i import edemez. Bu
-  // liste route eklendikçe elle güncellenir.
-  it.each([
-    "gizlilik",
-    "kullanim-kosullari",
-    "cerez-politikasi",
-    // Bugün route'u yok; rıza sistemi geldiğinde kullanılacak, o zamana dek
-    // kapılmamalı.
-    "cerez-tercihleri",
-  ])("hukuki sayfa slug'ını rezerve tutar: %s", (u) => {
-    expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+  // Bugün route'u yok; rıza sistemi geldiğinde kullanılacak, o zamana dek
+  // kapılmamalı. Route tablosundan türetilemediği için elle tutulur.
+  it("route'u olmayan planlı slug'ı rezerve tutar: cerez-tercihleri", () => {
+    expect(validateUsername("cerez-tercihleri")).toEqual({
+      ok: false,
+      error: "reserved",
+    });
   });
 
   it.each(["cakateam", "caka-resmi", "cakahq"])(
@@ -135,5 +134,56 @@ describe("validateUsername", () => {
     "apici",
   ])("meşru adlara izin verir: %s", (u) => {
     expect(validateUsername(u).ok).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * Route tablosu ↔ rezerve liste senkronu (KTD9)
+ * ------------------------------------------------------------------ */
+
+// `packages/shared` `apps/web/app/routes.ts`'i **import** edemez (React Router
+// bağımlılığı buraya girmemeli), ama Vitest Node'da koşar: dosyayı metin olarak
+// okuyup route adlarını çıkarmak mümkün. Böylece `:username` catch-all'undan
+// önce eklenen bir route rezerve listeye girmeyi unutulduğunda test kırılır —
+// aksi hâlde route, o adı almış profili yönlendirmesiz karartır (Değişmez #1).
+const ROUTES_PATH = fileURLToPath(
+  new URL("../../../apps/web/app/routes.ts", import.meta.url),
+);
+
+/** `route("onboarding/tamamla", …)` → `onboarding`. Parametrik segment atlanır. */
+function topLevelRouteSlugs(source: string): string[] {
+  const slugs = new Set<string>();
+  for (const match of source.matchAll(/\broute\(\s*["']([^"']+)["']/g)) {
+    const first = match[1]?.split("/")[0];
+    if (!first || first.startsWith(":")) continue;
+    slugs.add(first);
+  }
+  return [...slugs];
+}
+
+describe("route tablosu ↔ rezerve liste", () => {
+  it("route tablosu beklenen yerde durur", () => {
+    // Dosya taşınırsa test sessizce boş geçmesin, gürültüyle kırılsın.
+    expect(
+      existsSync(ROUTES_PATH),
+      `route tablosu bulunamadı: ${ROUTES_PATH} — dosya taşındıysa bu testteki yolu güncelle`,
+    ).toBe(true);
+  });
+
+  it("route tablosundan slug çıkarılabiliyor", () => {
+    const slugs = topLevelRouteSlugs(readFileSync(ROUTES_PATH, "utf8"));
+    // Ayrıştırma bozulursa (route tanımı biçimi değişirse) boş küme dönüp test
+    // yanlışlıkla yeşile düşerdi; alt sınır bunu engeller.
+    expect(slugs.length, "route tablosundan hiç slug çıkmadı").toBeGreaterThan(5);
+    expect(slugs, "hukuki sayfalar route tablosunda").toContain("gizlilik");
+  });
+
+  it("her top-level route slug'ı rezerve listede", () => {
+    for (const slug of topLevelRouteSlugs(readFileSync(ROUTES_PATH, "utf8"))) {
+      expect(
+        RESERVED_USERNAMES.has(slug),
+        `"/${slug}" route'u var ama RESERVED_USERNAMES'te yok (packages/shared/src/username.ts)`,
+      ).toBe(true);
+    }
   });
 });
