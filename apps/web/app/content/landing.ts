@@ -51,7 +51,7 @@ export interface FooterColumn {
 }
 
 export interface SocialLink {
-  platform: "github" | "instagram";
+  platform: "github";
   href: string;
   label: string;
 }
@@ -212,20 +212,15 @@ export const landing = {
         ],
       },
     ] satisfies FooterColumn[],
-    // Yalnızca var olduğu doğrulanmış hesaplar. `github.com/caka-app` ve
-    // `x.com/cakaapp` 404 dönüyordu: ilki gerçek depoyla değiştirildi,
-    // ikincisi kaldırıldı. Bu liste `home.tsx`'teki Organization
-    // şemasının `sameAs` alanını da besler — ölü hesap ilan edilmemeli.
+    // Yalnızca Caka'ya ait, var olduğu doğrulanmış hesaplar. `github.com/caka-app`
+    // ve `x.com/cakaapp` 404 dönüyordu; `instagram.com/caka.app` ise Caka'ya ait
+    // değil, o yüzden kaldırıldı. Bu liste `home.tsx`'teki Organization şemasının
+    // `sameAs` alanını da besler — sahip olmadığımız hesabı kendimize mal etmeyiz.
     social: [
       {
         platform: "github",
         href: "https://github.com/abdullahcicekli/caka.app",
         label: "GitHub",
-      },
-      {
-        platform: "instagram",
-        href: "https://instagram.com/caka.app",
-        label: "Instagram",
       },
     ] satisfies SocialLink[],
     // R49/R50: rozet koleksiyonu değil, doğrulanabilir ve ayırt edici iki
