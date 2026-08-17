@@ -27,6 +27,15 @@ export interface MarqueeItem {
   image: string;
 }
 
+/**
+ * Footer'daki güven ifadesi. Her biri kanıtına bağlanır: okuyucu iddiayı
+ * doğrulayabilmeli, yoksa rozet olur (R49/R50).
+ */
+export interface TrustItem {
+  label: string;
+  href: string;
+}
+
 export interface FooterColumn {
   title: string;
   links: readonly Cta[];
@@ -187,6 +196,27 @@ export const landing = {
         label: "Instagram",
       },
     ] satisfies SocialLink[],
+    // R49/R50: rozet koleksiyonu değil, doğrulanabilir ve ayırt edici iki
+    // ifade. Her biri kanıtına tıklanıyor. Bilinçli olarak YOK: ISO 27001,
+    // "GDPR compliant", "KVKK uyumlu", "%100 Türkiye'de barındırılıyor" —
+    // hiçbirinin arkasında gösterebileceğimiz bir belge yok (KD3). "Güvenli
+    // bağlantı" da yok: her sitede bulunan bir özelliği güven sinyali diye
+    // sunmak, reddettiğimiz içi boş rozet mantığının doğrulanabilir sürümü
+    // olurdu.
+    trust: [
+      {
+        // packages/shared/src/cookies.ts envanteriyle kanıtlanıyor: tanımlı
+        // tek kategori "zorunlu". Ölçüm çerezsiz, tarayıcıda doğrulandı.
+        label: "Reklam ve analitik çerezi kullanmıyoruz",
+        href: "/cerez-politikasi",
+      },
+      {
+        // MIT lisanslı public depo; yukarıdaki iddia dahil her şey kodda
+        // okunabilir.
+        label: "Kaynak kodu açık",
+        href: "https://github.com/abdullahcicekli/caka.app",
+      },
+    ] satisfies readonly TrustItem[],
     copyright: `© ${new Date().getFullYear()}`,
   },
 } as const;

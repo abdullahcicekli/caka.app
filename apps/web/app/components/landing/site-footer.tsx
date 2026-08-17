@@ -10,16 +10,30 @@ const LINK_CLASS = "text-[15px] text-murekkep hover:opacity-70";
  * Uygulama içi route'lar client-side gezinir; anchor ve `mailto:` hedefleri
  * düz `<a>` kalır.
  */
-function FooterLink({ href, label }: { href: string; label: string }) {
+function FooterLink({
+  href,
+  label,
+  className = LINK_CLASS,
+}: {
+  href: string;
+  label: string;
+  className?: string;
+}) {
   if (href.startsWith("/")) {
     return (
-      <Link to={href} className={LINK_CLASS}>
+      <Link to={href} className={className}>
         {label}
       </Link>
     );
   }
+  // Dış hedefler (http, mailto) düz <a>; yeni sekmede açılanlara rel şart.
+  const external = href.startsWith("http");
   return (
-    <a href={href} className={LINK_CLASS}>
+    <a
+      href={href}
+      className={className}
+      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+    >
       {label}
     </a>
   );
@@ -53,7 +67,21 @@ export function SiteFooter({ footer }: { footer: LandingContent["footer"] }) {
           ))}
         </div>
 
-        <hr className="mt-12 border-sinir" />
+        {/* Güven alanı: her ifade kanıt sayfasına gider (R50). Rozet gibi
+            görünmemesi bilinçli — çerçeve ve ikon yok, düz bağlantı. */}
+        <ul className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2">
+          {footer.trust.map((item) => (
+            <li key={item.label}>
+              <FooterLink
+                href={item.href}
+                label={item.label}
+                className="text-sm text-murekkep/60 underline decoration-sinir underline-offset-4 hover:text-murekkep"
+              />
+            </li>
+          ))}
+        </ul>
+
+        <hr className="mt-8 border-sinir" />
 
         <div className="mt-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
