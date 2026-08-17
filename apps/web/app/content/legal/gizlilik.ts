@@ -448,7 +448,14 @@ export const gizlilikSections: LegalSection[] = [
             ],
             [
               "Caka'da işlenen tüm veriler ile siteye gelen isteklerin teknik " +
-                "bilgileri.",
+                "bilgileri. Ziyaret ölçümü ",
+              {
+                kind: "strong",
+                text: "herkese açık profil sayfaları dâhil tüm sayfalarda",
+              },
+              " çalışır: her sayfa görüntülemesinde tarayıcın Cloudflare'in " +
+                "ölçüm script'ini indirir ve bu istekte IP adresin ile User " +
+                "Agent'ın Cloudflare'e ulaşır. Cihazına hiçbir şey yazılmaz.",
             ],
             ["Evet — [AKTARIM MEKANİZMASI]"],
           ],
@@ -702,16 +709,19 @@ export const gizlilikSections: LegalSection[] = [
           { kind: "strong", text: "zorunlu çerezleri" },
           " kullanır: oturumunu taşıyan çerez ve giriş akışını güvenli " +
             "tutan kısa ömürlü çerezler. Reklam çerezi, analitik çerezi ve " +
-            "çapraz site takibi yoktur; ziyaret istatistikleri cihazına " +
-            "hiçbir şey yazmadan, çerezsiz biçimde ölçülür. Bu yüzden onay " +
-            "istemek zorunda kalmıyoruz.",
+            "çapraz site takibi yoktur; ziyaret istatistikleri, herkese açık " +
+            "profil sayfaları dâhil tüm sayfalarda, cihazına hiçbir şey " +
+            "yazmadan çerezsiz biçimde ölçülür. Bu yüzden onay istemek " +
+            "zorunda kalmıyoruz.",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Kullanılan her çerezin adını, amacını, ömrünü ve kimin çerezi " +
-            "olduğunu ",
+          "Çerezlerin yanı sıra, gezinirken kaydırma konumunu hatırlamak için " +
+            "sekmeye özel tek bir sessionStorage girdisi oluşur; sekmeyi " +
+            "kapattığında silinir ve kişisel veri taşımaz. Cihazına yazılan " +
+            "her girdinin adını, amacını, ömrünü ve kime ait olduğunu ",
           {
             kind: "link",
             text: "Çerez Politikası",

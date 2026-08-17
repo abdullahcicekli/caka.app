@@ -11,13 +11,16 @@
 // güncellenir, tablo kendiliğinden değişir — politika ile gerçek arasında
 // sessiz kayma oluşmaz.
 //
-// KTD31 — U28 için not: bu belge bugün var olanı anlatır. Üründe çalışan bir
-// ölçüm aracı yok, dolayısıyla metin hiçbir ölçüm aracının çerezsizliğini
-// iddia etmiyor. Ölçüm devreye alınıp cihaza hiçbir şey yazmadığı DevTools'ta
-// doğrulandığında GENİŞLETİLECEK BÖLÜM: `kullanmadiklarimiz` (2. bölüm) —
-// oradaki "Analitik veya ölçüm çerezi" maddesinin ardına doğrulanmış cümle
-// eklenir. İkinci dokunuş `cihaza-yazmayan-istekler` (6. bölüm) listesine
-// ölçüm beacon'ının satırıdır. Diğer bölümler değişmeden kalır.
+// KTD31 — U28 tamamlandı: ziyaret ölçümü Cloudflare Web Analytics ile kurulu
+// ve çerezsizliği iddia edilmiyor, doğrulandı. Temiz bir tarayıcı profilinde
+// prod'da ana sayfa ve bir profil sayfası açıldı; DevTools'ta beacon'a ait
+// hiçbir çerez, `localStorage` veya `sessionStorage` girdisi görülmedi.
+// Doğrulamanın yan bulgusu: `<ScrollRestoration />` (`app/root.tsx`) sekmeye
+// özel `react-router-scroll-positions` girdisini `sessionStorage`'a yazıyor.
+// Bu girdi ölçüme ait değil ama cihazda duruyor; 1. bölümde adıyla anlatılır
+// ve envantere alındı. Beacon otomatik enjeksiyonla geldiği için profil
+// sayfaları dâhil tüm yüzeylerde çalışır — bölge geneli bir ayar, rota
+// bazında kapatılamaz.
 //
 // Köşeli parantezli her alan doğrulanmamış olgudur ve R33 kapısını tetikler:
 // doldurulmadan belge prod'da 404 döner. Köşeli parantez metinde başka hiçbir
@@ -28,6 +31,7 @@ import type { LegalRow, LegalSection } from "@caka/shared";
 /** Envanter satırları → tablo hücreleri. Sütun sırası aşağıdaki `columns` ile aynı. */
 const cookieRows: LegalRow[] = cookieTableRows().map((row) => [
   [row.name],
+  [row.storage],
   [row.category],
   [row.purpose],
   [row.lifetime],
@@ -56,25 +60,43 @@ export const cerezPolitikasiSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Caka bu teknolojilerden yalnızca ",
-          { kind: "strong", text: "çerezleri" },
-          " kullanır ve onları da yalnızca giriş ile kayıt akışını " +
-            "çalıştırmak için. Tarayıcının sunduğu diğer depolama yolları — ",
+          "Caka çerezleri yalnızca giriş ile kayıt akışını çalıştırmak için " +
+            "kullanır. Tarayıcının sunduğu diğer depolama yollarından ",
           { kind: "strong", text: "localStorage" },
-          " ve ",
-          { kind: "strong", text: "sessionStorage" },
-          " — Caka'nın hiçbir yerinde kullanılmaz. Bu, kodda tek tek " +
-            "doğrulanabilir bir iddia: uygulamanın kaynağında bu iki API'ye " +
-            "yapılmış tek bir çağrı yoktur.",
+          " Caka'nın hiçbir yerinde kullanılmaz: uygulamanın kaynağında bu " +
+            "API'ye yapılmış tek bir çağrı yoktur ve tarayıcında Caka adına " +
+            "hiçbir kalıcı depolama girdisi oluşmaz.",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          { kind: "strong", text: "Sadece geziniyorsan cihazına hiçbir şey yazılmaz. " },
+          { kind: "strong", text: "sessionStorage'da tek bir girdi oluşur. " },
+          "Sayfalar arasında gezindiğinde tarayıcın ",
+          { kind: "strong", text: "react-router-scroll-positions" },
+          " adlı bir girdi yazar. Bunu sitenin gezinme altyapısı (React " +
+            "Router) koyar ve tek işi vardır: hangi sayfada ne kadar aşağı " +
+            "kaydırdığını hatırlamak, böylece geri tuşuna bastığında sayfa " +
+            "başa atlamaz, kaldığın yere döner. Girdi ",
+          { kind: "strong", text: "birinci taraftır" },
+          " — yalnızca caka.app okur, sunucuya gönderilmez — içinde yalnız " +
+            "piksel değerleri bulunur, kimlik veya başka bir kişisel veri " +
+            "taşımaz ve ",
+          { kind: "strong", text: "sekmeyi kapattığında kendiliğinden silinir" },
+          ". DevTools'u açıp bakarsan onu görürsün; bu yüzden burada da " +
+            "yazıyoruz ve ",
+          { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
+          " diğer girdilerle birlikte listeliyoruz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Sadece geziniyorsan cihazına çerez yazılmaz. " },
           "Ana sayfayı veya bir Caka profilini açtığında Caka sana çerez " +
             "yazmaz. Çerezler ancak giriş yapmaya başladığında ya da kayıt " +
-            "sırasında bir adres seçtiğinde oluşur. Hangileri olduğunu ",
+            "sırasında bir adres seçtiğinde oluşur. Cihazına dokunan her " +
+            "girdinin — üç çerez ve yukarıdaki kaydırma girdisi — tamamını ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
           " görebilirsin.",
         ],
@@ -130,13 +152,51 @@ export const cerezPolitikasiSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
+          { kind: "strong", text: "Peki ziyaretleri nasıl sayıyoruz? " },
+          "Ziyaret ölçümü için ",
+          { kind: "strong", text: "Cloudflare Web Analytics" },
+          " kullanıyoruz. Bu araç çerezsiz çalışır: ziyaretçinin cihazına " +
+            "hiçbir şey yazmaz, cihazından hiçbir şey okumaz ve sana bir " +
+            "kimlik atamaz. Bunu iddia olarak bırakmadık, ",
+          { kind: "strong", text: "açıp baktık" },
+          ": temiz bir tarayıcı profiliyle ana sayfa ve bir profil sayfası " +
+            "açıldı, tarayıcının geliştirici araçlarında ölçüme ait hiçbir " +
+            "çerez, hiçbir localStorage girdisi ve hiçbir cihaz kimliği " +
+            "oluşmadığı görüldü. Sayfa yüklenirken tarayıcın yalnızca ölçüm " +
+            "script'ini indirir; bu isteği ",
+          {
+            kind: "link",
+            text: "6. bölümde",
+            href: "#cihaza-yazmayan-istekler",
+          },
+          " ayrıca yazıyoruz. Bu araç yarın cihaza bir şey yazmaya başlarsa " +
+            "envantere girer, tablo ile bu bölüm birlikte değişir ve rıza " +
+            "duruşu yeniden değerlendirilir.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Bunun bedeli de var. " },
+          "Çerezsiz ve hafif bir ölçüm seçtiğimiz için sayılarımız eksiktir: " +
+            "reklam engelleyiciler ölçüm script'ini engeller, dolayısıyla " +
+            "ziyaretlerin bir kısmı hiç sayılmaz; adresin sonundaki kampanya " +
+            "parametreleri (utm_ ile başlayanlar) kaydedilmediği için hangi " +
+            "kampanyanın kaç ziyaret getirdiğini de göremeyiz. Bunu bilerek " +
+            "kabul ettik; ölçümümüzün eksiksiz olduğunu hiçbir yerde " +
+            "söylemiyoruz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
           "Kısacası: ",
           {
             kind: "strong",
             text:
-              "Caka'da analitik çerezi, reklam veya pazarlama çerezi, üçüncü " +
-              "taraf pixel'i ve parmak izi tekniği yoktur; kullandığımız " +
-              "çerezlerin tamamı zorunlu kategorisindedir.",
+              "Caka'da analitik çerezi, reklam veya pazarlama çerezi, reklam " +
+              "ve sosyal medya pixel'i ve parmak izi tekniği yoktur; " +
+              "kullandığımız çerezlerin tamamı zorunlu kategorisindedir.",
           },
           " Bu boş bir taahhüt değil, envanterin bugünkü hâli: kodda " +
             "tanımlanmış tek çerez kategorisi ",
@@ -199,9 +259,11 @@ export const cerezPolitikasiSections: LegalSection[] = [
           "Tablodaki üç çerez de Kriter B'ye girer: ikisi olmadan giriş " +
             "yapamazsın — biri oturumunu taşır, diğeri giriş gidiş-dönüşünü " +
             "sahteciliğe karşı korur. Üçüncüsü olmadan kayıt sırasında " +
-            "seçtiğin adres, sağlayıcıdan dönüşte sana bağlanamaz. Hiçbiri " +
-            "senin talep etmediğin bir amaca hizmet etmez, bu yüzden açık " +
-            "rıza aranmaz.",
+            "seçtiğin adres, sağlayıcıdan dönüşte sana bağlanamaz. " +
+            "Tablodaki dördüncü satır, yani kaydırma konumunu tutan " +
+            "sessionStorage girdisi, senin istediğin gezinme davranışını " +
+            "sağlar ve hiçbir kişisel veri taşımaz. Hiçbiri senin talep " +
+            "etmediğin bir amaca hizmet etmez, bu yüzden açık rıza aranmaz.",
         ],
       },
       {
@@ -249,25 +311,34 @@ export const cerezPolitikasiSections: LegalSection[] = [
    * ---------------------------------------------------------------- */
   {
     id: "cerez-tablosu",
-    heading: "4. Kullandığımız çerezler",
+    heading: "4. Cihazına yazdıklarımızın tamamı",
     blocks: [
       {
         kind: "paragraph",
         text: [
-          "Aşağıdaki tablo Caka'nın yazdığı çerezlerin tamamıdır. Üçü de " +
-            "birinci taraf çerezidir: caka.app tarafından yazılır, yalnızca " +
-            "caka.app tarafından okunur ve kimseyle paylaşılmaz.",
+          "Aşağıdaki tablo Caka'nın cihazına yazdığı her şeyi gösterir: üç " +
+            "çerez ve bir sessionStorage girdisi. Dördü de birinci taraftır: " +
+            "caka.app tarafından yazılır, yalnızca caka.app tarafından " +
+            "okunur ve kimseyle paylaşılmaz.",
         ],
       },
       {
         kind: "table",
-        columns: ["Çerez adı", "Kategori", "Amaç", "Süre", "Taraf", "Sağlayıcı"],
+        columns: [
+          "Ad",
+          "Tür",
+          "Kategori",
+          "Amaç",
+          "Süre",
+          "Taraf",
+          "Sağlayıcı",
+        ],
         rows: cookieRows,
         caption:
-          "Tablo, uygulamanın kodundaki çerez envanterinden üretilir. Yeni " +
-          "bir çerez eklendiğinde önce envanter güncellenir ve bu tablo " +
-          "kendiliğinden değişir; böylece politika ile gerçek arasında " +
-          "sessiz bir fark oluşmaz.",
+          "Tablo, uygulamanın kodundaki envanterden üretilir. Yeni bir çerez " +
+          "veya depolama girdisi eklendiğinde önce envanter güncellenir ve " +
+          "bu tablo kendiliğinden değişir; böylece politika ile gerçek " +
+          "arasında sessiz bir fark oluşmaz.",
       },
       {
         kind: "paragraph",
@@ -378,6 +449,26 @@ export const cerezPolitikasiSections: LegalSection[] = [
               "servise ulaşır; cihazına hiçbir şey yazılmaz ve cihazından " +
               "hiçbir şey okunmaz. Yazı tiplerini kendi sunucumuza taşıyıp bu " +
               "isteği tamamen kaldırmak iş listemizde duruyor.",
+          ],
+          [
+            {
+              kind: "strong",
+              text: "Ziyaret ölçümü (Cloudflare Web Analytics). ",
+            },
+            "Her sayfa yüklemesinde tarayıcın ",
+            { kind: "strong", text: "static.cloudflareinsights.com" },
+            " adresinden küçük bir ölçüm script'i indirir ve görüntülenen " +
+              "sayfayı bildirir. Bu istekte IP adresin ve User Agent'ın " +
+              "Cloudflare'e ulaşır; ",
+            {
+              kind: "strong",
+              text: "cihazına hiçbir şey yazılmaz ve cihazından hiçbir şey okunmaz",
+            },
+            " — bu yüzden 4. bölümdeki tabloda yer almaz. Script otomatik " +
+              "olarak alan adının tamamına eklenir; ana sayfada da, herkese " +
+              "açık profil sayfalarında da çalışır ve sayfa bazında " +
+              "kapatılamaz. Reklam engelleyici kullanıyorsan bu istek " +
+              "büyük ihtimalle hiç yapılmaz.",
           ],
           [
             {

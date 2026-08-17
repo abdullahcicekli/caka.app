@@ -4,6 +4,7 @@ import {
   COOKIE_CATEGORIES,
   COOKIE_INVENTORY,
   COOKIE_PARTIES,
+  COOKIE_STORAGE_KINDS,
   cookieTableRows,
   type CookieEntry,
 } from "./cookies";
@@ -46,6 +47,34 @@ describe("çerez envanteri", () => {
       expect(entry.lifetime.trim(), entry.name).not.toBe("");
     }
   });
+
+  it("belirtilen depolama türü bilinen birliğe aittir", () => {
+    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
+    for (const entry of entries) {
+      if (entry.storage === undefined) continue;
+      expect(COOKIE_STORAGE_KINDS, entry.name).toContain(entry.storage);
+    }
+  });
+
+  it("kaydırma konumu girdisi sessionStorage olarak işaretlidir", () => {
+    // AE9 / KTD31: `<ScrollRestoration />` cihaza yazan tek çerez dışı
+    // girdidir; envanterden düşerse politika tablosu da sessizce yanlışlanır.
+    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
+    const scroll = entries.find(
+      (entry) => entry.name === "react-router-scroll-positions",
+    );
+    expect(scroll).toBeDefined();
+    expect(scroll?.storage).toBe("sessionStorage");
+    expect(scroll?.party).toBe("birinci");
+  });
+
+  it("çerez dışı girdiler dışında her şey çerezdir", () => {
+    const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
+    const cookies = entries.filter(
+      (entry) => (entry.storage ?? "cookie") === "cookie",
+    );
+    expect(cookies).toHaveLength(3);
+  });
 });
 
 describe("cookieTableRows", () => {
@@ -67,6 +96,7 @@ describe("cookieTableRows", () => {
     expect(rows).toEqual([
       {
         name: "test_cookie",
+        storage: "Çerez",
         category: "Zorunlu",
         purpose: "Test amaçlı",
         lifetime: "1 gün",
@@ -74,6 +104,36 @@ describe("cookieTableRows", () => {
         provider: "Caka",
       },
     ]);
+  });
+
+  it("depolama türü yazılmayan girdiyi çerez sayar", () => {
+    const [row] = cookieTableRows([
+      {
+        name: "test_cookie",
+        category: "zorunlu",
+        purpose: "Test amaçlı",
+        lifetime: "1 gün",
+        party: "birinci",
+        provider: "Caka",
+      },
+    ]);
+    expect(row?.storage).toBe("Çerez");
+  });
+
+  it("sessionStorage girdisini kendi etiketiyle gösterir", () => {
+    const [row] = cookieTableRows([
+      {
+        name: "test_scroll",
+        storage: "sessionStorage",
+        category: "zorunlu",
+        purpose: "Test amaçlı",
+        lifetime: "Sekmeyi kapatınca silinir",
+        party: "birinci",
+        provider: "Caka",
+      },
+    ]);
+    expect(row?.storage).toBe("sessionStorage");
+    expect(row?.lifetime).toBe("Sekmeyi kapatınca silinir");
   });
 
   it("boş envanterde boş dizi döner", () => {
