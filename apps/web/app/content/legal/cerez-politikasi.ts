@@ -22,6 +22,18 @@
 // sayfaları dâhil tüm yüzeylerde çalışır — bölge geneli bir ayar, rota
 // bazında kapatılamaz.
 //
+// Sonraki tarama (derlenmiş istemci paketi, `build/client/assets`) ikinci bir
+// `sessionStorage` anahtarı buldu: React Router'ın rota keşfi, yeni sürüm
+// yayınlandığında `react-router-manifest-version` yazıyor. 1. bölüme eklendi,
+// envantere alındı; tablodaki satır sayısını anlatan cümleler (1., 3. ve 4.
+// bölüm) buna göre "üç çerez + iki sessionStorage girdisi" diyor.
+//
+// R48 birinci taraf ölçümü de 2. bölümde anlatılıyor: public profillerde
+// görüntülenme ve tıklama sayaçları kendi D1'imizde artıyor. Sayım sunucu
+// tarafında olduğu ve cihaza hiçbir şey yazılmadığı için envantere girecek
+// bir kalem doğurmuyor — ama "ziyaretleri nasıl sayıyoruz" sorusunun yanıtı
+// artık yalnız Cloudflare Web Analytics değil, bu yüzden bölüm genişletildi.
+//
 // Köşeli parantezli her alan doğrulanmamış olgudur ve R33 kapısını tetikler:
 // doldurulmadan belge prod'da 404 döner. Köşeli parantez metinde başka hiçbir
 // amaçla kullanılmaz.
@@ -71,19 +83,41 @@ export const cerezPolitikasiSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          { kind: "strong", text: "sessionStorage'da tek bir girdi oluşur. " },
-          "Sayfalar arasında gezindiğinde tarayıcın ",
+          { kind: "strong", text: "sessionStorage'da iki girdi oluşabilir. " },
+          "Birincisini sayfalar arasında gezindiğinde tarayıcın yazar: ",
           { kind: "strong", text: "react-router-scroll-positions" },
-          " adlı bir girdi yazar. Bunu sitenin gezinme altyapısı (React " +
-            "Router) koyar ve tek işi vardır: hangi sayfada ne kadar aşağı " +
-            "kaydırdığını hatırlamak, böylece geri tuşuna bastığında sayfa " +
-            "başa atlamaz, kaldığın yere döner. Girdi ",
+          ". Bunu sitenin gezinme altyapısı (React Router) koyar ve tek işi " +
+            "vardır: hangi sayfada ne kadar aşağı kaydırdığını hatırlamak, " +
+            "böylece geri tuşuna bastığında sayfa başa atlamaz, kaldığın yere " +
+            "döner. İçinde yalnız piksel değerleri bulunur.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "İkincisi ",
+          { kind: "strong", text: "react-router-manifest-version" },
+          " ve yalnızca ",
+          {
+            kind: "strong",
+            text: "sitenin yeni bir sürümünü yayınladığımız anda sekmen açıksa",
+          },
+          " oluşur. Eski sürümde takılı kalmaman için sayfa bir kez " +
+            "yenilenir; bu girdi de hangi sürüm için yenilendiğini tutar ki " +
+            "yenileme döngüye girmesin. İçinde bir sürüm etiketinden başka " +
+            "bir şey yoktur ve yenileme başarılı olur olmaz silinir. Çoğu " +
+            "ziyarette hiç oluşmaz — ama oluşabildiği için burada yazıyoruz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "İkisi de ",
           { kind: "strong", text: "birinci taraftır" },
-          " — yalnızca caka.app okur, sunucuya gönderilmez — içinde yalnız " +
-            "piksel değerleri bulunur, kimlik veya başka bir kişisel veri " +
-            "taşımaz ve ",
+          " — yalnızca caka.app okur, sunucuya gönderilmez — kimlik veya " +
+            "başka bir kişisel veri taşımaz ve ",
           { kind: "strong", text: "sekmeyi kapattığında kendiliğinden silinir" },
-          ". DevTools'u açıp bakarsan onu görürsün; bu yüzden burada da " +
+          ". DevTools'u açıp bakarsan onları görürsün; bu yüzden burada da " +
             "yazıyoruz ve ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
           " diğer girdilerle birlikte listeliyoruz.",
@@ -96,7 +130,8 @@ export const cerezPolitikasiSections: LegalSection[] = [
           "Ana sayfayı veya bir Caka profilini açtığında Caka sana çerez " +
             "yazmaz. Çerezler ancak giriş yapmaya başladığında ya da kayıt " +
             "sırasında bir adres seçtiğinde oluşur. Cihazına dokunan her " +
-            "girdinin — üç çerez ve yukarıdaki kaydırma girdisi — tamamını ",
+            "girdinin — üç çerez ve yukarıdaki iki sessionStorage girdisi — " +
+            "tamamını ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
           " görebilirsin.",
         ],
@@ -172,6 +207,35 @@ export const cerezPolitikasiSections: LegalSection[] = [
           " ayrıca yazıyoruz. Bu araç yarın cihaza bir şey yazmaya başlarsa " +
             "envantere girer, tablo ile bu bölüm birlikte değişir ve rıza " +
             "duruşu yeniden değerlendirilir.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          {
+            kind: "strong",
+            text: "Bir de kendi sayacımız var — o da çerezsiz. ",
+          },
+          "Herkese açık bir Caka profilini açtığında, o sayfanın sahibi " +
+            "kendi panelinde sayfasının kaç kez görüntülendiğini ve hangi " +
+            "bağlantısına kaç kez tıklandığını görebilsin diye bir sayacı " +
+            "biz kendi veritabanımızda artırıyoruz. Bu sayım tamamen " +
+            "sunucu tarafında olur: ",
+          {
+            kind: "strong",
+            text: "cihazına hiçbir şey yazılmaz, cihazından hiçbir şey okunmaz",
+          },
+          " ve sana bir kimlik atanmaz — bu yüzden 4. bölümdeki tabloda bir " +
+            "satırı yoktur. Bağlantı tıklamaları tarayıcındaki küçük bir " +
+            "JavaScript parçasıyla bildirilir, ama o da yalnızca hangi " +
+            "bloğa tıklandığını gönderir ve karşılığında hiçbir şey almaz. " +
+            "Ne saklandığı ve sahibinin tam olarak neyi görebildiği ",
+          {
+            kind: "link",
+            text: "Gizlilik ve Aydınlatma Metni'nde",
+            href: "/gizlilik#islenen-veriler",
+          },
+          " yazıyor.",
         ],
       },
       {
@@ -260,10 +324,12 @@ export const cerezPolitikasiSections: LegalSection[] = [
             "yapamazsın — biri oturumunu taşır, diğeri giriş gidiş-dönüşünü " +
             "sahteciliğe karşı korur. Üçüncüsü olmadan kayıt sırasında " +
             "seçtiğin adres, sağlayıcıdan dönüşte sana bağlanamaz. " +
-            "Tablodaki dördüncü satır, yani kaydırma konumunu tutan " +
-            "sessionStorage girdisi, senin istediğin gezinme davranışını " +
-            "sağlar ve hiçbir kişisel veri taşımaz. Hiçbiri senin talep " +
-            "etmediğin bir amaca hizmet etmez, bu yüzden açık rıza aranmaz.",
+            "Tablodaki iki sessionStorage girdisi de aynı kritere girer: " +
+            "biri kaydırma konumunu tutarak senin istediğin gezinme " +
+            "davranışını sağlar, diğeri sayfanın eski bir sürümde takılı " +
+            "kalmasını önler. Hiçbiri kişisel veri taşımaz ve hiçbiri senin " +
+            "talep etmediğin bir amaca hizmet etmez, bu yüzden açık rıza " +
+            "aranmaz.",
         ],
       },
       {
@@ -317,9 +383,10 @@ export const cerezPolitikasiSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           "Aşağıdaki tablo Caka'nın cihazına yazdığı her şeyi gösterir: üç " +
-            "çerez ve bir sessionStorage girdisi. Dördü de birinci taraftır: " +
+            "çerez ve iki sessionStorage girdisi. Beşi de birinci taraftır: " +
             "caka.app tarafından yazılır, yalnızca caka.app tarafından " +
-            "okunur ve kimseyle paylaşılmaz.",
+            "okunur ve kimseyle paylaşılmaz. Hepsi her ziyarette oluşmaz — " +
+            "her satırın ne zaman yazıldığını “Amaç” sütunu anlatıyor.",
         ],
       },
       {

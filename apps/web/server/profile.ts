@@ -1,4 +1,4 @@
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, eq, gt, ne, notExists, sql } from "drizzle-orm";
 
 import { account, createDb, profile, usernameRedirect } from "@caka/db";
 import {
@@ -46,23 +46,32 @@ export function parseOnboardingData(value: string): OnboardingData {
   }
 }
 
-/** Adres kullanılabilir mi? Profil kaydı + süresi geçmemiş devir kilidi bakılır. */
+/**
+ * Adres kullanılabilir mi? Profil kaydı + süresi geçmemiş devir kilidi bakılır.
+ *
+ * İki sorgu bilerek SIRAYLA çalışır (`Promise.all` DEĞİL): bağımsız iki D1
+ * gidiş-dönüşü tek bir anlık görüntü değildir. Paralelken kilit okuması bir
+ * kurbanın atomik "x → y" değişikliğinden ÖNCE, doluluk okuması SONRA
+ * sunulabilir; o aralıkta x hem boş hem kilitsiz görünür ve Değişmez #10
+ * delinir. Doluluk önce okunduğunda, ondan SONRA başlayan kilit okuması aynı
+ * commit'i görmek zorundadır (D1 bağlaması birincil örneğe gider; okuma
+ * replikası/Sessions API'si açılırsa bu akıl yürütme yeniden gözden geçirilmeli).
+ */
 export async function isUsernameAvailable(env: Env, username: string) {
   const db = createDb(env.DB);
-  const [taken, locked] = await Promise.all([
-    db.query.profile.findFirst({
-      columns: { id: true },
-      where: eq(profile.username, username),
-    }),
-    db.query.usernameRedirect.findFirst({
-      columns: { oldUsername: true },
-      where: and(
-        eq(usernameRedirect.oldUsername, username),
-        gt(usernameRedirect.expiresAt, new Date()),
-      ),
-    }),
-  ]);
-  return !taken && !locked;
+  const taken = await db.query.profile.findFirst({
+    columns: { id: true },
+    where: eq(profile.username, username),
+  });
+  if (taken) return false;
+  const locked = await db.query.usernameRedirect.findFirst({
+    columns: { oldUsername: true },
+    where: and(
+      eq(usernameRedirect.oldUsername, username),
+      gt(usernameRedirect.expiresAt, new Date()),
+    ),
+  });
+  return !locked;
 }
 
 export async function getProfileByUserId(env: Env, userId: string) {
@@ -240,6 +249,16 @@ export async function claimUsername(
     ? await copyGoogleAvatar(env, user.id, user.image)
     : null;
 
+  // Yukarıdaki kopyalama Google'a giden bir HTTP çağrısıdır: kontrol ile
+  // insert arasını yüzlerce ms açar. O aralıkta biri adresi boşaltırsa geride
+  // 30 günlük devir kilidi kalır ama unique kısıt bunu GÖREMEZ (ad gerçekten
+  // boştur) — Değişmez #10'un ikinci uygulama noktası burasıdır. Insert'ten
+  // hemen önce bir kez daha bakılır; pencere ağ çağrısı boyunca değil, tek
+  // sorgu kadar açık kalır.
+  if (!(await isUsernameAvailable(env, result.username))) {
+    return { ok: false, error: "taken" };
+  }
+
   const db = createDb(env.DB);
   try {
     await db.insert(profile).values({
@@ -379,17 +398,24 @@ export type ChangeUsernameResult =
  *  1. Profil YALNIZCA `userId` üzerinden okunur/yazılır — çağıran başkasının
  *     profilini değiştiremez, adres parametre olarak dışarıdan gelmez.
  *  2. Saf kurallar `checkUsernameChange`'te (biçim/rezerve/aynı/bekleme).
- *  3. Doluluk ve kilit kontrolü: ad başka bir profildeyse ya da BAŞKASININ
- *     süresi dolmamış devir kaydı tutuyorsa reddedilir. Kilit kendine aitse
- *     (kendi eski adresini geri alıyor) izin verilir; eski kayıt profilin
- *     kendisine işaret ettiği için resolveUsername zaten profili önce bulur.
+ *  3. Ön kontrol (doluluk + kilit) yalnızca doğru hata mesajı içindir. Kilit
+ *     kendine aitse (kendi eski adresini geri alıyor) izin verilir; eski kayıt
+ *     profilin kendisine işaret ettiği için resolveUsername zaten profili
+ *     önce bulur.
  *  4. Yazma tek D1 batch'inde: profil güncellemesi + eski ad için devir kaydı.
  *     Batch atomiktir; unique ihlalinde ikisi de geri alınır, yani "adres
  *     değişti ama yönlendirme yok" hâli oluşmaz.
  *
+ * Değişmez #10'un iki yarısı da YAZMA anında zorlanır:
+ *  - Doluluk: `profile.username` unique kısıtı.
+ *  - Kilit: UPDATE'in WHERE'ine giren `NOT EXISTS` koşulu. Ayrı bir okuma
+ *    olsaydı okuma ile yazma arasına kurbanın atomik değişikliği sızabilir,
+ *    ad hem boş hem kilitsiz görünürdü.
+ *
  * `WHERE username = previous` koşulu eşzamanlı ikinci gönderimi yakalar:
- * satır güncellenmezse "conflict" döner (DB tutarlı kalır, eski ad zaten
- * ilk isteğin kaydıyla yönlendiriyordur).
+ * satır güncellenmezse "conflict" döner. Devir kaydı da aynı koşula bağlı
+ * (`where exists`), yani çakışan deneme HİÇBİR ŞEY yazmaz — kilidin süresi
+ * kazara uzamaz.
  */
 export async function changeUsername(
   env: Env,
@@ -408,18 +434,16 @@ export async function changeUsername(
   if (!checked.ok) return { ok: false, error: checked.error };
   const next = checked.username;
 
-  const [taken, lock] = await Promise.all([
-    db.query.profile.findFirst({
-      columns: { id: true },
-      where: eq(profile.username, next),
-    }),
-    db.query.usernameRedirect.findFirst({
-      columns: { profileId: true },
-      where: and(eq(usernameRedirect.oldUsername, next), gt(usernameRedirect.expiresAt, now)),
-    }),
-  ]);
+  // Ön kontroller yalnızca DOĞRU HATA MESAJINI üretmek içindir; asıl kilit
+  // güvencesi aşağıdaki batch'in içindedir. Yine de sırayla okunurlar
+  // (`Promise.all` DEĞİL) — gerekçe isUsernameAvailable'ın başında.
+  const taken = await db.query.profile.findFirst({
+    columns: { id: true },
+    where: eq(profile.username, next),
+  });
   if (taken) return { ok: false, error: "taken" };
-  if (lock && lock.profileId !== row.id) return { ok: false, error: "locked" };
+  const lock = await findForeignLock(db, next, row.id, now);
+  if (lock) return { ok: false, error: "locked" };
 
   const previousUsername = row.username;
   const redirectExpiresAt = usernameRedirectExpiresAt(now);
@@ -428,16 +452,43 @@ export async function changeUsername(
       db
         .update(profile)
         .set({ username: next, usernameChangedAt: now, updatedAt: now })
-        .where(and(eq(profile.userId, userId), eq(profile.username, previousUsername)))
+        .where(
+          and(
+            eq(profile.userId, userId),
+            eq(profile.username, previousUsername),
+            // Kilit testi yazmanın KENDİ ifadesinde: başkasının süresi dolmamış
+            // devir kaydı varsa hiçbir satır eşleşmez. Ayrı bir okuma ile yazma
+            // arasına eşzamanlı bir değişiklik sızamaz.
+            notExists(
+              db
+                .select({ one: sql`1` })
+                .from(usernameRedirect)
+                .where(
+                  and(
+                    eq(usernameRedirect.oldUsername, next),
+                    gt(usernameRedirect.expiresAt, now),
+                    ne(usernameRedirect.profileId, row.id),
+                  ),
+                ),
+            ),
+          ),
+        )
         .returning({ id: profile.id }),
       db
         .insert(usernameRedirect)
-        .values({
-          oldUsername: previousUsername,
-          profileId: row.id,
-          expiresAt: redirectExpiresAt,
-          createdAt: now,
-        })
+        // Devir kaydı yalnızca YUKARIDAKİ güncelleme tuttuysa yazılır:
+        // `where exists` koşulu profilin hem `next` adını taşıdığını hem de
+        // `username_changed_at`'in TAM OLARAK bu isteğin `now`'u olduğunu
+        // sorar. Batch tek işlem olduğu için koşul aynı anlık görüntüde okunur.
+        //
+        // Ada değil zamana da bakmanın sebebi: eşzamanlı ikinci gönderim aynı
+        // hedefi isterse, ilk isteğin yazdığı ad tek başına koşulu geçirirdi ve
+        // çakışan deneme çağıranın devir kaydını sessizce 30 gün ileri atardı.
+        // Aynı milisaniyeye düşen iki istek ise birebir aynı değerleri yazar —
+        // gözlemlenebilir bir fark, dolayısıyla uzayan bir kilit yok.
+        .select(
+          sql`select ${previousUsername}, ${row.id}, ${redirectExpiresAt.getTime()}, ${now.getTime()} where exists (select 1 from ${profile} where ${profile.id} = ${row.id} and ${profile.username} = ${next} and ${profile.usernameChangedAt} = ${now.getTime()})`,
+        )
         // Aynı ad daha önce (süresi dolmuş) bir devir kaydı bırakmış olabilir;
         // kayıt bu profile ve yeni süreye taşınır.
         .onConflictDoUpdate({
@@ -445,7 +496,13 @@ export async function changeUsername(
           set: { profileId: row.id, expiresAt: redirectExpiresAt, createdAt: now },
         }),
     ]);
-    if (!updated.length) return { ok: false, error: "conflict" };
+    if (!updated.length) {
+      // Batch hiçbir şey yazmadı. İki sebebi olabilir: eşzamanlı ikinci
+      // gönderim (ad artık `previousUsername` değil) ya da kilit koşulu.
+      // Ayrımı tek sorguyla yapıyoruz — DB zaten tutarlı.
+      const blocking = await findForeignLock(db, next, row.id, now);
+      return { ok: false, error: blocking ? "locked" : "conflict" };
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";
     // Kontrol ile yazma arasında başkası kaptı (AE1 ile aynı yarış).
@@ -456,6 +513,23 @@ export async function changeUsername(
   }
 
   return { ok: true, username: next, previousUsername, redirectExpiresAt };
+}
+
+/** `username` üzerinde BAŞKA bir profile ait, süresi dolmamış devir kaydı var mı. */
+async function findForeignLock(
+  db: ReturnType<typeof createDb>,
+  username: string,
+  profileId: string,
+  now: Date,
+) {
+  return db.query.usernameRedirect.findFirst({
+    columns: { profileId: true },
+    where: and(
+      eq(usernameRedirect.oldUsername, username),
+      gt(usernameRedirect.expiresAt, now),
+      ne(usernameRedirect.profileId, profileId),
+    ),
+  });
 }
 
 /**

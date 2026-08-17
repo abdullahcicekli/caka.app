@@ -12,6 +12,8 @@ import {
   isTrackableBlockId,
   normalizeCountry,
   OLCUM_BILINMEYEN_ULKE,
+  OLCUM_DIGER_ULKE,
+  OLCUM_ULKE_ESIGI,
   shiftDayKey,
   sumSince,
   topCountries,
@@ -118,11 +120,14 @@ describe("ülke kırılımı", () => {
 
   it("limit uygular", () => {
     const rows = [
-      { country: "TR", count: 5 },
-      { country: "DE", count: 4 },
-      { country: "US", count: 3 },
+      { country: "TR", count: 9 },
+      { country: "DE", count: 8 },
+      { country: "US", count: 7 },
     ];
-    expect(topCountries(rows, 2)).toHaveLength(2);
+    expect(topCountries(rows, 2)).toEqual([
+      { country: "TR", count: 9 },
+      { country: "DE", count: 8 },
+    ]);
   });
 
   it("ülkesi çözülemeyen istekleri XX'te toplar", () => {
@@ -130,8 +135,127 @@ describe("ülke kırılımı", () => {
     expect(normalizeCountry("")).toBe(OLCUM_BILINMEYEN_ULKE);
     expect(normalizeCountry("T1")).toBe(OLCUM_BILINMEYEN_ULKE);
     expect(normalizeCountry("tr")).toBe("TR");
-    expect(topCountries([{ country: "", count: 2 }])).toEqual([
-      { country: OLCUM_BILINMEYEN_ULKE, count: 2 },
+    expect(topCountries([{ country: "", count: 6 }])).toEqual([
+      { country: OLCUM_BILINMEYEN_ULKE, count: 6 },
+    ]);
+  });
+});
+
+describe("ülke kırılımı — yeniden kimliklendirme eşiği", () => {
+  it("tek ziyaretçili bir ülkeyi adıyla göstermez", () => {
+    // Asıl korunan senaryo: bağlantısını yalnız birkaç kişiyle paylaşan
+    // yaratıcı, "DE: 1" satırından tek ziyaretçinin yerini okuyamamalı.
+    const rows = topCountries([
+      { country: "TR", count: 40 },
+      { country: "DE", count: 1 },
+    ]);
+    expect(rows.some((row) => row.country === "DE")).toBe(false);
+    expect(rows).toEqual([
+      { country: "TR", count: 40 },
+      { country: OLCUM_DIGER_ULKE, count: 1 },
+    ]);
+  });
+
+  it("eşiğin tam üstünü gösterir, tam altını gizler", () => {
+    const rows = topCountries([
+      { country: "TR", count: OLCUM_ULKE_ESIGI },
+      { country: "DE", count: OLCUM_ULKE_ESIGI - 1 },
+    ]);
+    expect(rows).toEqual([
+      { country: "TR", count: OLCUM_ULKE_ESIGI },
+      { country: OLCUM_DIGER_ULKE, count: OLCUM_ULKE_ESIGI - 1 },
+    ]);
+  });
+
+  it("gizlenen ziyaretler toplamdan düşmez", () => {
+    const girdi = [
+      { country: "TR", count: 30 },
+      { country: "DE", count: 3 },
+      { country: "US", count: 2 },
+      { country: "FR", count: 1 },
+    ];
+    const toplam = girdi.reduce((sum, row) => sum + row.count, 0);
+    const rows = topCountries(girdi);
+    expect(rows.reduce((sum, row) => sum + row.count, 0)).toBe(toplam);
+    expect(rows).toEqual([
+      { country: "TR", count: 30 },
+      { country: OLCUM_DIGER_ULKE, count: 6 },
+    ]);
+  });
+
+  it("gizli kova her zaman en sonda durur, en büyük olsa bile", () => {
+    const rows = topCountries([
+      { country: "TR", count: 6 },
+      ...Array.from({ length: 20 }, (_, index) => ({
+        // 20 ayrı ülke, her biri 1 ziyaret: toplamı TR'yi geçer ama hiçbiri
+        // adıyla listelenmemeli.
+        country: `Z${String.fromCharCode(65 + index)}`,
+        count: 1,
+      })),
+    ]);
+    expect(rows).toEqual([
+      { country: "TR", count: 6 },
+      { country: OLCUM_DIGER_ULKE, count: 20 },
+    ]);
+  });
+
+  it("eşik altı satırlar limitte yer kaplamaz", () => {
+    // Gizlenen bir satır `limit` kotasını yeseydi, gösterilebilir bir ülke
+    // listeden düşerdi.
+    const rows = topCountries(
+      [
+        { country: "TR", count: 9 },
+        { country: "DE", count: 1 },
+        { country: "US", count: 8 },
+      ],
+      2,
+    );
+    expect(rows).toEqual([
+      { country: "TR", count: 9 },
+      { country: "US", count: 8 },
+      { country: OLCUM_DIGER_ULKE, count: 1 },
+    ]);
+  });
+
+  it("hiçbir satır eşiği geçmezse yalnız gizli kova kalır", () => {
+    expect(
+      topCountries([
+        { country: "TR", count: 2 },
+        { country: "DE", count: 1 },
+      ]),
+    ).toEqual([{ country: OLCUM_DIGER_ULKE, count: 3 }]);
+  });
+
+  it("gizlenecek satır yoksa kova hiç eklenmez", () => {
+    const rows = topCountries([{ country: "TR", count: 7 }]);
+    expect(rows).toEqual([{ country: "TR", count: 7 }]);
+    expect(rows.some((row) => row.country === OLCUM_DIGER_ULKE)).toBe(false);
+  });
+
+  it("çözülemeyen ülke de eşiğe tabidir", () => {
+    // `XX` bir ülke değil ama yine de bir kırılım satırı; eşik onun için de
+    // geçerli olmalı, yoksa "Bilinmiyor: 1" aynı bilgiyi sızdırırdı.
+    expect(topCountries([{ country: OLCUM_BILINMEYEN_ULKE, count: 1 }])).toEqual([
+      { country: OLCUM_DIGER_ULKE, count: 1 },
+    ]);
+  });
+
+  it("girdide ZZ kodu gelirse ayrı bir ülke gibi listelenmez", () => {
+    expect(
+      topCountries([
+        { country: "TR", count: 10 },
+        { country: OLCUM_DIGER_ULKE, count: 40 },
+      ]),
+    ).toEqual([
+      { country: "TR", count: 10 },
+      { country: OLCUM_DIGER_ULKE, count: 40 },
+    ]);
+  });
+
+  it("eşik çağrı başına gevşetilebilir ama varsayılan 5'tir", () => {
+    expect(OLCUM_ULKE_ESIGI).toBe(5);
+    expect(topCountries([{ country: "DE", count: 1 }], 5, 1)).toEqual([
+      { country: "DE", count: 1 },
     ]);
   });
 });

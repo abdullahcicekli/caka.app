@@ -11,6 +11,7 @@ import {
   normalizeUsername,
   usernameChangeWindow,
   usernameRedirectExpiresAt,
+  usernameWindowDayKey,
   validateUsername,
 } from "./username";
 
@@ -202,6 +203,27 @@ describe("usernameRedirectExpiresAt", () => {
       "2026-09-16T10:00:00.000Z",
     );
     expect(USERNAME_REDIRECT_DAYS).toBe(30);
+  });
+});
+
+describe("usernameWindowDayKey", () => {
+  it("günü Türkiye saatine göre keser (UTC'de bir gün geri kaymaz)", () => {
+    // 17 Ağustos 01:30 (TR) = 16 Ağustos 22:30 UTC. Düz toISOString "16"
+    // gösterirdi; kullanıcıya söylenen tarih bir gün erken olurdu.
+    expect(usernameWindowDayKey(new Date("2026-08-16T22:30:00.000Z"))).toBe("2026-08-17");
+  });
+
+  it("TR gün sınırının hemen öncesinde önceki günde kalır", () => {
+    // 16 Ağustos 23:59 (TR) = 16 Ağustos 20:59 UTC.
+    expect(usernameWindowDayKey(new Date("2026-08-16T20:59:00.000Z"))).toBe("2026-08-16");
+    // 17 Ağustos 00:00 (TR) = 16 Ağustos 21:00 UTC.
+    expect(usernameWindowDayKey(new Date("2026-08-16T21:00:00.000Z"))).toBe("2026-08-17");
+  });
+
+  it("gece yapılan değişikliğin 30 günlük bitişi doğru günü gösterir", () => {
+    // Değişiklik 17 Ağustos 01:00 TR → kilit 16 Eylül 01:00 TR'de düşer.
+    const changedAt = new Date("2026-08-16T22:00:00.000Z");
+    expect(usernameWindowDayKey(usernameRedirectExpiresAt(changedAt))).toBe("2026-09-16");
   });
 });
 

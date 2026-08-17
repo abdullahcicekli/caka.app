@@ -75,6 +75,32 @@ describe("çerez envanteri", () => {
     expect(scroll?.party).toBe("birinci");
   });
 
+  it("sürüm uyuşmazlığı girdisi sessionStorage olarak işaretlidir", () => {
+    // KTD21: derlenmiş istemci paketinde `sessionStorage.setItem` ile yazılan
+    // ikinci anahtar. Envanterden düşerse `/cerez-politikasi` tablosu yayında
+    // eksik kalır — sayfa bugün gerçekten yayında olduğu için sessiz kayma
+    // değil, doğrudan yanlış beyan olurdu.
+    const manifest = entries.find(
+      (entry) => entry.name === "react-router-manifest-version",
+    );
+    expect(manifest).toBeDefined();
+    expect(manifest?.storage).toBe("sessionStorage");
+    expect(manifest?.party).toBe("birinci");
+  });
+
+  it("çerez dışı girdilerin tamamı sessionStorage'dır ve sayısı bilinir", () => {
+    // Sayı, `/cerez-politikasi` ve `/gizlilik` metinlerindeki "iki
+    // sessionStorage girdisi" ifadesine bağlı. Girdi eklenir de metin
+    // güncellenmezse burada kırılsın.
+    const dosSurumleri = entries.filter(
+      (entry) => (entry.storage ?? "cookie") !== "cookie",
+    );
+    expect(dosSurumleri).toHaveLength(2);
+    for (const entry of dosSurumleri) {
+      expect(entry.storage, entry.name).toBe("sessionStorage");
+    }
+  });
+
   it("çerez dışı girdiler dışında her şey çerezdir", () => {
     const cookies = entries.filter(
       (entry) => (entry.storage ?? "cookie") === "cookie",

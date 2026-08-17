@@ -9,11 +9,23 @@
 // tablonun dışında bırakmak, DevTools'u açan okuyucuya karşı sessiz kayma
 // olurdu.
 //
+// Çerez dışı girdiler İDDİA EDİLMEDİ, derlenmiş istemci paketinde arandı:
+// `pnpm --filter @caka/web build` sonrası `build/client/assets` altında
+// `sessionStorage`/`localStorage` çağrıları taranıp anahtar adları okundu.
+// Bugün React Router iki anahtar yazabiliyor ve ikisi de aşağıda:
+// `react-router-scroll-positions` ile `react-router-manifest-version`.
+// Üçüncü bir aday (`remix-router-transitions`) pakette duruyor ama yalnızca
+// `viewTransition` seçeneği kullanıldığında yazılıyor; uygulamanın kaynağında
+// bu seçeneğe yapılmış tek bir çağrı yok, bu yüzden envantere alınmadı —
+// kullanılmaya başlanırsa girdi de eklenir.
+//
 // Kategori birliği bugün tek değer taşır: `zorunlu`. Üründe rıza gerektiren
 // hiçbir girdi yok — analitik/pazarlama kategorileri bilinçli olarak
-// tanımlanmadı (GA4 alınmadı; ziyaret ölçümü çerezsiz Cloudflare Web
-// Analytics ile yapılır ve cihaza hiçbir şey yazmaz). Böyle bir araç
-// eklenirse birliğe yeni değer eklenir ve rıza akışı da o zaman kurulur.
+// tanımlanmadı (GA4 alınmadı). Ziyaret ölçümü çerezsizdir ve cihaza hiçbir şey
+// yazmaz: zone genelindeki Cloudflare Web Analytics de, panel için tutulan
+// birinci taraf sayaçlar da (R48) yalnızca sunucu tarafında toplar. Rıza
+// gerektiren bir araç eklenirse birliğe yeni değer eklenir ve rıza akışı da o
+// zaman kurulur.
 
 export const COOKIE_CATEGORIES = ["zorunlu"] as const;
 export type CookieCategory = (typeof COOKIE_CATEGORIES)[number];
@@ -131,6 +143,29 @@ export const COOKIE_INVENTORY = [
       "yalnızca piksel değerleri bulunur — kimlik, ad veya başka bir kişisel " +
       "veri taşımaz. Sunucuya gönderilmez; sekmeye özeldir.",
     lifetime: "Sekmeyi kapatınca silinir",
+    party: "birinci",
+    provider: "Caka",
+  },
+  // Çerez değil: React Router'ın rota keşfi (lazy route discovery), sitenin
+  // yeni bir sürümü yayınlandığında bunu fark edip sayfayı bir kez yeniler.
+  // Sonsuz yenileme döngüsüne girmemek için hangi sürüm için yenilediğini
+  // sekmeye özel `sessionStorage` alanına yazar. Ad, kurulu paketin derlenmiş
+  // istemci paketinden okunarak doğrulandı (`react-router-manifest-version`),
+  // varsayılmadı. Yalnızca yayın sırasında açık kalmış bir sekmede oluşur ve
+  // yenileme başarılıysa hemen silinir — ama oluştuğu an cihazda durur, bu
+  // yüzden envanterde yeri var (KTD21).
+  {
+    name: "react-router-manifest-version",
+    storage: "sessionStorage",
+    category: "zorunlu",
+    purpose:
+      "Sitenin yeni bir sürümü yayınlandığında, o sırada açık olan sekmenin " +
+      "eski sürümde takılı kalmaması için sayfa bir kez yenilenir. Bu girdi " +
+      "yalnızca hangi sürüm için yenilendiğini tutar, böylece yenileme " +
+      "döngüye girmez. İçinde bir sürüm etiketi vardır — kimlik, ad veya " +
+      "başka bir kişisel veri taşımaz. Sunucuya gönderilmez; sekmeye " +
+      "özeldir ve ancak yayın anında açık olan sekmelerde oluşur.",
+    lifetime: "Yenileme başarılı olunca silinir; en geç sekmeyi kapatınca",
     party: "birinci",
     provider: "Caka",
   },

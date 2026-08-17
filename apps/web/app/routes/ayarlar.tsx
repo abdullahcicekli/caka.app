@@ -23,6 +23,7 @@ import {
   normalizeOgTemplate,
   OG_TEMPLATE_OPTIONS,
   parseProfileLayout,
+  usernameWindowDayKey,
   type OgTemplate,
   type ProfileBlock,
 } from "@caka/shared";
@@ -39,11 +40,6 @@ import type { Route } from "./+types/ayarlar";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Ayarlar — Caka");
-}
-
-/** `Date` → `YYYY-MM-DD`; içerik katmanı Türkçe biçime bunun üzerinden çevirir. */
-function isoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -93,12 +89,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     addressChange: {
       allowed: changeState.window.allowed,
       availableOn: changeState.window.availableAt
-        ? isoDate(changeState.window.availableAt)
+        ? usernameWindowDayKey(changeState.window.availableAt)
         : null,
       remainingDays: changeState.window.remainingDays,
       activeRedirects: changeState.activeRedirects.map((item) => ({
         oldUsername: item.oldUsername,
-        expiresOn: isoDate(item.expiresAt),
+        expiresOn: usernameWindowDayKey(item.expiresAt),
       })),
     },
     accountInfo: {
@@ -154,7 +150,7 @@ export async function action({ request }: Route.ActionArgs) {
     ok: true,
     previousUsername: result.previousUsername,
     username: result.username,
-    expiresOn: isoDate(result.redirectExpiresAt),
+    expiresOn: usernameWindowDayKey(result.redirectExpiresAt),
   } satisfies AddressActionData);
 }
 

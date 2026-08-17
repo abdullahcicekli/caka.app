@@ -204,6 +204,9 @@ function DashAnalytics({ analytics }: { analytics: Analytics }) {
                   </li>
                 ))}
               </ul>
+              <p className="mt-2 text-[11.5px] leading-relaxed text-murekkep/45">
+                {analitik.ulkeEsikNotu}
+              </p>
             </>
           ) : null}
         </>

@@ -228,13 +228,42 @@ export const gizlilikSections: LegalSection[] = [
             ["Doğrudan senin gönderin."],
           ],
           [
-            ["Çerezsiz ziyaret istatistikleri"],
+            ["Çerezsiz ziyaret istatistikleri (Cloudflare Web Analytics)"],
             [
               "Sayfa görüntülenme sayısı, yönlendiren adres, ülke, tarayıcı " +
                 "ve cihaz türü gibi toplu veriler. Bu ölçüm için cihazına " +
                 "hiçbir şey yazılmaz ve cihazından hiçbir şey okunmaz.",
             ],
             ["Otomatik olarak, sayfa görüntülendiğinde."],
+          ],
+          [
+            [
+              "Sayfa istatistiği sayaçları (profile_view_daily, " +
+                "link_click_daily)",
+            ],
+            [
+              "Yukarıdakinden ayrı, ",
+              { kind: "strong", text: "bizim kendi veritabanımızda" },
+              " tutulan iki sayaç tablosu. Bunlar public bir Caka profilinin " +
+                "sahibine kendi sayfasının istatistiğini gösterir. " +
+                "Tutulanlar: görüntülenme için gün (Türkiye saatiyle), iki " +
+                "harfli ülke kodu ve o gün o ülkeden gelen görüntülenme " +
+                "sayısı; tıklama için gün, tıklanan bloğun kimliği ve tıklama " +
+                "sayısı. Tıklama satırlarında ülke ",
+              { kind: "strong", text: "bilerek tutulmaz" },
+              ". Saklanan şey bir olay değil, bir ",
+              { kind: "strong", text: "sayaçtır" },
+              ": tek tek ziyaretlerin saati kaydedilmez, bu yüzden " +
+                "kayıtlardan tek bir ziyaret geri kurulamaz. IP adresi " +
+                "saklanmaz ve hiçbir türevi (hash, tuzlanmış özet) " +
+                "üretilmez; tarayıcı bilgisi yalnızca bot ayıklamak için " +
+                "okunur ve yazılmaz. Ziyaretçilere kimlik atanmaz, tekil " +
+                "ziyaretçi sayılmaz.",
+            ],
+            [
+              "Otomatik olarak, bir public profil görüntülendiğinde ve o " +
+                "profildeki bir bağlantıya tıklandığında.",
+            ],
           ],
         ],
       },
@@ -379,6 +408,23 @@ export const gizlilikSections: LegalSection[] = [
                 "budur.",
             ],
           ],
+          [
+            [
+              "Public profil sahibine kendi sayfasının istatistiğinin " +
+                "gösterilmesi: sayfanın günlük kaç kez görüntülendiği, " +
+                "ziyaretlerin hangi ülkelerden geldiği ve hangi bağlantısına " +
+                "kaç kez tıklandığı (profile_view_daily, link_click_daily).",
+            ],
+            [
+              "m.5/2-f — meşru menfaat: yaratıcının kendi sayfasının " +
+                "kullanıldığını görebilmesi ve ziyaretçinin de takip " +
+                "edilmeden gezebilmesi. Denge bu yüzden tasarıma yazıldı: " +
+                "cihaza yazma yok, ham IP yok, tekil ziyaretçi yok, üçüncü " +
+                "tarafa aktarım yok ve ülke kırılımında az sayıda ziyaret " +
+                "alan ülkeler tek tek gösterilmez. Rıza gerekmemesi işlemeyi " +
+                "hukuki sebepten muaf tutmaz; sebep budur.",
+            ],
+          ],
         ],
       },
       {
@@ -454,8 +500,10 @@ export const gizlilikSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           "Verilerini satmıyoruz ve reklam amacıyla kimseyle paylaşmıyoruz. " +
-            "Hizmeti çalıştırmak için kullandığımız tedarikçiler ve bu " +
-            "tedarikçilere ulaşan veriler şunlardır:",
+            "Verinin ulaştığı taraflar ve her birine ulaşan veri şunlardır. " +
+            "İlk beş satır hizmeti çalıştırmak için kullandığımız " +
+            "tedarikçilerdir; son satır tedarikçi değil, ziyaret ettiğin " +
+            "sayfanın sahibidir.",
         ],
       },
       {
@@ -523,6 +571,39 @@ export const gizlilikSections: LegalSection[] = [
             ],
             ["Evet — [AKTARIM MEKANİZMASI]"],
           ],
+          [
+            ["Ziyaret ettiğin profilin sahibi"],
+            ["Kendi sayfasının panelindeki sayfa istatistikleri."],
+            [
+              "Ziyaretin ",
+              {
+                kind: "strong",
+                text: "toplu sayılara karışmış hâlde",
+              },
+              " o sayfanın sahibine görünür: hangi gün sayfasının kaç kez " +
+                "görüntülendiği, ziyaretlerin hangi ülkelerden geldiği ve " +
+                "hangi bağlantısına kaç kez tıklandığı. Sahibi seni tek tek " +
+                "göremez — kimliğin, IP adresin, tarayıcı bilgin ve ziyaret " +
+                "saatin ona ulaşmaz, çünkü bunlar hiç saklanmaz. Az sayıda " +
+                "ziyaret alan ülkeler tek tek gösterilmez, “az sayıda” " +
+                "satırında toplanır; tıklamalarda ise ülke hiç tutulmaz.",
+            ],
+            ["Hayır — veri sunucularımızdan çıkmaz, sahibi kendi panelinde görür."],
+          ],
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Profil sahibi neyi göremez. " },
+          "Bir Caka profilini ziyaret ettiğinde sayfanın sahibi bunu " +
+            "sayaçlarında görür, ama seni değil. Ölçüm için cihazına hiçbir " +
+            "şey yazılmadığından ve ham IP adresin saklanmadığından, iki " +
+            "ziyaretin aynı kişiye ait olup olmadığı bizim tarafımızdan da " +
+            "bilinemez; panelde “tekil ziyaretçi” diye bir sayı bu yüzden " +
+            "yoktur. Bu ölçüm yalnızca herkese açık profil sayfaları için " +
+            "çalışır ve sayfa sahibinin kendi ziyaretleri, giriş yapmış " +
+            "olduğu sürece sayılmaz.",
         ],
       },
       {
@@ -617,14 +698,31 @@ export const gizlilikSections: LegalSection[] = [
             },
             ".",
           ],
+          [
+            {
+              kind: "strong",
+              text: "Sayfa istatistiği sayaçları: bugün silinmiyor. ",
+            },
+            "Panelde yalnızca son 30 gün gösterilir, ama bunu yapan şey bir " +
+              "silme değil, bir görüntüleme filtresidir: ",
+            {
+              kind: "strong",
+              text: "daha eski sayaç satırları veritabanında kalmaya devam eder",
+            },
+            ". Bu satırları düzenli olarak budayan bir iş henüz yazılmadı; " +
+              "yazıldığında süre bu listeye yazılacak. Olduğundan iyi " +
+              "göstermemek için bunu böyle yazıyoruz. Satırlar kişiyi değil " +
+              "günü, ülkeyi ve blok kimliğini taşıyan sayaçlardır ve " +
+              "profilin silinmesi hâlinde birlikte silinirler.",
+          ],
         ],
       },
       {
         kind: "paragraph",
         text: [
           "Hesap verisi, profil içeriği, yüklenen dosyalar, operasyon " +
-            "kayıtları ve destek yazışmaları için uygulanacak saklama " +
-            "süreleri ",
+            "kayıtları, sayfa istatistiği sayaçları ve destek yazışmaları " +
+            "için uygulanacak saklama süreleri ",
           { kind: "strong", text: "[SAKLAMA SÜRELERİ]" },
           " olarak belirlenecektir. Uydurma bir süre yazmaktansa alanı boş " +
             "bıraktık; bu alan doldurulmadan metin yayına alınmaz.",
@@ -741,10 +839,12 @@ export const gizlilikSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Çerezlerin yanı sıra, gezinirken kaydırma konumunu hatırlamak için " +
-            "sekmeye özel tek bir sessionStorage girdisi oluşur; sekmeyi " +
-            "kapattığında silinir ve kişisel veri taşımaz. Cihazına yazılan " +
-            "her girdinin adını, amacını, ömrünü ve kime ait olduğunu ",
+          "Çerezlerin yanı sıra, sekmeye özel iki sessionStorage girdisi " +
+            "oluşabilir: biri gezinirken kaydırma konumunu hatırlar, diğeri " +
+            "sitenin yeni bir sürümü yayınlandığında açık sekmenin bir kez " +
+            "yenilenmesini sağlar. İkisi de sekmeyi kapattığında silinir ve " +
+            "kişisel veri taşımaz. Cihazına yazılan her girdinin adını, " +
+            "amacını, ömrünü ve kime ait olduğunu ",
           {
             kind: "link",
             text: "Çerez Politikası",

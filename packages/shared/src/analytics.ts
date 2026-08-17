@@ -20,6 +20,32 @@ export const OLCUM_PENCERE_GUN = 30;
 /** Ülkesi çözülemeyen istekler için ayrılmış kod (ISO 3166-1'de kullanılmaz). */
 export const OLCUM_BILINMEYEN_ULKE = "XX";
 
+/**
+ * Eşiğin altında kalan ülkelerin toplandığı kova. `XX`'ten ayrı bir koddur:
+ * `XX` "ülkesini çözemedik" der, bu ise "çözdük ama söylemiyoruz" der.
+ * `ZZ` de `XX` gibi ISO 3166-1'de kullanıcıya ayrılmıştır, gerçek bir ülkeyi
+ * gölgelemez.
+ */
+export const OLCUM_DIGER_ULKE = "ZZ";
+
+/**
+ * Ülke satırının tek tek gösterilebilmesi için gereken en az ziyaret sayısı.
+ *
+ * Neden var: `link_click_daily` şeması ülkeyi bilerek tutmuyor, gerekçesi
+ * yeniden kimliklendirme riski. Aynı gerekçe ülke kırılımı için de geçerli —
+ * bağlantısını yalnız birkaç kişiyle paylaşan bir yaratıcı, "DE: 1" satırında
+ * tek bir ziyaretçinin nerede olduğunu okuyabilirdi.
+ *
+ * Neden 5: kırılım toplulaştırılmış istatistik yayınında yerleşik k-anonimlik
+ * tabanıdır ve buradaki en küçük anlamlı kova boyutudur. Daha düşük bir k
+ * (2-3) tek kişilik ifşayı ancak bir ziyaret kaydırarak engeller; daha yüksek
+ * bir k ise yeni sayfaların kırılımını aylarca tümüyle boş bırakırdı. Eşiğin
+ * altındaki satırlar SİLİNMEZ, `OLCUM_DIGER_ULKE` kovasında toplanır: toplam
+ * korunur, açığa çıkan tek şey "bu kadar ziyaret listelenmeyen ülkelerden
+ * geldi" olur — hangi ülke olduğu değil.
+ */
+export const OLCUM_ULKE_ESIGI = 5;
+
 /** `Date` → Türkiye günü anahtarı (`YYYY-MM-DD`). */
 export function dayKey(date: Date): string {
   return new Date(date.getTime() + OLCUM_OFFSET_MS).toISOString().slice(0, 10);
@@ -92,20 +118,43 @@ export interface CountryRow {
  * Ülke kırılımı: çoktan aza, eşitlikte koda göre. `limit` kadarı döner —
  * kuyruk "diğer" olarak toplanmaz, çünkü küçük sayılarda uzun kuyruk
  * göstermek yanıltıcı bir kesinlik hissi verir.
+ *
+ * `OLCUM_ULKE_ESIGI`'nin altında kalan ülkeler tek tek listelenmez; sayıları
+ * `OLCUM_DIGER_ULKE` satırında toplanır ve bu satır her zaman en sonda durur.
+ * Böylece tek ziyaretçili bir ülke koduyla ziyaretçinin yeri ele verilmez ama
+ * ziyaretler toplamdan da düşmez.
  */
 export function topCountries(
   rows: readonly CountryRow[],
   limit = 5,
+  esik: number = OLCUM_ULKE_ESIGI,
 ): CountryRow[] {
   const totals = new Map<string, number>();
   for (const row of rows) {
     const code = row.country || OLCUM_BILINMEYEN_ULKE;
     totals.set(code, (totals.get(code) ?? 0) + row.count);
   }
-  return [...totals.entries()]
-    .map(([country, count]) => ({ country, count }))
+
+  // Eşiğin altındakiler daha `limit` uygulanmadan ayrılır: aksi hâlde
+  // gizlenmiş bir satır listede yer kaplayıp gösterilebilir bir ülkeyi dışarı
+  // itebilirdi.
+  const gorunur: CountryRow[] = [];
+  let gizli = 0;
+  for (const [country, count] of totals) {
+    // Kovanın kendisi eşiğin altındaki satırlardan doğar; girdide böyle bir
+    // kod gelirse (ki Cloudflare üretmez) ayrı bir ülke gibi listelenmesin.
+    if (count >= esik && country !== OLCUM_DIGER_ULKE) {
+      gorunur.push({ country, count });
+    } else {
+      gizli += count;
+    }
+  }
+
+  const list = gorunur
     .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country))
     .slice(0, Math.max(0, limit));
+  if (gizli > 0) list.push({ country: OLCUM_DIGER_ULKE, count: gizli });
+  return list;
 }
 
 /** Tıklanabilir blok: paneldeki kırılımın satır kimliği blok id'sidir. */

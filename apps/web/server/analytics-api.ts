@@ -34,10 +34,17 @@ export const analyticsApi = new Hono<{ Bindings: Env }>();
 const noContent = new Response(null, { status: 204 });
 
 analyticsApi.post("/tiklama", async (c) => {
-  // Origin başlığı varsa kendi kaynağımız olmalı; yabancı sayfalardan
-  // gönderilen istekler sayaca dokunamaz.
-  const origin = c.req.header("Origin");
-  if (origin && !hasSameOrigin(c.req.raw)) return noContent.clone();
+  // Origin kendi kaynağımız OLMALI. Kapı kapalı başlar: başlık yoksa da
+  // istek reddedilir. Blok id'leri sayfanın HTML'inde `data-block-id` olarak
+  // yayınlanır, yani herkes kazıyıp öğrenebilir; başlığı hiç göndermeyen bir
+  // istemciye geçit vermek sayacı tarayıcı dışından şişirmeye açardı.
+  //
+  // Gerçek tıklamalar bundan etkilenmez: Fetch standardı GET/HEAD dışındaki
+  // her isteğe `Origin` ekler, aynı kaynağa gidenlere de. Hem
+  // `navigator.sendBeacon` hem de yedekteki `keepalive` fetch (bkz.
+  // `app/components/link-click-beacon.tsx`) gerçek tarayıcıda başlığı
+  // gönderiyor; ölçüldü, varsayılmadı.
+  if (!hasSameOrigin(c.req.raw)) return noContent.clone();
 
   try {
     const parsed = clickSchema.safeParse(await readLimitedJson(c.req.raw, 1024));

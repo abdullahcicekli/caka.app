@@ -220,6 +220,29 @@ export function usernameRedirectExpiresAt(changedAt: Date): Date {
   return new Date(changedAt.getTime() + USERNAME_REDIRECT_DAYS * DAY_MS);
 }
 
+/**
+ * Türkiye saatinin UTC ofseti. Türkiye 2016'dan beri sabit UTC+3 kullanıyor
+ * (yaz saati kaldırıldı), bu yüzden gün kesimi için zaman dilimi verisine
+ * gerek yok — sabit ofset deterministik ve Worker'da bedava.
+ */
+const TR_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/**
+ * Kullanıcıya gösterilecek pencere tarihi (`YYYY-MM-DD`); içerik katmanı
+ * Türkçe biçime bunun üzerinden çevirir.
+ *
+ * Düz `toISOString()` UTC gününü keser: gece 00:00–03:00 arasında yapılan bir
+ * değişiklikte ekrandaki bitiş/uygunluk tarihi bir gün geri kayardı. Metin
+ * Türkçe ve hukuki metnin anlattığı pencereye işaret ettiği için gün kesimi
+ * Türkiye saatine göre yapılır.
+ *
+ * Not: aynı ofset ölçüm tarafında da (`analytics.ts` → `dayKey`) var. Bilerek
+ * kopyalandı: iki alan birbirinden bağımsız evriliyor ve sabit üç saat.
+ */
+export function usernameWindowDayKey(date: Date): string {
+  return new Date(date.getTime() + TR_OFFSET_MS).toISOString().slice(0, 10);
+}
+
 export interface UsernameChangeWindow {
   /** Şu an değiştirilebilir mi. */
   allowed: boolean;
