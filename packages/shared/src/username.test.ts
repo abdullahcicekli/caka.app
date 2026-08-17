@@ -50,6 +50,23 @@ describe("validateUsername", () => {
     expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
   });
 
+  // Hukuki sayfa slug'ları: `apps/web/app/routes.ts`'te route olarak kayıtlı
+  // (veya ileride açılacak) adlar kullanıcı adı olarak kapılamamalı — aksi
+  // hâlde route eklemek o profili yönlendirmesiz karartır (Değişmez #1).
+  // Not: route tablosu ile rezerve listenin tam senkron testi burada mümkün
+  // değil; `packages/shared`, `apps/web/app/routes.ts`'i import edemez. Bu
+  // liste route eklendikçe elle güncellenir.
+  it.each([
+    "gizlilik",
+    "kullanim-kosullari",
+    "cerez-politikasi",
+    // Bugün route'u yok; rıza sistemi geldiğinde kullanılacak, o zamana dek
+    // kapılmamalı.
+    "cerez-tercihleri",
+  ])("hukuki sayfa slug'ını rezerve tutar: %s", (u) => {
+    expect(validateUsername(u)).toEqual({ ok: false, error: "reserved" });
+  });
+
   it.each(["cakateam", "caka-resmi", "cakahq"])(
     "marka prefix'ini reddeder: %s",
     (u) => {

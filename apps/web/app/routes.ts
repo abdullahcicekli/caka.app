@@ -12,5 +12,8 @@ export default [
   route("edit", "routes/edit.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
   route("ayarlar", "routes/ayarlar.tsx"),
+  route("gizlilik", "routes/gizlilik.tsx"),
+  route("kullanim-kosullari", "routes/kullanim-kosullari.tsx"),
+  route("cerez-politikasi", "routes/cerez-politikasi.tsx"),
   route(":username", "routes/username.tsx"),
 ] satisfies RouteConfig;

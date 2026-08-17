@@ -75,7 +75,16 @@ seoRoutes.get("/sitemap.xml", async (c) => {
 });
 
 seoRoutes.get("/sitemaps/core.xml", (c) =>
-  c.body(urlset([{ loc: `${SITE_URL}/` }]), 200, XML_HEADERS),
+  c.body(
+    urlset([
+      { loc: `${SITE_URL}/` },
+      { loc: `${SITE_URL}/gizlilik` },
+      { loc: `${SITE_URL}/kullanim-kosullari` },
+      { loc: `${SITE_URL}/cerez-politikasi` },
+    ]),
+    200,
+    XML_HEADERS,
+  ),
 );
 
 seoRoutes.get("/sitemaps/profiles-*", async (c) => {
