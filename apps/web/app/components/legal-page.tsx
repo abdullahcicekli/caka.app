@@ -4,7 +4,7 @@
 // Yalnızca render eder: yapılandırılmış bölümleri okunur biçimde gösterir
 // (sınırlı okuma genişliği, yatay kaydırılabilir tablo). R33 yayın kapısı
 // sunucu tarafındadır (`server/legal.ts`) ve loader'dan çağrılır.
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import { Navbar } from "~/components/landing/navbar";
@@ -31,7 +31,34 @@ import {
 const INLINE_LINK_CLASS =
   "font-medium text-mavi underline underline-offset-2 hover:opacity-70";
 
-function renderInline(node: LegalInline, key: number): ReactNode {
+/** `/gizlilik#bolum` → `gizlilik`; hukuki belge değilse `undefined`. */
+const LEGAL_PATH_TO_ID = new Map<string, LegalDocumentId>(
+  Object.values(LEGAL_DOCUMENTS).map((doc) => [doc.path, doc.id]),
+);
+
+/**
+ * Yayındaki hukuki belgeler. Satır içi bağlantı bu listeyi okur: kapı (R33)
+ * doldurulmamış belgeyi prod'da 404'lediği için metnin içinden ona link
+ * vermek ziyaretçiyi ölü sayfaya gönderirdi. Context kullanılıyor çünkü
+ * karar satır içi render'da veriliyor; blok katmanlarının bu veriyi
+ * taşıması gereksiz gürültü olurdu.
+ */
+const PublishedLegalContext = createContext<readonly LegalDocumentId[]>([]);
+
+/** Hedef hukuki bir belgeyse ve yayında değilse bağlantı kurulmaz. */
+function isDeadLegalTarget(
+  href: string,
+  published: readonly LegalDocumentId[],
+): boolean {
+  const targetId = LEGAL_PATH_TO_ID.get(href.split("#")[0]);
+  return targetId !== undefined && !published.includes(targetId);
+}
+
+function renderInline(
+  node: LegalInline,
+  key: number,
+  published: readonly LegalDocumentId[],
+): ReactNode {
   if (typeof node === "string") return node;
   if (node.kind === "strong") {
     return (
@@ -45,6 +72,8 @@ function renderInline(node: LegalInline, key: number): ReactNode {
   // Güvenli olmayan hedef sessizce düz metne düşer (rich-text.tsx ile aynı
   // duruş): bağlantı kaybolur ama metin okunur kalır.
   if (!isSafeLegalHref(href)) return <span key={key}>{text}</span>;
+  // Yayında olmayan hukuki belge de aynı şekilde düşer; cümle okunur kalır.
+  if (isDeadLegalTarget(href, published)) return <span key={key}>{text}</span>;
 
   // Uygulama içi yollar client-side gezinir; anchor ve dış hedefler düz <a>.
   if (href.startsWith("/")) {
@@ -74,8 +103,17 @@ function renderInline(node: LegalInline, key: number): ReactNode {
   );
 }
 
-function renderRichText(text: LegalRichText): ReactNode[] {
-  return text.map((node, index) => renderInline(node, index));
+function renderRichText(
+  text: LegalRichText,
+  published: readonly LegalDocumentId[],
+): ReactNode[] {
+  return text.map((node, index) => renderInline(node, index, published));
+}
+
+/** Blok bileşenleri yayın listesini context'ten alır; prop zinciri yok. */
+function useRichText() {
+  const published = useContext(PublishedLegalContext);
+  return (text: LegalRichText) => renderRichText(text, published);
 }
 
 /* ------------------------------------------------------------------ *
@@ -95,6 +133,7 @@ function TableBlock({
   columns: readonly string[];
   rows: readonly (readonly LegalCell[])[];
 }) {
+  const richText = useRichText();
   return (
     <figure className="my-1">
       {/* Depoda hazır duyarlı tablo deseni yoktu; kapsayıcı + min genişlik +
@@ -122,7 +161,7 @@ function TableBlock({
                     key={cellIndex}
                     className="px-4 py-3 align-top text-murekkep/80"
                   >
-                    {renderRichText(cell)}
+                    {richText(cell)}
                   </td>
                 ))}
               </tr>
@@ -142,14 +181,15 @@ function TableBlock({
 }
 
 function BlockView({ block }: { block: LegalBlock }) {
+  const richText = useRichText();
   if (block.kind === "paragraph") {
-    return <p className={PROSE_CLASS}>{renderRichText(block.text)}</p>;
+    return <p className={PROSE_CLASS}>{richText(block.text)}</p>;
   }
 
   if (block.kind === "list") {
     const items = block.items.map((item, index) => (
       <li key={index} className="pl-1">
-        {renderRichText(item)}
+        {richText(item)}
       </li>
     ));
     return block.style === "numbered" ? (
@@ -288,11 +328,16 @@ export function LegalPage({
 
         {warnings.length > 0 ? <DevWarnings warnings={warnings} /> : null}
 
-        <div className="mt-12 space-y-10">
-          {sections.map((section) => (
-            <SectionView key={section.id} section={section} />
-          ))}
-        </div>
+        {/* Metnin içindeki hukuki bağlantılar da yayın listesine uyar: kapı
+            yayınlanmamış belgeyi 404'lerken gövdeden ona link vermek
+            ziyaretçiyi ölü sayfaya gönderirdi. */}
+        <PublishedLegalContext value={publishedLegal}>
+          <div className="mt-12 space-y-10">
+            {sections.map((section) => (
+              <SectionView key={section.id} section={section} />
+            ))}
+          </div>
+        </PublishedLegalContext>
 
         <LegalDocumentNav currentId={doc.id} publishedLegal={publishedLegal} />
       </main>
