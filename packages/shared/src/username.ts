@@ -192,3 +192,85 @@ export const USERNAME_ERROR_MESSAGES: Record<UsernameError, string> = {
   invalid_chars: "Yalnızca küçük harf, rakam ve tire; başta/sonda tire olamaz",
   reserved: "Bu adres kullanılamaz",
 };
+
+/* ------------------------------------------------------------------ *
+ * Adres değişikliği (Değişmez #10)
+ * ------------------------------------------------------------------ */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Eski adresin yönlendirme + kilit penceresi. Değişmez #10: 30 gün 302
+ * yönlendirme, aynı süre boyunca ad kilitli (başkası alamaz).
+ */
+export const USERNAME_REDIRECT_DAYS = 30;
+
+/**
+ * İki adres değişikliği arasındaki bekleme. Bilerek yönlendirme penceresiyle
+ * AYNI: her değişiklik 30 gün kilitli bir ad bırakır, o kilit düşmeden yeni
+ * bir değişikliğe izin verilirse kullanıcı arkasında kilitli ad zinciri ve
+ * kırık bağlantı yığını bırakır. Eşitlik sayesinde bir kullanıcının aynı anda
+ * en fazla BİR aktif eski adresi olur ve süre dolduğunda ikisi birden serbest
+ * kalır — hukuki metinde anlatılan tek pencere yeter, ikinci bir süre yok.
+ */
+export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
+
+/** Değişiklik anından eski adresin yönlendirmeyi bırakacağı ana. */
+export function usernameRedirectExpiresAt(changedAt: Date): Date {
+  return new Date(changedAt.getTime() + USERNAME_REDIRECT_DAYS * DAY_MS);
+}
+
+export interface UsernameChangeWindow {
+  /** Şu an değiştirilebilir mi. */
+  allowed: boolean;
+  /** İzin verilmiyorsa değişikliğin açılacağı an; izinliyken null. */
+  availableAt: Date | null;
+  /** Kalan gün (yukarı yuvarlanır, en az 1); izinliyken 0. */
+  remainingDays: number;
+}
+
+/**
+ * Bekleme penceresi. `lastChangedAt` null ise (hiç değiştirmemiş) serbesttir.
+ * Gelecek tarihli bir kayıt (saat kayması) bilerek kısıtlayıcı sayılır.
+ */
+export function usernameChangeWindow(
+  lastChangedAt: Date | null | undefined,
+  now: Date,
+): UsernameChangeWindow {
+  if (!lastChangedAt) return { allowed: true, availableAt: null, remainingDays: 0 };
+  const availableAt = new Date(
+    lastChangedAt.getTime() + USERNAME_CHANGE_COOLDOWN_DAYS * DAY_MS,
+  );
+  const remainingMs = availableAt.getTime() - now.getTime();
+  if (remainingMs <= 0) return { allowed: true, availableAt: null, remainingDays: 0 };
+  return { allowed: false, availableAt, remainingDays: Math.ceil(remainingMs / DAY_MS) };
+}
+
+/** Değişiklik yolunun saf hataları; "dolu"/"kilitli" DB'ye bakar, burada yok. */
+export type UsernameChangeError = UsernameError | "same" | "cooldown";
+
+export type UsernameChangeCheck =
+  | { ok: true; username: string }
+  | { ok: false; error: UsernameChangeError };
+
+/**
+ * Adres değişikliğinin DB'ye bakmayan tüm kuralları tek yerde: biçim/rezerve
+ * (validateUsername), "zaten senin adresin" ve bekleme penceresi. Sunucu bunu
+ * geçen adayı ayrıca doluluk/kilit için sorgular.
+ */
+export function checkUsernameChange(
+  input: string,
+  current: string,
+  lastChangedAt: Date | null | undefined,
+  now: Date,
+): UsernameChangeCheck {
+  const result = validateUsername(input);
+  if (!result.ok) return result;
+  if (result.username === normalizeUsername(current)) {
+    return { ok: false, error: "same" };
+  }
+  if (!usernameChangeWindow(lastChangedAt, now).allowed) {
+    return { ok: false, error: "cooldown" };
+  }
+  return { ok: true, username: result.username };
+}

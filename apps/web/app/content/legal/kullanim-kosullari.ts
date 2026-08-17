@@ -175,6 +175,20 @@ export const kullanimKosullariSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
+          { kind: "strong", text: "Ne sıklıkla değiştirebilirsin. " },
+          "Bir adres değişikliğinden sonra ",
+          { kind: "strong", text: "30 gün" },
+          " boyunca adresini yeniden değiştiremezsin. Bu bekleme, " +
+            "yönlendirme ve kilit süresiyle aynı uzunluktadır: her " +
+            "değişiklik arkasında 30 gün kilitli bir ad bıraktığı için, " +
+            "arka arkaya yapılan değişiklikler hem birden çok adı " +
+            "dolaşımdan çıkarır hem de paylaştığın bağlantıların hepsini " +
+            "kırar. Süre dolduğunda dilersen eski adresini geri alabilirsin.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
           { kind: "strong", text: "Kötüye kullanım hâlinde geri alma. " },
           "Bir kullanıcı adını, başkasının adını, markasını veya kurumunu " +
             "taklit etmek, satmak ya da yalnızca stoklamak için alırsan o adı " +

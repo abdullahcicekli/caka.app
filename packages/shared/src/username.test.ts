@@ -5,9 +5,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   RESERVED_USERNAMES,
+  USERNAME_CHANGE_COOLDOWN_DAYS,
+  USERNAME_REDIRECT_DAYS,
+  checkUsernameChange,
   normalizeUsername,
+  usernameChangeWindow,
+  usernameRedirectExpiresAt,
   validateUsername,
 } from "./username";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 describe("normalizeUsername", () => {
   it("kırpar ve küçük harfe çevirir", () => {
@@ -185,5 +192,106 @@ describe("route tablosu ↔ rezerve liste", () => {
         `"/${slug}" route'u var ama RESERVED_USERNAMES'te yok (packages/shared/src/username.ts)`,
       ).toBe(true);
     }
+  });
+});
+
+describe("usernameRedirectExpiresAt", () => {
+  it("değişiklik anına 30 gün ekler (Değişmez #10)", () => {
+    const changedAt = new Date("2026-08-17T10:00:00.000Z");
+    expect(usernameRedirectExpiresAt(changedAt).toISOString()).toBe(
+      "2026-09-16T10:00:00.000Z",
+    );
+    expect(USERNAME_REDIRECT_DAYS).toBe(30);
+  });
+});
+
+describe("usernameChangeWindow", () => {
+  const now = new Date("2026-08-17T10:00:00.000Z");
+
+  it("hiç değiştirmemiş kullanıcıya izin verir", () => {
+    expect(usernameChangeWindow(null, now)).toEqual({
+      allowed: true,
+      availableAt: null,
+      remainingDays: 0,
+    });
+  });
+
+  it("bekleme süresi dolmuşsa izin verir", () => {
+    const last = new Date(now.getTime() - USERNAME_CHANGE_COOLDOWN_DAYS * DAY_MS);
+    expect(usernameChangeWindow(last, now).allowed).toBe(true);
+  });
+
+  it("bekleme süresi içindeyse kalan günü yukarı yuvarlar", () => {
+    const last = new Date(now.getTime() - 28.5 * DAY_MS);
+    const window = usernameChangeWindow(last, now);
+    expect(window.allowed).toBe(false);
+    expect(window.remainingDays).toBe(2);
+    expect(window.availableAt?.toISOString()).toBe("2026-08-18T22:00:00.000Z");
+  });
+
+  it("saat kayması yüzünden gelecekte kalan kaydı kısıtlayıcı sayar", () => {
+    const last = new Date(now.getTime() + DAY_MS);
+    expect(usernameChangeWindow(last, now).allowed).toBe(false);
+  });
+
+  it("kilit penceresiyle bekleme penceresi aynı uzunlukta", () => {
+    expect(USERNAME_CHANGE_COOLDOWN_DAYS).toBe(USERNAME_REDIRECT_DAYS);
+  });
+});
+
+describe("checkUsernameChange", () => {
+  const now = new Date("2026-08-17T10:00:00.000Z");
+
+  it("geçerli adayı kanonik haliyle döner", () => {
+    expect(checkUsernameChange(" Deniz-42 ", "ali", null, now)).toEqual({
+      ok: true,
+      username: "deniz-42",
+    });
+  });
+
+  it("rezerve adı reddeder (validateUsername zayıflatılmadı)", () => {
+    expect(checkUsernameChange("ayarlar", "ali", null, now)).toEqual({
+      ok: false,
+      error: "reserved",
+    });
+    expect(checkUsernameChange("cakahq", "ali", null, now)).toEqual({
+      ok: false,
+      error: "reserved",
+    });
+  });
+
+  it.each(["al", "a".repeat(31), "ali_veli"])("biçim hatasını geçirmez: %s", (u) => {
+    expect(checkUsernameChange(u, "ali", null, now).ok).toBe(false);
+  });
+
+  it("mevcut adresin normalize eşitini 'same' sayar", () => {
+    expect(checkUsernameChange(" ALI ", "ali", null, now)).toEqual({
+      ok: false,
+      error: "same",
+    });
+  });
+
+  it("bekleme süresi içinde reddeder", () => {
+    const last = new Date(now.getTime() - DAY_MS);
+    expect(checkUsernameChange("veli", "ali", last, now)).toEqual({
+      ok: false,
+      error: "cooldown",
+    });
+  });
+
+  it("bekleme süresi içinde bile 'same' daha açıklayıcı hatadır", () => {
+    const last = new Date(now.getTime() - DAY_MS);
+    expect(checkUsernameChange("ali", "ali", last, now)).toEqual({
+      ok: false,
+      error: "same",
+    });
+  });
+
+  it("süre dolduğunda değişikliğe izin verir", () => {
+    const last = new Date(now.getTime() - (USERNAME_CHANGE_COOLDOWN_DAYS + 1) * DAY_MS);
+    expect(checkUsernameChange("veli", "ali", last, now)).toEqual({
+      ok: true,
+      username: "veli",
+    });
   });
 });

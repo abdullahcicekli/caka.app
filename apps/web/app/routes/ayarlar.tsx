@@ -1,12 +1,23 @@
-// Ayarlar: paylaşım görseli (og:image) şablonu ve fotoğraf kaynağı seçimi.
-// Önizlemeler GERÇEK /og/u/... render'larıdır — hash'li URL'ler loader'da
-// üretilir; seçim kaydedilince revalidate ile taze hash'ler çekilir (eski
-// URL'ler tarayıcıda immutable cache'lendiği için 302'ye güvenilmez).
-import { useEffect, useRef, useState } from "react";
+// Ayarlar: üç bölüm — Adres (kullanıcı adı değişikliği), Paylaşım görseli
+// (og:image şablonu + fotoğraf kaynağı) ve Hesap (salt okunur).
+//
+// Paylaşım görseli önizlemeleri GERÇEK /og/u/... render'larıdır — hash'li
+// URL'ler loader'da üretilir; seçim kaydedilince revalidate ile taze hash'ler
+// çekilir (eski URL'ler tarayıcıda immutable cache'lendiği için 302'ye
+// güvenilmez).
+//
+// İş mantığı burada değil `server/profile.ts`'te; bu dosya loader/action
+// bağlamasından ve bölümlerin dizilişinden sorumludur.
+import { useState } from "react";
 import { env } from "cloudflare:workers";
-import { redirect, useRevalidator } from "react-router";
+import { data, redirect } from "react-router";
 
+import { AccountCard } from "~/components/ayarlar/account-card";
+import { AddressCard } from "~/components/ayarlar/address-card";
+import { ShareImageCard, type SaveState } from "~/components/ayarlar/share-image-card";
 import { DashSidebar } from "~/components/dash-sidebar";
+import { ayarlarContent, ayarlarSections, type AddressErrorId } from "~/content/ayarlar";
+import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "~/content/legal";
 import { noIndexMeta } from "~/lib/seo";
 import {
   normalizeOgTemplate,
@@ -17,11 +28,22 @@ import {
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { ogImagePathForTemplate } from "../../server/og-image";
-import { getProfileByUserId } from "../../server/profile";
+import {
+  changeUsername,
+  getAccountProviders,
+  getProfileByUserId,
+  getUsernameChangeState,
+} from "../../server/profile";
+import { hasSameOrigin } from "../../server/request";
 import type { Route } from "./+types/ayarlar";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Ayarlar — Caka");
+}
+
+/** `Date` → `YYYY-MM-DD`; içerik katmanı Türkçe biçime bunun üzerinden çevirir. */
+function isoDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -51,13 +73,16 @@ export async function loader({ request }: Route.LoaderArgs) {
       : null;
 
   // 6 şablonun kararlı önizleme URL'leri (hash'li, gerçek render).
-  const previews = Object.fromEntries(
-    await Promise.all(
+  const [previewEntries, changeState, providers] = await Promise.all([
+    Promise.all(
       OG_TEMPLATE_OPTIONS.map(
         async ({ id }) => [id, await ogImagePathForTemplate(profile, id)] as const,
       ),
     ),
-  ) as Record<OgTemplate, string>;
+    getUsernameChangeState(env, profile),
+    getAccountProviders(env, session.user.id),
+  ]);
+  const previews = Object.fromEntries(previewEntries) as Record<OgTemplate, string>;
 
   return {
     username: profile.username,
@@ -65,6 +90,23 @@ export async function loader({ request }: Route.LoaderArgs) {
     ogPhotoAssetId,
     imageBlocks,
     previews,
+    addressChange: {
+      allowed: changeState.window.allowed,
+      availableOn: changeState.window.availableAt
+        ? isoDate(changeState.window.availableAt)
+        : null,
+      remainingDays: changeState.window.remainingDays,
+      activeRedirects: changeState.activeRedirects.map((item) => ({
+        oldUsername: item.oldUsername,
+        expiresOn: isoDate(item.expiresAt),
+      })),
+    },
+    accountInfo: {
+      providers,
+      email: session.user.email,
+      emailVerified: Boolean(session.user.emailVerified),
+    },
+    publishedLegal: PUBLISHED_LEGAL_DOCUMENT_IDS,
     account: {
       name: card?.data.name || profile.username,
       username: profile.username,
@@ -73,70 +115,52 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
-type SaveState = "idle" | "saving" | "saved" | "error";
+type AddressActionData =
+  | { ok: true; previousUsername: string; username: string; expiresOn: string }
+  | { ok: false; error: AddressErrorId };
+
+/**
+ * Adres değişikliği. Oturum zorunlu ve değişiklik yalnız oturum sahibinin
+ * kendi profiline uygulanır (`changeUsername` profili `userId` ile bulur);
+ * istek gövdesinde hedef kullanıcı taşınmaz.
+ */
+export async function action({ request }: Route.ActionArgs) {
+  // Hata yanıtları `data(...)` ile döner (throw DEĞİL): fetcher yükü okur,
+  // durum kodu da dürüst kalır.
+  const fail = (error: AddressErrorId, status: 400 | 403 | 409) =>
+    data({ ok: false, error } satisfies AddressActionData, { status });
+
+  if (!hasSameOrigin(request)) return fail("origin", 403);
+  const session = await getSession(env, request);
+  if (!session) throw redirect("/login");
+
+  const form = await request.formData();
+  if (form.get("intent") !== "address") return fail("unknown", 400);
+
+  let result;
+  try {
+    result = await changeUsername(env, session.user.id, String(form.get("username") ?? ""));
+  } catch (error) {
+    // Beklenmeyen hata sayfayı 500'e düşürmesin; satır içi Türkçe mesaj göster.
+    console.error(
+      JSON.stringify({ message: "username change failed", error: String(error) }),
+    );
+    return fail("unknown", 400);
+  }
+  if (!result.ok) {
+    return fail(result.error, result.error === "conflict" ? 409 : 400);
+  }
+  return data({
+    ok: true,
+    previousUsername: result.previousUsername,
+    username: result.username,
+    expiresOn: isoDate(result.redirectExpiresAt),
+  } satisfies AddressActionData);
+}
 
 export default function Ayarlar({ loaderData }: Route.ComponentProps) {
-  const { username, account, imageBlocks, previews } = loaderData;
-  const [template, setTemplate] = useState<OgTemplate>(loaderData.ogTemplate);
-  const [photoAssetId, setPhotoAssetId] = useState<string | null>(loaderData.ogPhotoAssetId);
+  const { username, account, accountInfo, addressChange, imageBlocks, previews } = loaderData;
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const revalidator = useRevalidator();
-  // Hızlı tıklamada iki PUT uçuşa çıkıp ağ sırayı ters çevirebilir; o zaman
-  // DB'de eski, ekranda yeni seçim kalırdı. Önceki isteği iptal et ve yalnız
-  // son isteğin sonucunu uygula.
-  const saveRef = useRef<AbortController | null>(null);
-
-  // Kaydetme başarısızsa (ör. seçilen görsel başka sekmede silinmişse) seçim
-  // uygulanmış görünmesin: sunucudaki gerçek değere geri dön.
-  useEffect(() => {
-    setTemplate(loaderData.ogTemplate);
-    setPhotoAssetId(loaderData.ogPhotoAssetId);
-  }, [loaderData.ogTemplate, loaderData.ogPhotoAssetId]);
-
-  async function save(next: { template: OgTemplate; photoAssetId: string | null }) {
-    saveRef.current?.abort();
-    const controller = new AbortController();
-    saveRef.current = controller;
-    setSaveState("saving");
-    try {
-      const response = await fetch("/api/profile/og", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ogTemplate: next.template,
-          ogPhotoAssetId: next.photoAssetId,
-        }),
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      if (!response.ok) {
-        setSaveState("error");
-        // Sunucu reddetti: ekrandaki seçimi gerçek değere geri sar.
-        revalidator.revalidate();
-        return;
-      }
-      setSaveState("saved");
-      // Şablon/fotoğraf değişimi hash'leri değiştirir; taze önizleme URL'leri çek.
-      revalidator.revalidate();
-    } catch (error) {
-      // Yeni bir seçim bu isteği iptal ettiyse hata gösterme.
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      setSaveState("error");
-      revalidator.revalidate();
-    }
-  }
-
-  function pickTemplate(next: OgTemplate) {
-    if (next === template) return;
-    setTemplate(next);
-    void save({ template: next, photoAssetId });
-  }
-
-  function pickPhoto(next: string | null) {
-    if (next === photoAssetId) return;
-    setPhotoAssetId(next);
-    void save({ template, photoAssetId: next });
-  }
 
   return (
     <main className="dash-shell">
@@ -144,110 +168,39 @@ export default function Ayarlar({ loaderData }: Route.ComponentProps) {
 
       <section className="dash-main ayarlar-main">
         <header className="ayarlar-header">
-          <h1>Ayarlar</h1>
+          <h1>{ayarlarContent.title}</h1>
           <span aria-live="polite" className="ayarlar-save-state" data-state={saveState}>
-            {saveState === "saving" && "Kaydediliyor…"}
-            {saveState === "saved" && "Kaydedildi"}
-            {saveState === "error" && "Kaydedilemedi — tekrar dene"}
+            {saveState === "saving" && ayarlarContent.saveState.saving}
+            {saveState === "saved" && ayarlarContent.saveState.saved}
+            {saveState === "error" && ayarlarContent.saveState.error}
           </span>
         </header>
 
-        <section className="ayarlar-card">
-          <h2>Paylaşım görseli</h2>
-          <p className="ayarlar-hint">
-            Sayfanın bağlantısı WhatsApp, X ve LinkedIn gibi yerlerde paylaşıldığında
-            bu görsel görünür.
-          </p>
+        <nav className="ayarlar-nav" aria-label={ayarlarContent.sectionNavLabel}>
+          {ayarlarSections.map((section) => (
+            <a key={section.id} href={`#${section.id}`}>
+              {section.label}
+            </a>
+          ))}
+        </nav>
 
-          <figure className="ayarlar-hero">
-            {/* key: revalidate sonrası URL değişince görsel tazelensin */}
-            <img
-              key={previews[template]}
-              src={previews[template]}
-              alt={`Seçili paylaşım görseli önizlemesi — ${
-                OG_TEMPLATE_OPTIONS.find((option) => option.id === template)?.label
-              }`}
-              width={1200}
-              height={630}
-            />
-          </figure>
+        <AddressCard username={username} change={addressChange} />
 
-          <h3>Şablon</h3>
-          <div className="ayarlar-template-grid" role="radiogroup" aria-label="Şablon seçimi">
-            {OG_TEMPLATE_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                role="radio"
-                aria-checked={option.id === template}
-                className="ayarlar-template"
-                onClick={() => pickTemplate(option.id)}
-              >
-                <img
-                  key={previews[option.id]}
-                  src={previews[option.id]}
-                  alt=""
-                  loading="lazy"
-                  width={1200}
-                  height={630}
-                />
-                <span>{option.label}</span>
-              </button>
-            ))}
-          </div>
+        <ShareImageCard
+          ogTemplate={loaderData.ogTemplate}
+          ogPhotoAssetId={loaderData.ogPhotoAssetId}
+          imageBlocks={imageBlocks}
+          previews={previews}
+          account={account}
+          onSaveStateChange={setSaveState}
+        />
 
-          {imageBlocks.length === 0 ? (
-            <>
-              <h3>Fotoğraf kaynağı</h3>
-              <p className="ayarlar-hint">
-                Portre ve Tam kadraj şablonları profil fotoğrafını kullanıyor. Sayfana bir
-                görsel bloğu ekleyip yayınlarsan burada onu da seçebilirsin.
-              </p>
-            </>
-          ) : (
-            <>
-              <h3>Fotoğraf kaynağı</h3>
-              <p className="ayarlar-hint">
-                Portre ve Tam kadraj şablonlarında kullanılacak fotoğraf.
-              </p>
-              <div
-                className="ayarlar-photo-grid"
-                role="radiogroup"
-                aria-label="Fotoğraf kaynağı seçimi"
-              >
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={photoAssetId === null}
-                  className="ayarlar-photo"
-                  onClick={() => pickPhoto(null)}
-                >
-                  {account.avatarUrl ? (
-                    <img src={account.avatarUrl} alt="" width={96} height={96} />
-                  ) : (
-                    <span className="ayarlar-photo-initial" aria-hidden>
-                      {(account.name.trim()[0] ?? "C").toLocaleUpperCase("tr")}
-                    </span>
-                  )}
-                  <span>Profil fotoğrafım</span>
-                </button>
-                {imageBlocks.map((block, index) => (
-                  <button
-                    key={block.assetId}
-                    type="button"
-                    role="radio"
-                    aria-checked={photoAssetId === block.assetId}
-                    className="ayarlar-photo"
-                    onClick={() => pickPhoto(block.assetId)}
-                  >
-                    <img src={`/i/${block.assetId}`} alt="" loading="lazy" width={96} height={96} />
-                    <span>{block.title || `Görsel ${index + 1}`}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
+        <AccountCard
+          providers={accountInfo.providers}
+          email={accountInfo.email}
+          emailVerified={accountInfo.emailVerified}
+          publishedLegal={loaderData.publishedLegal}
+        />
       </section>
     </main>
   );

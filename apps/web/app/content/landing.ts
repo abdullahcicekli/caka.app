@@ -151,7 +151,7 @@ export const landing = {
       {
         question: "Adresimi sonradan değiştirebilir miyim?",
         answer:
-          "Evet. Ayarlar'dan adresini değiştirebilirsin; eski adresin 30 gün boyunca yeni adresine yönlendirilir.",
+          "Evet. Ayarlar → Adres bölümünden değiştirebilirsin; eski adresin 30 gün boyunca yeni adresine yönlendirilir ve o süre boyunca kilitli kalır. Bir değişiklikten sonra yeniden değiştirmek için 30 gün beklemen gerekir.",
       },
       {
         question: "İçeriğimi dışa aktarabilir veya hesabımı silebilir miyim?",

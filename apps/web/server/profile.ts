@@ -1,16 +1,21 @@
 import { and, eq, gt, sql } from "drizzle-orm";
 
-import { createDb, profile, usernameRedirect } from "@caka/db";
+import { account, createDb, profile, usernameRedirect } from "@caka/db";
 import {
+  checkUsernameChange,
   createBlockId,
   parseProfileLayout,
   PROFILE_BIO_MAX,
   profileLayoutSchema,
   socialUrl,
   themeSchema,
+  usernameChangeWindow,
+  usernameRedirectExpiresAt,
   type ProfileLayout,
   type ProfileTheme,
   type SocialPlatform,
+  type UsernameChangeError,
+  type UsernameChangeWindow,
   validateUsername,
 } from "@caka/shared";
 import { copyGoogleAvatar } from "./avatar";
@@ -314,6 +319,155 @@ export async function ensureProfileAvatar(
     // Onarım best-effort; giriş akışını etkilemez.
     return null;
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Adres değişikliği (Değişmez #10)
+ * ------------------------------------------------------------------ */
+
+export interface ActiveUsernameRedirect {
+  oldUsername: string;
+  expiresAt: Date;
+}
+
+export interface UsernameChangeState {
+  /** Bekleme penceresi: şimdi değiştirilebilir mi, değilse ne zaman. */
+  window: UsernameChangeWindow;
+  /** Bu profile ait, süresi dolmamış eski adresler (302 yönlendiriyor + kilitli). */
+  activeRedirects: ActiveUsernameRedirect[];
+}
+
+/**
+ * Ayarlar/Adres bölümünün ihtiyacı olan durum: bekleme penceresi + hâlâ
+ * yönlendiren eski adresler. Yazma yapmaz.
+ */
+export async function getUsernameChangeState(
+  env: Env,
+  row: { id: string; usernameChangedAt: Date | null },
+  now = new Date(),
+): Promise<UsernameChangeState> {
+  const rows = await createDb(env.DB).query.usernameRedirect.findMany({
+    columns: { oldUsername: true, expiresAt: true },
+    where: and(
+      eq(usernameRedirect.profileId, row.id),
+      gt(usernameRedirect.expiresAt, now),
+    ),
+  });
+  return {
+    window: usernameChangeWindow(row.usernameChangedAt, now),
+    activeRedirects: rows
+      .map((item) => ({ oldUsername: item.oldUsername, expiresAt: item.expiresAt }))
+      .sort((a, b) => a.expiresAt.getTime() - b.expiresAt.getTime()),
+  };
+}
+
+/** Saf kural hataları + yalnızca DB'nin bilebileceği hâller. */
+export type ChangeUsernameError =
+  | UsernameChangeError
+  | "taken"
+  | "locked"
+  | "no_profile"
+  | "conflict";
+
+export type ChangeUsernameResult =
+  | { ok: true; username: string; previousUsername: string; redirectExpiresAt: Date }
+  | { ok: false; error: ChangeUsernameError };
+
+/**
+ * Adresi değiştirir (Değişmez #10). Sıra:
+ *
+ *  1. Profil YALNIZCA `userId` üzerinden okunur/yazılır — çağıran başkasının
+ *     profilini değiştiremez, adres parametre olarak dışarıdan gelmez.
+ *  2. Saf kurallar `checkUsernameChange`'te (biçim/rezerve/aynı/bekleme).
+ *  3. Doluluk ve kilit kontrolü: ad başka bir profildeyse ya da BAŞKASININ
+ *     süresi dolmamış devir kaydı tutuyorsa reddedilir. Kilit kendine aitse
+ *     (kendi eski adresini geri alıyor) izin verilir; eski kayıt profilin
+ *     kendisine işaret ettiği için resolveUsername zaten profili önce bulur.
+ *  4. Yazma tek D1 batch'inde: profil güncellemesi + eski ad için devir kaydı.
+ *     Batch atomiktir; unique ihlalinde ikisi de geri alınır, yani "adres
+ *     değişti ama yönlendirme yok" hâli oluşmaz.
+ *
+ * `WHERE username = previous` koşulu eşzamanlı ikinci gönderimi yakalar:
+ * satır güncellenmezse "conflict" döner (DB tutarlı kalır, eski ad zaten
+ * ilk isteğin kaydıyla yönlendiriyordur).
+ */
+export async function changeUsername(
+  env: Env,
+  userId: string,
+  input: string,
+  now = new Date(),
+): Promise<ChangeUsernameResult> {
+  const db = createDb(env.DB);
+  const row = await db.query.profile.findFirst({
+    columns: { id: true, username: true, usernameChangedAt: true },
+    where: eq(profile.userId, userId),
+  });
+  if (!row) return { ok: false, error: "no_profile" };
+
+  const checked = checkUsernameChange(input, row.username, row.usernameChangedAt, now);
+  if (!checked.ok) return { ok: false, error: checked.error };
+  const next = checked.username;
+
+  const [taken, lock] = await Promise.all([
+    db.query.profile.findFirst({
+      columns: { id: true },
+      where: eq(profile.username, next),
+    }),
+    db.query.usernameRedirect.findFirst({
+      columns: { profileId: true },
+      where: and(eq(usernameRedirect.oldUsername, next), gt(usernameRedirect.expiresAt, now)),
+    }),
+  ]);
+  if (taken) return { ok: false, error: "taken" };
+  if (lock && lock.profileId !== row.id) return { ok: false, error: "locked" };
+
+  const previousUsername = row.username;
+  const redirectExpiresAt = usernameRedirectExpiresAt(now);
+  try {
+    const [updated] = await db.batch([
+      db
+        .update(profile)
+        .set({ username: next, usernameChangedAt: now, updatedAt: now })
+        .where(and(eq(profile.userId, userId), eq(profile.username, previousUsername)))
+        .returning({ id: profile.id }),
+      db
+        .insert(usernameRedirect)
+        .values({
+          oldUsername: previousUsername,
+          profileId: row.id,
+          expiresAt: redirectExpiresAt,
+          createdAt: now,
+        })
+        // Aynı ad daha önce (süresi dolmuş) bir devir kaydı bırakmış olabilir;
+        // kayıt bu profile ve yeni süreye taşınır.
+        .onConflictDoUpdate({
+          target: usernameRedirect.oldUsername,
+          set: { profileId: row.id, expiresAt: redirectExpiresAt, createdAt: now },
+        }),
+    ]);
+    if (!updated.length) return { ok: false, error: "conflict" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    // Kontrol ile yazma arasında başkası kaptı (AE1 ile aynı yarış).
+    if (msg.includes("UNIQUE constraint failed: profile.username")) {
+      return { ok: false, error: "taken" };
+    }
+    throw err;
+  }
+
+  return { ok: true, username: next, previousUsername, redirectExpiresAt };
+}
+
+/**
+ * Hesap bölümü için salt okunur özet: hangi sağlayıcıyla girildiği.
+ * E-posta oturumdan okunur, burada tekrar sorgulanmaz.
+ */
+export async function getAccountProviders(env: Env, userId: string): Promise<string[]> {
+  const rows = await createDb(env.DB).query.account.findMany({
+    columns: { providerId: true },
+    where: eq(account.userId, userId),
+  });
+  return [...new Set(rows.map((row) => row.providerId))].sort();
 }
 
 /** Public sayfa lookup'ı: profil ya da aktif devir kaydı (R15/R18). */
