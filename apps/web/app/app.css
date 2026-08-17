@@ -777,44 +777,68 @@
 /* GitHub katkı grafiği (heatmap). Kart bir boyut konteyneridir: görünen hafta
    sayısı ve kare boyutu kartın KENDİ ölçüsünden türetilir — JS ölçümü yok,
    hydration kayması yok. 52+ haftanın tamamı DOM'dadır; en yeni haftalar
-   listenin SONUNDA olduğundan fazlası nth-last-child ile baştan gizlenir. */
+   listenin SONUNDA olduğundan fazlası nth-last-child ile baştan gizlenir.
+   DİKKAT: bir eleman kendi konteyner sorgusunun kapsamında değildir — aşağıdaki
+   @container blokları yalnız TORUN elemanları hedefler, kartın kendi dolgusu/
+   aralığı bant kurallarıyla değiştirilemez (kartın üstünde konteyner yok). */
 .profile-block-social.has-gh {
   container-type: size;
   align-items: stretch;
+  /* Artan dikey boşluk tek bir aralığa yığılmaz, satırlar arasında paylaşılır */
+  justify-content: space-between;
   flex-direction: column;
-  gap: 10px;
-  /* Tek satırlık bento kartına (156px) baş + 7 sıra kare sığsın diye dikey
-     dolgu hafifçe kısılır; kart yüksekliği DEĞİŞMEZ. */
-  padding-block: 14px;
+  gap: 8px;
+  /* Tek satırlık bento kartına baş + 7 sıra kare sığsın diye dikey dolgu
+     kısılır; kart yüksekliği DEĞİŞMEZ. */
+  padding-block: 12px;
 }
 .profile-block-social.has-gh .social-head { flex: none; }
+/* Başlık satırı sıkı satır yüksekliğiyle 33.75px'e iner (Tailwind preflight'ın
+   1.5'iyle 15px+12px metin 40.5px ederdi); kazanılan ~7px doğrudan karelere
+   gider. Rozet 36px olduğundan baş yüksekliği bu bantlarda 36px'tir. */
+.profile-block-social.has-gh .social-head strong,
+.profile-block-social.has-gh .social-head small { line-height: 1.25; }
 .profile-block-social.has-gh .gh-heatmap {
   display: flex;
   min-height: 0;
   justify-content: flex-start;
-  margin-top: auto;
   gap: 3px;
 }
+/* Kareler kartın genişliğini PAYLAŞIR (flex: 1 1 0) — sabit 8px tavanı kartın
+   sağında ölü alan bırakıyordu. Üst sınır kartın BOYUNDAN gelir: kare
+   genişledikçe (aspect-ratio: 1) 7 sıra da uzar, o yüzden tavan boy bantlarında
+   ayarlanır. Varsayılan 10px = tek satırlık masaüstü kartının bütçesi. */
 .profile-block-social.has-gh .gh-week {
   display: flex;
-  min-width: 8px;
-  max-width: 8px; /* tek satırlık kartta 7 sıra ancak 8px kareyle sığar */
-  flex: 1 1 8px;
+  min-width: 0;
+  max-width: 10px;
+  flex: 1 1 0;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 .profile-block-social.has-gh .gh-day {
   display: block;
   width: 100%;
   aspect-ratio: 1;
   border-radius: 2px;
-  /* Boş gün: kart zeminine az yeşil karışır — her temada zeminden seçilir */
-  background: color-mix(in srgb, var(--color-gh) 14%, var(--profile-card));
+  /* Boş gün NÖTRDÜR: katkı yeşiliyle değil, kart metniyle kart zemini
+     karıştırılır. Açık temalarda zeminden koyu, koyu temalarda zeminden açık
+     bir gri çıkar; her iki yönde de 1. kademe yeşilin altında kalır.
+     --profile-card-text zorunlu: "ufuk" temasında --profile-text kart rengiyle
+     AYNI (#22334a), yalnız kart metni (krem) doğru tonu verir. */
+  background: color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 8%, var(--profile-card));
 }
-.profile-block-social.has-gh .gh-day[data-level="1"] { background: color-mix(in srgb, var(--color-gh) 38%, var(--profile-card)); }
-.profile-block-social.has-gh .gh-day[data-level="2"] { background: color-mix(in srgb, var(--color-gh) 58%, var(--profile-card)); }
-.profile-block-social.has-gh .gh-day[data-level="3"] { background: color-mix(in srgb, var(--color-gh) 80%, var(--profile-card)); }
+/* Yeşil rampa nötr tabanın üstünde eşit adımlarla açılır (34→55→77→100). */
+.profile-block-social.has-gh .gh-day[data-level="1"] { background: color-mix(in srgb, var(--color-gh) 34%, var(--profile-card)); }
+.profile-block-social.has-gh .gh-day[data-level="2"] { background: color-mix(in srgb, var(--color-gh) 55%, var(--profile-card)); }
+.profile-block-social.has-gh .gh-day[data-level="3"] { background: color-mix(in srgb, var(--color-gh) 77%, var(--profile-card)); }
 .profile-block-social.has-gh .gh-day[data-level="4"] { background: var(--color-gh); }
+
+/* Grafik görünürken og önizlemesi DOM'da ama gizlidir; display:none +
+   loading="lazy" olduğundan tarayıcı görseli indirmez. Yalnız grafiğin hiç
+   sığmadığı en kısa bantta açılır (aşağıda), böylece kart çıplak bir etikete
+   düşmez. */
+.profile-block-social.has-gh .social-og { display: none; }
 
 /* Alt satır: düşük kontrastlı toplam + "GitHub ↗" ipucu. Yalnız 2+ satırlık
    kartlarda görünür (tek satıra sığmıyor). Kart bir <a> olduğundan ipucu
@@ -834,45 +858,87 @@
 .profile-block-social.has-gh .gh-foot > span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .profile-block-social.has-gh .gh-foot .gh-foot-hint { flex: none; }
 
-/* Görünen hafta sayısı kart içi genişliğe göre (content-box):
-   <150px → 10 hafta (mobil 1x1 emniyeti; 13 hafta 8px kareyle 140px ister),
-   ≥150px → 13 · ≥300px → 26 · ≥620px → 52. En yeni haftalar hep görünür. */
+/* Görünen hafta sayısı kart içi genişliğe göre (content-box). Merdiven, en
+   küçük kare 8px + 3px boşluk = 11px adım varsayımıyla kuruldu: n hafta
+   W ≥ 11n − 3 olduğunda açılır. Böylece kareler her genişlikte 8–10px arasında
+   kalır, kart sağında ölü alan bırakmaz. En yeni haftalar hep görünür. */
 .profile-block-social.has-gh .gh-week:nth-last-child(n + 11) { display: none; }
-@container (min-width: 150px) {
+@container (min-width: 129px) { /* 12 hafta — mobil 1x1 (131px) */
   .profile-block-social.has-gh .gh-week:nth-last-child(n + 11) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 13) { display: none; }
+}
+@container (min-width: 140px) { /* 13 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 13) { display: flex; }
   .profile-block-social.has-gh .gh-week:nth-last-child(n + 14) { display: none; }
 }
-@container (min-width: 300px) {
+@container (min-width: 162px) { /* 15 hafta */
   .profile-block-social.has-gh .gh-week:nth-last-child(n + 14) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 16) { display: none; }
+}
+@container (min-width: 184px) { /* 17 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 16) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 18) { display: none; }
+}
+@container (min-width: 206px) { /* 19 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 18) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 20) { display: none; }
+}
+@container (min-width: 239px) { /* 22 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 20) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 23) { display: none; }
+}
+@container (min-width: 283px) { /* 26 hafta — yarım yıl */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 23) { display: flex; }
   .profile-block-social.has-gh .gh-week:nth-last-child(n + 27) { display: none; }
 }
-@container (min-width: 620px) {
+@container (min-width: 327px) { /* 30 hafta */
   .profile-block-social.has-gh .gh-week:nth-last-child(n + 27) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 31) { display: none; }
+}
+@container (min-width: 371px) { /* 34 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 31) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 35) { display: none; }
+}
+@container (min-width: 426px) { /* 39 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 35) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 40) { display: none; }
+}
+@container (min-width: 481px) { /* 44 hafta */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 40) { display: flex; }
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 45) { display: none; }
+}
+@container (min-width: 569px) { /* 52 hafta — tam yıl */
+  .profile-block-social.has-gh .gh-week:nth-last-child(n + 45) { display: flex; }
   /* GraphQL 53. (kısmi) haftayı da döndürebilir; 52'den eskisi gizli kalır */
   .profile-block-social.has-gh .gh-week:nth-last-child(n + 53) { display: none; }
 }
 
-/* 2+ satırlık kartta dikey alan var: kareler 12px'e kadar büyür, alt satır
-   (toplam + ipucu) görünür olur. 200px eşiği tek satır (~126px içerik) ile
-   çift satır (~296px) arasını ayırır. */
-@container (min-height: 200px) {
-  .profile-block-social.has-gh { gap: 12px; padding-block: 18px; }
-  .profile-block-social.has-gh .gh-week { max-width: 12px; }
-  .profile-block-social.has-gh .gh-foot { display: flex; }
-}
+/* --- Boy bantları ---
+   Container query içerik kutusunu ölçer; içerik yüksekliği = kart yüksekliği
+   − 24 (dikey dolgu) − 2 (çerçeve):
+     dashboard önizleme 120 → 94 · mobil 1x1 138 → 112 ·
+     masaüstü ve editör 1x1 156 → 130 · iki satırlı kart 324 → 298
+   Dikey bütçe = baş (36px rozet) + 8px aralık + 7 kare + 6 sıra boşluğu. */
 
-/* Dar kartta heatmap HİÇ gösterilmez, kart sade GitHub kartına (ikon + ad)
-   döner — kırpılmış yarım grid en kötü seçenek. Gerekli içerik yüksekliği:
-   36 (platform-mark) + 10 (gap) + 7×8px kare + 6×3px boşluk = 74 → toplam
-   120px. Container query content-box ölçer; tek satırlık kartların içerik
-   yükseklikleri: masaüstü 156−28−2 = 126 (sığar), mobil 138−28−2 = 108 ve
-   dashboard önizleme 120−28−2 = 90 (sığmaz) → eşik 119px. Kare 8px'in
-   altına düşürülmez (spec alt sınırı). */
+/* 100–119 (mobil 1x1, 112px): rozet 30px'e iner → baş 33.75px, kare tavanı
+   8px, sıra boşluğu 2px → 33.75 + 8 + (7×8 + 6×2 = 68) = 109.75 ≤ 112. ✓
+   Alt satır bu bantta zaten gizli. */
 @container (max-height: 119px) {
-  .profile-block-social.has-gh { align-items: center; flex-direction: row; padding-block: 18px; }
-  .profile-block-social.has-gh .social-head { flex: 1; }
-  .profile-block-social.has-gh .gh-heatmap,
-  .profile-block-social.has-gh .gh-foot { display: none; }
+  .profile-block-social.has-gh .platform-mark { width: 30px; height: 30px; border-radius: var(--radius-lg); }
+  .profile-block-social.has-gh .gh-week { max-width: 8px; }
+}
+/* ≤99 (dashboard önizlemesi, 94px): 8px kareyle bile sığmıyor
+   (33.75 + 8 + 68 = 109.75 > 94) → grafik yerine og önizlemesi gösterilir. */
+@container (max-height: 99px) {
+  .profile-block-social.has-gh .gh-heatmap { display: none; }
+  .profile-block-social.has-gh .social-og { display: block; }
+}
+/* ≥200 (2+ satırlık kart, 298px): dikey alan bol, kareler 14px'e kadar büyür
+   (52 hafta × 14px hâlâ katkı grafiği gibi okunur, kart resmine dönüşmez) ve
+   alt satır görünür. 36 + 8 + (7×14 + 6×3 = 116) + 8 + 17 = 185 ≤ 298. */
+@container (min-height: 200px) {
+  .profile-block-social.has-gh .gh-week { max-width: 14px; gap: 3px; }
+  .profile-block-social.has-gh .gh-foot { display: flex; }
 }
 .profile-block-link { justify-content: center; padding: 18px; flex-direction: column; }
 /* Bağlantı oku tema CTA renginde "buton" çipi olur */

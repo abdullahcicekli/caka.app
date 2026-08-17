@@ -177,3 +177,21 @@ pencereden uzun olmalı) ve budamadan önce aylık bir özet tutulup
 tutulmayacağı. Yapıldığında `/gizlilik` §7'deki "bugün silinmiyor" maddesi
 gerçek süreyle değiştirilir — **o madde bu iş bitene kadar kalmalı**, çünkü
 bugünkü durumu dürüstçe anlatan tek yer orası.
+
+## 14. Editör ile public sayfanın satır yüksekliği mobilde tutmuyor
+
+Editör ızgarası (`app/components/editor/grid.tsx`) gridstack'e sabit
+`cellHeight: 168, margin: 6` veriyor → tek satırlık blok her ekran boyutunda
+156px. Public sayfa ise `app.css`'te masaüstünde `grid-auto-rows: 156px`,
+`@media (max-width: 640px)` içinde **138px** kullanıyor. Yani mobilde
+kullanıcının editörde gördüğü kart, yayında satır başına 18px daha kısa —
+WYSIWYG değil ve bu **her blok tipini** ilgilendiriyor (metin kırpılması,
+og görselinin payı, GitHub grafiğinin sığması).
+
+GitHub kartında bu fark ayrı bir boy bandıyla kapatıldı (mobilde daha küçük
+kare), ama kök neden duruyor.
+
+Yapılacak (istenirse): ya gridstack `cellHeight`'i duyarlı yap (dar ekranda
+138), ya da public `grid-auto-rows`'u 156'ya çıkar. İkincisi **yayındaki her
+mobil profilin görünümünü değiştirir**, o yüzden kendi başına bir iş olarak
+planlanmalı; ölçüm/regresyon yüzeyi geniş.

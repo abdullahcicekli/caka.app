@@ -70,15 +70,18 @@ export function ProfileBlockCard({
 
   if (block.type === "social") {
     const platform = platformById(block.data.platform);
-    // GitHub kartında görsel odak katkı grafiğidir: takvim verisi varsa
-    // ogImage hiç basılmaz. Veri yoksa (token yok / hata / bilinmeyen
-    // kullanıcı) kart eski davranışına döner.
+    // GitHub kartında görsel odak katkı grafiğidir. Veri yoksa (token yok /
+    // hata / bilinmeyen kullanıcı) kart eski davranışına döner.
     const calendar =
       block.data.platform === "github" && block.data.handle
         ? githubCalendars?.[githubLoginKey(block.data.handle)]
         : undefined;
     // og görseli her boyutta saklanır; yalnız 1x1'den büyük kartlarda gösterilir.
-    const ogImage = block.size !== "1x1" && !calendar ? block.data.ogImage : "";
+    // Katkı grafiği varken de DOM'a basılır ama CSS'te gizlidir: grafiğin hiç
+    // sığmadığı en kısa kartta (dashboard önizlemesi) kart çıplak bir etikete
+    // düşmesin diye o bantta og'a geri çekilir. display:none + loading="lazy"
+    // olduğundan grafik görünürken tarayıcı görseli indirmez.
+    const ogImage = block.size !== "1x1" ? block.data.ogImage : "";
     const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
@@ -94,6 +97,9 @@ export function ProfileBlockCard({
       <>
         <span className="social-head">{head}</span>
         <GithubHeatmap calendar={calendar} />
+        {ogImage ? (
+          <img className="social-og" src={ogImage} alt="" loading="lazy" draggable={false} />
+        ) : null}
       </>
     ) : ogImage ? (
       <>
@@ -103,7 +109,9 @@ export function ProfileBlockCard({
     ) : (
       head
     );
-    const className = `profile-block profile-block-social${ogImage ? " has-og" : ""}${calendar ? " has-gh" : ""}`;
+    // has-og ve has-gh birlikte verilmez: grafik varken düzeni has-gh kurar,
+    // og yalnız onun içindeki dar bantta açılan bir yedektir.
+    const className = `profile-block profile-block-social${ogImage && !calendar ? " has-og" : ""}${calendar ? " has-gh" : ""}`;
     if (block.data.url) {
       return (
         <a className={className} href={block.data.url} target="_blank" rel="noreferrer">
