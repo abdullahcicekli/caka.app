@@ -103,7 +103,11 @@ function DashAnalytics({ analytics }: { analytics: Analytics }) {
   const topCountryTotal = countries.reduce((max, row) => Math.max(max, row.count), 0);
 
   return (
-    <section className="w-full max-w-[560px] rounded-2xl border border-sinir bg-white p-6 text-left">
+    // `id`, sidebar'daki "Analitik" bağlantısının hedefi (dash-sidebar.tsx).
+    <section
+      id="analitik"
+      className="w-full max-w-[560px] scroll-mt-8 rounded-2xl border border-sinir bg-white p-6 text-left"
+    >
       <header className="flex items-baseline justify-between gap-3">
         <h2 className="text-base font-bold">{analitik.baslik}</h2>
         <span className="text-xs font-semibold text-murekkep/45">{analitik.pencereEtiketi}</span>

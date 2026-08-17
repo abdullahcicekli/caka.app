@@ -61,9 +61,12 @@ export function DashSidebar({
           <NavLink to="/dashboard">
             <Files size={17} /> Sayfalar
           </NavLink>
-          <button type="button" disabled>
-            <BarChart3 size={17} /> Analitik <em>Yakında</em>
-          </button>
+          {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
+              /dashboard'da önizlemenin altında duruyor. "Yakında" etiketi
+              artık gerçeği yansıtmıyordu. */}
+          <NavLink to="/dashboard#analitik">
+            <BarChart3 size={17} /> Analitik
+          </NavLink>
           <NavLink to="/ayarlar">
             <Settings size={17} /> Ayarlar
           </NavLink>
