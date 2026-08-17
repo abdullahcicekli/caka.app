@@ -66,3 +66,90 @@ metin Türkçe" diyor; bu, GitHub'ın kendi biçimini birebir izlemek için
 Türkçe.
 
 Karar bekliyor: Türkçeleştirilecekse tek dosyada tek değişiklik.
+
+## 6. Uzak `ogImage` için Worker proxy'si — **bu listenin en değerlisi**
+
+`profile-block.tsx:101`'deki `<img src={ogImage}>` etiketinin host'unu profil
+sahibi seçiyor: ziyaretçinin tarayıcısı o siteye doğrudan gidiyor, IP'si ve
+User Agent'ı oraya ulaşıyor ve o site yanıtta `Set-Cookie` göndererek
+tarayıcıya **üçüncü taraf çerezi** yazabiliyor — aynı çerezle ziyaretçiyi
+farklı Caka profilleri arasında eşleyebilir. `referrerPolicy="no-referrer"`
+yalnızca `Referer`'ı kesiyor. Ertelenme sebebi kapsam: proxy demek yeni bir
+Hono route'u, boyut/tip/timeout sınırları, cache stratejisi ve SSRF koruması
+demek — hukuki yüzey planına sığmıyordu. Bugünkü durum gizlenmiyor:
+`/gizlilik` §6 sızıntıyı olduğu gibi anlatıyor ve `docs/legal/vendor-register.md`
+kaydediyor. **Kapatılana kadar footer'daki çerez ifadesi "hiç üçüncü taraf
+çerezi yok" biçimine genişletilemez** (`docs/legal/trust-claims.md`).
+
+## 7. Fontshare self-host
+
+`app/root.tsx` fontları `api.fontshare.com` ve `cdn.fontshare.com`'dan çekiyor;
+yani **her sayfa yüklemesinde** ziyaretçinin IP adresi ve User Agent'ı Indian
+Type Foundry'ye ulaşıyor ve bu, yurt dışına aktarım kaydında ayrı bir satır
+açıyor. Font dosyalarını depoya alıp kendi alanımızdan servis etmek bu satırı
+tamamen siler ve bir tedarikçi bağımlılığını da kaldırır. Ertelendi çünkü
+lisans koşullarının okunması, `woff2` alt kümelerinin üretilmesi ve
+`@font-face` + preload zincirinin elle kurulması gerekiyor; ölçülebilir bir
+kullanıcı sorunu da yok. Yapıldığında `docs/legal/vendor-register.md` §A'dan
+Fontshare satırı ve `/gizlilik` §6'daki karşılığı kalkar.
+
+## 8. Birinci taraf panel analitiği (R48)
+
+Yaratıcının kendi sayfasının kaç kez görüntülendiğini ve hangi bağlantısına
+tıklandığını göreceği ölçüm hattı. Cloudflare Web Analytics bunu veremiyor:
+zone genelinde toplam sayıyor, profil başına kırılım ve tıklama olayı yok.
+Ertelendi çünkü bu ayrı bir ürün özelliği — depolama (Analytics Engine ya da
+D1), toplama uç noktası ve panelde bir ekran gerektiriyor. Tasarım kısıtı
+şimdiden sabit: **ziyaretçi cihazına yazma veya cihazdan okuma yok**, ham IP
+saklanmaz, üçüncü tarafa aktarım yok, çapraz site takibi yok — böylece çerez
+rejimi hiç tetiklenmez. Rıza gerekmemesi işlemeyi hukuki sebepten muaf tutmaz;
+sebep m.5/2-f'tir ve aydınlatma metnine öyle yazılır. Cihaza yazan bir tasarıma
+kayarsa rıza sistemi gerekir; tasarımı planın Appendix'inde hazır duruyor.
+Ayrıca "tekil ziyaretçi" metriği cihaza yazmadan üretilemiyor — metrikten
+vazgeçmek ya da günlük dönen tuzlu IP+UA hash'i kullanmak arasındaki karar bu
+işe devredildi.
+
+## 9. Self-servis silme ve dışa aktarma
+
+Bugün hesap silme akışı var ama **veri dışa aktarma yok** ve KVKK m.11
+haklarının hiçbiri ürün içinden kullanılamıyor; hepsi e-postayla ve elle
+karşılanıyor. Ertelendi çünkü doğru yapılması JSON dışa aktarma formatı, R2
+nesnelerinin paketlenmesi ve silme sonrası yedek politikası kararı istiyor —
+sonuncusu zaten `docs/legal/placeholders.md` §1'deki `[SAKLAMA SÜRELERİ]`
+alanına bağlı. Kullanıcı sayısı düşükken elle karşılamak makul; ölçek
+büyüdüğünde bu bir yük olur.
+
+## 10. İlgili kişi başvuru yordamı
+
+`/gizlilik` §8 başvuru yolunu tarif ediyor (`hello@caka.app`, 30 gün) ama
+**yordamın kendisi yazılmadı**: başvuru nasıl kaydedilecek, kimlik nasıl
+doğrulanacak, süre nasıl takip edilecek, yanıt nasıl arşivlenecek. Özellikle
+gereken bir durum var: `github_calendar` tablosunun ilgili kişisi **hiç Caka
+hesabı olmayan** bir GitHub kullanıcısı olabilir — yani hesabıyla kimlik
+doğrulayamayacak bir başvuru sahibi (`docs/legal/data-map.md`). Ertelendi çünkü
+kod değil süreç işi; ilk gerçek başvuru gelmeden önce yazılmalı.
+
+## 11. R21 — güvenlik başlıkları ve CSP
+
+Tüm SSR ve API yanıtlarına middleware'den uygulanacak başlıklar hâlâ yok: CSP
+(`default-src`, sayfanın gerçek JS ayak izine göre en dar `script-src`,
+`object-src 'none'`, `base-uri 'self'`, `form-action 'self'`,
+`frame-ancestors 'none'`), `X-Frame-Options: DENY`, HSTS,
+`X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`.
+Ertelendi çünkü CSP'yi doğru yazmak için üçüncü taraf yüzeylerinin sabitlenmesi
+gerekiyordu — ölçüm beacon'ı (`static.cloudflareinsights.com`), Fontshare
+(`api`/`cdn.fontshare.com`) ve profil sayfalarındaki **host'u önceden
+bilinemeyen** uzak görseller. Sonuncusu tek başına `img-src`'yi geniş bırakmayı
+zorunlu kılıyor; §6'daki proxy işi bittiğinde CSP de gerçekten dar yazılabilir.
+Bu ikisi sırayla yapılmalı.
+
+## 12. `caka_claim` çerezinde `Secure` bayrağı yok
+
+`app/routes/onboarding.tsx` bu çerezi tarayıcıda `document.cookie` ile yazıyor;
+bu yüzden `HttpOnly` olamıyor (kaçınılmaz) ama `Secure` bayrağı da
+taşımıyor (kaçınılmaz değil, sadece eklenmemiş). Prod tamamen HTTPS olduğu ve
+çerez yalnızca kullanıcının birazdan herkese açık olacak kullanıcı adını 15
+dakika taşıdığı için bugün somut bir risk yok — bu yüzden ertelendi.
+`SameSite=Lax` ve `Path=/` zaten var. Yapılacak: yazma noktasına `Secure`
+eklemek (lokal `http` geliştirmede çerezin düşeceğine dikkat) ve
+`packages/shared/src/cookies.ts`'teki açıklama metnini güncellemek.

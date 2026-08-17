@@ -186,7 +186,12 @@ export const gizlilikSections: LegalSection[] = [
               "Yüklediğin görseller ile bu dosyaların türü, boyutu ve " +
                 "yüklenme zamanı.",
             ],
-            ["Doğrudan senin yüklemen."],
+            [
+              "Doğrudan senin yüklemen. Ayrıca Google ile ilk kez giriş " +
+                "yaptığında, Google'daki profil fotoğrafın bir kez bizim " +
+                "dosya depomuza kopyalanır; böylece sayfan her açıldığında " +
+                "tarayıcın Google'a istek atmak zorunda kalmaz.",
+            ],
           ],
           [
             ["Adres değişikliği kaydı (username_redirect)"],

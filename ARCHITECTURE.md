@@ -140,6 +140,24 @@ Neden normalize `blocks` tablosu değil de JSON kolon: grid editör dokümanı *
 - **Deploy:** GitHub Actions → `drizzle-kit` migration'ları D1'e uygula → `wrangler deploy`. Custom domain: `caka.app` Workers route.
 - Observability: Workers Logs + `wrangler tail`; MVP için yeterli.
 
-## 11. MVP sonrasına bilinçli ertelenenler
+## 11. Ölçüm ve hukuki yüzey
+
+Ziyaret ölçümü **Cloudflare Web Analytics** ile yapılır: zone genelinde otomatik
+kurulum, beacon `static.cloudflareinsights.com`'dan gelir (`root.tsx`'e elle
+script eklenmez) ve herkese açık profil sayfaları dâhil tüm sayfalarda çalışır.
+Yapı gereği çerezsizdir — cihaza hiçbir şey yazmadığı prod'da gerçek tarayıcıda
+doğrulandı — bu yüzden **rıza banner'ı yoktur ve gerekmez**; işleme KVKK
+m.5/2-f meşru menfaate dayanır ve aydınlatma metninde o sebeple yazılıdır (rıza
+gerekmemesi aydınlatma yükümlülüğünü kaldırmaz). Bedeli kabul edilmiştir: UTM
+kampanya atıfı ve Google Ads bağlantısı yok. Hukuki taraf üç public route'tur
+(`/gizlilik`, `/kullanim-kosullari`, `/cerez-politikasi`); üçü de ortak
+`LegalPage` bileşeninden, `apps/web/app/content/legal/` altındaki veri
+modüllerinden render edilir, belge başına `version` + `updatedAt` taşır ve
+çerez tablosu `packages/shared/src/cookies.ts` envanterinden üretilir. Metinde
+doldurulmamış bir köşeli parantez alanı kalırsa **placeholder kapısı sayfayı
+prod'da 404'e düşürür**, lokalde uyarıyla render eder — yarım hukuki metin
+yayına çıkamaz. Denetim kaydı ve açık alanlar: `docs/legal/`.
+
+## 12. MVP sonrasına bilinçli ertelenenler
 
 Analitik (Workers Analytics Engine hazır bekliyor), draft/publish ayrımı (layout'a `draft_layout` kolonu eklemek yeterli), çoklu sayfa, custom domain bağlama, ödeme. Şema ve cache katmanı bunlara engel çıkarmayacak şekilde kuruldu.

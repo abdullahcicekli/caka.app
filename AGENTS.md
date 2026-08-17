@@ -23,6 +23,11 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 - Mimari özet: `ARCHITECTURE.md`. Çelişki görürsen plan kazanır.
 - Ertelenmiş açık işler: `docs/backlog.md`. Bir madde bitince oradan **silinir**
   (durum git'ten okunur, "yapıldı" yazılmaz).
+- Hukuki denetim kaydı: `docs/legal/` — `data-map.md` (hangi veri nerede, hangi
+  sebeple), `cookie-inventory.md`, `vendor-register.md`, `trust-claims.md`
+  (footer iddialarının dayanağı), `placeholders.md` (yayın kapısı). Yayındaki
+  hukuki metinler bu dosyalardan yazıldı; çelişki görürsen **kod ve
+  `docs/legal/` kazanır**, metin düzeltilir.
 
 ## Değişmezler (bozma)
 
@@ -70,6 +75,13 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 - **Yeni sayfa/route:** `app/routes.ts`'e `:username`'den önce ekle + rezerve
   listeye ekle + gerekiyorsa footer/nav linkini `content/landing.ts`'te güncelle.
   Public pazarlama sayfalarına `SiteFooter` eklenir; `/:username` sayfalarına eklenmez.
+- **Yeni çerez veya cihaz depolaması:** ziyaretçinin cihazına yazan (çerez,
+  `localStorage`, `sessionStorage`, IndexedDB) her şey **önce**
+  `packages/shared/src/cookies.ts` envanterine girer. `/cerez-politikasi`
+  tablosu bu diziden render edilir; envanteri atlarsan yayındaki politika
+  sessizce yanlışa düşer (KTD21). Aynı kural üçüncü taraf script eklemek için
+  de geçerli: cihaza yazmadığı **iddia edilmez, tarayıcıda doğrulanır**. Zorunlu
+  olmayan bir girdi eklenirse rıza akışı da gerekir — bugün yok.
 - **DB değişikliği:** `packages/db/src/schema.ts` → `apps/web` içinde
   `pnpm exec drizzle-kit generate --name <ad>` → `--local` apply; `--remote`
   apply artık `pnpm deploy` içinde otomatik (elle de çalıştırılabilir).
