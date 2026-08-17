@@ -201,6 +201,11 @@ export function ProfileCanvas({
             return (
               <div
                 key={block.id}
+                // Tıklama ölçümünün kimliği (R48): sayaç blok id'sine yazılır,
+                // adrese değil. Öznitelik yalnızca bir kanca — sayım kararını
+                // public sayfadaki LinkClickBeacon verir, panel önizlemesinde
+                // dinleyici hiç kurulmaz.
+                data-block-id={block.id}
                 className={`profile-grid-item size-${block.size} ${pos ? "has-pos" : ""}`}
                 style={style}
               >

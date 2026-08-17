@@ -1,4 +1,5 @@
 // @caka/shared — uygulama genelinde paylaşılan saf kurallar ve tipler.
+export * from "./analytics";
 export * from "./cookies";
 export * from "./layout";
 export * from "./legal";

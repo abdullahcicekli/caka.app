@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth-schema";
 
@@ -95,4 +95,57 @@ export const asset = sqliteTable(
     createdAt: timestampMs("created_at"),
   },
   (table) => [index("asset_user_idx").on(table.userId)],
+);
+
+/**
+ * Panel analitiği — profil görüntülenmesi (R48).
+ *
+ * Olay başına satır DEĞİL, gün+ülke başına sayaçtır: yazma anında
+ * toplulaştırılır (`ON CONFLICT ... views = views + 1`). Bunun iki nedeni var:
+ * (a) satır sayısı profil × gün × ülke ile sınırlı kalır, gecelik toplulaştırma
+ * cron'una gerek kalmaz; (b) olay düzeyinde zaman damgası hiç yazılmadığı için
+ * tek bir ziyaretin izi diskte oluşmaz — ziyaret sırası geri kurulamaz.
+ *
+ * `country` yalnızca `request.cf.country`dir; ham IP hiçbir yerde saklanmaz,
+ * hash'lenmez, türev üretilmez (KD1'in birinci koşulu). Ülkesi çözülemeyen
+ * istekler `XX` kovasına düşer. Tekil ziyaretçi metriği yoktur (OQ6) — cihaza
+ * yazmadan üretilemezdi.
+ */
+export const profileViewDaily = sqliteTable(
+  "profile_view_daily",
+  {
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profile.id, { onDelete: "cascade" }),
+    /** Türkiye günü (`YYYY-MM-DD`, sabit UTC+3 — bkz. @caka/shared dayKey) */
+    day: text("day").notNull(),
+    /** ISO 3166-1 alpha-2 veya `XX` */
+    country: text("country").notNull(),
+    views: integer("views").notNull().default(0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.day, table.country] }),
+  ],
+);
+
+/**
+ * Panel analitiği — bağlantı tıklaması (R48). Ölçüm kimliği blok id'sidir:
+ * adres değişse de seri kopmaz. Ülke kırılımı bilinçli olarak yoktur —
+ * tıklama zaten seyrek bir olay, ülke ile çaprazlamak küçük sayılarda
+ * gereksiz ayırt edicilik üretirdi.
+ */
+export const linkClickDaily = sqliteTable(
+  "link_click_daily",
+  {
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profile.id, { onDelete: "cascade" }),
+    /** Düzendeki blok id'si (`blk_xxxxxxxx`) */
+    blockId: text("block_id").notNull(),
+    day: text("day").notNull(),
+    clicks: integer("clicks").notNull().default(0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.day, table.blockId] }),
+  ],
 );

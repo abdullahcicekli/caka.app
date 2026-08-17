@@ -3,6 +3,7 @@ import { LayoutDashboard, Pencil } from "lucide-react";
 import { Link, data, redirect } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
+import { LinkClickBeacon } from "~/components/link-click-beacon";
 import { ProfileCanvas } from "~/components/profile-block";
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ import {
   parseProfileLayout,
   validateUsername,
 } from "@caka/shared";
+import { recordProfileView } from "../../server/analytics";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { ogImagePathForProfile } from "../../server/og-image";
@@ -115,6 +117,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const description =
     (profileCard?.type === "profile" ? profileCard.data.title.trim() : "") ||
     `${name} adlı kişinin bağlantıları, projeleri ve ürettikleri.`;
+  const isOwner = session?.user.id === p.userId;
+  // Görüntülenme ölçümü (R48). `await` YOK: fonksiyon senkron döner, D1
+  // yazması `waitUntil` içinde yanıtın dışında koşar. Yazma hatası da orada
+  // yutulur — ziyaretçi ne gecikme ne hata görür, sayfa her hâlükârda render
+  // edilir. Ziyaretçinin cihazına hiçbir şey yazılmaz; istekten yalnızca
+  // `cf.country` okunur, ham IP okunmaz ve saklanmaz.
+  recordProfileView(env, request, { profileId: p.id, isOwner });
+
   const sameAs = [
     ...layout.blocks.flatMap((block) => {
       if (block.type === "social" || block.type === "link") return [block.data.url];
@@ -134,7 +144,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     ogImage: absoluteSiteUrl(await ogImagePathForProfile(p)),
     theme: normalizeTheme(p.theme),
     layout: ensureLayoutPositions(layout),
-    isOwner: session?.user.id === p.userId,
+    isOwner,
     // GitHub katkı grafikleri: D1 önbelleğinden okunur; token yoksa boş.
     githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
   };
@@ -145,6 +155,10 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
   return (
     <main className="relative min-h-svh">
       <ProfileCanvas layout={layout} theme={theme} githubCalendars={githubCalendars} />
+      {/* Tıklama ölçümü yalnız ziyaretçide çalışır; sahibin kendi tıklaması
+          sayaca girmez. Bağlantıların href'i değişmez — JS kapalıyken
+          bağlantılar aynen çalışır, yalnızca sayılmaz. */}
+      {isOwner ? null : <LinkClickBeacon username={username} />}
       {/* Marka rozeti sağ üstte: sahip için hızlı menü (Düzenle/Panel),
           ziyaretçi için ana sayfa bağlantısı. Logo beyaz yuvarlak zemin
           üzerinde durur; koyu/açık her temada okunur. */}

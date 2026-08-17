@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { validateUsername } from "@caka/shared";
+import { analyticsApi } from "./analytics-api";
 import { getAuth } from "./auth";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
@@ -25,6 +26,8 @@ honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
 honoApp.route("/api/onboarding", onboardingApi);
 // layoutApi: PUT /api/profile/layout (taslak kaydı) + POST /api/profile/publish
 honoApp.route("/api/profile", layoutApi);
+// Birinci taraf ölçüm (R48): POST /api/olcum/tiklama — çerezsiz, gövdesiz 204.
+honoApp.route("/api/olcum", analyticsApi);
 honoApp.route("/api/og-image", ogApi);
 // Kullanıcıya özel og:image: /og/u/:username/:hash.png (hash'li, immutable)
 honoApp.route("/og", ogImageApi);

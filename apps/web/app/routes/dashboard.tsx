@@ -4,15 +4,25 @@ import { env } from "cloudflare:workers";
 import { ExternalLink, Pencil } from "lucide-react";
 import { Link, redirect } from "react-router";
 
+import { analitik, baglantiAdi, kisaAdres, ulkeAdi } from "~/content/analitik";
 import { DashSidebar } from "~/components/dash-sidebar";
 import { ProfileCanvas } from "~/components/profile-block";
 import { noIndexMeta } from "~/lib/seo";
 import {
+  buildDailySeries,
+  buildLinkBreakdown,
+  collectTrackableLinks,
   ensureLayoutPositions,
+  formatCount,
   normalizeTheme,
+  OLCUM_PENCERE_GUN,
   parseProfileLayout,
+  shiftDayKey,
+  sumSince,
+  topCountries,
   type ProfileBlock,
 } from "@caka/shared";
+import { getProfileAnalytics } from "../../server/analytics";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { getProfileByUserId } from "../../server/profile";
@@ -34,7 +44,31 @@ export async function loader({ request }: Route.LoaderArgs) {
   const card = layout.blocks.find(
     (block): block is Extract<ProfileBlock, { type: "profile" }> => block.type === "profile",
   );
+
+  // Ölçüm okuması (R48). Toplulaştırma saf fonksiyonlarda yapılır; loader
+  // yalnızca ham kovaları çeker ve panele hazır seriyi döndürür. Ölçüm hattı
+  // arızalanırsa panel yine açılır: hata boş veriye düşer.
+  const raw = await getProfileAnalytics(env, profile.id).catch(() => null);
+  const today = raw?.today ?? "";
+  const windowStart = today ? shiftDayKey(today, -(OLCUM_PENCERE_GUN - 1)) : "";
+  const trackable = collectTrackableLinks(layout);
+  const analytics = {
+    since: raw?.since ?? null,
+    series: raw ? buildDailySeries(raw.views, today, OLCUM_PENCERE_GUN) : [],
+    totalViews: raw ? sumSince(raw.views, windowStart) : 0,
+    todayViews: raw ? sumSince(raw.views, today) : 0,
+    totalClicks: raw
+      ? raw.clicks.reduce((sum, row) => sum + row.clicks, 0)
+      : 0,
+    countries: raw ? topCountries(raw.countries) : [],
+    links: buildLinkBreakdown(
+      trackable,
+      raw?.clicks ?? [],
+    ),
+  };
+
   return {
+    analytics,
     username: profile.username,
     layout: ensureLayoutPositions(layout),
     theme: normalizeTheme(profile.theme),
@@ -51,8 +85,135 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
+type Analytics = Awaited<ReturnType<typeof loader>>["analytics"];
+
+/** Küçük sayı kutusu — dash yüzeyinin kart dilini (beyaz + sinir) tekrarlar. */
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-xl border border-sinir bg-zemin px-4 py-3">
+      <span className="text-xs font-semibold tracking-wide text-murekkep/55">{label}</span>
+      <strong className="text-2xl font-bold tabular-nums">{formatCount(value)}</strong>
+    </div>
+  );
+}
+
+function DashAnalytics({ analytics }: { analytics: Analytics }) {
+  const { since, series, totalViews, todayViews, totalClicks, countries, links } = analytics;
+  const peak = series.reduce((max, day) => Math.max(max, day.count), 0);
+  const topCountryTotal = countries.reduce((max, row) => Math.max(max, row.count), 0);
+
+  return (
+    <section className="w-full max-w-[560px] rounded-2xl border border-sinir bg-white p-6 text-left">
+      <header className="flex items-baseline justify-between gap-3">
+        <h2 className="text-base font-bold">{analitik.baslik}</h2>
+        <span className="text-xs font-semibold text-murekkep/45">{analitik.pencereEtiketi}</span>
+      </header>
+
+      {since === null ? (
+        // Yeni profil: her şey sıfır. "Bozuk" görünmesin diye tablolar yerine
+        // ne olacağını anlatan bir açıklama gösterilir.
+        <div className="mt-4 rounded-xl border border-sinir bg-zemin px-4 py-5">
+          <strong className="text-sm font-semibold">{analitik.bosBaslik}</strong>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-murekkep/60">{analitik.bosMetin}</p>
+        </div>
+      ) : (
+        <>
+          <p className="mt-1 text-xs text-murekkep/50">{analitik.baslangicNotu(since)}</p>
+
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <StatTile label={analitik.gorunumBaslik} value={totalViews} />
+            <StatTile label={analitik.tiklamaBaslik} value={totalClicks} />
+            <StatTile label={analitik.bugunBaslik} value={todayViews} />
+          </div>
+
+          <h3 className="mt-6 text-xs font-bold tracking-wide text-murekkep/60 uppercase">
+            {analitik.grafikBaslik}
+          </h3>
+          <div
+            className="mt-2 flex h-16 items-end gap-[3px]"
+            role="img"
+            aria-label={analitik.grafikAria(formatCount(totalViews))}
+          >
+            {series.map((day) => (
+              <span
+                key={day.day}
+                title={analitik.gunEtiketi(day.day, formatCount(day.count))}
+                className={`min-h-[3px] flex-1 rounded-sm ${
+                  day.count > 0 ? "bg-murekkep/70" : "bg-sinir"
+                }`}
+                style={{ height: peak > 0 ? `${(day.count / peak) * 100}%` : "3px" }}
+              />
+            ))}
+          </div>
+
+          <h3 className="mt-6 text-xs font-bold tracking-wide text-murekkep/60 uppercase">
+            {analitik.baglantiBaslik}
+          </h3>
+          {links.length === 0 ? (
+            <p className="mt-2 text-[13px] text-murekkep/55">{analitik.baglantiBos}</p>
+          ) : (
+            <ul className="mt-2 flex flex-col">
+              {links.map((link) => (
+                <li
+                  key={link.blockId}
+                  className="flex items-center gap-3 border-b border-sinir py-2.5 last:border-b-0"
+                >
+                  <span className="min-w-0 flex-1">
+                    <strong className="block truncate text-[13.5px] font-semibold">
+                      {baglantiAdi(link.label, link.type)}
+                    </strong>
+                    <small className="block truncate text-xs text-murekkep/45">
+                      {kisaAdres(link.url)}
+                    </small>
+                  </span>
+                  <span className="tabular-nums text-sm font-semibold">
+                    {formatCount(link.clicks)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {countries.length > 0 ? (
+            <>
+              <h3 className="mt-6 text-xs font-bold tracking-wide text-murekkep/60 uppercase">
+                {analitik.ulkeBaslik}
+              </h3>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {countries.map((row) => (
+                  <li key={row.country} className="flex items-center gap-3 text-[13.5px]">
+                    <span className="w-28 shrink-0 truncate">{ulkeAdi(row.country)}</span>
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-sinir">
+                      <span
+                        className="block h-full rounded-full bg-murekkep/70"
+                        style={{
+                          width:
+                            topCountryTotal > 0
+                              ? `${(row.count / topCountryTotal) * 100}%`
+                              : "0%",
+                        }}
+                      />
+                    </span>
+                    <span className="w-10 shrink-0 text-right tabular-nums font-semibold">
+                      {formatCount(row.count)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </>
+      )}
+
+      <p className="mt-5 border-t border-sinir pt-3 text-[11.5px] leading-relaxed text-murekkep/45">
+        {analitik.gizlilikNotu} {analitik.kapsamNotu} {analitik.tarayiciSaati}
+      </p>
+    </section>
+  );
+}
+
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { username, layout, theme, account, hasDraft, githubCalendars } = loaderData;
+  const { username, layout, theme, account, hasDraft, githubCalendars, analytics } = loaderData;
 
   return (
     <main className="dash-shell">
@@ -77,6 +238,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             <ProfileCanvas layout={layout} theme={theme} compact githubCalendars={githubCalendars} />
           </div>
         </div>
+        <DashAnalytics analytics={analytics} />
       </section>
     </main>
   );
