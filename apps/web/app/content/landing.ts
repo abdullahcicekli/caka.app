@@ -2,11 +2,6 @@ import creatorElif from "~/assets/landing/creator-elif.webp";
 import creatorKerem from "~/assets/landing/creator-kerem.webp";
 import creatorNaz from "~/assets/landing/creator-naz.webp";
 import creatorSelin from "~/assets/landing/creator-selin.webp";
-import proofCreator1 from "~/assets/landing/proof-creator-1.webp";
-import proofCreator2 from "~/assets/landing/proof-creator-2.webp";
-import proofCreator3 from "~/assets/landing/proof-creator-3.webp";
-import proofCreator4 from "~/assets/landing/proof-creator-4.webp";
-import quoteAvatar from "~/assets/landing/quote-avatar.webp";
 import shareCards from "~/assets/landing/share-cards.webp";
 
 /**
@@ -24,10 +19,12 @@ export interface Cta {
   href: string;
 }
 
-/** Hero'daki akan vitrin kartı. */
+/**
+ * Hero'daki akan vitrin kartı. Tamamen dekoratiftir; gerçek bir kullanıcıyı
+ * temsil etmediği için görselin üzerinde isim/unvan yazısı taşımaz.
+ */
 export interface MarqueeItem {
   image: string;
-  caption: string;
 }
 
 export interface FooterColumn {
@@ -49,38 +46,21 @@ export interface ShareSection {
   image: string;
 }
 
-/** Analitik kartı (kum blok): bar grafik + iki metrik. */
-export interface Metric {
-  value: string;
-  label: string;
-  /** Kart rengini belirleyen varyant (bar | lila | mavi). */
-  tone: "bar" | "lila" | "mavi";
-}
-
+/**
+ * Kitle bölümü (kum blok). Yanındaki analitik görseli tamamen dekoratiftir:
+ * ürünün bugün üretmediği hiçbir sayı gösterilmez (R25).
+ */
 export interface AudienceSection {
   title: string;
   body: string;
   cta: Cta;
-  metrics: readonly Metric[];
-}
-
-export interface ProofSection {
-  title: string;
-  accent: string;
-  images: readonly string[];
-  address: string;
-}
-
-export interface QuoteSection {
-  image: string;
-  quote: string;
-  name: string;
-  role: string;
 }
 
 export interface FaqItem {
   question: string;
   answer: string;
+  /** Cevabın dayandığı sayfaya isteğe bağlı bağlantı. */
+  link?: Cta;
 }
 
 export interface FaqSection {
@@ -90,12 +70,7 @@ export interface FaqSection {
 
 export const landing = {
   nav: {
-    items: [
-      { label: "Ürün", href: "#urun" },
-      { label: "Şablonlar", href: "#sablonlar" },
-      { label: "Örnekler", href: "#ornekler" },
-      { label: "Fiyat", href: "#fiyat" },
-    ] satisfies NavItem[],
+    items: [{ label: "Ürün", href: "#urun" }] satisfies NavItem[],
     login: { label: "Giriş yap", href: "/login" } satisfies Cta,
     cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
   },
@@ -111,10 +86,10 @@ export const landing = {
     marquee: {
       durationSeconds: 30,
       items: [
-        { image: creatorKerem, caption: "Kerem Aydın · Müzisyen" },
-        { image: creatorSelin, caption: "Selin Duru · Seramik atölyesi" },
-        { image: creatorElif, caption: "Elif Şahin · Podcast sunucusu" },
-        { image: creatorNaz, caption: "Naz Erdem · Yayıncı" },
+        { image: creatorKerem },
+        { image: creatorSelin },
+        { image: creatorElif },
+        { image: creatorNaz },
       ] satisfies MarqueeItem[],
     },
   },
@@ -133,34 +108,7 @@ export const landing = {
     title: "Kitleni tanı,\nilgisini koru",
     body: "Hangi bağlantının tıklandığını, ziyaretçinin nereden geldiğini ve neyin işe yaradığını gör. Sayfanı buna göre güncelle.",
     cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
-    metrics: [
-      {
-        value: "43.500",
-        label: "Tıklama",
-        tone: "bar",
-      },
-      { value: "643", label: "Bülten kaydı", tone: "lila" },
-      { value: "960", label: "Ziyaret · İstanbul", tone: "mavi" },
-    ] satisfies readonly Metric[],
   } satisfies AudienceSection,
-  proof: {
-    title: "Türkiye'de 50 binden fazla",
-    accent: "yaratıcının",
-    images: [
-      proofCreator1,
-      proofCreator2,
-      proofCreator3,
-      proofCreator4,
-    ] satisfies readonly string[],
-    address: "caka.app/atolye",
-  } satisfies ProofSection,
-  quote: {
-    image: quoteAvatar,
-    quote:
-      "\"Bütün işlerimi tek bağlantıda toplamak, profilimi paylaşma şeklimi değiştirdi.\"",
-    name: "Deniz Aksu",
-    role: "Endüstriyel tasarımcı",
-  } satisfies QuoteSection,
   faq: {
     title: "Soruların? Cevaplandı",
     items: [
@@ -185,9 +133,10 @@ export const landing = {
           "Evet. Ayarlar'dan adresini değiştirebilirsin; eski adresin 30 gün boyunca yeni adresine yönlendirilir.",
       },
       {
-        question: "İçeriğimi dışa aktarabilir miyim?",
+        question: "İçeriğimi dışa aktarabilir veya hesabımı silebilir miyim?",
         answer:
-          "Evet, içeriğini istediğin zaman dışa aktarabilir ve istersen hesabını tamamen silebilirsin.",
+          "İkisi de şu an panelden kendi başına yapılmıyor. Verilerinin bir kopyasını istemek veya hesabının silinmesini talep etmek için KVKK m.11 kapsamında destek@caka.app adresine yazman yeterli.",
+        link: { label: "Gizlilik Metni", href: "/gizlilik" },
       },
     ] satisfies readonly FaqItem[],
   } satisfies FaqSection,
@@ -201,38 +150,24 @@ export const landing = {
     },
   },
   footer: {
+    // Yalnızca çalışan hedefler: tek gerçek anchor (#urun), iki gerçek posta
+    // kutusu ve üç yayındaki hukuki route (R23). Sütun sayısı azaldığı için
+    // tek bağlantılı sütunlar "Caka" altında birleştirildi.
     columns: [
       {
-        title: "Ürün",
+        title: "Caka",
         links: [
           { label: "Nasıl çalışır", href: "#urun" },
-          { label: "Şablonlar", href: "#sablonlar" },
-          { label: "Örnekler", href: "#ornekler" },
-          { label: "Fiyat", href: "#fiyat" },
-        ],
-      },
-      {
-        title: "Kaynaklar",
-        links: [
-          { label: "SSS", href: "#sss" },
           { label: "Destek", href: "mailto:destek@caka.app" },
-          { label: "Blog", href: "#blog" },
-        ],
-      },
-      {
-        title: "Şirket",
-        links: [
-          { label: "Hakkımızda", href: "#hakkimizda" },
           { label: "İletişim", href: "mailto:merhaba@caka.app" },
-          { label: "Kariyer", href: "#kariyer" },
         ],
       },
       {
         title: "Yasal",
         links: [
-          { label: "Gizlilik", href: "#gizlilik" },
-          { label: "Kullanım Şartları", href: "#kosullar" },
-          { label: "Çerezler", href: "#cerezler" },
+          { label: "Gizlilik", href: "/gizlilik" },
+          { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
+          { label: "Çerez Politikası", href: "/cerez-politikasi" },
         ],
       },
     ] satisfies FooterColumn[],

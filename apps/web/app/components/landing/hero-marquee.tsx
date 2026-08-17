@@ -24,7 +24,7 @@ export function HeroMarquee({ items, durationSeconds }: HeroMarqueeProps) {
         style={{ animationDuration: `${durationSeconds}s` } as CSSProperties}
       >
         {loop.map((item, i) => (
-          <MarqueeCard key={`${item.caption}-${i}`} item={item} />
+          <MarqueeCard key={`${item.image}-${i}`} item={item} />
         ))}
       </div>
     </div>
@@ -40,9 +40,6 @@ function MarqueeCard({ item }: { item: MarqueeItem }) {
         loading="lazy"
         className="size-full object-cover"
       />
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-[18px] pt-10 pb-4 text-[13px] tracking-wide text-white">
-        {item.caption}
-      </div>
     </div>
   );
 }

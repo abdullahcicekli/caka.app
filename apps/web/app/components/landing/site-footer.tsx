@@ -4,6 +4,27 @@ import { logoBlackText } from "~/assets/brand";
 import { SocialIcon } from "~/components/icons/social";
 import type { LandingContent } from "~/content/landing";
 
+const LINK_CLASS = "text-[15px] text-murekkep hover:opacity-70";
+
+/**
+ * Uygulama içi route'lar client-side gezinir; anchor ve `mailto:` hedefleri
+ * düz `<a>` kalır.
+ */
+function FooterLink({ href, label }: { href: string; label: string }) {
+  if (href.startsWith("/")) {
+    return (
+      <Link to={href} className={LINK_CLASS}>
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} className={LINK_CLASS}>
+      {label}
+    </a>
+  );
+}
+
 /**
  * Public sayfaların ortak footer'ı (kullanıcı profil sayfaları hariç).
  * Üst köşeleri yuvarlak beyaz kart, bir üstteki renk bloğunun üzerine biner.
@@ -12,7 +33,10 @@ export function SiteFooter({ footer }: { footer: LandingContent["footer"] }) {
   return (
     <footer className="relative -mt-8 rounded-t-[2.5rem] bg-white">
       <div className="mx-auto max-w-7xl px-6 pt-14 pb-10 sm:px-10">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-4">
+        {/* Sütun sayısı içerikten gelir (bugün iki sütun); sabit grid yerine
+            wrap eden esnek yerleşim, sütun eklenip çıktığında boş track
+            bırakmaz. */}
+        <div className="flex flex-wrap gap-x-16 gap-y-10 sm:gap-x-24">
           {footer.columns.map((column) => (
             <nav key={column.title} aria-label={column.title}>
               <h3 className="text-xs font-medium tracking-widest text-murekkep/50 uppercase">
@@ -21,12 +45,7 @@ export function SiteFooter({ footer }: { footer: LandingContent["footer"] }) {
               <ul className="mt-4 space-y-3">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-[15px] text-murekkep hover:opacity-70"
-                    >
-                      {link.label}
-                    </a>
+                    <FooterLink href={link.href} label={link.label} />
                   </li>
                 ))}
               </ul>

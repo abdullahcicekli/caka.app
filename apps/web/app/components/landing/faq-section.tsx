@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
+import { Link } from "react-router";
 
 import type { LandingContent } from "~/content/landing";
 
@@ -25,6 +26,17 @@ export function FaqSection({ faq }: { faq: LandingContent["faq"] }) {
               </summary>
               <p className="px-6 pb-5 text-[15px] leading-relaxed text-erik-beyaz/80">
                 {item.answer}
+                {item.link ? (
+                  <>
+                    {" "}
+                    <Link
+                      to={item.link.href}
+                      className="font-semibold text-erik-acik underline underline-offset-4 hover:opacity-80"
+                    >
+                      {item.link.label}
+                    </Link>
+                  </>
+                ) : null}
               </p>
             </details>
           ))}
