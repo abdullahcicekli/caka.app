@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { LayoutDashboard, Pencil } from "lucide-react";
+import { EditPencil, ViewGrid } from "iconoir-react";
 import { Link, data, redirect } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
@@ -198,12 +198,12 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
           <DropdownMenuContent align="end" sideOffset={8} className="w-40">
             <DropdownMenuItem asChild>
               <Link to="/edit">
-                <Pencil /> Düzenle
+                <EditPencil /> Düzenle
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/dashboard">
-                <LayoutDashboard /> Panel
+                <ViewGrid /> Panel
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

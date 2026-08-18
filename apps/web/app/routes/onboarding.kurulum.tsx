@@ -2,21 +2,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "cloudflare:workers";
 import {
   AtSign,
-  CalendarDays,
+  Calendar,
   Check,
-  ChevronLeft,
-  ImageIcon,
-  Link2,
+  EditPencil,
+  GraphUp,
+  Group,
+  Link as LinkIcon,
   Mail,
-  MoreHorizontal,
-  Pencil,
+  MediaImage,
+  MoreHoriz,
+  NavArrowLeft,
   Rocket,
   Search,
-  Sparkles,
-  Store,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+  Shop,
+  Sparks,
+} from "iconoir-react";
 import { Form, Link, data, redirect, useNavigate, useNavigation } from "react-router";
 
 import { ProfileAvatar } from "~/components/profile-avatar";
@@ -277,22 +277,22 @@ function BottomActions({
 }
 
 function PurposeIcon({ name }: { name: string }) {
-  const icons: Record<string, typeof Link2> = {
-    link: Link2,
-    image: ImageIcon,
-    calendar: CalendarDays,
+  const icons: Record<string, typeof LinkIcon> = {
+    link: LinkIcon,
+    image: MediaImage,
+    calendar: Calendar,
     mail: Mail,
-    store: Store,
-    trend: TrendingUp,
+    store: Shop,
+    trend: GraphUp,
     search: Search,
-    sparkles: Sparkles,
+    sparkles: Sparks,
     at: AtSign,
-    users: Users,
+    users: Group,
     rocket: Rocket,
-    more: MoreHorizontal,
+    more: MoreHoriz,
   };
-  const Icon = icons[name] ?? Link2;
-  return <Icon size={21} strokeWidth={1.8} />;
+  const Icon = icons[name] ?? LinkIcon;
+  return <Icon width={21} height={21} strokeWidth={1.8} />;
 }
 
 function ProfileStep({
@@ -341,7 +341,7 @@ function ProfileStep({
     <Form method="post" className="onboarding-form onboarding-profile-form">
       <input type="hidden" name="avatarAssetId" value={avatarAssetId} />
       <p className="onboarding-account-note">
-        <AtSign size={18} /> {username} hesabından alındı
+        <AtSign width={18} height={18} /> {username} hesabından alındı
       </p>
       <button
         className="onboarding-avatar-button"
@@ -350,7 +350,7 @@ function ProfileStep({
       >
         <span className="onboarding-avatar-visual">
           <ProfileAvatar name={name || defaults.name} avatarUrl={avatarUrl} className="size-28" />
-          <span className="avatar-edit-badge" aria-hidden><Pencil size={16} /></span>
+          <span className="avatar-edit-badge" aria-hidden><EditPencil width={16} height={16} /></span>
         </span>
         <span>{uploading ? "Yükleniyor…" : "Fotoğrafı değiştir"}</span>
       </button>
@@ -479,7 +479,7 @@ function PurposeStep({ initial }: { initial: string[] }) {
             >
               <PurposeIcon name={purpose.icon} />
               <span>{purpose.label}</span>
-              {active ? <Check className="ml-auto" size={19} /> : null}
+              {active ? <Check className="ml-auto" width={19} height={19} /> : null}
             </button>
           );
         })}
@@ -549,7 +549,7 @@ function TemplateStep({
           >
             {selected === template.id ? (
               <span className="template-check" aria-hidden>
-                <Check size={17} strokeWidth={3} />
+                <Check width={17} height={17} strokeWidth={3} />
               </span>
             ) : null}
             <ProfileAvatar name={name} avatarUrl={avatarUrl} className="template-avatar" />
@@ -725,7 +725,7 @@ export default function OnboardingSetup({ loaderData, actionData }: Route.Compon
         <nav className="onboarding-topbar" aria-label="Kurulum adımları">
           {back ? (
             <Link className="onboarding-back" to={stepPath(back)}>
-              <ChevronLeft size={17} strokeWidth={2} />
+              <NavArrowLeft width={17} height={17} strokeWidth={2} />
               Geri
             </Link>
           ) : <span className="onboarding-back-placeholder" aria-hidden />}

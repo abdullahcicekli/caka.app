@@ -5,7 +5,7 @@
 // content div'ine uygulanır. Gridstack yalnızca client'ta dinamik import
 // edilir — SSR bundle'ına girmez.
 import { useEffect, useRef, type ReactNode } from "react";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { Trash, WarningTriangle } from "iconoir-react";
 import type { GridItemHTMLElement, GridStack } from "gridstack";
 
 import {
@@ -340,7 +340,7 @@ export function EditorGrid({
               {renderBlock ? renderBlock(block) : <ProfileBlockCard block={block} />}
               {issue && editingId !== block.id ? (
                 <span className="block-issue-badge">
-                  <AlertTriangle size={12} aria-hidden /> {issue}
+                  <WarningTriangle width={12} height={12} aria-hidden /> {issue}
                 </span>
               ) : null}
               {selectedId === block.id && editingId !== block.id ? (
@@ -356,7 +356,7 @@ export function EditorGrid({
                     onRemove(block.id);
                   }}
                 >
-                  <Trash2 size={14} />
+                  <Trash width={14} height={14} />
                 </button>
               ) : null}
             </div>

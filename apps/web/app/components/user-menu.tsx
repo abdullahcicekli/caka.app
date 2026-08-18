@@ -1,4 +1,11 @@
-import { ChevronsUpDown, ExternalLink, LogOut, Pencil, Settings } from "lucide-react";
+import {
+  ArrowSeparateVertical,
+  EditPencil,
+  LogOut,
+  OpenNewWindow,
+  Settings,
+  ViewGrid,
+} from "iconoir-react";
 import { Link } from "react-router";
 
 import { ProfileAvatar } from "~/components/profile-avatar";
@@ -28,7 +35,15 @@ function signOut() {
 }
 
 /** Menü gövdesi: navbar (avatar) ve panel (geniş) tetikleyicileri paylaşır. */
-function AccountMenuContent({ user }: { user: SessionUser }) {
+function AccountMenuContent({
+  user,
+  showDashboard = false,
+}: {
+  user: SessionUser;
+  /** "Panel" satırı yalnız panel DIŞINDAN açılan menüde (navbar) görünür;
+      panelin kendi kenar çubuğunda bulunduğun yere bağlantı olurdu. */
+  showDashboard?: boolean;
+}) {
   return (
     <>
       <div className="flex items-center gap-2.5 px-2 py-1.5">
@@ -47,21 +62,31 @@ function AccountMenuContent({ user }: { user: SessionUser }) {
       <DropdownMenuSeparator />
       {user.username ? (
         <>
+          {/* Panel ilk sırada: oturumlu kullanıcının navbardan aradığı şey
+              önce burası. Adresi olmayan kullanıcıya gösterilmez —
+              /dashboard onboarding'e geri yollardı. */}
+          {showDashboard ? (
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard">
+                <ViewGrid /> Panel
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem asChild>
             <a href={`/${user.username}`} target="_blank" rel="noreferrer">
-              <ExternalLink /> Profili gör
+              <OpenNewWindow /> Profili gör
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/edit">
-              <Pencil /> Profili düzenle
+              <EditPencil /> Profili düzenle
             </Link>
           </DropdownMenuItem>
         </>
       ) : (
         <DropdownMenuItem asChild>
           <Link to="/onboarding">
-            <ExternalLink /> Adresini al
+            <OpenNewWindow /> Adresini al
           </Link>
         </DropdownMenuItem>
       )}
@@ -94,7 +119,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <AccountMenuContent user={user} />
+        <AccountMenuContent user={user} showDashboard />
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -115,7 +140,7 @@ export function SidebarUserMenu({ user }: { user: SessionUser }) {
             <strong>{user.name}</strong>
             {user.username ? <small>@{user.username}</small> : null}
           </span>
-          <ChevronsUpDown size={15} aria-hidden />
+          <ArrowSeparateVertical width={15} height={15} aria-hidden />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-[238px]">

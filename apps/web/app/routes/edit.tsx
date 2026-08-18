@@ -1,26 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "cloudflare:workers";
 import {
-  AlertTriangle,
-  ChevronDown,
-  ChevronLeft,
-  ChevronUp,
-  ExternalLink,
-  ImageIcon,
-  Images,
-  LayoutGrid,
-  Link2,
+  Computer,
+  Link as LinkIcon,
+  MediaImage,
+  MediaImageList,
+  MediaVideo,
   Megaphone,
-  Monitor,
-  MonitorPlay,
+  NavArrowDown,
+  NavArrowLeft,
+  NavArrowUp,
+  OpenNewWindow,
   Palette,
   Plus,
-  Send,
-  Smartphone,
-  Trash2,
-  Type,
-  X,
-} from "lucide-react";
+  SendDiagonal,
+  SmartphoneDevice,
+  Text,
+  Trash,
+  ViewGrid,
+  WarningTriangle,
+  Xmark,
+} from "iconoir-react";
 import { Link, redirect, useNavigate, useSearchParams } from "react-router";
 
 import {
@@ -252,6 +252,9 @@ function Inspector({
   onSignedImage: (path: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  // Çoklu seçimde tek bir "Yükleniyor…" beş fotoğraf boyunca donmuş görünür;
+  // kaçıncı dosyada olduğumuz yazılınca bekleme anlaşılır oluyor.
+  const [uploadStep, setUploadStep] = useState<{ done: number; total: number } | null>(null);
   // Yükleme hatası (kota, tür, boyut) sessizce yutulmaz: sunucunun Türkçe
   // mesajı panelde gösterilir.
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -345,14 +348,39 @@ function Inspector({
     if (id) update({ assetId: id });
   }
 
-  async function addGalleryPhoto(file: File) {
+  /**
+   * Seçilen fotoğrafları SIRAYLA yükler ve hepsini TEK `update` ile ekler.
+   * Sıralı: `uploadAsset` tek bir `uploading`/hata durumu paylaşıyor, paralel
+   * istekler o durumu birbirinin üstüne yazardı. Tek update: `block` bu
+   * kapanışta sabit, her dosyada ayrı ayrı güncelleseydik ikinci yazım
+   * birincisini silerdi.
+   */
+  async function addGalleryPhotos(files: File[]) {
     if (block.type !== "gallery") return;
     // İkinci savunma hattı: arayüz zaten kapanıyor ama yarışan bir tıklama
     // sınırı aşmasın (şema 5'te reddediyor, kullanıcı hatayı kayıtta görürdü).
-    if (block.data.photos.length >= GALLERY_MAX_PHOTOS) return;
-    const id = await uploadAsset(file);
-    if (!id) return;
-    update({ photos: [...block.data.photos, { assetId: id, alt: "" }] });
+    const room = GALLERY_MAX_PHOTOS - block.data.photos.length;
+    if (room <= 0) return;
+    const picked = files.slice(0, room);
+    const added: { assetId: string; alt: string }[] = [];
+    setUploadStep({ done: 0, total: picked.length });
+    for (const file of picked) {
+      const id = await uploadAsset(file);
+      // Bir dosya reddedildiyse (kota/tür/boyut) sıradakiler de aynı duvara
+      // çarpar; sunucunun gerekçesi yazıldı, döngü orada durur.
+      if (!id) break;
+      added.push({ assetId: id, alt: "" });
+      setUploadStep({ done: added.length, total: picked.length });
+    }
+    setUploadStep(null);
+    if (added.length > 0) update({ photos: [...block.data.photos, ...added] });
+    // Sınırın üstünde seçim sessizce kırpılmaz; kaçının alındığı yazılır.
+    // Yükleme hatası varsa o mesaj kalır — daha acil olan odur.
+    if (added.length === picked.length && files.length > room) {
+      setUploadError(
+        `Bir galeride en fazla ${GALLERY_MAX_PHOTOS} fotoğraf olabilir; seçtiklerinin ilk ${room} tanesi eklendi.`,
+      );
+    }
   }
 
   /**
@@ -544,7 +572,7 @@ function Inspector({
           <>
             <label>Görsel
               <span className="inspector-upload">
-                <ImageIcon size={18} />
+                <MediaImage width={18} height={18} />
                 {uploading ? "Yükleniyor…" : block.data.assetId ? "Görseli değiştir" : "Sürükle veya seç"}
                 <input
                   type="file"
@@ -635,7 +663,7 @@ function Inspector({
                           className="disabled:opacity-30"
                           onClick={() => move(index, -1)}
                         >
-                          <ChevronUp size={15} />
+                          <NavArrowUp width={15} height={15} />
                         </button>
                         <button
                           type="button"
@@ -644,7 +672,7 @@ function Inspector({
                           className="disabled:opacity-30"
                           onClick={() => move(index, 1)}
                         >
-                          <ChevronDown size={15} />
+                          <NavArrowDown width={15} height={15} />
                         </button>
                       </span>
                       <button
@@ -655,7 +683,7 @@ function Inspector({
                           update({ photos: photos.filter((_, other) => other !== index) })
                         }
                       >
-                        <Trash2 size={15} />
+                        <Trash width={15} height={15} />
                       </button>
                     </li>
                   ))}
@@ -670,17 +698,27 @@ function Inspector({
                 </p>
               ) : (
                 <span className="inspector-upload">
-                  <ImageIcon size={18} />
-                  {uploading ? "Yükleniyor…" : "Fotoğraf ekle (JPEG veya PNG)"}
+                  <MediaImage width={18} height={18} />
+                  {uploading
+                    ? uploadStep && uploadStep.total > 1
+                      ? `Yükleniyor… (${Math.min(uploadStep.done + 1, uploadStep.total)}/${uploadStep.total})`
+                      : "Yükleniyor…"
+                    : "Fotoğraf ekle (JPEG veya PNG)"}
+                  {uploading ? null : (
+                    <small className="opacity-70">Birden fazla fotoğraf seçebilirsin</small>
+                  )}
                   <input
                     type="file"
                     accept="image/jpeg,image/png"
+                    // Toplu seçim: dosya seçicide birden fazla fotoğraf
+                    // işaretlenir, sıraya alınıp tek seferde eklenir.
+                    multiple
                     disabled={uploading}
                     onChange={(event) => {
-                      const file = event.target.files?.[0];
+                      const files = Array.from(event.target.files ?? []);
                       // Aynı dosya art arda seçilebilsin diye alan sıfırlanır.
                       event.target.value = "";
-                      if (file) void addGalleryPhoto(file);
+                      if (files.length > 0) void addGalleryPhotos(files);
                     }}
                   />
                 </span>
@@ -773,13 +811,13 @@ function Inspector({
     <aside className="editor-inspector">
       <header>
         <strong>{editorBlockLabel(block.type)} bloğu</strong>
-        <button type="button" aria-label="Paneli kapat" onClick={close}><X size={18} /></button>
+        <button type="button" aria-label="Paneli kapat" onClick={close}><Xmark width={18} height={18} /></button>
       </header>
       <div className="inspector-fields">
         {fields()}
       </div>
       <footer>
-        {block.type !== "profile" ? <button type="button" onClick={remove}><Trash2 size={16} /> Sil</button> : <span />}
+        {block.type !== "profile" ? <button type="button" onClick={remove}><Trash width={16} height={16} /> Sil</button> : <span />}
         <button type="button" onClick={close}>Uygula</button>
       </footer>
     </aside>
@@ -1230,7 +1268,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   return (
     <main className="editor-shell">
       <Link to="/dashboard" className="editor-back" aria-label="Panele dön">
-        <ChevronLeft size={20} />
+        <NavArrowLeft width={20} height={20} />
       </Link>
       <div className="editor-topbar">
         <a
@@ -1246,7 +1284,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           <span className="address-host" aria-hidden>caka.app/{loaderData.username}</span>
           {hasDraft ? <span className="draft-chip" aria-hidden>Taslak</span> : null}
           <span className="address-status" aria-hidden>{hasDraft ? "Taslak" : "Yayında"}</span>
-          <ExternalLink size={13} aria-hidden className="address-open" />
+          <OpenNewWindow width={13} height={13} aria-hidden className="address-open" />
         </a>
         <button
           type="button"
@@ -1255,7 +1293,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           disabled={publishing || !hasDraft}
           aria-label={publishing ? "Yayınlanıyor" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
         >
-          <Send size={15} aria-hidden />
+          <SendDiagonal width={15} height={15} aria-hidden />
           {/* Mobilde kısa etiket görünür ("Yayınla"); erişilebilir ad aria-label'da */}
           <span className="publish-label" aria-hidden>
             {publishing ? "Yayınlanıyor…" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
@@ -1269,7 +1307,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       {issues.length ? (
         <div className="editor-issue-panel" role="alert">
           <strong>
-            <AlertTriangle size={15} aria-hidden /> Aksiyon gerekli
+            <WarningTriangle width={15} height={15} aria-hidden /> Aksiyon gerekli
           </strong>
           <p>Şu bloklar tamamlanmadan sayfan yayınlanamaz. Doldur ya da kaldır:</p>
           <ul>
@@ -1384,7 +1422,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               }
             />
             <button type="button" className="editor-add-tile" onClick={() => setPanel("gallery")}>
-              <Plus size={20} /> Blok ekle
+              <Plus width={20} height={20} /> Blok ekle
             </button>
           </div>
         </div>
@@ -1398,20 +1436,20 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           className={panel === "theme" ? "is-active" : ""}
           onClick={() => setPanel(panel === "theme" ? null : "theme")}
         >
-          <Palette size={19} />
+          <Palette width={19} height={19} />
         </button>
         <span className="toolbar-sep" aria-hidden />
         <button type="button" data-tooltip="Bağlantı ekle" aria-label="Bağlantı ekle" onClick={() => add("link")}>
-          <Link2 size={19} />
+          <LinkIcon width={19} height={19} />
         </button>
         <button type="button" data-tooltip="Metin ekle" aria-label="Metin ekle" onClick={() => add("text")}>
-          <Type size={19} />
+          <Text width={19} height={19} />
         </button>
         <button type="button" data-tooltip="Duyuru ekle" aria-label="Duyuru ekle" onClick={() => add("status")}>
-          <Megaphone size={18} />
+          <Megaphone width={18} height={18} />
         </button>
         <button type="button" data-tooltip="Görsel ekle" aria-label="Görsel ekle" onClick={() => add("image")}>
-          <ImageIcon size={19} />
+          <MediaImage width={19} height={19} />
         </button>
         {/* "Fotoğraf galerisi": bu çubuktaki son düğme zaten "Blok galerisi"
             adını taşıyor; ikisi aynı adı taşısaydı hangisinin ne yaptığı
@@ -1424,10 +1462,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           className={galleryBlocked ? "cursor-not-allowed opacity-40" : ""}
           onClick={() => add("gallery")}
         >
-          <Images size={19} />
+          <MediaImageList width={19} height={19} />
         </button>
         <button type="button" data-tooltip="YouTube ekle" aria-label="YouTube ekle" onClick={() => add("youtube")}>
-          <MonitorPlay size={19} />
+          <MediaVideo width={19} height={19} />
         </button>
         <button
           type="button"
@@ -1436,7 +1474,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           className={panel === "gallery" ? "is-active" : ""}
           onClick={() => setPanel(panel === "gallery" ? null : "gallery")}
         >
-          <LayoutGrid size={19} />
+          <ViewGrid width={19} height={19} />
         </button>
         <span className="toolbar-sep" aria-hidden />
         <button
@@ -1446,7 +1484,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           className={device === "mobile" ? "is-active" : ""}
           onClick={() => setDevice(device === "desktop" ? "mobile" : "desktop")}
         >
-          {device === "desktop" ? <Smartphone size={18} /> : <Monitor size={19} />}
+          {device === "desktop" ? <SmartphoneDevice width={18} height={18} /> : <Computer width={19} height={19} />}
         </button>
       </nav>
 

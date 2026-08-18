@@ -1,5 +1,5 @@
 import type { ComponentProps, ComponentType } from "react";
-import { Globe2, Mail } from "lucide-react";
+import { Globe, Mail } from "iconoir-react";
 
 import type { SocialPlatform } from "@caka/shared";
 
@@ -105,7 +105,7 @@ const ICONS: Record<SocialPlatform, ComponentType<IconProps>> = {
   dribbble: DribbbleIcon,
   threads: ThreadsIcon,
   nsosyal: NsosyalIcon,
-  website: Globe2,
+  website: Globe,
   email: Mail,
 };
 

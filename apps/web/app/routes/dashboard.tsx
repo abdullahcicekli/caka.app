@@ -1,7 +1,7 @@
 // Dashboard: sol side panelde sayfa menüsü, ortada telefon çerçevesinde
 // canlı sayfa önizlemesi.
 import { env } from "cloudflare:workers";
-import { ExternalLink, Pencil } from "lucide-react";
+import { EditPencil, OpenNewWindow } from "iconoir-react";
 import { Link, redirect } from "react-router";
 
 import { analitik, baglantiAdi, kisaAdres, ulkeAdi } from "~/content/analitik";
@@ -256,10 +256,10 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         ) : null}
         <div className="dash-actions">
           <Link className="dash-edit" to="/edit">
-            <Pencil size={16} /> Sayfayı düzenle
+            <EditPencil width={16} height={16} /> Sayfayı düzenle
           </Link>
           <a href={`/${username}`} target="_blank" rel="noreferrer">
-            <ExternalLink size={16} /> Sayfayı aç
+            <OpenNewWindow width={16} height={16} /> Sayfayı aç
           </a>
         </div>
         <div className="dashboard-preview" aria-hidden>

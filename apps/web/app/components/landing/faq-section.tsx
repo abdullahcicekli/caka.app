@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "lucide-react";
+import { NavArrowDown } from "iconoir-react";
 import { Link } from "react-router";
 
 import type { LegalDocumentId } from "@caka/shared";
@@ -39,7 +39,7 @@ export function FaqSection({
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold text-erik-beyaz">
                   {item.question}
-                  <ChevronDownIcon
+                  <NavArrowDown
                     aria-hidden
                     className="size-5 flex-none text-erik-acik transition-transform group-open:rotate-180"
                   />

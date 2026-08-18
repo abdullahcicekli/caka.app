@@ -1,7 +1,7 @@
 // Panel sol menüsü — Dashboard ve Ayarlar sayfalarının ortak sidebar'ı.
 // routes/dashboard.tsx'ten çıkarıldı; görünüm birebir korunur (dash-* CSS).
 import { useEffect, useState } from "react";
-import { BarChart3, Check, Copy, Files, Settings } from "lucide-react";
+import { Check, Copy, MultiplePages, Settings, StatsReport } from "iconoir-react";
 import { Link, NavLink } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
@@ -51,7 +51,7 @@ export function DashSidebar({
             aria-label={copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
             onClick={() => void copyAddress()}
           >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
+            {copied ? <Check width={16} height={16} /> : <Copy width={16} height={16} />}
           </button>
         </div>
       </header>
@@ -59,16 +59,16 @@ export function DashSidebar({
       <section>
         <div className="dash-page-list">
           <NavLink to="/dashboard">
-            <Files size={17} /> Sayfalar
+            <MultiplePages width={17} height={17} /> Sayfalar
           </NavLink>
           {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
               /dashboard'da önizlemenin altında duruyor. "Yakında" etiketi
               artık gerçeği yansıtmıyordu. */}
           <NavLink to="/dashboard#analitik">
-            <BarChart3 size={17} /> Analitik
+            <StatsReport width={17} height={17} /> Analitik
           </NavLink>
           <NavLink to="/ayarlar">
-            <Settings size={17} /> Ayarlar
+            <Settings width={17} height={17} /> Ayarlar
           </NavLink>
         </div>
       </section>

@@ -5,7 +5,15 @@
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Bold, Check, Italic, Link2, List, ListOrdered, Quote } from "lucide-react";
+import {
+  Bold,
+  Check,
+  Italic,
+  Link as LinkIcon,
+  List,
+  NumberedListLeft,
+  Quote,
+} from "iconoir-react";
 
 // Legacy düz metni Tiptap dokümanına çevirir (HTML olarak parse ETMEDEN).
 function docFromPlainText(text: string) {
@@ -83,9 +91,9 @@ export function InlineTextEditor({
     { label: "Kalın", icon: Bold, active: editor.isActive("bold"), run: () => editor.chain().focus().toggleBold().run() },
     { label: "İtalik", icon: Italic, active: editor.isActive("italic"), run: () => editor.chain().focus().toggleItalic().run() },
     { label: "Liste", icon: List, active: editor.isActive("bulletList"), run: () => editor.chain().focus().toggleBulletList().run() },
-    { label: "Sıralı liste", icon: ListOrdered, active: editor.isActive("orderedList"), run: () => editor.chain().focus().toggleOrderedList().run() },
+    { label: "Sıralı liste", icon: NumberedListLeft, active: editor.isActive("orderedList"), run: () => editor.chain().focus().toggleOrderedList().run() },
     { label: "Alıntı", icon: Quote, active: editor.isActive("blockquote"), run: () => editor.chain().focus().toggleBlockquote().run() },
-    { label: "Bağlantı", icon: Link2, active: editor.isActive("link"), run: setLink },
+    { label: "Bağlantı", icon: LinkIcon, active: editor.isActive("link"), run: setLink },
   ];
 
   return (
@@ -107,12 +115,12 @@ export function InlineTextEditor({
             onMouseDown={(event) => event.preventDefault()}
             onClick={tool.run}
           >
-            <tool.icon size={15} />
+            <tool.icon width={15} height={15} />
           </button>
         ))}
         <span className="sep" aria-hidden />
         <button type="button" aria-label="Bitti" data-tooltip="Bitti" onClick={onClose}>
-          <Check size={15} />
+          <Check width={15} height={15} />
         </button>
       </div>
     </article>

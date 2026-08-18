@@ -44,7 +44,13 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 4. **Tasarım token'ları** `apps/web/app/app.css` `@theme` bloğundadır
    (`zemin, murekkep, kirec, mavi, cam, kum, erik, mor, sinir` + türetilmiş
    `kirec-koyu`, `mor-acik`). Bileşenlere ham hex yazma; yeni renk gerekiyorsa
-   önce token ekle. Radius: kılavuz 8/12/16 → `rounded-lg/xl/2xl`.
+   önce token ekle. Radius: kılavuz 8/12/16 → `rounded-lg/xl/2xl` (shadcn'in
+   oransal radius ölçeği bilinçli olarak kaldırıldı — geri koyma, kılavuzu ezer).
+   shadcn'in semantik renkleri (`--popover`, `--accent`, `--border`,
+   `--destructive` …) `:root`'ta marka token'larına bağlıdır; bileşen
+   dosyalarındaki `bg-popover` gibi sınıflar bu yüzden markayla uyumlu.
+   **İkon kütüphanesi `iconoir-react`** — lucide kaldırıldı, geri getirme.
+   Iconoir'da `size` prop'u YOKTUR; ölçü `width`/`height` ile verilir.
 5. **İçerik/görünüm ayrımı:** Landing metin ve linkleri
    `apps/web/app/content/landing.ts`'te; bileşenlere metin gömme.
 6. **Sır disiplini:** Gerçek anahtarlar yalnızca `apps/web/.dev.vars`

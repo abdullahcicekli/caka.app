@@ -11,11 +11,6 @@ import shareCards from "~/assets/landing/share-cards.webp";
  * değişir; bileşenler yalnızca bu tipleri tüketir (içerik/görünüm ayrımı).
  */
 
-export interface NavItem {
-  label: string;
-  href: string;
-}
-
 export interface Cta {
   label: string;
   href: string;
@@ -87,11 +82,11 @@ export interface FaqSection {
 }
 
 export const landing = {
+  // Navbar'da bölüm bağlantısı YOK: ana sayfa tek sayfa, "Ürün" bağlantısı
+  // ziyaretçiyi zaten aşağıda gördüğü bölüme yolluyordu. Kalan iki eylem
+  // (giriş / başla) navbarın işini yapıyor. `#urun` id'si duruyor — footer
+  // "Nasıl çalışır" oraya gidiyor.
   nav: {
-    // Anchor mutlak yolla yazılır: navbar üç hukuki sayfada da render ediliyor,
-    // `#urun` bölümü ise yalnız ana sayfada var. Çıplak `#urun` oralarda hiçbir
-    // yere gitmeyen ölü bağlantı olurdu.
-    items: [{ label: "Ürün", href: "/#urun" }] satisfies NavItem[],
     login: { label: "Giriş yap", href: "/login" } satisfies Cta,
     cta: { label: "Ücretsiz başla", href: "/onboarding" } satisfies Cta,
   },

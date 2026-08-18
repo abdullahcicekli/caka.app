@@ -104,7 +104,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="bg-kirec">
       <Navbar
-        items={landing.nav.items}
         login={landing.nav.login}
         cta={landing.nav.cta}
         user={loaderData.user}

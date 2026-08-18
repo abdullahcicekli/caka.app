@@ -30,6 +30,12 @@
   /* Editör uyarısı: yayına engel olan eksik blokların çerçevesi/rozeti */
   --color-uyari: #d97706;
 
+  /* Yıkıcı eylem tonu (çıkış yap, sil). Kılavuzda karşılığı yoktu ve shadcn'in
+     jenerik kırmızısı bileşenlerin içine gömülüydü; token'a alındı ki tek
+     yerden değişsin. Sıcak palete oturması için kırmızı hafifçe tuğlaya
+     çekildi. */
+  --color-tehlike: #cc3122;
+
   /* GitHub katkı grafiği taban yeşili (GitHub'ın kendi yeşiline yakın).
      4 kademe + boş kare bu tek token'dan kart zeminiyle color-mix'lenerek
      türetilir; böylece 6 profil temasının hepsinde okunur kalır. */
@@ -1055,12 +1061,18 @@
   line-height: 1;
 }
 .profile-block-link.has-og .link-go { display: none; }
-/* Görselli kartın taban düzeni: önizleme üstte, metin altta (yüksek tile). */
+/* Görselli kartın taban düzeni: önizleme üstte, metin altta (yüksek tile).
+   KUTU OG'UN ORANINDA (1,91:1 — og:image'in fiili standardı). Eskiden
+   `flex: 1` idi: kutu kartta kalan bütün yüksekliği yutuyor, oran 1,2'ye
+   düşüyor ve `cover` görselin İKİ YANINI kesiyordu — kesilen yer de tam
+   olarak og'ların yazı taşıdığı yer. Sığmadığında (4×2) kutu küçülür,
+   kırpma dikeyde ve simetrik kalır. */
 .profile-block-link.has-og .link-og {
   width: 100%;
   min-height: 0;
-  flex: 1;
+  flex: 0 1 auto;
   border-radius: var(--radius-lg);
+  aspect-ratio: 1.91 / 1;
   object-fit: cover;
 }
 .profile-block-link.has-og .link-body { flex: none; }
@@ -1201,28 +1213,22 @@
   }
 }
 
-/* Hover yalnız gerçek işaretçide: dokunmatikte :hover takılı kalır. */
+/* Hover yalnız gerçek işaretçide: dokunmatikte :hover takılı kalır.
+ *
+ * HOVER'DA GEOMETRİ DEĞİŞMEZ. Eskiden kart 3px yükseliyor, İÇİNDEKİ önizleme
+ * görseli de 1,03 büyüyordu. İki sorun vardı: (1) büyüme yalnız görseli olan
+ * kartlarda oluyordu — aynı ızgarada bazı kartlar canlanıp bazıları
+ * kıpırdamıyordu; (2) kapak düzenindeki kartta büyüyen görsel kırpma
+ * çerçevesini kaydırıp kompozisyonu bozuyordu. Geri bildirim artık yalnız
+ * kenarlık ve gölge: her kartta AYNI, hiçbirinde ölçü oynamıyor. */
 @media (hover: hover) and (pointer: fine) {
   a.profile-block {
-    transition: translate 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    transition: box-shadow 200ms ease, border-color 200ms ease;
   }
   a.profile-block:hover {
-    translate: 0 -3px;
     border-color: color-mix(in srgb, var(--profile-text) 14%, transparent);
     box-shadow: 0 12px 28px -14px color-mix(in srgb, var(--profile-text) 42%, transparent);
   }
-  /* Kart içindeki önizleme görseli hoverda hafifçe yaklaşır. Kap zaten
-     overflow:hidden, taşma olmaz. */
-  a.profile-block .social-og,
-  a.profile-block .link-og,
-  a.profile-block .youtube-thumb,
-  a.profile-block .yt-latest-media img {
-    transition: scale 320ms cubic-bezier(.22, .61, .36, 1);
-  }
-  a.profile-block:hover .social-og,
-  a.profile-block:hover .link-og,
-  a.profile-block:hover .youtube-thumb,
-  a.profile-block:hover .yt-latest-media img { scale: 1.03; }
 }
 
 /* Klavye odağı hoverla aynı yükselmeyi almalı; görünürlük erişilebilirlik
@@ -1545,29 +1551,6 @@ a.profile-block:focus-visible {
   .profile-block-gallery[data-count="5"] img:nth-child(n + 5) { display: none; }
   .profile-block-gallery[data-count="5"] .gallery-more[data-slot="4"] { display: flex; }
   .gallery-more { right: 12px; bottom: 12px; padding: 2px 8px; font-size: 11px; }
-
-  /* Bu darlıkta görsel ve metin yan yana sığmaz (kalan 165×140). Önizleme
-     tam kanama zemine geçer, metin okunabilirlik perdesinin üstünde durur —
-     kart küçülmek yerine bir "kapak"a dönüşür. */
-  .profile-block-link.has-og { justify-content: flex-end; padding: 12px; }
-  .profile-block-link.has-og .link-og {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    flex: none;
-    border-radius: 0;
-  }
-  .profile-block-link.has-og::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgb(0 0 0 / 0.08) 35%, rgb(0 0 0 / 0.8));
-  }
-  .profile-block-link.has-og .link-body { position: relative; z-index: 1; flex: none; }
-  .profile-block-link.has-og .link-mark { display: none; }
-  .profile-block-link.has-og strong,
-  .profile-block-link.has-og small { color: white; }
 }
 
 /* --- DAR (her yükseklikte): sosyal kart ------------------------- */
@@ -1593,6 +1576,19 @@ a.profile-block:focus-visible {
   /* Bağlantı kartı: baş harf çipi üstte, başlık ve alan adı altta. */
   .profile-block-link .link-mark { width: 42px; height: 42px; border-radius: 13px; font-size: 19px; }
   .profile-block-link .link-go { top: 12px; right: 12px; }
+
+  /* ÖNİZLEMENİN EN KÜÇÜK GENİŞLİĞİ. 1 track'lik kart 158-181px geniştir;
+     1,91:1 bir og görseli bu kutuya ancak iki yanı kesilerek giriyor ve
+     kesilen yer tam olarak og'ların yazı taşıdığı yer. Ölçülen bantlar
+     arasında (1 track 158-181 | 2 track 328-374) eşik 200px'e kondu: bunun
+     altında görsel HİÇ gösterilmez, kart kendi sade hâline döner — baş harf
+     çipi + başlık + alan adı. `display:none` + `loading="lazy"`: tarayıcı
+     görüntüyü indirmez bile. */
+  .profile-block-link.has-og .link-og { display: none; }
+  /* Görsel yokken gidiş oku geri gelir; sade kartın "buradan çıkılır"
+     işareti odur (has-og onu gizliyor). */
+  .profile-block-link.has-og .link-go { display: block; }
+  .profile-block-link.has-og .link-body { flex: 1; }
 }
 
 /* --- DAR + YÜKSEK (1×2) ----------------------------------------- */
@@ -1608,6 +1604,17 @@ a.profile-block:focus-visible {
   .profile-block-gallery[data-count="3"] .gallery-more[data-slot="2"],
   .profile-block-gallery[data-count="4"] .gallery-more[data-slot="2"],
   .profile-block-gallery[data-count="5"] .gallery-more[data-slot="2"] { display: flex; }
+
+  /* Önizleme bu darlıkta gizli; og'u olan kart da sade kartın nefesli
+     tipografisini almalı — aşağıdaki YÜKSEK kuralları `:not(.has-og)` ile
+     yazıldığı için onu atlıyor. */
+  .profile-block-link.has-og .link-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    font-size: 24px;
+  }
+  .profile-block-link.has-og strong { font-size: 17px; }
 }
 
 /* --- ORTA + KISA (2×1; mobilde 4×1 de buraya düşer) ------------- */
@@ -1629,17 +1636,6 @@ a.profile-block:focus-visible {
     gap: 12px;
   }
   .profile-block-link .link-lines { flex: 1; }
-  /* Önizleme sağda 16:9 bir kapak; metin solda okunur kalır. */
-  .profile-block-link.has-og { align-items: stretch; flex-direction: row; gap: 12px; padding: 14px; }
-  .profile-block-link.has-og .link-og {
-    width: auto;
-    height: 100%;
-    max-width: 50%;
-    flex: none;
-    aspect-ratio: 16 / 9;
-  }
-  .profile-block-link.has-og .link-body { flex: 1; }
-
   .profile-block-youtube.is-video:not(.is-shorts) {
     align-items: stretch;
     flex-direction: row;
@@ -1654,6 +1650,69 @@ a.profile-block:focus-visible {
     flex: none;
     aspect-ratio: 16 / 9;
   }
+}
+
+/* --- ORTA + KISA (2×1): önizleme kapak olur, metin rozete iner --- */
+@container (min-width: 200px) and (max-width: 499px) and (max-height: 199px) {
+  /* Önizleme kartı KAPLAR, metin onun üstünde bir rozete iner.
+     Eskiden görsel sağda 16:9 bir kutuydu ve genişliği metinle paylaşıyordu:
+     kutu 161×112'ye (1,44) düşüyor, 1,91:1 og görselinin iki yanı — yani
+     yazısı — kırpılıyordu. Tam kanamada görsel kartın tüm genişliğini alır
+     (2 track = 328-374px), kırpma yalnız dikeyde ve simetrik kalır. */
+  .profile-block-link.has-og {
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 0;
+    gap: 0;
+  }
+  .profile-block-link.has-og .link-og {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    flex: none;
+    border-radius: 0;
+  }
+  /* Rozet kendi zeminini taşır; bu yüzden görselin tamamına perde çekmek
+     gerekmez (perde bütün fotoğrafı karartırdı). */
+  .profile-block-link.has-og .link-body {
+    position: relative;
+    z-index: 1;
+    max-width: calc(100% - 24px);
+    flex: none;
+    align-items: center;
+    flex-direction: row;
+    gap: 9px;
+    margin: 12px;
+    border-radius: var(--radius-xl);
+    background: rgb(0 0 0 / 0.55);
+    padding: 7px 12px 7px 7px;
+    color: white;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .profile-block-link.has-og .link-mark { width: 30px; height: 30px; border-radius: 9px; font-size: 15px; }
+  /* Rozet içeriği kadar geniştir; `width:100%` + `flex:1` onu kartın tamamına
+     yayardı. */
+  .profile-block-link.has-og .link-lines { width: auto; min-width: 0; flex: 0 1 auto; }
+  .profile-block-link.has-og strong { -webkit-line-clamp: 1; font-size: 14px; }
+  .profile-block-link.has-og small { color: rgb(255 255 255 / 0.72); }
+}
+
+/* --- GENİŞ + KISA (4×1): önizleme yanda, tam ve kırpılmamış ---- */
+@container (min-width: 500px) and (max-height: 199px) {
+  /* Burada iki şeye birden yer var: 112px'lik satır yüksekliğinde 1,91:1 bir
+     kutu 214px eder ve 744px'lik kartta metne hâlâ 500px kalır. Kapak yapmaya
+     gerek yok — görselin tamamı görünür, oran hiç bozulmaz. */
+  .profile-block-link.has-og { align-items: stretch; flex-direction: row; gap: 12px; padding: 14px; }
+  .profile-block-link.has-og .link-og {
+    width: auto;
+    height: 100%;
+    max-width: 50%;
+    flex: none;
+    aspect-ratio: 1.91 / 1;
+  }
+  .profile-block-link.has-og .link-body { flex: 1; }
 }
 
 /* --- ORTA + YÜKSEK (2×2) ---------------------------------------- */
@@ -1819,17 +1878,11 @@ a.profile-block:focus-visible {
   .profile-block.is-embed:not(.is-playing) {
     transition: translate 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
   }
+  /* Bağlantı kartlarıyla aynı kural: yalnız kenarlık + gölge, ölçü oynamaz. */
   .profile-block.is-embed:not(.is-playing):hover {
-    translate: 0 -3px;
     border-color: color-mix(in srgb, var(--profile-text) 14%, transparent);
     box-shadow: 0 12px 28px -14px color-mix(in srgb, var(--profile-text) 42%, transparent);
   }
-  .profile-block.is-embed .youtube-thumb,
-  .profile-block.is-embed .sp-cover img {
-    transition: scale 320ms cubic-bezier(.22, .61, .36, 1);
-  }
-  .profile-block.is-embed:not(.is-playing):hover .youtube-thumb,
-  .profile-block.is-embed:not(.is-playing):hover .sp-cover img { scale: 1.03; }
 }
 
 /* --- YouTube: gömme düzeni ------------------------------------- */
@@ -2773,40 +2826,44 @@ html[data-profile-theme] body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* RADIUS BURADA TANIMLANMAZ. shadcn'in oransal ölçeği (--radius * 1.4 …)
+     bu blok sonra geldiği için yukarıdaki kılavuz değerlerini eziyordu:
+     rounded-lg/xl/2xl 8/12/16 yerine 10/14/18 çıkıyordu. Kılavuz tek kaynak,
+     ölçek buradan kaldırıldı. */
 }
 
+/* shadcn bileşenleri (dropdown, dialog, button, input) bu semantik
+   token'ları okur. Varsayılanları NÖTR GRİ bir ölçekti (oklch(… 0 0)); Caka
+   paleti ise sıcak: zemin #f7f6f2, sınır #e6e6e1, mürekkep #14141a. Aradaki
+   fark küçük ama yan yana görülünce menü "başka bir üründen gelmiş" gibi
+   duruyordu. Token'lar markaya bağlandı — bileşen dosyalarına dokunmadan
+   hepsi aynı dili konuşuyor. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: var(--color-zemin);
+  --foreground: var(--color-murekkep);
+  --card: #ffffff;
+  --card-foreground: var(--color-murekkep);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-murekkep);
+  --primary: var(--color-murekkep);
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-zemin);
+  --secondary-foreground: var(--color-murekkep);
+  --muted: var(--color-zemin);
+  --muted-foreground: color-mix(in srgb, var(--color-murekkep) 55%, transparent);
+  --accent: var(--color-zemin);
+  --accent-foreground: var(--color-murekkep);
+  --destructive: var(--color-tehlike);
+  --border: var(--color-sinir);
+  --input: var(--color-sinir);
+  --ring: var(--color-mavi);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  /* shadcn CLI ile eklenecek bileşenler için taban radius: kılavuzun 8px'i. */
+  --radius: var(--radius-lg);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);

@@ -3,7 +3,17 @@
 // blokları nötr kartlardır. Araç çubuğunun üstünde popover olarak açılır;
 // dışarı tıklama/Escape ile kapanma editördeki ortak panel handler'ındadır.
 import { useMemo, useState } from "react";
-import { AudioLines, ImageIcon, Images, Link2, Megaphone, MonitorPlay, Search, Type, X } from "lucide-react";
+import {
+  Link as LinkIcon,
+  MediaImage,
+  MediaImageList,
+  MediaVideo,
+  Megaphone,
+  MusicDoubleNote,
+  Search,
+  Text,
+  Xmark,
+} from "iconoir-react";
 
 import { SocialIcon } from "~/components/icons/social";
 import { onboardingPlatforms } from "~/content/onboarding";
@@ -17,7 +27,7 @@ type Category = "social" | "content";
 
 type ContentBlockType = Exclude<ProfileBlock["type"], "profile" | "social">;
 
-type CatalogItem = { label: string; icon: typeof Link2; enabled: boolean };
+type CatalogItem = { label: string; icon: typeof LinkIcon; enabled: boolean };
 
 // Record: yeni bir içerik bloğu tipi eklendiğinde katalog derleme hatası
 // verir (dizi olarak yazılsaydı tip sessizce galeride görünmezdi).
@@ -25,15 +35,15 @@ type CatalogItem = { label: string; icon: typeof Link2; enabled: boolean };
 // katalogda görünmez. Kayıt tipi böylece eksiksiz kalır (yeni tip eklemeyi
 // unutmak hâlâ derleme hatası) ama kullanıcıya yarım bir blok sunulmaz.
 const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
-  link: { label: "Bağlantı", icon: Link2, enabled: true },
-  text: { label: "Metin", icon: Type, enabled: true },
-  image: { label: "Görsel", icon: ImageIcon, enabled: true },
+  link: { label: "Bağlantı", icon: LinkIcon, enabled: true },
+  text: { label: "Metin", icon: Text, enabled: true },
+  image: { label: "Görsel", icon: MediaImage, enabled: true },
   status: { label: "Duyuru", icon: Megaphone, enabled: true },
   // "Galeri" DEĞİL: bu panelin kendi adı zaten "Blok galerisi". Aynı arayüzde
   // iki ayrı şeyin aynı adı taşıması kullanıcıyı yanıltırdı.
-  gallery: { label: "Fotoğraf galerisi", icon: Images, enabled: true },
-  youtube: { label: "YouTube", icon: MonitorPlay, enabled: true },
-  spotify: { label: "Spotify", icon: AudioLines, enabled: true },
+  gallery: { label: "Fotoğraf galerisi", icon: MediaImageList, enabled: true },
+  youtube: { label: "YouTube", icon: MediaVideo, enabled: true },
+  spotify: { label: "Spotify", icon: MusicDoubleNote, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */
@@ -73,7 +83,7 @@ export function BlockGallery({
   return (
     <div className="block-gallery editor-popover" role="dialog" aria-label="Blok galerisi">
         <label className="gallery-search">
-          <Search size={19} aria-hidden />
+          <Search width={19} height={19} aria-hidden />
           <input
             autoFocus
             type="search"
@@ -99,7 +109,7 @@ export function BlockGallery({
           </button>
           {category !== null ? (
             <button type="button" aria-label="Filtreyi temizle" onClick={() => setCategory(null)}>
-              <X size={16} />
+              <Xmark width={16} height={16} />
             </button>
           ) : null}
         </div>
@@ -118,7 +128,7 @@ export function BlockGallery({
                     onClick={() => onPick({ kind: "content", type: item.type })}
                   >
                     <span className="tile tile-content" aria-hidden>
-                      <item.icon size={30} strokeWidth={1.8} />
+                      <item.icon width={30} height={30} strokeWidth={1.8} />
                     </span>
                     {item.label}
                     {blocked ? (

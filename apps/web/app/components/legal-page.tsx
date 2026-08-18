@@ -311,7 +311,6 @@ export function LegalPage({
   return (
     <div className="bg-zemin">
       <Navbar
-        items={landing.nav.items}
         login={landing.nav.login}
         cta={landing.nav.cta}
         user={user}
