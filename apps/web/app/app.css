@@ -2992,3 +2992,69 @@ html[data-profile-theme] body {
     @apply font-sans;
   }
 }
+
+
+/* ------------------------------------------------------------------ *
+ * Hata ve 404 sayfaları (`components/error-page.tsx`)
+ *
+ * İllüstrasyon sayfanın ZEMİNİDİR: tam ekranı kaplar, alta yaslanır; metin ve
+ * butonlar onun üstünde durur. Görselin üst yarısı zaten düz gökyüzü olduğu
+ * için yazı oraya oturur — yine de okunurluğu şansa bırakmamak için üstten
+ * zemin renginde bir perde iniyor (`.error-page::after`), böylece dar ve kısa
+ * ekranlarda çalılar metnin arkasına girse bile kontrast korunur.
+ *
+ * Hareket `alternate` yönlüdür: gidiş-dönüş yaptığı için döngü noktası ve
+ * dolayısıyla kesilme yoktur. `prefers-reduced-motion` açıkken durur.
+ * ------------------------------------------------------------------ */
+.error-page { position: relative; display: grid; min-height: 100svh; place-items: center; overflow: hidden; background: var(--color-zemin); }
+
+.error-art { position: absolute; inset: 0; z-index: 0; }
+.error-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%;
+  animation: error-art-drift 24s ease-in-out infinite alternate;
+  transform-origin: 50% 100%; will-change: transform; }
+
+/* Üstten inen perde: metnin oturduğu bölge her koşulda açık kalır. */
+.error-page::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom,
+    var(--color-zemin) 0%,
+    color-mix(in srgb, var(--color-zemin) 92%, transparent) 34%,
+    color-mix(in srgb, var(--color-zemin) 60%, transparent) 56%,
+    transparent 76%); }
+
+.error-copy { position: relative; z-index: 2; display: flex; width: 100%; max-width: 640px; flex-direction: column; align-items: center;
+  /* Metin dikey ortanın biraz üstünde durur: altta kalan boşluk manzarayı
+     gösterir, kompozisyon referanstaki gibi nefes alır. */
+  padding: 0 24px clamp(150px, 38vh, 380px); text-align: center; }
+.error-kicker { font-size: 13px; font-weight: 600; letter-spacing: .18em; color: color-mix(in srgb, var(--color-murekkep) 40%, transparent); }
+.error-copy h1 { margin-top: 10px; font-size: clamp(30px, 5vw, 46px); font-weight: 700; line-height: 1.08; letter-spacing: -.02em; color: var(--color-murekkep); text-wrap: balance; }
+.error-body { margin-top: 14px; max-width: 42ch; font-size: 16px; line-height: 1.6; color: color-mix(in srgb, var(--color-murekkep) 62%, transparent); text-wrap: pretty; }
+.error-actions { margin-top: 28px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.error-action { border: 1px solid var(--color-sinir); border-radius: 999px; background: white; padding: 11px 22px; font-size: 15px; font-weight: 600; color: var(--color-murekkep); transition: border-color .15s ease, background-color .15s ease, opacity .15s ease; }
+.error-action:hover { border-color: var(--color-murekkep); }
+.error-action.is-primary { border-color: var(--color-murekkep); background: var(--color-murekkep); color: white; }
+.error-action.is-primary:hover { opacity: .85; }
+.error-action:focus-visible { outline: 2px solid var(--color-mavi); outline-offset: 2px; }
+
+/* Dar ekran: 16:9 görsel `cover` ile dikey bir çerçeveye sığdırılınca kenarlar
+   aşırı kırpılıyor ve manzara tanınmaz bir çalı duvarına dönüyordu. Burada
+   görsel alta yaslanıp yüksekliği sınırlanır; üstünü sayfa zemini doldurur. */
+@media (max-width: 640px) {
+  .error-art { top: auto; height: min(58svh, 460px); }
+  .error-art img { object-position: 50% 100%; }
+  .error-page::after {
+    background: linear-gradient(to bottom,
+      var(--color-zemin) 0%,
+      color-mix(in srgb, var(--color-zemin) 88%, transparent) 44%,
+      transparent 66%);
+  }
+  .error-copy { padding-bottom: clamp(180px, 46svh, 420px); }
+}
+
+@keyframes error-art-drift {
+  from { transform: scale(1.02) translateY(0); }
+  to   { transform: scale(1.07) translateY(-1.4%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-art img { animation: none; }
+}

@@ -255,6 +255,7 @@ export const tr = {
     unclaimed: (username: string) => `caka.app/${username} henüz kimsenin değil.`,
 
     availableAddress: "Bu adres boşta",
+    claimThisAddress: "Bu adresi kap",
     availableCta: "bu adres boşta, kap!",
   },
 
@@ -298,6 +299,9 @@ export const tr = {
     notFoundBody: "Aradığın sayfa yok ya da taşınmış olabilir.",
     profileErrorTitle: "Bu sayfa görüntülenemiyor",
     profileErrorBody: "Bir şeyler ters gitti; daha sonra tekrar dene.",
+    illustrationAlt:
+      "Örgü ve oyun hamurundan yapılmış minyatür bir manzara: yuvarlak çalılar ve aralarından kıvrılan mavi bir dere",
+    createPage: "Kendi sayfanı oluştur",
     backHome: "Ana sayfaya dön",
   },
 };

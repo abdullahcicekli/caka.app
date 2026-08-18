@@ -29,12 +29,23 @@ import { resolveUsername } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/username";
 import { localeFromRequest } from "../../server/locale";
-import { DEFAULT_LOCALE } from "@caka/shared";
+import { DEFAULT_LOCALE, type Locale } from "@caka/shared";
+import { ErrorPage } from "~/components/error-page";
 import { appCatalog } from "~/content/app";
 import { useCatalog } from "~/lib/locale";
 
-export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.notFound);
+/** Kök route'un loader verisinden dili okur (meta içinde hook kullanılamaz). */
+function metaLocale(matches: Route.MetaArgs["matches"]): Locale {
+  const root = matches.find((match) => match?.id === "root");
+  const data = root?.loaderData as { locale?: Locale } | undefined;
+  return data?.locale ?? DEFAULT_LOCALE;
+}
+
+export function meta({ loaderData, matches }: Route.MetaArgs) {
+  // Hata hâlinde `loaderData` yoktur ama kök loader çalışmıştır; sekme başlığı
+  // ziyaretçinin dilinde olmalı. Yoksa Türkçeye düşülür.
+  const locale = metaLocale(matches);
+  if (!loaderData) return noIndexMeta(appCatalog[locale].titles.notFound);
   const title = `${loaderData.name} — @${loaderData.username} | Caka`;
   const canonical = absoluteSiteUrl(`/${loaderData.username}`);
   const person: Record<string, unknown> = {
@@ -54,7 +65,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
       description: loaderData.description,
       path: `/${loaderData.username}`,
       image: loaderData.ogImage,
-      imageAlt: appCatalog[DEFAULT_LOCALE].profile.shareImageAlt(loaderData.name),
+      imageAlt: appCatalog[locale].profile.shareImageAlt(loaderData.name),
       type: "profile",
       schema: {
         "@context": "https://schema.org",
@@ -235,38 +246,27 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (info.kind !== "unclaimed") {
     const broken = info.kind === "broken";
     return (
-      <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
-        <p className="text-sm font-medium tracking-widest text-murekkep/40">404</p>
-        <h1 className="mt-2 text-3xl font-bold">
-          {broken ? app.errors.profileErrorTitle : app.errors.notFoundTitle}
-        </h1>
-        <p className="mt-3 max-w-sm text-murekkep/60">
-          {broken
-            ? app.errors.profileErrorBody
-            : app.errors.notFoundBody}
-        </p>
-        <Link
-          to="/"
-          className="mt-8 rounded-full bg-murekkep px-8 py-3.5 font-medium text-white hover:bg-murekkep/85"
-        >
-          {app.errors.backHome}
-        </Link>
-      </main>
+      <ErrorPage
+        kicker={broken ? undefined : "404"}
+        title={broken ? app.errors.profileErrorTitle : app.errors.notFoundTitle}
+        body={broken ? app.errors.profileErrorBody : app.errors.notFoundBody}
+        primary={{ label: app.errors.backHome, href: "/" }}
+        secondary={{ label: app.errors.createPage, href: "/onboarding" }}
+      />
     );
   }
 
+  // "Bu adres boşta" aynı kabuğu kullanır ama hata değildir: kicker yok,
+  // birincil eylem adresi kapmak.
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
-      <h1 className="text-3xl font-bold">{app.profile.availableAddress}</h1>
-      <p className="mt-3 text-murekkep/60">
-        {app.profile.unclaimed(username || "…")}
-      </p>
-      <Link
-        to={`/onboarding${username ? `?u=${encodeURIComponent(username)}` : ""}`}
-        className="mt-8 rounded-full bg-murekkep px-8 py-3.5 font-medium text-white hover:bg-murekkep/85"
-      >
-        Bu adresi kap
-      </Link>
-    </main>
+    <ErrorPage
+      title={app.profile.availableAddress}
+      body={app.profile.unclaimed(username || "…")}
+      primary={{
+        label: app.profile.claimThisAddress,
+        href: `/onboarding${username ? `?u=${encodeURIComponent(username)}` : ""}`,
+      }}
+      secondary={{ label: app.errors.backHome, href: "/" }}
+    />
   );
 }

@@ -4,6 +4,7 @@ import { SUPPORTED_LOCALES, prefixForLocale } from "./locale";
 import {
   ROUTE_KEYS,
   ROUTE_SLUGS,
+  localeFromPathname,
   localizeHref,
   localizePath,
   parseLocalizedPath,
@@ -208,5 +209,23 @@ describe("localizeHref", () => {
 
   it("dilden bağımsız yolu olduğu gibi bırakır", () => {
     expect(localizeHref("/ahmet", "de")).toBe("/ahmet");
+  });
+});
+
+describe("localeFromPathname", () => {
+  it("önekli yoldan dili okur", () => {
+    expect(localeFromPathname("/en/privacy")).toBe("en");
+    expect(localeFromPathname("/pt-br")).toBe("pt-BR");
+  });
+
+  it("uygulama route'u OLMAYAN önekli yolda da çalışır", () => {
+    // 404 sayfasının dili buradan gelir: route eşleşmedi ama önek duruyor.
+    expect(localeFromPathname("/de/boyle-bir-sayfa-yok")).toBe("de");
+  });
+
+  it("öneksiz yolda null döner", () => {
+    expect(localeFromPathname("/gizlilik")).toBeNull();
+    expect(localeFromPathname("/")).toBeNull();
+    expect(localeFromPathname("/ahmet")).toBeNull();
   });
 });

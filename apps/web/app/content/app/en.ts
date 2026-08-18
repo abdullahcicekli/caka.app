@@ -250,6 +250,7 @@ export const en = {
     unclaimed: (username: string) => `caka.app/${username} isn't taken yet.`,
 
     availableAddress: "This address is free",
+    claimThisAddress: "Claim this address",
     availableCta: "this address is free, grab it!",
   },
 
@@ -292,6 +293,9 @@ export const en = {
     notFoundBody: "The page you're looking for doesn't exist or may have moved.",
     profileErrorTitle: "This page can't be displayed",
     profileErrorBody: "Something went wrong; try again later.",
+    illustrationAlt:
+      "A miniature landscape made of knitted yarn and clay: round bushes with a blue stream winding between them",
+    createPage: "Create your own page",
     backHome: "Back to home",
   },
 } satisfies AppContent;

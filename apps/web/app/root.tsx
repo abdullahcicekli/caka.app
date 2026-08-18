@@ -5,15 +5,22 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
   useMatches,
   useRouteLoaderData,
 } from "react-router";
 
-import { DEFAULT_LOCALE, type Locale, type ProfileTheme } from "@caka/shared";
+import {
+  DEFAULT_LOCALE,
+  type Locale,
+  localeFromPathname,
+  type ProfileTheme,
+} from "@caka/shared";
 
 import type { Route } from "./+types/root";
 import { localeFromRequest } from "../server/locale";
 import "./app.css";
+import { ErrorPage } from "./components/error-page";
 import { appCatalog } from "./content/app";
 import { useCatalog } from "./lib/locale";
 
@@ -61,10 +68,13 @@ export function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  // Hata sınırı çalıştığında kök loader verisi olmayabilir; o hâlde Türkçeye
-  // düşülür (L2'nin son adımı).
+  // Hata sınırı çalıştığında kök loader verisi olmayabilir (404'te hiçbir
+  // route eşleşmez). O hâlde dil ADRESİN ÖNEKİNDEN okunur; `/en/olmayan-sayfa`
+  // sayfası `lang="en"` olmalı. Önek de yoksa Türkçe — öneksiz olan odur.
   const rootData = useRouteLoaderData<typeof loader>("root");
-  const locale: Locale = rootData?.locale ?? DEFAULT_LOCALE;
+  const { pathname } = useLocation();
+  const locale: Locale =
+    rootData?.locale ?? localeFromPathname(pathname) ?? DEFAULT_LOCALE;
 
   // Yalnız /:username route'u eşleşince tema kök elemana taşınır; landing,
   // panel ve editör zeminleri (bg-zemin) etkilenmez. Route hata verdiğinde
@@ -108,29 +118,28 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let details = app.errors.genericBody;
   let stack: string | undefined;
 
+  const notFound = isRouteErrorResponse(error) && error.status === 404;
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? app.errors.notFoundTitle : app.errors.genericTitle;
-    details =
-      error.status === 404
-        ? app.errors.notFoundBody
-        : error.statusText || details;
+    message = notFound ? app.errors.notFoundTitle : app.errors.genericTitle;
+    details = notFound ? app.errors.notFoundBody : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1 className="text-2xl font-bold">{message}</h1>
-      <p className="mt-2">{details}</p>
-      <a href="/" className="mt-6 inline-block font-medium underline">
-        {app.errors.backHome}
-      </a>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+    <ErrorPage
+      kicker={notFound ? "404" : undefined}
+      title={message}
+      body={details}
+      primary={{ label: app.errors.backHome, href: "/" }}
+      secondary={{ label: app.errors.createPage, href: "/onboarding" }}
+    >
+      {stack ? (
+        <pre className="mt-8 w-full overflow-x-auto text-left text-xs">
           <code>{stack}</code>
         </pre>
-      )}
-    </main>
+      ) : null}
+    </ErrorPage>
   );
 }

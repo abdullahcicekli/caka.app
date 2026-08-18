@@ -252,6 +252,7 @@ export const de = {
     unclaimed: (username: string) => `caka.app/${username} gehört noch niemandem.`,
 
     availableAddress: "Diese Adresse ist frei",
+    claimThisAddress: "Sichere dir diese Adresse",
     availableCta: "diese Adresse ist frei, schnapp sie dir!",
   },
 
@@ -294,6 +295,9 @@ export const de = {
     notFoundBody: "Die Seite, die du suchst, gibt es nicht oder sie wurde verschoben.",
     profileErrorTitle: "Diese Seite kann nicht angezeigt werden",
     profileErrorBody: "Etwas ist schiefgelaufen; versuch es später noch mal.",
+    illustrationAlt:
+      "Eine Miniaturlandschaft aus gestrickter Wolle und Knete: runde Büsche und ein blauer Bach, der sich dazwischen schlängelt",
+    createPage: "Erstell deine eigene Seite",
     backHome: "Zur Startseite",
   },
 } satisfies AppContent;

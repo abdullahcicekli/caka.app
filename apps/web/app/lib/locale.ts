@@ -4,11 +4,12 @@
 // Prop drilling yoktur: `profile-block` gibi derindeki bileşenler de kataloğu
 // doğrudan seçebilir.
 
-import { useRouteLoaderData } from "react-router";
+import { useLocation, useRouteLoaderData } from "react-router";
 
 import {
   DEFAULT_LOCALE,
   type Locale,
+  localeFromPathname,
   localizeHref,
   localizePath,
   pathFor,
@@ -18,11 +19,17 @@ import {
 import type { loader as rootLoader } from "~/root";
 
 /**
- * İsteğin dili. Kök loader verisi yoksa (hata sınırı) Türkçeye düşer — dilin
- * çözülememesi sayfanın çökmesine yol açmaz.
+ * İsteğin dili.
+ *
+ * Normalde kök loader'dan gelir. Hata sınırı çalıştığında loader verisi
+ * olmayabilir (404'te hiçbir route eşleşmez); o hâlde dil ADRESİN ÖNEKİNDEN
+ * okunur — `/en/olmayan-sayfa` hatası İngilizce yazılmalı, Türkçe değil.
+ * Önek de yoksa Türkçeye düşülür, çünkü Türkçe öneksiz olandır.
  */
 export function useLocale(): Locale {
-  return useRouteLoaderData<typeof rootLoader>("root")?.locale ?? DEFAULT_LOCALE;
+  const fromLoader = useRouteLoaderData<typeof rootLoader>("root")?.locale;
+  const { pathname } = useLocation();
+  return fromLoader ?? localeFromPathname(pathname) ?? DEFAULT_LOCALE;
 }
 
 /**

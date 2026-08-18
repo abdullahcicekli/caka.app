@@ -212,3 +212,15 @@ export function localizeHref(href: string, locale: Locale): string {
 
   return localizePath(pathname, locale) + query + hash;
 }
+
+/**
+ * Yolun ÖNEKİNDEN dili okur; route'un tanınmasına bağlı değildir.
+ *
+ * `parseLocalizedPath` yalnız bilinen bir uygulama route'unu çözebilir. 404
+ * sayfasında route zaten eşleşmemiştir — ama `/de/boyle-bir-sayfa-yok`
+ * adresindeki `de` öneki hâlâ ortadadır ve hata sayfası o dilde yazılmalıdır.
+ * Öneksiz yollarda `null` döner (Türkçe kanoniktir, öneki yoktur).
+ */
+export function localeFromPathname(pathname: string): Locale | null {
+  return localeFromPrefix(pathname.split("/").filter(Boolean)[0] ?? "");
+}

@@ -252,6 +252,7 @@ export const ptBR = {
     unclaimed: (username: string) => `caka.app/${username} ainda não é de ninguém.`,
 
     availableAddress: "Este endereço está livre",
+    claimThisAddress: "Pegue este endereço",
     availableCta: "este endereço está livre, pegue!",
   },
 
@@ -294,6 +295,9 @@ export const ptBR = {
     notFoundBody: "A página que você procura não existe ou pode ter sido movida.",
     profileErrorTitle: "Não dá para exibir esta página",
     profileErrorBody: "Algo deu errado; tente mais tarde.",
+    illustrationAlt:
+      "Uma paisagem em miniatura feita de lã tricotada e massinha: arbustos redondos e um riacho azul serpenteando entre eles",
+    createPage: "Crie sua própria página",
     backHome: "Voltar para o início",
   },
 } satisfies AppContent;
