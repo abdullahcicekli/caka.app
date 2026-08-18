@@ -7,7 +7,7 @@
 // burada log yok — sessizce null döner ve kart tasarlanmış fallback'ini gösterir.
 import { Hono } from "hono";
 
-import { checkProxyImageUrl, type ProfileLayout } from "@caka/shared";
+import { checkProxyImageUrl, pickFaviconHref, type ProfileLayout } from "@caka/shared";
 import { getSession } from "./auth";
 import { isCrossOriginRequest } from "./request";
 import { fetchFollowingCheckedRedirects, signImageProxyPath } from "./image-proxy";
@@ -36,6 +36,20 @@ function collectMetaImages(window: string, found: Map<string, string>): void {
     const key = /(?:property|name)\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase();
     const content = /content\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1];
     if (key && content && PRIORITIES.includes(key) && !found.has(key)) found.set(key, content);
+  }
+}
+
+/**
+ * Favicon olabilecek `<link>` etiketlerini ham hâliyle biriktirir. og
+ * meta'sıyla AYNI akışta okunur: favicon için ikinci bir istek atmak, zaten
+ * indirdiğimiz HTML'i ikinci kez indirmek olurdu.
+ *
+ * Hangisinin seçileceği (SVG elemesi, boyut, tür sırası) saf ve testli bir
+ * kural — `pickFaviconHref`, @caka/shared.
+ */
+function collectIconLinks(window: string, tags: string[]): void {
+  for (const tag of window.match(/<link\s[^>]*>/gi) ?? []) {
+    if (/rel\s*=\s*["'][^"']*icon/i.test(tag)) tags.push(tag);
   }
 }
 
@@ -70,8 +84,13 @@ export async function readTextStreaming(
   await reader.cancel().catch(() => {});
 }
 
-function resolveOgImage(found: Map<string, string>, baseUrl: string): string | null {
-  for (const key of PRIORITIES) {
+/** Öncelik sırasına göre ilk geçerli mutlak adresi döner. */
+function resolveFirst(
+  found: Map<string, string>,
+  order: readonly string[],
+  baseUrl: string,
+): string | null {
+  for (const key of order) {
     const raw = found.get(key);
     if (!raw) continue;
     try {
@@ -80,21 +99,46 @@ function resolveOgImage(found: Map<string, string>, baseUrl: string): string | n
         return resolved.toString();
       }
     } catch {
-      // Geçersiz aday — sıradaki meta'ya bak.
+      // Geçersiz aday — sıradakine bak.
     }
   }
   return null;
 }
 
-/** Hedef sayfanın og:image URL'sini döner; bulunamazsa null (best-effort). */
-export async function fetchOgImage(
+/**
+ * Sayfa favicon'unu ilan etmediyse kök `/favicon.ico`. Doğrulanmaz: bir
+ * istek daha atmak yerine kart GRACEFUL düşer — favicon `<img>`'i baş harf
+ * çipinin ÜSTÜNDE durur, yüklenemezse altındaki harf görünür
+ * (bkz. `.link-mark img` / app.css).
+ */
+function defaultFaviconUrl(baseUrl: string): string | null {
+  try {
+    return new URL("/favicon.ico", baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+export interface LinkPreview {
+  /** og:image adresi; yoksa null. */
+  image: string | null;
+  /** Sitenin favicon adresi; yoksa null. */
+  favicon: string | null;
+}
+
+/**
+ * Hedef sayfanın önizleme görselini VE favicon'unu döner; ikisi de
+ * best-effort (bulunamazsa null). Tek istek, tek akış.
+ */
+export async function fetchLinkPreview(
   target: string,
   selfHost?: string,
-): Promise<string | null> {
+): Promise<LinkPreview> {
+  const empty: LinkPreview = { image: null, favicon: null };
   // Oturum gerektirse de bu, kullanıcı girdisiyle tetiklenen bir dış istek:
   // proxy ile aynı SSRF kurallarından geçer (özel/loopback/metadata kapalı).
   const checked = checkProxyImageUrl(target);
-  if (!checked.ok) return null;
+  if (!checked.ok) return empty;
   const url = new URL(checked.url);
   try {
     // Yönlendirmeler elle izlenir ve her hop yeniden doğrulanır: aksi hâlde
@@ -109,34 +153,58 @@ export async function fetchOgImage(
       // dönmek iç içe Worker çağrısı doğurur.
       selfHost,
     });
-    if (!response || !response.ok) return null;
+    if (!response || !response.ok) return empty;
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.includes("html")) {
       await response.body?.cancel().catch(() => {});
-      return null;
+      return empty;
     }
     const found = new Map<string, string>();
+    const iconTags: string[] = [];
+    let headClosed = false;
     await readTextStreaming(response, MAX_HTML_BYTES, (window) => {
       collectMetaImages(window, found);
-      // Bir aday bulunduysa gerisini indirmeye gerek yok: kalan öncelikler
-      // (secure_url vs twitter:image) aynı görseli işaret ediyor.
-      return found.size > 0;
+      collectIconLinks(window, iconTags);
+      if (/<\/head\s*>/i.test(window)) headClosed = true;
+      // İkisi de bulunduysa gerisi gereksiz. og bulunup ikon bulunamadıysa
+      // `</head>`'i beklemek yeterli: `<link rel=icon>` head dışında olmaz.
+      // (YouTube'un og meta'sı head'den SONRA geliyor — bu yüzden koşul
+      // "og bulundu" olmadan asla true dönmez.)
+      if (found.size === 0) return false;
+      return headClosed;
     });
-    const image = resolveOgImage(found, response.url || url.toString());
+    const base = response.url || url.toString();
+    const image = resolveFirst(found, PRIORITIES, base);
+    const iconHref = pickFaviconHref(iconTags);
+    const favicon =
+      (iconHref ? resolveFirst(new Map([["icon", iconHref]]), ["icon"], base) : null) ??
+      defaultFaviconUrl(base);
     // Proxy'nin servis edemeyeceği bir adresi layout'a hiç yazma.
-    return image && checkProxyImageUrl(image).ok ? image : null;
+    return {
+      image: image && checkProxyImageUrl(image).ok ? image : null,
+      favicon: favicon && checkProxyImageUrl(favicon).ok ? favicon : null,
+    };
   } catch {
-    return null;
+    return empty;
   }
 }
 
-/** Bağlantısı olup görseli olmayan sosyal blokların og görselini doldurur. */
+/** Bağlantısı olup önizlemesi eksik sosyal blokları doldurur (görsel + favicon). */
 export async function enrichSocialOgImages(layout: ProfileLayout): Promise<ProfileLayout> {
   const blocks = await Promise.all(
     layout.blocks.map(async (block) => {
-      if (block.type !== "social" || !block.data.url || block.data.ogImage) return block;
-      const image = await fetchOgImage(block.data.url);
-      return image ? { ...block, data: { ...block.data, ogImage: image } } : block;
+      if (block.type !== "social" || !block.data.url) return block;
+      if (block.data.ogImage && block.data.favicon) return block;
+      const preview = await fetchLinkPreview(block.data.url);
+      if (!preview.image && !preview.favicon) return block;
+      return {
+        ...block,
+        data: {
+          ...block.data,
+          ogImage: block.data.ogImage || preview.image || "",
+          favicon: block.data.favicon || preview.favicon || "",
+        },
+      };
     }),
   );
   return { ...layout, blocks };
@@ -151,7 +219,13 @@ ogApi.get("/", async (c) => {
   if (isCrossOriginRequest(c.req.raw)) return c.json({ error: "Geçersiz istek kaynağı" }, 403);
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
-  const image = await fetchOgImage(c.req.query("url") ?? "", new URL(c.req.url).host);
-  const proxied = image ? await signImageProxyPath(c.env, image) : null;
-  return c.json({ image, proxied });
+  const { image, favicon } = await fetchLinkPreview(
+    c.req.query("url") ?? "",
+    new URL(c.req.url).host,
+  );
+  const [proxied, faviconProxied] = await Promise.all([
+    image ? signImageProxyPath(c.env, image) : null,
+    favicon ? signImageProxyPath(c.env, favicon) : null,
+  ]);
+  return c.json({ image, proxied, favicon, faviconProxied });
 });

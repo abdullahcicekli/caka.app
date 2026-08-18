@@ -1,6 +1,12 @@
 import type { CSSProperties } from "react";
 
-import { classifyYouTubeUrl, type ProfileBlock, type ProfileLayout, type ProfileTheme } from "@caka/shared";
+import {
+  classifyYouTubeUrl,
+  faviconImageKey,
+  type ProfileBlock,
+  type ProfileLayout,
+  type ProfileTheme,
+} from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
 import { SpotifyCard, YoutubePlayMark, YoutubeVideoCard } from "~/components/media-embed";
@@ -22,7 +28,7 @@ import {
   youtubeSonVideoBasligi,
 } from "~/content/widget";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
-import { linkBrand, linkHostLabel, prettyLinkTarget } from "~/lib/link-preview";
+import { linkBrand, prettyLinkTarget } from "~/lib/link-preview";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
 import { ProfileAvatar } from "./profile-avatar";
 
@@ -94,6 +100,10 @@ export function ProfileBlockCard({
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
   // tanımsız veya blokta görsel yok) kart görselsiz tasarımına düşer.
   const signedImage = signedImages?.[block.id] ?? "";
+  // Sitenin favicon'u — baş harf çipinin/globe ikonunun ÜSTÜNE biner.
+  // Yüklenemezse (adres türetilmiş `/favicon.ico` olabilir) alttaki işaret
+  // görünmeye devam eder; `alt=""` olduğu için kırık görsel çıkmaz.
+  const signedFavicon = signedImages?.[faviconImageKey(block.id)] ?? "";
   // switch + never: yeni bir blok tipi eklendiğinde bu dosya derleme hatası
   // verir. Eskiden `if` zinciriydi ve tanınmayan tip sessizce `status`
   // dalına düşüp `block.data.text` üzerinde çalışma anında patlıyordu.
@@ -161,13 +171,27 @@ export function ProfileBlockCard({
     // Adres loader'da imzalanır; imza sırra ve HMAC'e bağlı olduğu için
     // burada türetilemez.
     const ogImage = block.size !== "1x1" ? signedImage : "";
+    // BAŞLIK İSTEĞE BAĞLI. `label` yeni bloklarda platformun kendi adıyla
+    // doğuyor ("Web sitesi", "Instagram") — kartın üstünde hiçbir şey
+    // söylemeyen bir satırdı ve ikonun zaten anlattığını tekrar ediyordu.
+    // Varsayılana eşitse basılmaz; kullanıcı kendi başlığını yazarsa görünür.
+    // (Eşitlik testi geriye dönük de çalışır: mevcut blokların hepsinde
+    // varsayılan yazılı, veri taşımaya gerek yok.)
+    const customLabel = block.data.label.trim() === platform.label ? "" : block.data.label.trim();
+    // Favicon yalnız "web sitesi" kartında: marka platformlarında kendi
+    // ikonları favicon'dan daha okunur ve tek renk oldukları için kart
+    // tonuyla uyumlu.
+    const showFavicon = platform.id === "website" && signedFavicon !== "";
     const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
           <SocialIcon platform={platform.id} width={18} height={18} strokeWidth={2.2} />
+          {showFavicon ? (
+            <img className="mark-favicon" src={signedFavicon} alt="" loading="lazy" draggable={false} />
+          ) : null}
         </span>
         <span>
-          <strong>{block.data.label}</strong>
+          {customLabel ? <strong>{customLabel}</strong> : null}
           <small>{block.data.handle}</small>
         </span>
       </>
@@ -231,11 +255,18 @@ export function ProfileBlockCard({
           <span className="link-body">
             <span className={`platform-mark link-mark ${brand.tone}`} aria-hidden>
               {brand.initial}
+              {/* Favicon varsa harfin üstünü kapatır; yüklenemezse harf kalır
+                  (bkz. `.mark-favicon`, app.css). Uzak host'a gidilmez —
+                  adres imzalı birinci taraf proxy'sinden geçer (R58). */}
+              {signedFavicon ? (
+                <img className="mark-favicon" src={signedFavicon} alt="" loading="lazy" draggable={false} />
+              ) : null}
             </span>
             <span className="link-lines">
-              {/* Başlık boşsa (taslak) alan adı başlığın yerine geçer; alt
-                  satır zaten yollu hâli yazıyor, aynı metin iki kez çıkmasın. */}
-              <strong>{block.data.title || linkHostLabel(block.data.url)}</strong>
+              {/* BAŞLIK İSTEĞE BAĞLI: yoksa alan adı satırı tek başına yeter.
+                  Eskiden başlık boşken alan adı `strong`a da yazılıyordu,
+                  yani aynı metin kartta iki kez görünüyordu. */}
+              {block.data.title ? <strong>{block.data.title}</strong> : null}
               <small>{target}</small>
             </span>
           </span>

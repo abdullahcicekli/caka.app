@@ -172,10 +172,19 @@ const socialBlockSchema = z.object({
     platform: socialPlatformSchema,
     handle: z.string().trim().max(120),
     url: optionalHttpUrlSchema,
+    /**
+     * Kartta görünen başlık. İSTEĞE BAĞLI: platformun kendi adına eşitse
+     * (ve yeni bloklar öyle doğar) kart onu basmaz — "Web sitesi" gibi
+     * hiçbir şey söylemeyen bir satır olurdu. Kullanıcı kendi başlığını
+     * yazarsa görünür.
+     */
     label: z.string().trim().max(60),
     // Bağlantının og:image önizlemesi; her zaman çekilip saklanır,
     // yalnız 1x1'den büyük kartlarda gösterilir.
     ogImage: optionalHttpUrlSchema.default(""),
+    // Sitenin favicon'u (kayıt anında sayfadan okunur ya da /favicon.ico'dan
+    // türetilir). Ziyaretçiye imzalı proxy'den servis edilir.
+    favicon: optionalHttpUrlSchema.default(""),
   }),
 });
 
@@ -183,11 +192,13 @@ const linkBlockSchema = z.object({
   ...blockBase,
   type: z.literal("link"),
   data: z.object({
+    /** İsteğe bağlı başlık; boşsa kart yalnız adresi yazar. */
     title: z.string().trim().max(60).default(""),
     url: optionalHttpUrlSchema,
     // R60: bağlantının og:image önizlemesi — `social` bloğundakiyle aynı
     // sözleşme (kayıt anında çekilir, saklanır, render yeniden çekmez).
     ogImage: optionalHttpUrlSchema.default(""),
+    favicon: optionalHttpUrlSchema.default(""),
   }),
 });
 
@@ -362,6 +373,17 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   youtubeBlockSchema,
   spotifyBlockSchema,
 ]);
+
+/**
+ * Favicon'un imzalı proxy yolu, og görselinin yanında AYNI eşlemede taşınır.
+ * Ayrı bir eşleme üç loader'ın, `ProfileCanvas`'ın ve editörün imza
+ * tesisatını ikiye katlardı; anahtar biçimi bu yüzden burada, iki tarafın da
+ * gördüğü yerde tanımlı (sunucu `server/layout-images.ts`, istemci
+ * `components/profile-block.tsx`).
+ */
+export function faviconImageKey(blockId: string): string {
+  return `${blockId}#favicon`;
+}
 
 export const MAX_LAYOUT_BLOCKS = 50;
 

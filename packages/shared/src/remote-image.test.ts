@@ -206,3 +206,19 @@ describe("proxy imzası", () => {
     await expect(signedRemoteImageProxyPath("", secret)).resolves.toBeNull();
   });
 });
+
+describe("favicon içerik tipleri", () => {
+  // `/favicon.ico` çoğu sitede bu iki başlıktan biriyle geliyor; allowlist'te
+  // olmasalardı favicon hiçbir kartta görünmezdi (kart sessizce baş harfe
+  // düşerdi ve sebebi görünmezdi).
+  it("ico başlıklarını kabul eder", () => {
+    expect(normalizeImageContentType("image/x-icon")).toBe("image/x-icon");
+    expect(normalizeImageContentType("image/vnd.microsoft.icon")).toBe(
+      "image/vnd.microsoft.icon",
+    );
+  });
+
+  it("svg'yi hâlâ reddeder", () => {
+    expect(normalizeImageContentType("image/svg+xml")).toBeNull();
+  });
+});

@@ -32,6 +32,7 @@ import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/edi
 import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
 import { onboardingPlatforms, onboardingTemplates, platformById } from "~/content/onboarding";
+import { linkHostLabel } from "~/lib/link-preview";
 import { noIndexMeta } from "~/lib/seo";
 import {
   BLOCK_TYPE_LABELS,
@@ -42,6 +43,7 @@ import {
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
+  faviconImageKey,
   layoutIssues,
   ensureLayoutPositions,
   normalizeTheme,
@@ -107,9 +109,9 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
   switch (type) {
     case "link":
-      return { id, type, size: "1x1", data: { title: "", url: "", ogImage: "" } };
+      return { id, type, size: "1x1", data: { title: "", url: "", ogImage: "", favicon: "" } };
     case "social":
-      return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "" } };
+      return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "", favicon: "" } };
     case "text":
       return { id, type, size: "2x1", data: { text: "" } };
     case "image":
@@ -305,15 +307,16 @@ function Inspector({
         handle: detected.handle,
         url: detected.url,
         ogImage: "",
+        favicon: "",
       });
       return;
     }
     if (block.data.platform === "website") {
-      update({ handle: "", url: value, ogImage: "" });
+      update({ handle: "", url: value, ogImage: "", favicon: "" });
       return;
     }
     const handle = value.trim().replace(/^@/, "");
-    update({ handle, url: socialUrl(block.data.platform, value), ogImage: "" });
+    update({ handle, url: socialUrl(block.data.platform, value), ogImage: "", favicon: "" });
   }
 
   /**
@@ -521,11 +524,18 @@ function Inspector({
                 value={block.data.platform}
                 onChange={(event) => {
                   const config = platformById(event.target.value as SocialPlatform);
+                  // Kullanıcı kendi başlığını yazdıysa platform değişince
+                  // silinmez; yalnız varsayılan etiket yeni platformunkine
+                  // döner (varsayılan zaten kartta görünmüyor).
+                  const current = block.data.label.trim();
+                  const wasDefault =
+                    current === "" || current === platformById(block.data.platform).label;
                   update({
                     platform: config.id,
-                    label: config.label,
+                    label: wasDefault ? config.label : current,
                     url: socialUrl(config.id, block.data.handle),
                     ogImage: "",
+                    favicon: "",
                   });
                 }}
               >
@@ -548,12 +558,42 @@ function Inspector({
                 ikisini de anlıyoruz.
               </small>
             </label>
+            {/* Başlık İSTEĞE BAĞLI: boşken kart yalnız ikon + kullanıcı adı
+                gösterir. Placeholder platformun kendi adı — yazmazsan o metin
+                kartta ÇIKMAZ, yalnız burada ne yazabileceğini anlatır. */}
+            <label>
+              Başlık (isteğe bağlı)
+              <input
+                value={
+                  block.data.label.trim() === platformById(block.data.platform).label
+                    ? ""
+                    : block.data.label
+                }
+                placeholder={platformById(block.data.platform).label}
+                onChange={(event) =>
+                  update({
+                    label: event.target.value.trim()
+                      ? event.target.value
+                      : platformById(block.data.platform).label,
+                  })
+                }
+              />
+            </label>
           </>
         );
       case "link":
         return (
           <>
-            <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+            {/* Başlık İSTEĞE BAĞLI: boşsa kart yalnız adresi yazar (eskiden
+                alan adı başlığa da kopyalanıyordu, aynı metin iki kez). */}
+            <label>
+              Başlık (isteğe bağlı)
+              <input
+                value={block.data.title}
+                placeholder={linkHostLabel(block.data.url) || "Örn. Portfolyo"}
+                onChange={(event) => update({ title: event.target.value })}
+              />
+            </label>
             <label>
               Bağlantı
               <input
@@ -562,7 +602,7 @@ function Inspector({
                 // döngüsü `ogImage` doluysa atlıyor, yani nytimes.com'dan
                 // gelen görsel yeni adrese yapışıp o hâliyle yayınlanıyordu.
                 // `social` bloğu bunu zaten yapıyor (`onSocialLink`).
-                onChange={(event) => update({ url: event.target.value, ogImage: "" })}
+                onChange={(event) => update({ url: event.target.value, ogImage: "", favicon: "" })}
               />
             </label>
           </>
@@ -1141,7 +1181,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     const timer = window.setTimeout(() => {
       for (const block of layout.blocks) {
         if (block.type !== "social" && block.type !== "link") continue;
-        if (!block.data.url || block.data.ogImage) continue;
+        if (!block.data.url || (block.data.ogImage && block.data.favicon)) continue;
         const key = `${block.id}|${block.data.url}`;
         if (ogAttemptedRef.current.has(key)) continue;
         ogAttemptedRef.current.add(key);
@@ -1150,22 +1190,38 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         void fetch(`/api/og-image?url=${encodeURIComponent(url)}`)
           .then((response) =>
             response.ok
-              ? (response.json() as Promise<{ image?: string | null; proxied?: string | null }>)
+              ? (response.json() as Promise<{
+                  image?: string | null;
+                  proxied?: string | null;
+                  favicon?: string | null;
+                  faviconProxied?: string | null;
+                }>)
               : null,
           )
           .then((result) => {
-            const image = result?.image;
-            if (!image) return;
+            const image = result?.image ?? "";
+            const favicon = result?.favicon ?? "";
+            if (!image && !favicon) return;
             // İmzalı yol layout'a YAZILMAZ (kaynak adres kaybolurdu); ayrı
             // eşlemede durur — bkz. server/layout-images.ts.
             if (result?.proxied) rememberSignedImage(id, result.proxied);
+            if (result?.faviconProxied) {
+              rememberSignedImage(faviconImageKey(id), result.faviconProxied);
+            }
             setLayout((current) => ({
               ...current,
               blocks: current.blocks.map((item) =>
                 item.id === id &&
                 (item.type === "social" || item.type === "link") &&
                 item.data.url === url
-                  ? ({ ...item, data: { ...item.data, ogImage: image } } as ProfileBlock)
+                  ? ({
+                      ...item,
+                      data: {
+                        ...item.data,
+                        ogImage: item.data.ogImage || image,
+                        favicon: item.data.favicon || favicon,
+                      },
+                    } as ProfileBlock)
                   : item,
               ),
             }));
@@ -1230,7 +1286,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       id: createBlockId(),
       type: "social",
       size: "1x1",
-      data: { platform: pick.platform, handle: "", url: "", label: config.label, ogImage: "" },
+      data: { platform: pick.platform, handle: "", url: "", label: config.label, ogImage: "", favicon: "" },
     });
   }
 
