@@ -1590,6 +1590,15 @@ a.profile-block:focus-visible {
   .profile-block-gallery[data-count="5"] img:nth-child(n + 5) { display: none; }
   .profile-block-gallery[data-count="5"] .gallery-more[data-slot="4"] { display: flex; }
   .gallery-more { right: 12px; bottom: 12px; padding: 2px 8px; font-size: 11px; }
+
+  /* Dar + kısa (178×156): kimlik satırı + 93px'lik önizleme kutusu yan yana
+     da alt alta da sığmıyor. Kart sade hâline döner. */
+  .profile-block-link.has-og .link-og,
+  .profile-block-social.has-og:not(.has-gh) .social-og { display: none; }
+  /* Görsel yokken gidiş oku geri gelir; sade kartın "buradan çıkılır"
+     işareti odur (has-og onu gizliyor). */
+  .profile-block-link.has-og .link-go { display: block; }
+  .profile-block-link.has-og .link-body { flex: 1; }
 }
 
 /* --- DAR (her yükseklikte): sosyal kart ------------------------- */
@@ -1607,27 +1616,22 @@ a.profile-block:focus-visible {
   .profile-block-social:not(.has-gh) > span:last-child,
   .profile-block-social:not(.has-gh) .social-head { width: 100%; }
   .profile-block-social:not(.has-gh) .platform-mark { width: 42px; height: 42px; border-radius: 13px; }
-  /* Bu darlıkta önizleme görseline yer yok; `size` bayat olsa bile kart
-     ezilmiş bir görselle değil, sade hâliyle durur. */
-  .profile-block-social:not(.has-gh) .social-og { display: none; }
+  /* Önizleme burada GİZLENMEZ: kutu artık og'un oranını koruyor (1,91:1),
+     yani 178px'lik dar bir kartta 178×93'lük küçük ama TAM bir görsel oluyor.
+     Eskiden `flex: 1` yüzünden ezilmiş bir şeride dönüştüğü için gizleniyordu.
+     Yer gerçekten yoksa (kısa kart) aşağıdaki bant gizliyor. */
   .profile-block-social.has-og:not(.has-gh) { flex-direction: column; }
 
   /* Bağlantı kartı: baş harf çipi üstte, başlık ve alan adı altta. */
   .profile-block-link .link-mark { width: 42px; height: 42px; border-radius: 13px; font-size: 19px; }
   .profile-block-link .link-go { top: 12px; right: 12px; }
 
-  /* ÖNİZLEMENİN EN KÜÇÜK GENİŞLİĞİ. 1 track'lik kart 158-181px geniştir;
-     1,91:1 bir og görseli bu kutuya ancak iki yanı kesilerek giriyor ve
-     kesilen yer tam olarak og'ların yazı taşıdığı yer. Ölçülen bantlar
-     arasında (1 track 158-181 | 2 track 328-374) eşik 200px'e kondu: bunun
-     altında görsel HİÇ gösterilmez, kart kendi sade hâline döner — baş harf
-     çipi + başlık + alan adı. `display:none` + `loading="lazy"`: tarayıcı
-     görüntüyü indirmez bile. */
-  .profile-block-link.has-og .link-og { display: none; }
-  /* Görsel yokken gidiş oku geri gelir; sade kartın "buradan çıkılır"
-     işareti odur (has-og onu gizliyor). */
-  .profile-block-link.has-og .link-go { display: block; }
-  .profile-block-link.has-og .link-body { flex: 1; }
+  /* Dar + YÜKSEK kartta önizleme üstte durur; taban düzen zaten öyle. Dar +
+     KISA olanı aşağıdaki bant hallediyor. */
+
+  /* Önizleme dar kartta da gösterilir: kutu og'un oranını koruduğu için
+     178×93'lük küçük ama TAM bir görsel çıkıyor. Yalnız KISA kartta (aşağıda)
+     gizlenir — orada 93px'lik kutuya yer yok. */
 }
 
 /* --- DAR + YÜKSEK (1×2) ----------------------------------------- */
@@ -1663,12 +1667,22 @@ a.profile-block:focus-visible {
   .profile-block-gallery[data-count="4"] .gallery-more[data-slot="3"],
   .profile-block-gallery[data-count="5"] .gallery-more[data-slot="3"] { display: flex; }
 
-  /* Sosyal kartta ÖNİZLEME GÖSTERİLMEZ. Kimlik satırı (favicon + adres)
-     kartın üstünü alıyor, geriye ~70px kalıyor: 1,91:1 bir görsel oraya
-     ancak 5:1 bir şerit olarak girer. Yan yana koymak da olmuyor — 120px
-     yüksekliğinde oranlı bir kutu 229px eder, kimlik satırına 97px kalırdı.
-     Bağlantı kartındaki kuralın kardeşi: gösteremiyorsan gösterme. */
-  .profile-block-social.has-og:not(.has-gh) .social-og { display: none; }
+  /* KISA kartta önizleme ALTA sığmaz (kimlik satırından sonra ~68px kalıyor,
+     1,91:1 görsel orada 4,9'luk bir şerit olurdu) ama YANA sığar: kutu
+     genişliğin %45'iyle sınırlanır (368px'lik kartta 149×78), kimlik satırına
+     171px kalır. Küçük ama TAM bir önizleme; kartın yarısını boş bırakmaktan
+     iyi. */
+  .profile-block-social.has-og:not(.has-gh) {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+  .profile-block-social.has-og:not(.has-gh) .social-head { min-width: 0; flex: 1; }
+  .profile-block-social.has-og:not(.has-gh) .social-og {
+    width: 45%;
+    height: auto;
+    flex: none;
+  }
 }
 
 /* --- ORTA/GENİŞ + KISA: bağlantı ve video yatay düzene geçer ---- */
@@ -1807,6 +1821,34 @@ a.profile-block:focus-visible {
 
 /* --- YÜKSEK (her genişlikte): kanal kartı büyük kapağa geçer ---- */
 @container (min-height: 200px) {
+  /* ÖNİZLEME KUTUSU: GENİŞLİK, KALAN YÜKSEKLİKTEN HESAPLANIR.
+   *
+   * İki uçlu bir kusur vardı ve ikisi de görseli kırpıyordu:
+   *  • `width:100%` + `flex-shrink`: kutu kalan yükseklikten uzun çıkıyor,
+   *    flex onu eziyor, oran 1,91'den 2,70'e (558×324) çıkıyor → dikey kırpma.
+   *  • `flex: 1 1 0` ile büyütmek: bu sefer kutu kalanı yutuyor, genişlik
+   *    %100'de kilitli kaldığı için oran 1,41'e (368×324) düşüyor → YATAY
+   *    kırpma, yani og'un yazısı kesiliyor.
+   *
+   * Doğrusu genişliği iki sınırın küçüğüne bağlamak: kart genişliği ve
+   * "kalan yükseklik × 1,91". `cqh` konteynerin (ızgara hücresi) yüksekliği;
+   * çıkarılan sabit kartın kendi payı (dolgu + kimlik/başlık satırı + boşluk,
+   * ölçüldü: bağlantı 130px, sosyal 90px). Kutu böylece HER ölçüde tam
+   * 1,91 kalıyor — ne kırpma ne letterbox. */
+  .profile-block-link.has-og .link-og {
+    width: min(100%, calc((100cqh - 130px) * 1.91));
+    height: auto;
+    min-height: 0;
+    flex: none;
+    align-self: center;
+  }
+  .profile-block-social.has-og:not(.has-gh) .social-og {
+    width: min(100%, calc((100cqh - 90px) * 1.91));
+    height: auto;
+    min-height: 0;
+    flex: none;
+    align-self: center;
+  }
   .profile-block-youtube.is-channel .yt-latest {
     align-items: stretch;
     flex-direction: column;
@@ -1967,8 +2009,18 @@ a.profile-block:focus-visible {
   aspect-ratio: 16 / 9;
   margin-inline: auto;
 }
-/* Kalan yüksekliği metin alır; oynat uyarısı üçüncü satır olarak sığar. */
+/* Kalan yüksekliği metin alır. */
 .profile-block-youtube.is-video.is-embed .youtube-meta { flex: 1 1 auto; }
+/* OYNATICI HER ÖLÇÜDE 16:9. `width: 100%` kısa kartta kutuyu ezip oranı
+   bozuyordu — ölçüm: 748×156'lık kartta 5,55 (kıymık), 368×156'da 2,63.
+   Genişlik kalan yükseklikten hesaplanır; başlık varsa (`:has`) pay büyür. */
+.profile-block-youtube.is-video.is-embed:not(.is-shorts) .yt-media {
+  width: min(100%, calc((100cqh - 30px) * 16 / 9));
+  align-self: center;
+}
+.profile-block-youtube.is-video.is-embed:not(.is-shorts):has(.youtube-meta) .yt-media {
+  width: min(100%, calc((100cqh - 76px) * 16 / 9));
+}
 /* 2×2 mobilde (350×288) oynatıcı 326×183; başlık + kanal + uyarı için
    geriye 71px kalıyor. Boşluk 10 yerine 8: üç satır rahat sığsın. */
 .profile-block-youtube.is-video.is-embed { gap: 8px; }
@@ -2100,12 +2152,16 @@ a.profile-block:focus-visible {
     flex-direction: column;
     gap: 10px;
   }
+  /* Kapak KARE kalır. `flex: 1` + `aspect-ratio: auto` kalan yüksekliği
+     yutuyordu ve albüm kapağı (kare) `cover` ile kırpılıyordu — ölçüm:
+     558×324'te kutu 2,15 oranına çıkıyor, kapağın iki yanı kesiliyordu.
+     Genişlik kalan yükseklikten hesaplanır (bkz. bağlantı/sosyal kartı). */
   .profile-block-spotify .sp-cover {
-    width: 100%;
+    width: min(100%, calc(100cqh - 78px));
     height: auto;
     min-height: 0;
-    flex: 1;
-    aspect-ratio: auto;
+    flex: none;
+    align-self: center;
   }
   .profile-block-spotify .sp-foot { flex: none; }
   /* Oynatıcının TAM düzeni (kapak + başlık + kontroller + parça listesi)

@@ -169,14 +169,16 @@ export function YoutubeVideoCard({
   // ölü boşluk bırakıyordu. Sıra MEDYADAN ÖNCE — başlık videonun üstünde
   // durur (yan yana dizilen bantlarda CSS `order` ile kapak yine solda
   // kalır; bkz. app.css "youtube-meta order").
+  // GÖRÜNÜR UYARI SATIRI YOK. "Oynatınca YouTube'a bağlanılır" kartın en
+  // üstünde, başlıktan da önce duran bir gürültüydü; kapak + oynat çipi zaten
+  // ne olacağını söylüyor. Bilgi kaybolmuyor: oynat tuşunun `aria-label` ve
+  // `title`'ında duruyor, yani hem ekran okuyucuda hem imleç üstünde
+  // (bkz. `MediaHit` — rıza metni orada tek kaynak).
   const meta =
-    title || data.channelName || canPlay ? (
+    title || data.channelName ? (
       <span className="youtube-meta">
         {title ? <strong>{title}</strong> : null}
         {data.channelName ? <small>{data.channelName}</small> : null}
-        {/* Uyarı satırı basılır; kısa/dar bantlarda CSS gizler ve bilgi
-            tuşun `aria-label`/`title`'ında yaşamaya devam eder. */}
-        {canPlay ? <small className="media-note">{w.youtube.embedNotice}</small> : null}
       </span>
     ) : null;
 
@@ -268,7 +270,7 @@ export function SpotifyCard({
         <span className="spotify-meta">
           <span className="sp-kind-pill">{kindLabel}</span>
           {title ? <strong>{title}</strong> : null}
-          {canPlay ? <small className="media-note">{w.spotify.embedNotice}</small> : null}
+          {/* Uyarı yalnız oynat tuşunun adında; bkz. YouTube kartı. */}
         </span>
         <span className="sp-play" aria-hidden />
       </span>
