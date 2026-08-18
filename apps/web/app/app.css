@@ -39,6 +39,11 @@
      kırmızıyı paylaşır — üç yerde tekrarlanmasın diye token. */
   --color-youtube: #ff0000;
 
+  /* Spotify markası: oynat çipi ve tür rozeti bu yeşili paylaşır. Rozet
+     metninde ham hâli kullanılmaz — kart metniyle karıştırılarak koyu/açık
+     her profil temasında okunur hâle getirilir (bkz. `.sp-kind-pill`). */
+  --color-spotify: #1db954;
+
   /* Türetilmiş: lime blok üzerindeki kontrast rengi (landing mockup'ından örneklendi).
      Favicon asset'lerinin zemini #3554ec'dir; token mavisi kılavuzu izler. */
   --color-kirec-koyu: #233917;
@@ -1753,6 +1758,242 @@ a.profile-block:focus-visible {
   .profile-block-youtube.is-channel.has-latest .yt-avatar { width: 56px; height: 56px; }
   .profile-block-youtube.is-channel.has-latest .yt-channel-head .youtube-meta { flex: none; }
   .profile-block-youtube.is-channel.has-latest .yt-latest { flex: 1; }
+}
+
+/* ---------------------------------------------------------------- *
+ * Yerinde oynatma (facade → iframe) — YouTube videosu ve Spotify.
+ *
+ * Kart açılışta üçüncü tarafa HİÇ istek atmaz: görünen şey bizim
+ * proxy'lediğimiz kapaktır. Oynatıcı ancak tıklamayla doğar; gerekçe ve
+ * hidrasyon notu `components/media-embed.tsx`'te.
+ *
+ * Ölçülen tile'lar (masaüstü / mobil):
+ *   2×1 374×156 / 350×138 · 2×2 374×324 / 350×288 · 4×1 760×156 · 4×2 760×324
+ * YouTube her zaman 2 satır yüksektir (şema tabanı minH=2 ve
+ * `ensureLayoutPositions` bunu public sayfada kırpar), Spotify 1 veya 2.
+ * ---------------------------------------------------------------- */
+
+/* Kartın tamamını kaplayan GÖRÜNMEZ oynat tuşu. Görsel işaretin kendisini
+   tuş yapmak dokunma hedefini çipin boyutuna indirirdi; böylece kart
+   içeriği olduğu gibi kalır ve tıklanabilir alan kartın tamamıdır. */
+.media-hit {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+}
+/* Odak halkası İÇERİ çizilir: tuş kartın tamamını kapladığı için dışa taşan
+   bir halka komşu kartların üstüne binerdi. */
+.media-hit:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 55%, transparent);
+  outline-offset: -3px;
+}
+
+/* Oynatıcı çerçevesi. Kabı tamamen doldurur; kart zaten overflow:hidden,
+   taşma olmaz ve köşe yuvarlaklığı korunur. */
+.media-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Rıza satırı: tıklamadan ÖNCE ne olacağını söyler. Bilgi ayrıca oynat
+   tuşunun aria-label/title'ında da var — bu satır gizlenirse bile
+   kullanıcı uyarısız kalmaz. */
+.media-note {
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 11px;
+}
+
+/* Facade'lı kart bir <a> değil (içinde <button> var, iç içe etkileşim
+   olmaz), yine de canlılık dilinin dışında kalmamalı: aynı yükselme ve
+   aynı kapak yakınlaşması. Oynatıcı açıkken hareket durur — çalan bir
+   videonun altından kartın kaçması rahatsız edici. */
+@media (hover: hover) and (pointer: fine) {
+  .profile-block.is-embed:not(.is-playing) {
+    transition: translate 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .profile-block.is-embed:not(.is-playing):hover {
+    translate: 0 -3px;
+    border-color: color-mix(in srgb, var(--profile-text) 14%, transparent);
+    box-shadow: 0 12px 28px -14px color-mix(in srgb, var(--profile-text) 42%, transparent);
+  }
+  .profile-block.is-embed .youtube-thumb,
+  .profile-block.is-embed .sp-cover img {
+    transition: scale 320ms cubic-bezier(.22, .61, .36, 1);
+  }
+  .profile-block.is-embed:not(.is-playing):hover .youtube-thumb,
+  .profile-block.is-embed:not(.is-playing):hover .sp-cover img { scale: 1.03; }
+}
+
+/* --- YouTube: gömme düzeni ------------------------------------- */
+
+/* Kapak KIRPILABİLİR, oynatıcı kırpılamaz — 16:9 oranını korumak zorunda.
+   Bu yüzden facade da tıklamadan önce aynı kutuyu kullanır: geçişte düzen
+   zıplamaz. (Kırpmalı kapak 4×2'de 2,7 en-boyda bir şeritti; oynatıcı orada
+   siyah bantlarla dolardı.) */
+.profile-block-youtube.is-embed { position: relative; }
+.profile-block-youtube.is-video.is-embed:not(.is-shorts) .yt-media {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-width: none;
+  flex: none;
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+}
+/* Kalan yüksekliği metin alır; oynat uyarısı üçüncü satır olarak sığar. */
+.profile-block-youtube.is-video.is-embed .youtube-meta { flex: 1 1 auto; }
+/* 2×2 mobilde (350×288) oynatıcı 326×183; başlık + kanal + uyarı için
+   geriye 71px kalıyor. Boşluk 10 yerine 8: üç satır rahat sığsın. */
+.profile-block-youtube.is-video.is-embed { gap: 8px; }
+/* Gömülü kartta başlık tek satır: ikinci satır uyarıyı dışarı iterdi. */
+.profile-block-youtube.is-video.is-embed strong { -webkit-line-clamp: 1; }
+
+/* GENİŞ + YÜKSEK: 3×2 (567×324) ve 4×2 (760×324).
+   Dikey dizilimde 16:9 oynatıcı tam genişlikte 4×2'de 414px ister ama
+   yalnız ~230px yer var; tam yükseklikte de 533px genişliğe çıkıp başlığa
+   yer bırakmaz. Yan yana düzen ikisini de çözer: oynatıcı %64 genişlik
+   (4×2 → 471×265, 3×2 → 347×195) — ikisi de 300px'lik iç yüksekliğe sığar. */
+@container (min-width: 500px) and (min-height: 200px) {
+  .profile-block-youtube.is-video.is-embed:not(.is-shorts) {
+    align-items: center;
+    flex-direction: row;
+    gap: 14px;
+  }
+  .profile-block-youtube.is-video.is-embed:not(.is-shorts) .yt-media {
+    width: 64%;
+    flex: none;
+    margin-inline: 0;
+  }
+  .profile-block-youtube.is-video.is-embed:not(.is-shorts) .youtube-meta { flex: 1 1 auto; }
+  /* Yanda yer bol: başlık iki satıra dönebilir. */
+  .profile-block-youtube.is-video.is-embed:not(.is-shorts) strong { -webkit-line-clamp: 2; }
+}
+
+/* --- Spotify kartı ---------------------------------------------- */
+
+/* Taban 2×1 (374×156): kapak solda kare, sağda tür rozeti + başlık +
+   uyarı, en sağda yeşil oynat çipi. Spotify'ın kendi kompakt oynatıcısıyla
+   aynı silueti kurar, yani tıklamada kart biçim değiştirmiş gibi olmaz. */
+.profile-block-spotify {
+  position: relative;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+.sp-cover {
+  position: relative;
+  display: block;
+  height: 100%;
+  flex: none;
+  border-radius: var(--radius-lg);
+  /* Kapak imzalanamadıysa (sır yok / uzak hata) kart kırık <img> göstermez. */
+  background: color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 8%, transparent);
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.sp-cover img,
+.sp-cover-empty { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sp-foot { display: flex; min-width: 0; flex: 1; align-items: center; gap: 10px; }
+.spotify-meta {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+}
+.profile-block-spotify strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.profile-block-spotify small {
+  overflow: hidden;
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Tür rozeti kartın çaldığı şeyi söyleyen TEK işaret (sanatçı adı için yuva
+   yok — oEmbed vermiyor), o yüzden her boyutta durur. Ham marka yeşili açık
+   kartta okunmuyor; kart metniyle karıştırılınca koyu temada açılır, açık
+   temada koyulur. */
+.sp-kind-pill {
+  align-self: flex-start;
+  flex: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-spotify) 16%, transparent);
+  padding: 2px 9px;
+  color: color-mix(in srgb, var(--color-spotify) 72%, var(--profile-card-text, var(--profile-text)));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+/* Oynat çipi: yuvarlak yeşil + beyaz üçgen. Tamamı CSS — YouTube'un köşeli
+   kırmızı çipinden ilk bakışta ayrılır, ek istek yok. */
+.sp-play {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-spotify);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.22);
+}
+.sp-play::after {
+  content: "";
+  width: 0;
+  height: 0;
+  /* Üçgenin görsel ağırlık merkezi sola kaçık; daireye ortalamak için itilir. */
+  margin-left: 3px;
+  border-width: 7px 0 7px 12px;
+  border-style: solid;
+  border-color: transparent transparent transparent white;
+}
+/* Oynatıcı Spotify'ın kendi köşe yuvarlaklığını ve iç boşluğunu getiriyor;
+   kartın dolgusu kalsaydı çerçeve iki kez çerçevelenmiş görünürdü. */
+.profile-block-spotify.is-playing { padding: 0; }
+/* Kompakt oynatıcı 152px ister (ölçüldü). Mobil 2×1 yalnız 138px veriyor ve
+   138 verilince Spotify daha dar bir düzene düşüp kartın altında beyaz bir
+   şerit bırakıyor. 152 verip ORTALIYORUZ: kart 7'şer piksel kırpıyor,
+   oynatıcının kendi iç boşluğu bunu yutuyor ve hiçbir kontrol kesilmiyor
+   (tarayıcıda doğrulandı, 390px genişlik). İki satırlı tile'larda
+   (≥288px) kural zaten etkisiz. */
+.profile-block-spotify.is-playing .media-frame { min-height: 152px; align-self: center; }
+
+/* YÜKSEK (2 satır): kapak üstte büyür, metin ve çip altta bir satır olur. */
+@container (min-height: 200px) {
+  .profile-block-spotify {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .profile-block-spotify .sp-cover {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: 1;
+    aspect-ratio: auto;
+  }
+  .profile-block-spotify .sp-foot { flex: none; }
+  /* Oynatıcının TAM düzeni (kapak + başlık + kontroller + parça listesi)
+     352px'te açılıyor; 324px'lik tile'a 322 verildiğinde Spotify kompakt
+     düzene düşüp kartın alt yarısını boş bırakıyordu (ölçüldü). 352 verip
+     30px'i kırpmak, yarısı beyaz bir karttan iyi: kesilen şey listenin
+     alt satırı, hiçbir kontrol değil. */
+  .profile-block-spotify.is-playing .media-frame { min-height: 352px; }
 }
 
 .profile-block-status {

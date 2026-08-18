@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
+import { SpotifyCard, YoutubePlayMark, YoutubeVideoCard } from "~/components/media-embed";
 import { RichTextView } from "~/components/rich-text";
 import {
   githubDayTitle,
@@ -18,9 +19,7 @@ import {
   galeriEtiketi,
   youtubeKanalRozeti,
   youtubeKanalYedekBasligi,
-  youtubeShortsRozeti,
   youtubeSonVideoBasligi,
-  youtubeVideoYedekBasligi,
 } from "~/content/widget";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
 import { linkBrand, linkHostLabel, prettyLinkTarget } from "~/lib/link-preview";
@@ -68,19 +67,12 @@ function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
  */
 const GALLERY_BADGE_SLOTS = [1, 2, 3, 4] as const;
 
-/**
- * YouTube oynatma göstergesi. Kırmızı çip + beyaz üçgen; tamamı CSS, ek
- * istek yok. Video kartını kanal kartından ayıran ilk işaret bu.
- */
-function YoutubePlayMark({ small = false }: { small?: boolean }) {
-  return <span className={`yt-play${small ? " is-small" : ""}`} aria-hidden />;
-}
-
 export function ProfileBlockCard({
   block,
   githubCalendars,
   signedImages,
   youtubeFeeds,
+  allowEmbeds = false,
 }: {
   block: ProfileBlock;
   githubCalendars?: GithubCalendarMap;
@@ -91,6 +83,13 @@ export function ProfileBlockCard({
   /** blok kimliği → kanalın en son videosu (loader doldurur; editörde boş
       kalır ve kart kayıt anında saklanan bilgiye düşer). */
   youtubeFeeds?: YoutubeFeedMap;
+  /**
+   * Medya kartları YERİNDE oynatılabilir mi? Yalnız public profil (`/:username`)
+   * true geçer. Editör tuvalinde oynatma sürükleme/yeniden boyutlandırmayla
+   * çakışır, panel önizlemesinde de gereksiz — oralarda facade görünür ama
+   * tıklama oynatmaz.
+   */
+  allowEmbeds?: boolean;
 }) {
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
   // tanımsız veya blokta görsel yok) kart görselsiz tasarımına düşer.
@@ -311,42 +310,12 @@ export function ProfileBlockCard({
       // doğrudan istek atmasın diye birinci taraf proxy'sinden geçer (R58).
       const thumbnail = signedImage;
 
+      // Video kartı kendi oynatma durumunu tutuyor (facade → iframe), bu
+      // yüzden ayrı bir bileşen: hook'lar bir `switch` dalının içinde
+      // yaşayamaz (blok tipi değişince çağrı sırası bozulurdu).
       if (data.kind === "video") {
-        const content = (
-          <>
-            <span className="yt-media">
-              {thumbnail ? (
-                <img
-                  className="youtube-thumb"
-                  src={thumbnail}
-                  alt=""
-                  loading="lazy"
-                  draggable={false}
-                />
-              ) : (
-                <span className="youtube-thumb yt-thumb-empty" aria-hidden />
-              )}
-              <YoutubePlayMark />
-              {data.shorts ? <span className="yt-pill">{youtubeShortsRozeti}</span> : null}
-            </span>
-            <span className="youtube-meta">
-              <strong>{data.title || youtubeVideoYedekBasligi}</strong>
-              <small>{data.channelName}</small>
-            </span>
-          </>
-        );
-        // 9:16 çerçeve yalnız küçük görsel GERÇEKTEN dikeyse doğru. Bir
-        // Short'un `mqdefault`'u da 16:9 gelir; `shorts` bayrağına bakarak
-        // çerçeve seçmek o görselin genişliğinin çoğunu kırpıyordu.
-        const className = `profile-block profile-block-youtube is-video${
-          data.verticalThumbnail ? " is-shorts" : ""
-        }`;
-        return data.url ? (
-          <a className={className} href={data.url} target="_blank" rel="noreferrer">
-            {content}
-          </a>
-        ) : (
-          <article className={className}>{content}</article>
+        return (
+          <YoutubeVideoCard data={data} thumbnail={thumbnail} allowEmbeds={allowEmbeds} />
         );
       }
 
@@ -402,6 +371,14 @@ export function ProfileBlockCard({
       );
     }
 
+    // Spotify: YouTube videosuyla aynı facade → iframe deseni. Kart, çalacak
+    // şeyi kapak + tür rozeti + başlıkla anlatır; oynatıcı ancak tıklamayla
+    // doğar (bkz. `components/media-embed.tsx`).
+    case "spotify":
+      return (
+        <SpotifyCard data={block.data} thumbnail={signedImage} allowEmbeds={allowEmbeds} />
+      );
+
     default: {
       // Tanınmayan tip: derleyici burada hata verir. Çalışma anında (eski
       // deploy + yeni blok) sessizce boş kalır, sayfayı düşürmez.
@@ -419,6 +396,7 @@ export function ProfileCanvas({
   githubCalendars,
   signedImages,
   youtubeFeeds,
+  allowEmbeds = false,
 }: {
   layout: ProfileLayout;
   theme: ProfileTheme;
@@ -429,6 +407,8 @@ export function ProfileCanvas({
   signedImages?: Readonly<Record<string, string>>;
   /** blok kimliği → kanalın en son videosu (loader doldurur) */
   youtubeFeeds?: YoutubeFeedMap;
+  /** Medya kartları yerinde oynatılabilsin mi? Yalnız public profil true geçer. */
+  allowEmbeds?: boolean;
 }) {
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
@@ -468,6 +448,7 @@ export function ProfileCanvas({
                   githubCalendars={githubCalendars}
                   signedImages={signedImages}
                   youtubeFeeds={youtubeFeeds}
+                  allowEmbeds={allowEmbeds}
                 />
               </div>
             );

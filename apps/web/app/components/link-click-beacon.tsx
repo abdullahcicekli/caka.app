@@ -42,9 +42,12 @@ export function LinkClickBeacon({ username }: { username: string }) {
       if (event.button !== 0 && event.button !== 1) return;
       const target = event.target;
       if (!(target instanceof Element)) return;
-      const anchor = target.closest("a[href]");
-      if (!anchor) return;
-      const holder = anchor.closest("[data-block-id]");
+      // Bağlantılar ve YERİNDE OYNATILAN medya kartları. İkincisi bir <a>
+      // değil (gömme modunda kart bir düğme), o yüzden ayrıca işaretli:
+      // aksi hâlde YouTube/Spotify blokları panelde hep sıfır görünürdü.
+      const trigger = target.closest('a[href], [data-measure="play"]');
+      if (!trigger) return;
+      const holder = trigger.closest("[data-block-id]");
       const blockId = holder?.getAttribute("data-block-id");
       if (!blockId) return;
       sendClick(username, blockId);

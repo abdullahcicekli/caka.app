@@ -10,6 +10,7 @@ import { ogApi } from "./og";
 import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
 import { seoRoutes } from "./seo";
+import { spotifyApi } from "./spotify-api";
 import { youtubeApi } from "./youtube-api";
 
 // Hono; API, R2 görselleri ve makine-okur SEO endpointlerini taşır. SSR
@@ -34,6 +35,9 @@ honoApp.route("/api/og-image", ogApi);
 // Editörün YouTube çözümleme ucu (KTD34): GET /api/youtube?url=… — video mu
 // kanal mı olduğu kayıt anında burada çözülür, render tekrarlamaz.
 honoApp.route("/api/youtube", youtubeApi);
+// Editörün Spotify çözümleme ucu: GET /api/spotify?url=… — tür (parça/albüm/
+// liste/…) ve kimlik kayıt anında burada çözülür, render tekrarlamaz.
+honoApp.route("/api/spotify", spotifyApi);
 // Uzak önizleme görselleri birinci taraftan servis edilir (backlog #6):
 // ziyaretçinin IP/UA'sı uzak host'a gitmez, üçüncü taraf çerezi yazılamaz.
 honoApp.route("/api/gorsel", imageProxyApi);

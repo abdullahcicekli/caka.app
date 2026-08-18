@@ -15,7 +15,7 @@ export const analitik = {
   pencereEtiketi: "Son 30 gün",
 
   gorunumBaslik: "Görüntülenme",
-  tiklamaBaslik: "Tıklama",
+  tiklamaBaslik: "Etkileşim",
   bugunBaslik: "Bugün",
 
   grafikBaslik: "Günlük görüntülenme",
@@ -23,8 +23,9 @@ export const analitik = {
   grafikAria: (toplam: string) => `Son 30 günün günlük görüntülenme grafiği, toplam ${toplam}`,
   gunEtiketi: (gun: string, sayi: string) => `${formatDayKey(gun)}: ${sayi} görüntülenme`,
 
-  baglantiBaslik: "Bağlantı tıklamaları",
-  baglantiBos: "Sayfanda tıklanabilir bir bağlantı yok. Bağlantı ekleyince tıklamaları burada görürsün.",
+  baglantiBaslik: "Tıklama ve oynatmalar",
+  baglantiBos:
+    "Sayfanda ölçülebilir bir bağlantı ya da medya kartı yok. Bağlantı, YouTube veya Spotify ekleyince buradan takip edersin.",
 
   ulkeBaslik: "Ülkeler",
 

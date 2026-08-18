@@ -25,6 +25,7 @@ function remoteImageOf(block: ProfileLayout["blocks"][number]): string {
     case "link":
       return block.data.ogImage;
     case "youtube":
+    case "spotify":
       return block.data.thumbnail;
     default:
       return "";

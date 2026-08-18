@@ -38,6 +38,7 @@ import {
   GALLERY_MAX_PHOTOS,
   GRID_COLUMNS,
   MAX_GALLERY_BLOCKS,
+  SPOTIFY_KIND_LABELS,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
@@ -49,11 +50,14 @@ import {
   sizeFromDims,
   sizeToDims,
   socialUrl,
+  spotifyDefaultSize,
   withDerivedSmPositions,
+  type BlockSize,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
   type SocialPlatform,
+  type SpotifyKind,
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
@@ -134,6 +138,16 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
           thumbnail: "",
         },
       };
+    // Blok ilk eklendiğinde tür HENÜZ bilinmiyor: adres yapıştırılmadan
+    // parça mı albüm mü olduğu söylenemez. Kompakt oynatıcının boyutuyla
+    // (2x1) başlar, adres çözülünce `spotifyDefaultSize` türe göre büyütür.
+    case "spotify":
+      return {
+        id,
+        type,
+        size: "2x1",
+        data: { kind: "track", url: "", entityId: "", title: "", thumbnail: "" },
+      };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
     default: {
@@ -158,6 +172,7 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   // sınırı atlatabilecek ikinci bir yol açmasın.
   gallery: false,
   youtube: false,
+  spotify: false,
 };
 
 /**
@@ -198,10 +213,24 @@ type YoutubeResolveResponse =
     }
   | { error: string };
 
+/** `/api/spotify` başarılı yanıtı; hata dalında yalnız `error` döner. */
+type SpotifyResolveResponse =
+  | {
+      kind: SpotifyKind;
+      kindLabel: string;
+      url: string;
+      entityId: string;
+      title: string;
+      thumbnail: string;
+      proxied: string | null;
+    }
+  | { error: string };
+
 function Inspector({
   block,
   update,
   setData,
+  setSize,
   remove,
   close,
   onSignedImage,
@@ -211,6 +240,11 @@ function Inspector({
   /** Veriyi bütünüyle değiştirir. YouTube'da şart: video ↔ kanal geçişi
       ayrımlı birleşimin DALINI değiştirir, alan yamalamakla olmaz. */
   setData: (data: ProfileBlock["data"]) => void;
+  /** Bloğu yeniden boyutlandırır. Spotify'da şart: gömme yüksekliği türe
+      bağlı (parça 152px, diğerleri 352px) ve tür ancak adres çözülünce
+      biliniyor — kullanıcıyı elle boyutlandırmaya bırakmak, kırpılmış bir
+      oynatıcıyı ona düzelttirmek olurdu. */
+  setSize: (size: BlockSize) => void;
   remove: () => void;
   close: () => void;
   /** Bloğun uzak görselinin imzalı yolu; editörün `signedImages` eşlemesine
@@ -230,6 +264,14 @@ function Inspector({
   const [youtubeError, setYoutubeError] = useState<string | null>(null);
   // Aynı adres için tekrar tekrar istek atma; çözülen adres de buraya yazılır.
   const youtubeAttemptedRef = useRef("");
+  // Spotify: YouTube ile aynı desen — ham adres ayrı tutulur, blok yalnız
+  // çözümleme başarılı olunca güncellenir.
+  const [spotifyInput, setSpotifyInput] = useState(() =>
+    block.type === "spotify" ? block.data.url : "",
+  );
+  const [spotifyBusy, setSpotifyBusy] = useState(false);
+  const [spotifyError, setSpotifyError] = useState<string | null>(null);
+  const spotifyAttemptedRef = useRef("");
   // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
   // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
   const [socialLink, setSocialLink] = useState(() =>
@@ -240,6 +282,9 @@ function Inspector({
     setYoutubeInput(block.type === "youtube" ? block.data.url : "");
     youtubeAttemptedRef.current = block.type === "youtube" ? block.data.url : "";
     setYoutubeError(null);
+    setSpotifyInput(block.type === "spotify" ? block.data.url : "");
+    spotifyAttemptedRef.current = block.type === "spotify" ? block.data.url : "";
+    setSpotifyError(null);
     setUploadError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız blok değişince
   }, [block.id]);
@@ -374,6 +419,59 @@ function Inspector({
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız adres değişince
   }, [youtubeInput, block.id]);
+
+  /**
+   * Adresi `/api/spotify`'ye sorar; tür (parça/albüm/liste/…) ORADA çözülür.
+   * Başarıda blok verisi bütünüyle değişir ve boyut türe göre ayarlanır;
+   * hatada blok olduğu gibi kalır ve sunucunun Türkçe gerekçesi gösterilir.
+   */
+  async function resolveSpotify(value: string) {
+    spotifyAttemptedRef.current = value;
+    setSpotifyBusy(true);
+    setSpotifyError(null);
+    try {
+      const response = await fetch(`/api/spotify?url=${encodeURIComponent(value)}`);
+      const result = (await response.json()) as SpotifyResolveResponse;
+      if (!response.ok || !("kind" in result)) {
+        setSpotifyError(
+          ("error" in result && result.error) || "Spotify bağlantısı çözümlenemedi.",
+        );
+        return;
+      }
+      setData({
+        kind: result.kind,
+        url: result.url,
+        entityId: result.entityId,
+        title: result.title,
+        thumbnail: result.thumbnail,
+      });
+      // Gömme yüksekliği türe bağlı: parça 152px (2x1), diğerleri 352px (2x2).
+      setSize(spotifyDefaultSize(result.kind));
+      // `proxied` yoksa (kapaksız içerik) eski kaydı temizle — parçadan
+      // listeye geçen kullanıcı, aksi hâlde bayat bir kapak görürdü.
+      onSignedImage(result.proxied ?? "");
+      // Kanonik adresi alana yaz: `?si=…` takip parametreleri ve ülke öneki
+      // temizlenmiş hâlini görsün. Ref de güncellenir, yoksa değişen değer
+      // yeni bir çözümleme tetiklerdi.
+      spotifyAttemptedRef.current = result.url;
+      setSpotifyInput(result.url);
+    } catch {
+      setSpotifyError("Spotify bağlantısı çözümlenemedi — bağlantını kontrol et.");
+    } finally {
+      setSpotifyBusy(false);
+    }
+  }
+
+  // YouTube'daki gerekçenin aynısı: yapıştırdıktan kısa süre sonra kendiliğinden
+  // çözümle, kullanıcıya ayrıca "çözümle" düğmesi tıklatma.
+  useEffect(() => {
+    if (block.type !== "spotify") return;
+    const value = spotifyInput.trim();
+    if (!value || value === spotifyAttemptedRef.current) return;
+    const timer = window.setTimeout(() => void resolveSpotify(value), 700);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız adres değişince
+  }, [spotifyInput, block.id]);
 
   // Alanlar tip başına tek bir switch'te toplanır: `never` default'u sayesinde
   // yeni bir blok tipi eklendiğinde derleyici burada durur (eskiden art arda
@@ -627,6 +725,39 @@ function Inspector({
           </>
         );
       }
+      case "spotify": {
+        // Tek alan: adres. Tür (parça/albüm/liste/sanatçı/podcast/bölüm)
+        // kayıt anında sunucuda çözülür, kullanıcı listeden seçmez —
+        // yapıştırdığı bağlantı zaten söylüyor. Ama SONUÇ gösterilir:
+        // yanlış şeyi eklediyse anlaması gerek.
+        const resolved = block.data.entityId
+          ? `${SPOTIFY_KIND_LABELS[block.data.kind]} olarak eklendi${
+              block.data.title ? ` — ${block.data.title}` : ""
+            }`
+          : null;
+        return (
+          <>
+            <label>Spotify bağlantısı
+              <input
+                value={spotifyInput}
+                placeholder="open.spotify.com/track/… ya da spotify:album:…"
+                onChange={(event) => setSpotifyInput(event.target.value)}
+              />
+              <small className="inspector-hint">
+                Parça, albüm, çalma listesi, sanatçı, podcast ve bölüm eklenebilir — ne
+                yapıştırdıysan onu ekleriz.
+              </small>
+            </label>
+            {spotifyBusy ? <p className="inspector-hint">Çözümleniyor…</p> : null}
+            {spotifyError ? (
+              <p className="inspector-error" role="alert">{spotifyError}</p>
+            ) : null}
+            {!spotifyBusy && !spotifyError && resolved ? (
+              <p className="inspector-hint">{resolved}</p>
+            ) : null}
+          </>
+        );
+      }
       // Metin bloğu tuval üzerinde Tiptap ile düzenlenir; panelde alanı yok.
       case "text":
         return null;
@@ -758,6 +889,36 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       }
       return current[blockId] === path ? current : { ...current, [blockId]: path };
     });
+  }
+
+  /**
+   * Bloğu sözlük ölçüsüne göre yeniden boyutlandırır (Spotify'da tür
+   * çözülünce çağrılır). `size` tek başına yetmez: gerçek yerleşim `pos`tan
+   * okunuyor, o yüzden lg/sm konumları da güncellenir. Genişleyen blok
+   * kolonların dışına taşmasın diye `x` sola çekilir; mobil konumlar sonra
+   * `withDerivedSmPositions` ile yeniden türetilir.
+   */
+  function resizeBlock(blockId: string, size: BlockSize) {
+    const { w, h } = sizeToDims(size);
+    setLayout((current) => ({
+      ...current,
+      blocks: withDerivedSmPositions(
+        current.blocks.map((block) => {
+          if (block.id !== blockId || block.type === "profile") return block;
+          if (!block.pos) return { ...block, size } as ProfileBlock;
+          const lgW = Math.min(w, GRID_COLUMNS.lg);
+          const smW = Math.min(w, GRID_COLUMNS.sm);
+          return {
+            ...block,
+            size,
+            pos: {
+              lg: { ...block.pos.lg, x: Math.min(block.pos.lg.x, GRID_COLUMNS.lg - lgW), w: lgW, h },
+              sm: { ...block.pos.sm, x: Math.min(block.pos.sm.x, GRID_COLUMNS.sm - smW), w: smW, h },
+            },
+          } as ProfileBlock;
+        }),
+      ),
+    }));
   }
 
   // R62: hesap başına galeri sınırı sunucuda (`profileLayoutWriteSchema`)
@@ -1320,6 +1481,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               ),
             }))
           }
+          setSize={(size) => resizeBlock(selected.id, size)}
           onSignedImage={(path) => rememberSignedImage(selected.id, path)}
           close={() => setSelectedId(null)}
           remove={() => {

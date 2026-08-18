@@ -262,3 +262,16 @@ widget yenilemesinden önce de vardı. Düzeltmek (`--profile-muted` opaklığı
 %56'dan ~%68'e çekmek) **yayındaki her profilin görünümünü** değiştirir, o
 yüzden kendi başına bir iş olarak planlanmalı — tercihen altı temanın
 tamamı yeniden gözden geçirilerek.
+
+## 16. Yüklenemeyen galeri fotoğrafı kırık ikon gösteriyor
+
+`/i/<assetId>` bir sebeple 404 dönerse (R2 geçici hatası) galeri hücresi
+tarayıcının kırık-görsel ikonunu ve `alt` metnini gösteriyor. Bento
+ızgarasında bu, sayfanın en görünür kartını bozuk gösterebiliyor
+(2026-08-18'de lokal test verisiyle gözlendi).
+
+Üretimde beklenmiyor: varlıklar yalnız hesap silinirken siliniyor
+(Değişmez #9) ve fotoğraf düzene ancak başarılı yüklemeden sonra ekleniyor.
+Yine de ucuz bir sağlamlaştırma var: `onError` ile başarısız görseli gizleyip
+mevcut `.profile-image-placeholder` desenine düşürmek.
+

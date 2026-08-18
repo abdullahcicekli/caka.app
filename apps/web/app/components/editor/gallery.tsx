@@ -3,7 +3,7 @@
 // blokları nötr kartlardır. Araç çubuğunun üstünde popover olarak açılır;
 // dışarı tıklama/Escape ile kapanma editördeki ortak panel handler'ındadır.
 import { useMemo, useState } from "react";
-import { ImageIcon, Images, Link2, Megaphone, MonitorPlay, Search, Type, X } from "lucide-react";
+import { AudioLines, ImageIcon, Images, Link2, Megaphone, MonitorPlay, Search, Type, X } from "lucide-react";
 
 import { SocialIcon } from "~/components/icons/social";
 import { onboardingPlatforms } from "~/content/onboarding";
@@ -33,6 +33,7 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   // iki ayrı şeyin aynı adı taşıması kullanıcıyı yanıltırdı.
   gallery: { label: "Fotoğraf galerisi", icon: Images, enabled: true },
   youtube: { label: "YouTube", icon: MonitorPlay, enabled: true },
+  spotify: { label: "Spotify", icon: AudioLines, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */

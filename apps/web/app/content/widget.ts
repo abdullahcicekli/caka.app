@@ -1,11 +1,12 @@
 /**
- * Galeri ve YouTube widget'larının kullanıcıya görünen metinleri.
+ * Galeri, YouTube ve Spotify widget'larının kullanıcıya görünen metinleri.
  * İçerik/görünüm ayrımı (Değişmez #5) gereği bileşende değil burada yaşar.
  *
  * Sayı ve tarih biçimleyicileri `Intl` KULLANMAZ: çıktı hem Worker'da hem
  * tarayıcıda birebir aynı olmalı (SSR + hidrasyon) ve ICU verisi ortama göre
  * değişebiliyor. Türkçe ondalık ayırıcı virgüldür.
  */
+import type { SpotifyKind } from "@caka/shared";
 
 /**
  * Widget'ın adı bilinçli olarak "Fotoğraf galerisi": editördeki blok seçici
@@ -46,6 +47,70 @@ export const youtubeVideoYedekBasligi = "YouTube videosu";
 
 /** Adı çözülememiş kanal kartı için yedek metin. */
 export const youtubeKanalYedekBasligi = "YouTube kanalı";
+
+/* ------------------------------------------------------------------ *
+ * Yerinde oynatma (facade → iframe).
+ *
+ * Kart açılışta ÜÇÜNCÜ TARAFA HİÇ İSTEK ATMAZ: görünen şey bizim
+ * proxy'lediğimiz kapak. Oynatıcı ancak kullanıcı tıklayınca doğar, yani
+ * YouTube/Spotify çerezi ziyaretçinin bilinçli bir eylemiyle yazılır.
+ * "Bilinçli" olması için ne olacağının ÖNCEDEN söylenmesi gerekiyor —
+ * aşağıdaki iki metin bunun için var: biri kartta görünür (yer olan
+ * boyutlarda), diğeri oynat tuşunun erişilebilir adı ve `title`'ıdır.
+ * ------------------------------------------------------------------ */
+
+/** Kartta görünen kısa satır (yalnız yer olan boyutlarda; CSS karar verir). */
+export const youtubeGommeUyarisi = "Oynatınca YouTube'a bağlanılır";
+
+/** Spotify karşılığı. */
+export const spotifyGommeUyarisi = "Oynatınca Spotify'a bağlanılır";
+
+/** Oynat tuşunun ekran okuyucu adı ve imleç ipucu — uyarıyı da taşır. */
+export function youtubeOynatEtiketi(title: string): string {
+  return `Oynat: ${title} — ${youtubeGommeUyarisi}`;
+}
+
+/** Spotify karşılığı. */
+export function spotifyOynatEtiketi(title: string): string {
+  return `Oynat: ${title} — ${spotifyGommeUyarisi}`;
+}
+
+/** `<iframe title>`: ekran okuyucu çerçeveyi bu adla duyurur. */
+export function youtubeOynaticiBasligi(title: string): string {
+  return `${title} — YouTube oynatıcı`;
+}
+
+/** Spotify karşılığı. */
+export function spotifyOynaticiBasligi(title: string): string {
+  return `${title} — Spotify oynatıcı`;
+}
+
+/** Başlığı çözülememiş Spotify kartı için yedek metin. */
+export const spotifyYedekBasligi = "Spotify içeriği";
+
+/**
+ * Tür rozeti. Sanatçı adı için yuva YOK (oEmbed vermiyor); rozet, kartın
+ * neyi çaldığını söyleyen tek işaret olduğu için her boyutta basılır.
+ *
+ * `Record` yerine `switch`: şemaya yeni bir tür eklenirse burası derleme
+ * hatası verir (bkz. `spotifyKindSchema`).
+ */
+export function spotifyTurRozeti(kind: SpotifyKind): string {
+  switch (kind) {
+    case "track":
+      return "Parça";
+    case "album":
+      return "Albüm";
+    case "playlist":
+      return "Liste";
+    case "artist":
+      return "Sanatçı";
+    case "episode":
+      return "Bölüm";
+    case "show":
+      return "Program";
+  }
+}
 
 function ondalik(value: number): string {
   const rounded = Math.round(value * 10) / 10;

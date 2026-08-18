@@ -176,6 +176,10 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
         githubCalendars={githubCalendars}
         signedImages={signedImages}
         youtubeFeeds={youtubeFeeds}
+        // Yerinde oynatma YALNIZ burada açık: editör tuvalinde oynatıcı
+        // sürükleme/yeniden boyutlandırmayla çakışır, panel önizlemesinde de
+        // gereksiz. Oralarda kart facade olarak kalır.
+        allowEmbeds
       />
       {/* Tıklama ölçümü yalnız ziyaretçide çalışır; sahibin kendi tıklaması
           sayaca girmez. Bağlantıların href'i değişmez — JS kapalıyken
