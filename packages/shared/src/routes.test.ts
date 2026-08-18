@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { SUPPORTED_LOCALES, prefixForLocale } from "./locale";
-import { ROUTE_KEYS, ROUTE_SLUGS, localizePath, parseLocalizedPath, pathFor } from "./routes";
+import {
+  ROUTE_KEYS,
+  ROUTE_SLUGS,
+  localizeHref,
+  localizePath,
+  parseLocalizedPath,
+  pathFor,
+} from "./routes";
 import { RESERVED_USERNAMES } from "./username";
 
 describe("slug tablosu", () => {
@@ -172,5 +179,34 @@ describe("localizePath", () => {
         }
       }
     }
+  });
+});
+
+describe("localizeHref", () => {
+  it("uygulama yolunu hedef dile çevirir", () => {
+    expect(localizeHref("/gizlilik", "de")).toBe("/de/datenschutz");
+    expect(localizeHref("/onboarding", "es")).toBe("/es/bienvenida");
+  });
+
+  it("çapayı korur", () => {
+    expect(localizeHref("/#urun", "de")).toBe("/de#urun");
+    expect(localizeHref("/gizlilik#haklar", "en")).toBe("/en/privacy#haklar");
+  });
+
+  it("sorgu dizesini korur", () => {
+    expect(localizeHref("/login?next=/edit", "de")).toBe("/de/anmelden?next=/edit");
+  });
+
+  it("dış bağlantıya dokunmaz", () => {
+    expect(localizeHref("https://github.com/x", "de")).toBe("https://github.com/x");
+    expect(localizeHref("mailto:hello@caka.app", "de")).toBe("mailto:hello@caka.app");
+  });
+
+  it("salt çapaya dokunmaz", () => {
+    expect(localizeHref("#urun", "de")).toBe("#urun");
+  });
+
+  it("dilden bağımsız yolu olduğu gibi bırakır", () => {
+    expect(localizeHref("/ahmet", "de")).toBe("/ahmet");
   });
 });

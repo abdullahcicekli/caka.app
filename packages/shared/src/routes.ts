@@ -189,3 +189,26 @@ export function localizePath(pathname: string, target: Locale): string {
   if (localeFromPrefix(segments[0] ?? "")) segments.shift();
   return `/${segments.join("/")}`;
 }
+
+/**
+ * Katalog içindeki bir bağlantıyı hedef dile çevirir.
+ *
+ * Kataloglar adresleri **Türkçe hâliyle** tutar (`/gizlilik`); okunur kalsın
+ * ve dil boyutu her satıra sızmasın diye. Çeviri render anında burada olur.
+ *
+ * Dokunulmayanlar: şema taşıyan bağlantılar (`https:`, `mailto:`) ve salt
+ * çapa (`#urun`). Sorgu dizesi ve çapa korunur.
+ */
+export function localizeHref(href: string, locale: Locale): string {
+  if (!href.startsWith("/")) return href;
+
+  const hashIndex = href.indexOf("#");
+  const hash = hashIndex === -1 ? "" : href.slice(hashIndex);
+  const withoutHash = hashIndex === -1 ? href : href.slice(0, hashIndex);
+
+  const queryIndex = withoutHash.indexOf("?");
+  const query = queryIndex === -1 ? "" : withoutHash.slice(queryIndex);
+  const pathname = queryIndex === -1 ? withoutHash : withoutHash.slice(0, queryIndex);
+
+  return localizePath(pathname, locale) + query + hash;
+}
