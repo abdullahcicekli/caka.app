@@ -31,7 +31,6 @@ import {
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
-import { onboardingPlatforms, onboardingTemplates, platformById } from "~/content/onboarding";
 import { noIndexMeta } from "~/lib/seo";
 import {
   BLOCK_TYPE_LABELS,
@@ -65,6 +64,7 @@ import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 import { localizedRedirect } from "../../server/locale";
+import { useOnboardingLists } from "~/lib/onboarding";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Editör — Caka");
@@ -252,6 +252,7 @@ function Inspector({
       eklenir ki kullanıcı kaydetmeyi beklemeden önizlemeyi görsün. */
   onSignedImage: (path: string) => void;
 }) {
+  const onboarding = useOnboardingLists();
   const [uploading, setUploading] = useState(false);
   // Çoklu seçimde tek bir "Yükleniyor…" beş fotoğraf boyunca donmuş görünür;
   // kaçıncı dosyada olduğumuz yazılınca bekleme anlaşılır oluyor.
@@ -299,7 +300,7 @@ function Inspector({
     if (block.type !== "social") return;
     const detected = detectSocialFromUrl(value);
     if (detected?.handle) {
-      const config = platformById(detected.platform);
+      const config = onboarding.byId(detected.platform);
       update({
         platform: detected.platform,
         label: config.label,
@@ -521,7 +522,7 @@ function Inspector({
               <select
                 value={block.data.platform}
                 onChange={(event) => {
-                  const config = platformById(event.target.value as SocialPlatform);
+                  const config = onboarding.byId(event.target.value as SocialPlatform);
                   update({
                     platform: config.id,
                     label: config.label,
@@ -530,7 +531,7 @@ function Inspector({
                   });
                 }}
               >
-                {onboardingPlatforms.map((platform) => (
+                {onboarding.platforms.map((platform) => (
                   <option key={platform.id} value={platform.id}>{platform.label}</option>
                 ))}
               </select>
@@ -538,7 +539,7 @@ function Inspector({
             <label>Bağlantı ya da kullanıcı adı
               <input
                 value={socialLink}
-                placeholder={platformById(block.data.platform).placeholder}
+                placeholder={onboarding.byId(block.data.platform).placeholder}
                 onChange={(event) => {
                   setSocialLink(event.target.value);
                   applySocialLink(event.target.value);
@@ -839,6 +840,7 @@ function Inspector({
 }
 
 export default function Editor({ loaderData }: Route.ComponentProps) {
+  const onboarding = useOnboardingLists();
   const [layout, setLayout] = useState<ProfileLayout>(loaderData.layout);
   const [theme, setTheme] = useState<ProfileTheme>(loaderData.theme);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -1226,7 +1228,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   function addFromGallery(pick: GalleryPick) {
     if (pick.kind === "content") return add(pick.type);
 
-    const config = platformById(pick.platform);
+    const config = onboarding.byId(pick.platform);
     insertBlock({
       id: createBlockId(),
       type: "social",
@@ -1504,7 +1506,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
       {panel === "theme" ? (
         <div className="theme-popover editor-popover" role="group" aria-label="Tema seç">
-          {onboardingTemplates.map((template) => (
+          {onboarding.templates.map((template) => (
             <button
               key={template.id}
               type="button"

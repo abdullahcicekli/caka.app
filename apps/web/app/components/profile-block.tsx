@@ -10,13 +10,13 @@ import {
   githubFootHint,
   githubTotalLine,
 } from "~/content/github";
-import { platformById } from "~/content/onboarding";
 import { widgetCatalog } from "~/content/widget";
 import { useCatalog } from "~/lib/locale";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
 import { linkBrand, linkHostLabel, prettyLinkTarget } from "~/lib/link-preview";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
 import { ProfileAvatar } from "./profile-avatar";
+import { useOnboardingLists } from "~/lib/onboarding";
 
 function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
   const w = useCatalog(widgetCatalog);
@@ -84,6 +84,7 @@ export function ProfileBlockCard({
    */
   allowEmbeds?: boolean;
 }) {
+  const onboarding = useOnboardingLists();
   const w = useCatalog(widgetCatalog);
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
   // tanımsız veya blokta görsel yok) kart görselsiz tasarımına düşer.
@@ -138,7 +139,7 @@ export function ProfileBlockCard({
         />
       );
     }
-    const platform = platformById(block.data.platform);
+    const platform = onboarding.byId(block.data.platform);
     // GitHub kartında görsel odak katkı grafiğidir. Veri yoksa (token yok /
     // hata / bilinmeyen kullanıcı) kart eski davranışına döner.
     const calendar =

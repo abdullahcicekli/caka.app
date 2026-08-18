@@ -22,12 +22,11 @@ import { Form, Link, data, redirect, useNavigate, useNavigation } from "react-ro
 import { ProfileAvatar } from "~/components/profile-avatar";
 import { SocialIcon } from "~/components/icons/social";
 import {
-  discoveryOptions,
-  onboardingPlatforms,
-  onboardingPurposes,
-  onboardingTemplates,
-  platformById,
-} from "~/content/onboarding";
+  DISCOVERY_IDS,
+  PURPOSE_IDS,
+  TEMPLATE_ORDER,
+} from "~/content/onboarding/shared";
+import { useOnboardingLists } from "~/lib/onboarding";
 import { parseSeedProfile } from "~/lib/profile-view";
 import { noIndexMeta } from "~/lib/seo";
 import {
@@ -180,7 +179,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (step === "amac") {
-    const allowed = new Set(onboardingPurposes.map((item) => item.id));
+    const allowed = new Set<string>(PURPOSE_IDS);
     patch = {
       purposes: form
         .getAll("purpose")
@@ -190,7 +189,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (step === "kesif") {
-    const allowed = new Set(discoveryOptions.map((item) => item.id));
+    const allowed = new Set<string>(DISCOVERY_IDS);
     const discovery = String(form.get("discovery") ?? "");
     patch = { discovery: allowed.has(discovery as never) ? discovery : "" };
   }
@@ -198,7 +197,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (step === "sablon") {
     const template = intent === "skip" ? "sade" : String(form.get("template") ?? "sade");
     patch = {
-      template: onboardingTemplates.some((item) => item.id === template)
+      template: TEMPLATE_ORDER.some((item) => item.id === template)
         ? template
         : "sade",
     };
@@ -410,6 +409,7 @@ function ProfileStep({
 }
 
 function PlatformsStep({ initial }: { initial: SocialPlatform[] }) {
+  const lists = useOnboardingLists();
   const [selected, setSelected] = useState<SocialPlatform[]>(initial);
   return (
     <Form method="post" className="onboarding-form">
@@ -421,7 +421,7 @@ function PlatformsStep({ initial }: { initial: SocialPlatform[] }) {
         <p>Seçtiğin her platform sayfanda bir blok olarak görünür. Kullanıcı adlarını sonra da girebilirsin.</p>
       </header>
       <div className="platform-grid">
-        {onboardingPlatforms.map((platform) => {
+        {lists.platforms.map((platform) => {
           const active = selected.includes(platform.id);
           return (
             <button
@@ -451,6 +451,7 @@ function PlatformsStep({ initial }: { initial: SocialPlatform[] }) {
 }
 
 function PurposeStep({ initial }: { initial: string[] }) {
+  const lists = useOnboardingLists();
   const [selected, setSelected] = useState(initial);
   return (
     <Form method="post" className="onboarding-form">
@@ -462,7 +463,7 @@ function PurposeStep({ initial }: { initial: string[] }) {
         <p>Sana uyanları seç. Sayfanı buna göre hazırlayalım, ayarlarla uğraşma.</p>
       </header>
       <div className="selection-list">
-        {onboardingPurposes.map((purpose) => {
+        {lists.purposes.map((purpose) => {
           const active = selected.includes(purpose.id);
           return (
             <button
@@ -491,6 +492,7 @@ function PurposeStep({ initial }: { initial: string[] }) {
 }
 
 function DiscoveryStep({ initial }: { initial: string }) {
+  const lists = useOnboardingLists();
   const [selected, setSelected] = useState(initial);
   return (
     <Form method="post" className="onboarding-form">
@@ -499,7 +501,7 @@ function DiscoveryStep({ initial }: { initial: string }) {
         <p>Caka’yı nereden duydun?</p>
       </header>
       <div className="selection-list discovery-list">
-        {discoveryOptions.map((option) => (
+        {lists.discovery.map((option) => (
           <label key={option.id} className={selected === option.id ? "is-selected" : ""}>
             <PurposeIcon name={option.icon} />
             <span>{option.label}</span>
@@ -530,6 +532,7 @@ function TemplateStep({
   avatarUrl: string | null;
   platforms: SocialPlatform[];
 }) {
+  const lists = useOnboardingLists();
   const [selected, setSelected] = useState(initial || "gece");
   const previewPlatforms = platforms.slice(0, 3);
   return (
@@ -540,7 +543,7 @@ function TemplateStep({
         <p>Sana uyan stili seç, içeriğini sonra ekle.</p>
       </header>
       <div className="template-grid">
-        {onboardingTemplates.map((template) => (
+        {lists.templates.map((template) => (
           <button
             type="button"
             key={template.id}
@@ -558,7 +561,7 @@ function TemplateStep({
             <small>Tasarım · İstanbul</small>
             <span className="template-social-list" aria-hidden>
               {(previewPlatforms.length ? previewPlatforms : [null, null, null]).map((platform, index) => {
-                const config = platform ? platformById(platform) : null;
+                const config = platform ? lists.byId(platform) : null;
                 return (
                   <span className="template-social-row" key={platform ?? `placeholder-${index}`}>
                     <span className={`template-social-icon ${config?.tone ?? "is-placeholder"}`}>
@@ -578,6 +581,7 @@ function TemplateStep({
 }
 
 function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: OnboardingLink[] }) {
+  const lists = useOnboardingLists();
   const selected = platforms.length ? platforms : (["website"] as SocialPlatform[]);
   const initial = new Map(links.map((link) => [link.platform, link.value]));
   const [extras, setExtras] = useState(["", ""]);
@@ -590,7 +594,7 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
       <section className="link-fields">
         <h2>Seçtiklerin</h2>
         {selected.map((platform) => {
-          const config = platformById(platform);
+          const config = lists.byId(platform);
           return (
             <label key={platform}>
               <span className={`platform-mark ${config.tone}`}>
@@ -659,6 +663,7 @@ function ReadyStep({
   avatarUrl: string | null;
   links: OnboardingLink[];
 }) {
+  const lists = useOnboardingLists();
   return (
     <div className="ready-screen">
       <header className="onboarding-heading compact">
@@ -671,7 +676,7 @@ function ReadyStep({
         <small>{bio}</small>
         <div>
           {links.slice(0, 2).map((link) => {
-            const platform = platformById(link.platform);
+            const platform = lists.byId(link.platform);
             return (
               <span key={`${link.platform}-${link.value}`}>
                 <span className={`platform-mark ${platform.tone}`}>

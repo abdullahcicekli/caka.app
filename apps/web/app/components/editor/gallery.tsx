@@ -16,8 +16,8 @@ import {
 } from "iconoir-react";
 
 import { SocialIcon } from "~/components/icons/social";
-import { onboardingPlatforms } from "~/content/onboarding";
 import type { ProfileBlock, SocialPlatform } from "@caka/shared";
+import { useOnboardingLists } from "~/lib/onboarding";
 
 export type GalleryPick =
   | { kind: "content"; type: Exclude<ProfileBlock["type"], "profile" | "social"> }
@@ -63,6 +63,7 @@ export function BlockGallery({
       edilemez — kullanıcı neden olmadığını görmeli. */
   blockers?: BlockAddBlockers;
 }) {
+  const onboarding = useOnboardingLists();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
 
@@ -70,7 +71,7 @@ export function BlockGallery({
   const matches = (label: string) => !needle || label.toLocaleLowerCase("tr").includes(needle);
 
   const socialItems = useMemo(
-    () => onboardingPlatforms.filter((platform) => matches(platform.label)),
+    () => onboarding.platforms.filter((platform) => matches(platform.label)),
     [needle],
   );
   const contentItems = useMemo(
