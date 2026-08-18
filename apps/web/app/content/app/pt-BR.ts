@@ -130,6 +130,7 @@ export const ptBR = {
     youtubeLinkLabel: "Link do YouTube",
     youtubeHint:
       "A gente diferencia endereços de vídeo e de canal — adicionamos o que você colar.",
+    linkTitlePlaceholder: "Ex. Portfólio",
     optionalTitle: "Título (opcional)",
     spotifyLinkLabel: "Link do Spotify",
     spotifyHint:

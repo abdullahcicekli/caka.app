@@ -221,7 +221,10 @@ export function SpotifyCard({
   const w = useCatalog(widgetCatalog);
   const [playing, setPlaying] = useState(false);
   const canPlay = allowEmbeds && data.entityId !== "";
-  const title = data.title || w.spotify.fallbackTitle;
+  // Başlık isteğe bağlı (YouTube kartıyla aynı kural): yedek metin yalnız
+  // erişilebilir adda yaşar, kartta hiçbir şey söylemeyen bir satır olmaz.
+  const title = data.title.trim();
+  const playLabel = w.spotify.playLabel(title || w.spotify.fallbackTitle);
   const kindLabel = w.spotify.kind(data.kind);
 
   const className = `profile-block profile-block-spotify${canPlay ? " is-embed" : ""}${
@@ -264,7 +267,7 @@ export function SpotifyCard({
       <span className="sp-foot">
         <span className="spotify-meta">
           <span className="sp-kind-pill">{kindLabel}</span>
-          <strong>{title}</strong>
+          {title ? <strong>{title}</strong> : null}
           {canPlay ? <small className="media-note">{w.spotify.embedNotice}</small> : null}
         </span>
         <span className="sp-play" aria-hidden />
@@ -276,7 +279,7 @@ export function SpotifyCard({
     return (
       <article className={className}>
         {content}
-        <MediaHit label={w.spotify.playLabel(title)} onPlay={() => setPlaying(true)} />
+        <MediaHit label={playLabel} onPlay={() => setPlaying(true)} />
       </article>
     );
   }

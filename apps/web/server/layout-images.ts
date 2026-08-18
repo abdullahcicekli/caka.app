@@ -13,6 +13,7 @@
 // `server/github.ts`); bu ona kardeş.
 import {
   classifyYouTubeUrl,
+  faviconImageKey,
   youtubeThumbnailUrl,
   type ProfileLayout,
 } from "@caka/shared";
@@ -39,6 +40,21 @@ function derivedPreview(url: string): string {
   return ref.kind === "video" ? youtubeThumbnailUrl(ref.videoId, "mq") : "";
 }
 
+/**
+ * Kayıtlı `favicon` yoksa adresin kökünden türet: `https://host/favicon.ico`.
+ * Doğrulanmaz — favicon `<img>`'i baş harf çipinin ÜSTÜNDE durur, adres
+ * boşsa altındaki harf görünür. Bu, mevcut bloklar için geriye dönük veri
+ * yazmayı da gereksiz kılıyor (aynı gerekçe: `derivedPreview`).
+ */
+function derivedFavicon(url: string): string {
+  if (!url) return "";
+  try {
+    return new URL("/favicon.ico", url).toString();
+  } catch {
+    return "";
+  }
+}
+
 /** Blok kimliği → imzalı birinci taraf görsel yolu. */
 export type SignedImageMap = Record<string, string>;
 
@@ -56,6 +72,17 @@ function remoteImageOf(block: ProfileLayout["blocks"][number]): string {
   }
 }
 
+/** Bloğun favicon kaynağı; yalnız bağlantı taşıyan bloklarda var. */
+function remoteFaviconOf(block: ProfileLayout["blocks"][number]): string {
+  switch (block.type) {
+    case "social":
+    case "link":
+      return block.data.favicon || derivedFavicon(block.data.url);
+    default:
+      return "";
+  }
+}
+
 /**
  * Düzendeki her uzak görsel için imzalı proxy yolunu üretir.
  *
@@ -68,7 +95,10 @@ export async function signLayoutImages(
   layout: ProfileLayout,
 ): Promise<SignedImageMap> {
   const targets = layout.blocks
-    .map((block) => ({ id: block.id, url: remoteImageOf(block) }))
+    .flatMap((block) => [
+      { id: block.id, url: remoteImageOf(block) },
+      { id: faviconImageKey(block.id), url: remoteFaviconOf(block) },
+    ])
     .filter((entry) => entry.url !== "");
   if (targets.length === 0) return {};
 

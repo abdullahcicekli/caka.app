@@ -107,7 +107,7 @@ function bento(
     size: sizeFromDims(lg.w, lg.h),
     smManual,
     pos: { lg, sm: sm ?? { x: 0, y: 0, w: Math.min(lg.w, 2), h: lg.h } },
-    data: { title: id, url: "", ogImage: "" },
+    data: { title: id, url: "", ogImage: "", favicon: "" },
   };
 }
 

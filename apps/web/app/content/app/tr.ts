@@ -133,6 +133,7 @@ export const tr = {
     youtubeLinkLabel: "YouTube bağlantısı",
     youtubeHint:
       "Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.",
+    linkTitlePlaceholder: "Örn. Portfolyo",
     optionalTitle: "Başlık (isteğe bağlı)",
     spotifyLinkLabel: "Spotify bağlantısı",
     spotifyHint:

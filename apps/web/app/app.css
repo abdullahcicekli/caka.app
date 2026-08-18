@@ -389,6 +389,7 @@
 .platform-grid button.is-selected { border: 1.5px solid var(--color-murekkep); background: var(--color-zemin); }
 
 .platform-mark {
+  position: relative;
   display: inline-flex;
   width: 36px;
   height: 36px;
@@ -403,6 +404,22 @@
 }
 
 .platform-mark svg { display: block; }
+/* FAVICON, İŞARETİN ÜSTÜNE BİNER. Altında ne varsa (baş harf çipi ya da
+   globe ikonu) durmaya devam eder: favicon adresi sayfa ilan etmediyse
+   `/favicon.ico` diye TÜRETİLİYOR ve her sitede olmayabiliyor. Yüklenemezse
+   `alt=""` olduğu için tarayıcı hiçbir şey çizmez ve alttaki işaret görünür —
+   doğrulama isteği atmadan bedava fallback. Zemin beyaz: şeffaf favicon'lar
+   marka tonunun üstünde okunmaz kalırdı. */
+.mark-favicon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: white;
+  padding: 18%;
+  object-fit: contain;
+}
 /* Instagram'ın kendi marka gradyanı: sol alttan çıkan sarı → turuncu → pembe
    → mor. Düz 135° linear'da sarı hiç görünmüyordu, ikon soluk kalıyordu. */
 .platform-instagram {

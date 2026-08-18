@@ -129,6 +129,7 @@ export const en = {
     youtubeLinkLabel: "YouTube link",
     youtubeHint:
       "We tell video and channel addresses apart — whichever you paste is what we add.",
+    linkTitlePlaceholder: "e.g. Portfolio",
     optionalTitle: "Title (optional)",
     spotifyLinkLabel: "Spotify link",
     spotifyHint:

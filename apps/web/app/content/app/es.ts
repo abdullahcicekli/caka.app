@@ -130,6 +130,7 @@ export const es = {
     youtubeLinkLabel: "Enlace de YouTube",
     youtubeHint:
       "Distinguimos las direcciones de vídeo y de canal: añadimos lo que pegues.",
+    linkTitlePlaceholder: "Ej. Portafolio",
     optionalTitle: "Título (opcional)",
     spotifyLinkLabel: "Enlace de Spotify",
     spotifyHint:

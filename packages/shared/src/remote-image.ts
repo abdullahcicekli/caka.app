@@ -14,13 +14,17 @@
 // ve açıkça özel adreslerdir.
 
 /** Proxy'nin ziyaretçiye döndürmeyi kabul ettiği içerik tipleri.
- * SVG bilerek yok: içinde script/dış kaynak taşıyabilir. */
+ * SVG bilerek yok: içinde script/dış kaynak taşıyabilir.
+ * ICO var: favicon'ların klasik biçimi ve `/favicon.ico` çoğu sitede bu
+ * başlıkla geliyor. SVG'nin aksine salt raster bir kap, script taşımaz. */
 export const PROXY_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
   "image/gif",
   "image/webp",
   "image/avif",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
 ] as const;
 
 /** Yanıt gövdesi tavanı (proxy bunu aşan gövdeyi keser ve reddeder). */
