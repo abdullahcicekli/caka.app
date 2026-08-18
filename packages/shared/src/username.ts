@@ -27,6 +27,12 @@ const RESERVED_GROUPS: Record<string, readonly string[]> = {
     "kurulum", "dashboard", "profile", "account", "home", "index", "new",
     "search", "explore", "discover", "popular", "trending", "preview",
   ],
+  // A1. Dil önekleri (L20). Bunlar top-level segment olduğu için Değişmez #1
+  // kapsamındadır. `en`/`es`/`de` zaten `USERNAME_MIN`in altında kalıp
+  // alınamıyor; `pt-br` beş karakterli geçerli bir desen ve gerçekten
+  // çakışabilir. Dördü de burada durur ki kural gerekçeye değil listeye
+  // dayansın.
+  diller: ["en", "es", "pt-br", "de"],
   // A2. Ürün/pazarlama sayfaları
   product: [
     "help", "support", "docs", "blog", "status", "about", "contact", "careers",
