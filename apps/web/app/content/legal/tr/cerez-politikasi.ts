@@ -26,7 +26,10 @@
 // `sessionStorage` anahtarı buldu: React Router'ın rota keşfi, yeni sürüm
 // yayınlandığında `react-router-manifest-version` yazıyor. 1. bölüme eklendi,
 // envantere alındı; tablodaki satır sayısını anlatan cümleler (1., 3. ve 4.
-// bölüm) buna göre "üç çerez + iki sessionStorage girdisi" diyor.
+// bölüm) buna göre "dört çerez + iki sessionStorage girdisi" diyor.
+//
+// Dördüncü çerez `caka_dil`: lokalizasyonla (L19) geldi, arayüz dili seçimini
+// taşır. Kriter B kapsamındadır — kullanıcının açıkça istediği dili sunar.
 //
 // R48 birinci taraf ölçümü de 2. bölümde anlatılıyor: public profillerde
 // görüntülenme ve tıklama sayaçları kendi D1'imizde artıyor. Sayım sunucu
@@ -130,7 +133,7 @@ export const cerezPolitikasiSections: LegalSection[] = [
           "Ana sayfayı veya bir Caka profilini açtığında Caka sana çerez " +
             "yazmaz. Çerezler ancak giriş yapmaya başladığında ya da kayıt " +
             "sırasında bir adres seçtiğinde oluşur. Cihazına dokunan her " +
-            "girdinin — üç çerez ve yukarıdaki iki sessionStorage girdisi — " +
+            "girdinin — dört çerez ve yukarıdaki iki sessionStorage girdisi — " +
             "tamamını ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
           " görebilirsin.",
@@ -320,10 +323,12 @@ export const cerezPolitikasiSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Tablodaki üç çerez de Kriter B'ye girer: ikisi olmadan giriş " +
+          "Tablodaki dört çerez de Kriter B'ye girer: ikisi olmadan giriş " +
             "yapamazsın — biri oturumunu taşır, diğeri giriş gidiş-dönüşünü " +
             "sahteciliğe karşı korur. Üçüncüsü olmadan kayıt sırasında " +
-            "seçtiğin adres, sağlayıcıdan dönüşte sana bağlanamaz. " +
+            "seçtiğin adres, sağlayıcıdan dönüşte sana bağlanamaz. Dördüncüsü " +
+            "seçtiğin arayüz dilini tutar; onsuz site senin açıkça istediğin " +
+            "dilde açılmaz. " +
             "Tablodaki iki sessionStorage girdisi de aynı kritere girer: " +
             "biri kaydırma konumunu tutarak senin istediğin gezinme " +
             "davranışını sağlar, diğeri sayfanın eski bir sürümde takılı " +
@@ -382,8 +387,8 @@ export const cerezPolitikasiSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Aşağıdaki tablo Caka'nın cihazına yazdığı her şeyi gösterir: üç " +
-            "çerez ve iki sessionStorage girdisi. Beşi de birinci taraftır: " +
+          "Aşağıdaki tablo Caka'nın cihazına yazdığı her şeyi gösterir: dört " +
+            "çerez ve iki sessionStorage girdisi. Altısı da birinci taraftır: " +
             "caka.app tarafından yazılır, yalnızca caka.app tarafından " +
             "okunur ve kimseyle paylaşılmaz. Hepsi her ziyarette oluşmaz — " +
             "her satırın ne zaman yazıldığını “Amaç” sütunu anlatıyor.",

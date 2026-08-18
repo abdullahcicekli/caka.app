@@ -10,7 +10,7 @@ import {
   type RouteKey,
   pathFor,
 } from "@caka/shared";
-import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "../app/content/legal";
+import { publishedLegalDocumentIds } from "../app/content/legal";
 import { SITE_URL } from "../app/lib/seo";
 
 const SITEMAP_PAGE_SIZE = 45_000;
@@ -142,8 +142,24 @@ seoRoutes.get("/sitemap.xml", async (c) => {
 // route sitemap'te 404 bırakamaz) ve yalnız yayındaki belgeler listelenir —
 // R33 kapısının 404'lediği bir belgeyi arama motoruna göndermek yanlış.
 seoRoutes.get("/sitemaps/core.xml", (c) => {
-  const keys: RouteKey[] = ["home", ...PUBLISHED_LEGAL_DOCUMENT_IDS];
-  return c.body(urlset(keys.flatMap(localizedEntries)), 200, XML_HEADERS);
+  // Ana sayfa beş dilde de var. Hukuki belgeler yalnız yayında oldukları
+  // dillerde listelenir: İngilizcesi henüz yazılmamış bir belge `/en/…`
+  // adresinde 404 verir, sitemap'e girmemeli.
+  const entries: SitemapEntry[] = localizedEntries("home");
+  for (const locale of SUPPORTED_LOCALES) {
+    for (const id of publishedLegalDocumentIds(locale)) {
+      entries.push({
+        loc: `${SITE_URL}${pathFor(id, locale)}`,
+        alternates: SUPPORTED_LOCALES.filter((alternate) =>
+          publishedLegalDocumentIds(alternate).includes(id),
+        ).map((alternate) => ({
+          locale: alternate,
+          href: `${SITE_URL}${pathFor(id, alternate)}`,
+        })),
+      });
+    }
+  }
+  return c.body(urlset(entries), 200, XML_HEADERS);
 });
 
 seoRoutes.get("/sitemaps/profiles-*", async (c) => {

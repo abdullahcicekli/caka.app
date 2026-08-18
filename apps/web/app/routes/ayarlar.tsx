@@ -20,7 +20,7 @@ import { AYARLAR_SECTION_IDS, ayarlarCatalog, type AddressErrorId } from "~/cont
 import { LanguageCard } from "~/components/ayarlar/language-card";
 import { commonCatalog } from "~/content/common";
 import { useCatalog } from "~/lib/locale";
-import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "~/content/legal";
+import { publishedLegalDocumentIds } from "~/content/legal";
 import { noIndexMeta } from "~/lib/seo";
 import {
   normalizeOgTemplate,
@@ -40,7 +40,7 @@ import {
 } from "../../server/profile";
 import { hasSameOrigin } from "../../server/request";
 import type { Route } from "./+types/ayarlar";
-import { localizedRedirect } from "../../server/locale";
+import { localeFromRequest, localizedRedirect } from "../../server/locale";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Ayarlar — Caka");
@@ -106,7 +106,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       email: session.user.email,
       emailVerified: Boolean(session.user.emailVerified),
     },
-    publishedLegal: PUBLISHED_LEGAL_DOCUMENT_IDS,
+    publishedLegal: publishedLegalDocumentIds(localeFromRequest(request)),
     account: {
       name: card?.data.name || profile.username,
       username: profile.username,

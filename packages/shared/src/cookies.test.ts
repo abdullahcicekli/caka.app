@@ -11,9 +11,11 @@ import {
 const entries: readonly CookieEntry[] = COOKIE_INVENTORY;
 
 describe("çerez envanteri", () => {
-  it("her girdinin amacı doludur", () => {
+  it("her girdinin amacı iki dilde de doludur", () => {
+    // İngilizce sürüm eksik kalırsa /en/cookies tablosunda boş hücre görünür.
     for (const entry of COOKIE_INVENTORY) {
-      expect(entry.purpose.trim(), entry.name).not.toBe("");
+      expect(entry.purpose.tr.trim(), `${entry.name} (tr)`).not.toBe("");
+      expect(entry.purpose.en.trim(), `${entry.name} (en)`).not.toBe("");
     }
   });
 
@@ -38,9 +40,10 @@ describe("çerez envanteri", () => {
     }
   });
 
-  it("her girdinin ömrü doludur", () => {
+  it("her girdinin ömrü iki dilde de doludur", () => {
     for (const entry of COOKIE_INVENTORY) {
-      expect(entry.lifetime.trim(), entry.name).not.toBe("");
+      expect(entry.lifetime.tr.trim(), `${entry.name} (tr)`).not.toBe("");
+      expect(entry.lifetime.en.trim(), `${entry.name} (en)`).not.toBe("");
     }
   });
 
@@ -55,13 +58,15 @@ describe("çerez envanteri", () => {
     ]);
   });
 
-  it("her depolama türünün Türkçe/teknik etiketi doludur ve tekildir", () => {
-    const labels = COOKIE_STORAGE_KINDS.map((kind) => {
-      const label = COOKIE_STORAGE_LABELS[kind];
-      expect(label?.trim(), kind).not.toBe("");
-      return label;
-    });
-    expect(new Set(labels).size).toBe(labels.length);
+  it("her depolama türünün etiketi iki dilde de doludur ve tekildir", () => {
+    for (const locale of ["tr", "en"] as const) {
+      const labels = COOKIE_STORAGE_KINDS.map((kind) => {
+        const label = COOKIE_STORAGE_LABELS[kind][locale];
+        expect(label?.trim(), `${kind} (${locale})`).not.toBe("");
+        return label;
+      });
+      expect(new Set(labels).size, locale).toBe(labels.length);
+    }
   });
 
   it("kaydırma konumu girdisi sessionStorage olarak işaretlidir", () => {
@@ -130,12 +135,13 @@ describe("cookieTableRows", () => {
 
   it("her depolama türü tabloda kendi etiketiyle görünür", () => {
     const rows = cookieTableRows(
+      "tr",
       COOKIE_STORAGE_KINDS.map((kind) => ({
         name: `test_${kind}`,
         storage: kind,
         category: "zorunlu",
-        purpose: "Test amaçlı",
-        lifetime: "1 gün",
+        purpose: { tr: "Test amaçlı", en: "For testing" },
+        lifetime: { tr: "1 gün", en: "1 day" },
         party: "birinci",
         provider: "Caka",
       })),
@@ -149,12 +155,12 @@ describe("cookieTableRows", () => {
   });
 
   it("kategori ve tarafı Türkçe etikete çevirir", () => {
-    const rows = cookieTableRows([
+    const rows = cookieTableRows("tr", [
       {
         name: "test_cookie",
         category: "zorunlu",
-        purpose: "Test amaçlı",
-        lifetime: "1 gün",
+        purpose: { tr: "Test amaçlı", en: "For testing" },
+        lifetime: { tr: "1 gün", en: "1 day" },
         party: "birinci",
         provider: "Caka",
       },
@@ -172,13 +178,39 @@ describe("cookieTableRows", () => {
     ]);
   });
 
-  it("depolama türü yazılmayan girdiyi çerez sayar", () => {
-    const [row] = cookieTableRows([
+  it("İngilizce istendiğinde bütün hücreleri İngilizce verir", () => {
+    // /en/cookies tablosu bu yoldan render edilir; bir etiket Türkçe kalırsa
+    // İngilizce belgede karışık dil görünür.
+    const rows = cookieTableRows("en", [
       {
         name: "test_cookie",
         category: "zorunlu",
-        purpose: "Test amaçlı",
-        lifetime: "1 gün",
+        purpose: { tr: "Test amaçlı", en: "For testing" },
+        lifetime: { tr: "1 gün", en: "1 day" },
+        party: "birinci",
+        provider: "Caka",
+      },
+    ]);
+    expect(rows).toEqual([
+      {
+        name: "test_cookie",
+        storage: "Cookie",
+        category: "Strictly necessary",
+        purpose: "For testing",
+        lifetime: "1 day",
+        party: "First party",
+        provider: "Caka",
+      },
+    ]);
+  });
+
+  it("depolama türü yazılmayan girdiyi çerez sayar", () => {
+    const [row] = cookieTableRows("tr", [
+      {
+        name: "test_cookie",
+        category: "zorunlu",
+        purpose: { tr: "Test amaçlı", en: "For testing" },
+        lifetime: { tr: "1 gün", en: "1 day" },
         party: "birinci",
         provider: "Caka",
       },
@@ -187,13 +219,13 @@ describe("cookieTableRows", () => {
   });
 
   it("sessionStorage girdisini kendi etiketiyle gösterir", () => {
-    const [row] = cookieTableRows([
+    const [row] = cookieTableRows("tr", [
       {
         name: "test_scroll",
         storage: "sessionStorage",
         category: "zorunlu",
-        purpose: "Test amaçlı",
-        lifetime: "Sekmeyi kapatınca silinir",
+        purpose: { tr: "Test amaçlı", en: "For testing" },
+        lifetime: { tr: "Sekmeyi kapatınca silinir", en: "Deleted when the tab closes" },
         party: "birinci",
         provider: "Caka",
       },
@@ -203,6 +235,6 @@ describe("cookieTableRows", () => {
   });
 
   it("boş envanterde boş dizi döner", () => {
-    expect(cookieTableRows([])).toEqual([]);
+    expect(cookieTableRows("tr", [])).toEqual([]);
   });
 });

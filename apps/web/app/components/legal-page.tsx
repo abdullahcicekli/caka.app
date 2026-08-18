@@ -11,10 +11,16 @@ import { Navbar } from "~/components/landing/navbar";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { landingCatalog } from "~/content/landing";
-import { useCatalog } from "~/lib/locale";
+import { legalChromeCatalog } from "~/content/legal/chrome";
+import {
+  legalBindingNotice,
+  legalTitles,
+  legalTurkishVersionLabel,
+} from "~/content/legal/meta";
+import { useCatalog, useLocale } from "~/lib/locale";
 import {
   LEGAL_DOCUMENTS,
-  formatLegalDate,
+  formatDate,
   isSafeLegalHref,
   type LegalBlock,
   type LegalCell,
@@ -22,6 +28,8 @@ import {
   type LegalDocumentMeta,
   type LegalInline,
   type LegalRichText,
+  LEGAL_DOCUMENT_IDS,
+  pathFor,
   type LegalSection,
 } from "@caka/shared";
 
@@ -32,9 +40,15 @@ import {
 const INLINE_LINK_CLASS =
   "font-medium text-mavi underline underline-offset-2 hover:opacity-70";
 
-/** `/gizlilik#bolum` → `gizlilik`; hukuki belge değilse `undefined`. */
+/**
+ * `/gizlilik#bolum` → `gizlilik`; hukuki belge değilse `undefined`.
+ *
+ * Anahtar TÜRKÇE yoldur, çünkü katalog ve hukuki metinler bağlantıları Türkçe
+ * hâliyle yazar (`localizeHref` render'da çevirir). Dil önekli bir yol burada
+ * aranmaz.
+ */
 const LEGAL_PATH_TO_ID = new Map<string, LegalDocumentId>(
-  Object.values(LEGAL_DOCUMENTS).map((doc) => [doc.path, doc.id]),
+  LEGAL_DOCUMENT_IDS.map((id) => [pathFor(id, "tr"), id]),
 );
 
 /**
@@ -135,6 +149,7 @@ function TableBlock({
   rows: readonly (readonly LegalCell[])[];
 }) {
   const richText = useRichText();
+  const chrome = useCatalog(legalChromeCatalog);
   return (
     <figure className="my-1">
       {/* Depoda hazır duyarlı tablo deseni yoktu; kapsayıcı + min genişlik +
@@ -172,7 +187,7 @@ function TableBlock({
       </div>
       <figcaption className="mt-2 text-xs text-murekkep/50">
         <span className="sm:hidden">
-          Tabloyu yana kaydırarak tamamını görebilirsin.
+          {chrome.tableScrollHint}
           {caption ? " " : null}
         </span>
         {caption}
@@ -266,24 +281,24 @@ function LegalDocumentNav({
   currentId: LegalDocumentId;
   publishedLegal: readonly LegalDocumentId[];
 }) {
-  const others = publishedLegal
-    .filter((id) => id !== currentId)
-    .map((id) => LEGAL_DOCUMENTS[id]);
+  const locale = useLocale();
+  const chrome = useCatalog(legalChromeCatalog);
+  const others = publishedLegal.filter((id) => id !== currentId);
   if (others.length === 0) return null;
 
   return (
-    <nav aria-label="Diğer hukuki belgeler" className="mt-16 border-t border-sinir pt-8">
+    <nav aria-label={chrome.otherDocumentsLabel} className="mt-16 border-t border-sinir pt-8">
       <p className="text-xs font-medium tracking-widest text-murekkep/40 uppercase">
-        Diğer belgeler
+        {chrome.otherDocuments}
       </p>
       <ul className="mt-3 flex flex-wrap gap-x-8 gap-y-2">
-        {others.map((doc) => (
-          <li key={doc.id}>
+        {others.map((id) => (
+          <li key={id}>
             <Link
-              to={doc.path}
+              to={pathFor(id, locale)}
               className="text-[15px] font-medium text-murekkep hover:opacity-70"
             >
-              {doc.navLabel}
+              {legalTitles(locale, id).navLabel}
             </Link>
           </li>
         ))}
@@ -294,6 +309,8 @@ function LegalDocumentNav({
 
 export type LegalPageProps = {
   document: LegalDocumentMeta;
+  /** Belgenin o dildeki başlığı ve şerit etiketi. */
+  titles: { title: string; navLabel: string };
   sections: readonly LegalSection[];
   /** `legalPlaceholderGate` çıktısı; prod'da her zaman boştur. */
   warnings?: readonly string[];
@@ -308,8 +325,12 @@ export function LegalPage({
   warnings = [],
   publishedLegal,
   user,
+  titles,
 }: LegalPageProps) {
   const landing = useCatalog(landingCatalog);
+  const locale = useLocale();
+  const chrome = useCatalog(legalChromeCatalog);
+  const bindingNotice = legalBindingNotice(locale);
   return (
     <div className="bg-zemin">
       <Navbar
@@ -319,13 +340,32 @@ export function LegalPage({
       />
       <main className="mx-auto max-w-3xl px-6 pt-14 pb-24 sm:px-10 sm:pt-20">
         <h1 className="text-3xl font-semibold text-murekkep sm:text-4xl">
-          {doc.title}
+          {titles.title}
         </h1>
         <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-murekkep/60">
-          <span>Son güncelleme: {formatLegalDate(doc.updatedAt)}</span>
+          <span>
+            {chrome.updatedAt}: {formatDate(doc.updatedAt, locale)}
+          </span>
           <span aria-hidden="true">·</span>
-          <span>Sürüm {doc.version}</span>
+          <span>
+            {chrome.version} {doc.version}
+          </span>
         </p>
+
+        {/* L11 — bağlayıcılık şeridi. Türkçe sayfada görünmez: o zaten
+            bağlayıcı olan metnin kendisi. Diğer dillerde okuyucuya hangi
+            metnin geçerli olduğunu söyler ve Türkçe sürüme bağlanır. */}
+        {bindingNotice ? (
+          <p className="mt-6 rounded-xl border border-sinir bg-white px-4 py-3 text-sm text-murekkep/70">
+            {bindingNotice}{" "}
+            <Link
+              to={pathFor(doc.id, "tr")}
+              className="font-medium text-mavi underline underline-offset-2 hover:opacity-70"
+            >
+              {legalTurkishVersionLabel(locale)}
+            </Link>
+          </p>
+        ) : null}
 
         {warnings.length > 0 ? <DevWarnings warnings={warnings} /> : null}
 

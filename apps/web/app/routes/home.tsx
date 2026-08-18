@@ -10,7 +10,7 @@ import { Navbar } from "~/components/landing/navbar";
 import { ShareSection } from "~/components/landing/share-section";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
-import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "~/content/legal";
+import { publishedLegalDocumentIds } from "~/content/legal";
 import { landingCatalog } from "~/content/landing";
 import { useCatalog } from "~/lib/locale";
 import { parseSeedProfile } from "~/lib/profile-view";
@@ -86,7 +86,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const ogImage = pickRandomOgImage();
   const locale = localeFromRequest(request);
   // Footer ve SSS yalnız yayındaki hukuki belgeleri reklam eder (R33).
-  const publishedLegal = PUBLISHED_LEGAL_DOCUMENT_IDS;
+  const publishedLegal = publishedLegalDocumentIds(locale);
   const session = await getSession(env, request);
   if (!session) return { user: null, ogImage, publishedLegal, locale };
 

@@ -11,9 +11,10 @@ import {
   classifyLegalDocument,
   type LegalDocumentMeta,
   type LegalSection,
+  type Locale,
 } from "@caka/shared";
 
-import { LEGAL_SECTION_REGISTRY } from "../app/content/legal";
+import { legalSectionRegistry } from "../app/content/legal";
 
 /**
  * Ortam ayrımı için deponun zaten kullandığı Vite sinyali kullanılır
@@ -29,10 +30,13 @@ import { LEGAL_SECTION_REGISTRY } from "../app/content/legal";
  * okunur); yalnız dev uyarısı olarak yüzeye çıkar ve testte kırılır.
  */
 export function legalPlaceholderGate(
+  locale: Locale,
   doc: LegalDocumentMeta,
   sections: readonly LegalSection[],
 ): string[] {
-  const status = classifyLegalDocument(doc, sections, LEGAL_SECTION_REGISTRY);
+  // Kayıt dil başınadır (L12): İngilizce belge eksikse yalnız İngilizce sürüm
+  // kapanır, Türkçe sayfa yayında kalır.
+  const status = classifyLegalDocument(doc, sections, legalSectionRegistry(locale));
 
   if (import.meta.env.PROD) {
     if (status.blocked) {
