@@ -9,11 +9,10 @@
 // doldurulmadan belge prod'da 404 döner. Köşeli parantez metinde başka hiçbir
 // amaçla kullanılmaz — parantez gerektiğinde normal parantez yazılır.
 //
-// Kalan tek alan §1'deki `[AD SOYAD]`. Üç belgenin tamamındaki son kapı budur:
-// KVKK Rehberi No: 60 (Mart 2025) §3.1.1 gerçek kişi veri sorumlusu için adı
-// soyadı ister ve alan adı bunun yerine geçmez. İletişim uzvu seçenekli
-// olduğundan tek kanal (hello@caka.app) yeterlidir; adres ve telefon
-// yayınlanmaz.
+// §1'de ad soyad YAZILMIYOR: işletmeci adını yayınlamamayı tercih etti ve
+// bölüm bunun m.10'u tam karşılamadığını açıkça söylüyor. Bu bilinçli bir
+// eksiktir, unutulmuş bir alan değil — `docs/legal/bilinen-aciklar.md`'de
+// gerekçesi ve ne zaman kapanması gerektiği kayıtlı.
 import type { LegalSection } from "@caka/shared";
 
 export const gizlilikSections: LegalSection[] = [
@@ -39,33 +38,43 @@ export const gizlilikSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          { kind: "strong", text: "Veri sorumlusu bir kişidir, bir alan adı değil. " },
+          { kind: "strong", text: "Eksik olanı da olduğu gibi yazalım. " },
           "KVKK m.10 ve Aydınlatma Tebliği m.5, veri sorumlusunun ",
           { kind: "strong", text: "kimliğinin" },
           " bildirilmesini ister. Kurum'un Aydınlatma Yükümlülüğünün Yerine " +
             "Getirilmesinde Uyulacak Usul ve Esaslar Rehberi (No: 60, Mart " +
-            "2025) §3.1.1 bunu gerçek kişiler için açıkça ",
+            "2025) §3.1.1 bunu gerçek kişiler için ",
           { kind: "strong", text: "adı ve soyadı" },
-          " olarak tarif eder; bir alan adı ne gerçek ne de tüzel kişi " +
-            "olduğundan “caka.app” tek başına bu bilgiyi karşılamaz. Bu " +
-            "yüzden aşağıdaki tabloda ad ve soyad ayrıca yazılıdır. Caka'nın " +
-            "arkasında kurulmuş bir tüzel kişilik, ticari faaliyet veya sicil " +
-            "kaydı olmadığı için bir unvan, vergi ya da MERSİS numarası " +
-            "göremezsin: olmayan bir şirketin bilgisini uydurmaktansa durumu " +
-            "olduğu gibi yazıyoruz. Ürün ticarileşip bir tüzel kişilik " +
-            "kurulduğunda burası o bilgilerle güncellenecektir.",
+          " olarak tarif eder. Aşağıda bir ad soyad göremezsin: Caka'yı " +
+            "işleten kişi, ortada bir işyeri değil kişisel bir kimlik " +
+            "olduğu için adını yayınlamamayı tercih etti. Bunun anlamı açık " +
+            "— ",
+          {
+            kind: "strong",
+            text:
+              "bu bölüm bugün m.10'un aradığı kimlik bilgisini tam olarak " +
+              "karşılamıyor",
+          },
+          " ve bunu gizlemek yerine söylüyoruz. Kurulmuş bir tüzel kişilik, " +
+            "ticari faaliyet veya sicil kaydı da olmadığı için bir unvan, " +
+            "vergi ya da MERSİS numarası yok; olmayan bir şirketin bilgisini " +
+            "uydurmaktansa durumu olduğu gibi yazıyoruz. Ürün ticarileşip " +
+            "bir tüzel kişilik kurulduğunda burası o bilgilerle " +
+            "güncellenecektir. Bu eksikliğe rağmen sorumluluk ortada " +
+            "değildir: aşağıdaki kutu gerçek ve okunur, başvurularına " +
+            "otuz gün içinde yanıt verilir.",
         ],
       },
       {
         kind: "table",
         columns: ["Bilgi", "Değer"],
         rows: [
-          [["Veri sorumlusu"], ["[AD SOYAD]"]],
+          [["Siteyi işleten"], ["caka.app"]],
           [
             ["Sıfatı"],
             [
-              "Gerçek kişi — caka.app'i açık kaynaklı kişisel bir proje " +
-                "olarak işletir",
+              "Türkiye'de yerleşik bir gerçek kişi; caka.app'i açık " +
+                "kaynaklı kişisel bir proje olarak işletir",
             ],
           ],
           [["İletişim ve KVKK başvuru adresi"], ["hello@caka.app"]],

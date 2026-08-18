@@ -23,7 +23,7 @@ kayıttan türetildi.
 > güvenceye bağlanmış değil ve bağlanması için çalışma sürüyor. Gerekçe zinciri
 > (standart sözleşmenin iki taraflı imza şartı, Cloudflare DPA v6.4'te Türkiye
 > ve KVKK atfının hiç bulunmaması, arızilik tanımı nedeniyle açık rızanın da
-> kapalı olması) `placeholders.md`'dedir. **Bugün mevcut bir açıktır** — hukuki
+> kapalı olması) `bilinen-aciklar.md`'dedir. **Bugün mevcut bir açıktır** — hukuki
 > sayfalar hiç yayınlanmasa bile uygulama, veritabanı, dosya deposu ve loglar
 > zaten Cloudflare'de.
 >

@@ -9,14 +9,13 @@
 // pazar yeri, self-servis hesap silme, dışa aktarma ve gömülü oynatıcı yok.
 //
 // Bu belgede doldurulmamış alan (`[...]`) kalmadı; R33 kapısı yalnız
-// `gizlilik.ts` §1'deki `[AD SOYAD]` üzerinden işliyor. Köşeli parantez bu
-// metinde başka hiçbir amaçla kullanılmaz — parantez gerektiğinde normal
-// parantez yazılır.
+// İşletmecinin kimliği `gizlilik.ts` §1 üzerinden işler; orada ad soyad
+// yayınlanmıyor ve bunun m.10'u tam karşılamadığı açıkça yazılı.
 //
 // §11 (sorumluluk) ve §14 (uyuşmazlık) bilinçli olarak sınırlama değil kapsam
 // üzerine kuruldu: haksız şart yasağı ve HMK m.17 karşısında geçersiz olacak
 // bir kaydı yazmak, hiç yazmamaktan kötüdür. Gerekçeler
-// `docs/legal/placeholders.md`'de.
+// `docs/legal/bilinen-aciklar.md`'de.
 import type { LegalSection } from "@caka/shared";
 
 export const kullanimKosullariSections: LegalSection[] = [

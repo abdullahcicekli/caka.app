@@ -8,7 +8,7 @@ metin düzeltilir.
 `packages/db/src/auth-schema.ts`, `apps/web/wrangler.jsonc`,
 `apps/web/server/github.ts`, `apps/web/server/og.ts`,
 `apps/web/server/avatar.ts`, `packages/shared/src/cookies.ts`.
-Doldurulmamış alanlar: `docs/legal/placeholders.md`.
+Bilinen uyum açıkları: `docs/legal/bilinen-aciklar.md`.
 
 **Tarih:** 2026-08-17 · **Kapsam:** prod Worker `caka` (`caka.app`), D1 `caka-db`,
 R2 `caka-assets`.
@@ -23,7 +23,7 @@ gün**; destek yazışmaları kapanıştan sonra **en geç 3 ay**; Workers Logs
 Yönetmeliği **m.11/3**'ten gelir: VERBİS'ten muaf olduğumuz için yazılı imha
 politikası ödevi doğmuyor, bu da altı aylık periyodik döngü yerine daha sıkı
 olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
-`placeholders.md`'dedir.
+`bilinen-aciklar.md`'dedir.
 
 ---
 
@@ -242,7 +242,7 @@ tutmaz; sebep m.5/2-f'tir ve `/gizlilik` §4 bunu böyle yazıyor.
 
 Hepsi bilerek burada duruyor; hiçbiri "sonra bakarız" diye kapatılmadı.
 
-1. **Hesap sonrası saklama ve yedek süreleri belirlenmedi** — `placeholders.md` §1.
+1. **Hesap sonrası saklama ve yedek süreleri belirlenmedi** — `bilinen-aciklar.md` §1.
 2. **`github_calendar` satırları hiç silinmiyor** — hesap silmede de temizlenmiyor
    (`docs/backlog.md`).
 3. **`session.ip_address` / `session.user_agent` yazılıyor ama hiçbir yerde
@@ -250,7 +250,7 @@ Hepsi bilerek burada duruyor; hiçbiri "sonra bakarız" diye kapatılmadı.
 4. **`account` token'ları şifrelenmemiş** — yukarıdaki karar noktası.
 5. **Cloudflare tarafındaki saklama süreleri (Logs, Web Analytics) ve R2/D1
    bölgeleri doğrulanmadı.**
-6. **Yurt dışına aktarım mekanizması yok** — OQ2a; `placeholders.md` §2. Bu,
+6. **Yurt dışına aktarım mekanizması yok** — OQ2a; `bilinen-aciklar.md` §2. Bu,
    hukuki sayfalar yayınlanmasa bile bugün mevcut olan bir açıktır: uygulama,
    veritabanı, dosya deposu ve loglar zaten Cloudflare'de.
 7. **Süresi geçmiş `session` ve `verification` satırlarının budandığı
