@@ -119,18 +119,35 @@ export function YoutubeVideoCard({
   // Kimlik çözülmemişse (taslak blok) gömecek bir şey yok; kart eski
   // davranışına — adrese giden bağlantıya — düşer.
   const canPlay = allowEmbeds && data.videoId !== "";
-  const title = data.title || youtubeVideoYedekBasligi;
+  // DÜZEN, OYNATMA YETKİSİNE BAĞLI DEĞİL. `is-embed` eskiden `canPlay` ile
+  // veriliyordu; oynatma yalnız public profilde açık olduğu için editör
+  // tuvali bambaşka bir düzen kuruyordu (aynı 542×324 hücrede kapak tam
+  // kanama ve kırpılmış, canlıda ise 16:9 ve yan yana). `is-embed` artık
+  // "bu kartta oynatılabilir bir medya VAR" demek — kutu üç yüzeyde de aynı,
+  // tıklamayı yine `canPlay` açıyor.
+  const hasMedia = data.videoId !== "";
+  // Başlık İSTEĞE BAĞLI: yoksa kart yazısız durur. Eskiden "YouTube videosu"
+  // yedek başlığı basılıyordu — hiçbir şey söylemeyen bir satırdı. Yedek
+  // metin yalnız erişilebilir adda yaşıyor: oynat tuşunun bir adı olmalı.
+  const title = data.title.trim();
+  const playLabel = youtubeOynatEtiketi(title || youtubeVideoYedekBasligi);
 
   // 9:16 çerçeve yalnız küçük görsel GERÇEKTEN dikeyse doğru. Bir Short'un
   // `mqdefault`'u da 16:9 gelir; `shorts` bayrağına bakarak çerçeve seçmek o
   // görselin genişliğinin çoğunu kırpıyordu.
   const className = `profile-block profile-block-youtube is-video${
     data.verticalThumbnail ? " is-shorts" : ""
-  }${canPlay ? " is-embed" : ""}${playing ? " is-playing" : ""}`;
+  }${hasMedia ? " is-embed" : ""}${playing ? " is-playing" : ""}`;
 
   if (playing) {
     return (
       <article className={className}>
+        {title ? (
+          <span className="youtube-meta">
+            <strong>{title}</strong>
+            {data.channelName ? <small>{data.channelName}</small> : null}
+          </span>
+        ) : null}
         <span className="yt-media">
           <iframe
             className="media-frame"
@@ -141,10 +158,6 @@ export function YoutubeVideoCard({
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
           />
-        </span>
-        <span className="youtube-meta">
-          <strong>{title}</strong>
-          <small>{data.channelName}</small>
         </span>
       </article>
     );
@@ -161,35 +174,40 @@ export function YoutubeVideoCard({
       {data.shorts ? <span className="yt-pill">{youtubeShortsRozeti}</span> : null}
     </span>
   );
-  const meta = (
-    <span className="youtube-meta">
-      <strong>{title}</strong>
-      <small>{data.channelName}</small>
-      {/* Uyarı satırı her zaman basılır; kısa/dar bantlarda CSS gizler ve
-          bilgi tuşun `aria-label`/`title`'ında yaşamaya devam eder. */}
-      {canPlay ? <small className="media-note">{youtubeGommeUyarisi}</small> : null}
-    </span>
-  );
+  // Yazacak bir şey yoksa metin bloğu hiç basılmaz: boş bir `<strong>` kartta
+  // ölü boşluk bırakıyordu. Sıra MEDYADAN ÖNCE — başlık videonun üstünde
+  // durur (yan yana dizilen bantlarda CSS `order` ile kapak yine solda
+  // kalır; bkz. app.css "youtube-meta order").
+  const meta =
+    title || data.channelName || canPlay ? (
+      <span className="youtube-meta">
+        {title ? <strong>{title}</strong> : null}
+        {data.channelName ? <small>{data.channelName}</small> : null}
+        {/* Uyarı satırı basılır; kısa/dar bantlarda CSS gizler ve bilgi
+            tuşun `aria-label`/`title`'ında yaşamaya devam eder. */}
+        {canPlay ? <small className="media-note">{youtubeGommeUyarisi}</small> : null}
+      </span>
+    ) : null;
 
   if (canPlay) {
     return (
       <article className={className}>
-        {media}
         {meta}
-        <MediaHit label={youtubeOynatEtiketi(title)} onPlay={() => setPlaying(true)} />
+        {media}
+        <MediaHit label={playLabel} onPlay={() => setPlaying(true)} />
       </article>
     );
   }
 
   return data.url ? (
     <a className={className} href={data.url} target="_blank" rel="noreferrer">
-      {media}
       {meta}
+      {media}
     </a>
   ) : (
     <article className={className}>
-      {media}
       {meta}
+      {media}
     </article>
   );
 }

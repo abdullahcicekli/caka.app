@@ -760,6 +760,19 @@ function Inspector({
             {!youtubeBusy && !youtubeError && resolved ? (
               <p className="inspector-hint">{resolved}</p>
             ) : null}
+            {/* Başlık İSTEĞE BAĞLI. Adres çözülürken YouTube'un kendi başlığı
+                buraya yazılır ama kilitli değil: silersen kart yazısız,
+                yalnız video olarak durur. */}
+            {block.data.kind === "video" ? (
+              <label>
+                Başlık (isteğe bağlı)
+                <input
+                  value={block.data.title}
+                  placeholder="Boş bırakırsan kartta yalnız video görünür"
+                  onChange={(event) => update({ title: event.target.value })}
+                />
+              </label>
+            ) : null}
           </>
         );
       }

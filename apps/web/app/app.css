@@ -1437,6 +1437,9 @@ a.profile-block:focus-visible {
 /* Short: dikey oran. Kapak yanda dar bir şerit olur — kartın silueti tek
    bakışta "bu bir Short" der. */
 .profile-block-youtube.is-shorts { align-items: stretch; flex-direction: row; gap: 12px; }
+/* DOM'da metin medyadan ÖNCE gelir (başlık videonun üstünde dursun diye);
+   yan yana dizilen bantlarda kapak yine solda kalmalı. */
+.profile-block-youtube.is-shorts .youtube-meta { order: 1; }
 .profile-block-youtube.is-shorts .yt-media {
   width: auto;
   height: 100%;
@@ -1650,6 +1653,7 @@ a.profile-block:focus-visible {
     flex: none;
     aspect-ratio: 16 / 9;
   }
+  .profile-block-youtube.is-video:not(.is-shorts) .youtube-meta { order: 1; }
 }
 
 /* --- ORTA + KISA (2×1): önizleme kapak olur, metin rozete iner --- */
@@ -1869,7 +1873,7 @@ a.profile-block:focus-visible {
    videonun altından kartın kaçması rahatsız edici. */
 @media (hover: hover) and (pointer: fine) {
   .profile-block.is-embed:not(.is-playing) {
-    transition: translate 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    transition: box-shadow 200ms ease, border-color 200ms ease;
   }
   /* Bağlantı kartlarıyla aynı kural: yalnız kenarlık + gölge, ölçü oynamaz. */
   .profile-block.is-embed:not(.is-playing):hover {
@@ -1903,24 +1907,25 @@ a.profile-block:focus-visible {
 .profile-block-youtube.is-video.is-embed strong { -webkit-line-clamp: 1; }
 
 /* GENİŞ + YÜKSEK: 3×2 (567×324) ve 4×2 (760×324).
-   Dikey dizilimde 16:9 oynatıcı tam genişlikte 4×2'de 414px ister ama
-   yalnız ~230px yer var; tam yükseklikte de 533px genişliğe çıkıp başlığa
-   yer bırakmaz. Yan yana düzen ikisini de çözer: oynatıcı %64 genişlik
-   (4×2 → 471×265, 3×2 → 347×195) — ikisi de 300px'lik iç yüksekliğe sığar. */
+   Oynatıcı TAM GENİŞLİK alamaz (3×2'de 16:9 → 318px ister, ~300px var), ama
+   yan yana düzen de doğru cevap değildi: kapak %64'e (3×2 → 340×192)
+   düşüyor, sağdaki metin iki satır tutuyor ve kartın altında ~110px ölü
+   alan kalıyordu. Oynatıcı bunun yerine YÜKSEKLİĞE oturur, genişliği
+   orandan gelir ve ortalanır: 3×2'de başlıksız 533×300, başlıklı 455×256 —
+   her iki hâlde de eskisinden büyük. Başlık üstte kalır. */
 @container (min-width: 500px) and (min-height: 200px) {
-  .profile-block-youtube.is-video.is-embed:not(.is-shorts) {
-    align-items: center;
-    flex-direction: row;
-    gap: 14px;
-  }
   .profile-block-youtube.is-video.is-embed:not(.is-shorts) .yt-media {
-    width: 64%;
-    flex: none;
-    margin-inline: 0;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    max-width: 100%;
+    flex: 1 1 0;
+    align-self: center;
+    margin-inline: auto;
   }
-  .profile-block-youtube.is-video.is-embed:not(.is-shorts) .youtube-meta { flex: 1 1 auto; }
-  /* Yanda yer bol: başlık iki satıra dönebilir. */
-  .profile-block-youtube.is-video.is-embed:not(.is-shorts) strong { -webkit-line-clamp: 2; }
+  .profile-block-youtube.is-video.is-embed:not(.is-shorts) .youtube-meta { flex: none; }
+  /* Üstte tek satır: ikinci satır oynatıcıdan yer çalardı. */
+  .profile-block-youtube.is-video.is-embed:not(.is-shorts) strong { -webkit-line-clamp: 1; }
 }
 
 /* --- Spotify kartı ---------------------------------------------- */
