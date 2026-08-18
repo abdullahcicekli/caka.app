@@ -54,6 +54,31 @@ tedarikçiye ulaşır. Aydınlatma yükümlülüğü buradan doğar.
 | **Indian Type Foundry (Fontshare)** | Yazı tipleri; `api.fontshare.com` (CSS) + `cdn.fontshare.com` (font dosyaları) | **Her sayfa yüklemesinde** IP adresi ve User Agent. Cihaza yazma yok | Fiilen ayrı veri sorumlusu (kendi altyapısı, bizim talimatımız yok) | Hindistan merkezli firma; **CDN sunucu konumu doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Google LLC** — Sign in with Google | Kimlik doğrulama yönlendirmesi | Kullanıcı girişi **başlattığında** Google'a yönlendirilir; istek ve dönüşte bize iletilen hesap bilgisi Google'ın kendi politikasıyla işlenir | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Apple Inc.** — Sign in with Apple | Kimlik doğrulama yönlendirmesi | Aynı akış | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
+| **Google LLC — YouTube gömülü oynatıcı** ⚠️ *(yalnız tıklamayla)* | Profildeki YouTube kartında videonun yerinde oynatılması; `youtube-nocookie.com/embed` | **Ziyaretçi oynata basarsa**: IP, User Agent, gömme adresi. Oynatma başlayınca **çerez yazabilir** | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(uygulanamaz — sözleşme tarafı yok; aktarım ziyaretçinin kendi eylemiyle)* |
+| **Spotify AB — gömülü oynatıcı** ⚠️ *(yalnız tıklamayla)* | Profildeki Spotify kartında parçanın yerinde çalınması; `open.spotify.com/embed` | Aynı akış | Ayrı veri sorumlusu | İsveç / AB | **Evet** | ⬚ *(uygulanamaz)* |
+
+### ⚠️ Gömülü oynatıcılar — tıklama kapısının arkasında
+
+YouTube ve Spotify kartları **sayfa açılışında hiçbir şey yüklemez**. Görünen
+kapak görseli birinci taraf proxy'sinden gelir; o siteye tek istek bile
+gitmez. Oynatıcı yalnız ziyaretçi oynat düğmesine bastığında yüklenir.
+
+Bu, "iki tıklama" desenidir ve bilinçli seçilmiştir:
+
+- Sayfa açılışında gömseydik, profile bakan **herkes** hiçbir şey yapmadan
+  YouTube ve Spotify'a tanıtılmış olurdu — üstelik profil sahibinin
+  koyduğu bir içerik yüzünden, ziyaretçinin haberi olmadan.
+- Tıklama aynı zamanda **bilgilendirilmiş bir eylemdir**: düğmenin
+  etiketinde bağlantının kurulacağı yazıyor, `/cerez-politikasi` §6 ve
+  `/gizlilik` §6 ayrıntısını veriyor.
+- YouTube için `youtube-nocookie.com` kullanılıyor. Bu takibi azaltır ama
+  **çerezi tamamen kaldırmaz**: oynatma başladığında çerez yazılır. Metinler
+  bunu abartmadan, olduğu gibi söylüyor.
+
+Bu çerezler bize ait olmadığı için `cookie-inventory.md` tablosunda **yer
+almazlar** — envanter yalnız kendi yazdıklarımızı kapsar.
+
+---
 
 ### ✅ Uzak `ogImage` — kapatıldı (2026-08-18)
 

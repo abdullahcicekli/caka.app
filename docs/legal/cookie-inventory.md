@@ -154,6 +154,11 @@ güncellenir:
    Profil sayfalarındaki üçüncü taraf çerez yüzeyi kapandı; `/gizlilik` §6
    ve `vendor-register.md` aynı commit'te güncellendi. Bundan sonraki tetik:
    proxy'nin kapsamı dışında kalan yeni bir uzak görsel yüzeyi eklenirse.
+6. Gömülü bir oynatıcı (YouTube, Spotify) **tıklama kapısı olmadan**, yani
+   sayfa açılışında yüklenmeye başlarsa. Bugün ikisi de yalnız ziyaretçi
+   oynat düğmesine bastığında yükleniyor; bu kapı kalkarsa yazdıkları
+   çerezler artık "ziyaretçinin kendi eylemi" sayılamaz ve rıza sorusu
+   baştan sorulmalıdır.
 
 ### Manuel doğrulama yordamı
 

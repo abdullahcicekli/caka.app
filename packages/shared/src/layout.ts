@@ -273,7 +273,6 @@ const youtubeVideoDataSchema = z.object({
   videoId: youtubeIdSchema(24),
   title: z.string().trim().max(140).default(""),
   channelName: z.string().trim().max(80).default(""),
-  /** Gösterime hazır süre dizesi ("12:34"); çözülemezse boş. */
   /** `/shorts/` yolundan geldi mi? Adres şeklinden gelir, render türetmez. */
   shorts: z.boolean().default(false),
   /**
@@ -287,6 +286,47 @@ const youtubeVideoDataSchema = z.object({
   thumbnail: optionalHttpUrlSchema.default(""),
 });
 
+/**
+ * Spotify gömme türleri. Hepsi `open.spotify.com/embed/<tür>/<id>` ile
+ * gömülüyor ve oEmbed anahtarsız çalışıyor (ölçüldü 2026-08-18): parça
+ * 456×152 kompakt oynatıcı, diğerleri 456×352.
+ */
+export const spotifyKindSchema = z.enum([
+  "track",
+  "album",
+  "playlist",
+  "artist",
+  "episode",
+  "show",
+]);
+export type SpotifyKind = z.infer<typeof spotifyKindSchema>;
+
+const spotifyBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("spotify"),
+  data: z.object({
+    kind: spotifyKindSchema,
+    /** Kanonik `open.spotify.com` adresi; kayıt anında normalize edilir. */
+    url: optionalHttpUrlSchema.default(""),
+    /** Base62 kimlik; gömme adresi bundan kurulur. */
+    entityId: z
+      .string()
+      .trim()
+      .max(40)
+      .regex(/^[A-Za-z0-9]*$/, "Geçersiz Spotify kimliği")
+      .default(""),
+    title: z.string().trim().max(140).default(""),
+    /**
+     * Kapak görseli (uzak adres; render imzalı proxy'den geçirir).
+     *
+     * Sanatçı/sahip adı için ALAN YOK: oEmbed yalnız `title` veriyor
+     * (parçada şarkı adı, albümde albüm adı), yani dolduramayacağımız bir
+     * yuva olurdu.
+     */
+    thumbnail: optionalHttpUrlSchema.default(""),
+  }),
+});
+
 const youtubeChannelDataSchema = z.object({
   kind: z.literal("channel"),
   url: optionalHttpUrlSchema.default(""),
@@ -295,7 +335,6 @@ const youtubeChannelDataSchema = z.object({
   channelName: z.string().trim().max(80).default(""),
   /** `@` olmadan saklanır. */
   handle: z.string().trim().max(80).default(""),
-  /** Gösterime hazır, yerelleştirilmiş dizeler; çözülemezse boş kalır. */
   /**
    * Kanal avatarı — kanal sayfasının `og:image`'ı, kayıt anında çözülür.
    * Uzak adres; render imzalı proxy'den geçirir. RSS akışı avatar vermiyor.
@@ -321,6 +360,7 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   statusBlockSchema,
   galleryBlockSchema,
   youtubeBlockSchema,
+  spotifyBlockSchema,
 ]);
 
 export const MAX_LAYOUT_BLOCKS = 50;
@@ -432,6 +472,7 @@ export const BLOCK_TYPE_LABELS: Record<ProfileBlock["type"], string> = {
   status: "Duyuru",
   gallery: "Galeri",
   youtube: "YouTube",
+  spotify: "Spotify",
 };
 
 export type BlockIssue = { blockId: string; label: string; message: string };
@@ -469,6 +510,10 @@ export function blockIssue(block: ProfileBlock): string | null {
         : block.data.channelId
           ? null
           : "YouTube kanal bağlantısı gir";
+    case "spotify":
+      // YouTube'la aynı gerekçe: kimlik kayıt anında çözülür, boşsa gömülecek
+      // bir şey yok.
+      return block.data.entityId ? null : "Spotify bağlantısı gir";
   }
 }
 
@@ -505,11 +550,17 @@ export const BLOCK_GRID_LIMITS: Record<
   // Galeri her tile boyutunda bir düzene sahip (KTD37/KTD38), 1×1 dahil;
   // tavan sözlüğün en büyük biçimi olan 4×2.
   gallery: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
-  // YouTube kartının görsel odağı 16:9 bir küçük görsel. 1 track'te (masaüstü
-  // 181px, mobil 169px) başlık + kanal adıyla birlikte okunaklı durmuyor;
-  // taban 2 track. Video ve kanal aynı sınırları paylaşır ki tip değiştirmek
-  // bloğu yeniden boyutlandırmasın.
-  youtube: { minW: 2, minH: 1, maxW: 4, maxH: 2 },
+  // YouTube kartı yerinde OYNATILIYOR, yani boyutu bir oynatıcı boyutudur.
+  // Ölçüm: 2 track genişlikte (masaüstü 374px) 16:9 bir video 210px yükseklik
+  // ister; 1 track yalnız 156px (mobilde 138px) veriyor, yani oynatıcı ya
+  // kırpılır ya kıymık gibi kalırdı. Taban bu yüzden 2x2. Video ve kanal
+  // aynı sınırları paylaşır ki tip değiştirmek bloğu yeniden boyutlandırmasın.
+  youtube: { minW: 2, minH: 2, maxW: 4, maxH: 2 },
+  // Spotify'ın kompakt parça oynatıcısı 152px (ölçüldü); masaüstünde 2x1
+  // (374x156) buna tam oturuyor, o yüzden yükseklik tabanı 1. Genişlik tabanı
+  // 2: 181px'lik bir oynatıcıda kontroller sığmıyor. Albüm/liste/sanatçı
+  // gömmesi 352px istediği için onların varsayılanı 2x2 (kayıt anında seçilir).
+  spotify: { minW: 2, minH: 1, maxW: 4, maxH: 2 },
 };
 
 /** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa Türkçe mesaj. */

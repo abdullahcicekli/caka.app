@@ -774,7 +774,11 @@ export const kullanimKosullariSections: LegalSection[] = [
             "servisi, katkı grafiği için GitHub ve barındırma için " +
             "Cloudflare. Profillerdeki bağlantı önizleme görselleri ise " +
             "uzak siteden bizim sunucumuz tarafından çekilir; tarayıcın o " +
-            "siteye istek atmaz. Bu isteklerde hangi verinin kime ulaştığını ",
+            "siteye istek atmaz. Bunların dışında bir de yalnızca senin " +
+            "başlattığın bağlantılar var: bir YouTube ya da Spotify kartında " +
+            "oynat düğmesine basarsan oynatıcı o anda yüklenir ve tarayıcın " +
+            "doğrudan o platforma bağlanır. Bu isteklerde hangi verinin " +
+            "kime ulaştığını ",
           {
             kind: "link",
             text: "Aktarım ve tedarikçiler",

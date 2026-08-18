@@ -418,19 +418,38 @@ describe("yeni tiplerin ızgara sınırları", () => {
     ).toBe(false);
   });
 
-  it("youtube tek track'e daralmaz (minW 2)", () => {
+  it("youtube en az 2x2 olmalı: kart artık bir oynatıcı", () => {
+    // Video yerinde oynatılıyor. Ölçüm: 374px genişlikte 16:9 bir video
+    // 210px yükseklik ister; 1 track yalnız 156px (mobilde 138px) veriyor.
+    // Bu yüzden hem genişlik hem yükseklik tabanı 2.
     const base = {
       id: "blk_yt",
       type: "youtube",
-      size: "2x1",
-      data: { kind: "video", url: "", videoId: "abc", title: "", channelName: "", duration: "", shorts: false, thumbnail: "" },
+      size: "2x2",
+      data: { kind: "video", url: "", videoId: "abc", title: "", channelName: "", shorts: false, verticalThumbnail: false, thumbnail: "" },
     };
-    expect(
-      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 1, 1)]))).success,
-    ).toBe(false);
-    expect(
-      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 2, 1)]))).success,
-    ).toBe(true);
+    const kabul = (w: number, h: number) =>
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, w, h)]))).success;
+    expect(kabul(1, 2)).toBe(false); // dar
+    expect(kabul(2, 1)).toBe(false); // alçak — oynatıcı sığmaz
+    expect(kabul(2, 2)).toBe(true);
+    expect(kabul(4, 2)).toBe(true);
+  });
+
+  it("spotify parçası 2x1'e sığar ama 1 track'e daralmaz", () => {
+    // Ölçüm: Spotify kompakt parça oynatıcısı 152px; masaüstü 2x1 = 156px.
+    // Genişlik tabanı 2 çünkü 181px'lik bir oynatıcıda kontroller sığmıyor.
+    const base = {
+      id: "blk_sp",
+      type: "spotify",
+      size: "2x1",
+      data: { kind: "track", url: "", entityId: "abc123", title: "", thumbnail: "" },
+    };
+    const kabul = (w: number, h: number) =>
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, w, h)]))).success;
+    expect(kabul(1, 1)).toBe(false);
+    expect(kabul(2, 1)).toBe(true);
+    expect(kabul(2, 2)).toBe(true);
   });
 
   it("ensureLayoutPositions galeri varsayılanını 4 track olarak yerleştirir", () => {

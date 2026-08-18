@@ -179,6 +179,9 @@ function blockUrl(block: ProfileBlock): string {
     case "status":
       return block.data.url;
     case "youtube":
+    // Spotify kartı yerinde oynatılıyor ama "Spotify'da aç" bağlantısı da
+    // taşıyor; ölçülecek hedef odur.
+    case "spotify":
       return block.data.url;
     case "profile":
     case "text":
@@ -207,6 +210,8 @@ function blockLabel(block: ProfileBlock): string {
       return block.data.kind === "video"
         ? block.data.title
         : block.data.channelName || block.data.handle;
+    case "spotify":
+      return block.data.title;
     case "profile":
     case "text":
     case "gallery":

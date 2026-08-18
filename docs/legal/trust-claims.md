@@ -77,6 +77,14 @@ Fark önemli, çünkü:
   anlamına **gelmez**: ölçüm beacon'ı hâlâ cihaza yazmıyor ama Fontshare
   yazı tipleri her sayfa yüklemesinde uzak host'tan çekiliyor. "Hiçbir
   üçüncü taraf isteği yok" demek bu yüzden hâlâ yanlış olurdu.
+- **Gömülü oynatıcılar ifadeyi bozmuyor ama sınırını keskinleştiriyor.**
+  Ziyaretçi bir YouTube/Spotify kartında oynata basarsa o siteler çerez
+  yazabilir. İfade "*biz* reklam ve analitik çerezi kullanmıyoruz" demeye
+  devam ediyor ve bu doğru: o çerezleri biz yazmıyoruz, okuyamıyoruz,
+  silemiyoruz. İfadeyi "bu sitede reklam çerezi yoktur" gibi bir biçime
+  **çevirmek yanlış olur** — oynatıcı yüklendikten sonra sayfada üçüncü
+  taraf çerezi bulunabilir. Kapıyı ayakta tutan şey, bunun ancak
+  ziyaretçinin bilinçli tıklamasıyla ve önceden söylenerek olması.
 - Ölçüm beacon'ı cihaza yazmasa da isteğin kendisinde IP ve User Agent
   Cloudflare'e ulaşır. "Hiçbir veri toplamıyoruz" demek de bu yüzden yanlış
   olurdu ve denmedi.

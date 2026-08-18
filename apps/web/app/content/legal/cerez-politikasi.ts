@@ -559,15 +559,51 @@ export const cerezPolitikasiSections: LegalSection[] = [
               "tarayıcından gidiyordu ve üçüncü taraf çerezi yazılabiliyordu; " +
               "18 Ağustos 2026'da kapatıldı.",
           ],
+          [
+            {
+              kind: "strong",
+              text: "Gömülü oynatıcılar (YouTube, Spotify) — yalnız sen oynata basarsan. ",
+            },
+            "Bir profildeki YouTube veya Spotify kartı açılışta ",
+            { kind: "strong", text: "hiçbir" },
+            " şey yüklemez: gördüğün kapak görseli bizim sunucumuzdan gelir ve " +
+              "o siteye tek bir istek bile gitmez. Oynat düğmesine ",
+            { kind: "strong", text: "sen basarsan" },
+            " oynatıcı o anda yüklenir ve işte o noktada tarayıcın doğrudan " +
+              "YouTube'a ya da Spotify'a bağlanır: IP adresin ve User Agent'ın " +
+              "onlara ulaşır ve ",
+            {
+              kind: "strong",
+              text: "cihazına kendi çerezlerini yazabilirler",
+            },
+            ". YouTube için çerezsiz gömme adresini (youtube-nocookie.com) " +
+              "kullanıyoruz; bu takibi azaltır ama video oynamaya başladığında " +
+              "çerez yazılmasını tamamen engellemez. Bu çerezler bize ait " +
+              "olmadığı için 4. bölümdeki tabloda yer almazlar; onlar için " +
+              "YouTube'un ve Spotify'ın kendi politikaları geçerlidir.",
+          ],
+          [
+            {
+              kind: "strong",
+              text: "Neden düğmeye basmadan yüklemiyoruz. ",
+            },
+            "Oynatıcıyı sayfa açılır açılmaz gömseydik, o profile bakan " +
+              "herkes hiçbir şey yapmadan YouTube'a ve Spotify'a tanıtılmış " +
+              "olurdu. Böyle kurmadık: bağlantı ancak senin bilinçli bir " +
+              "eylemininle kuruluyor ve düğmenin üstünde bunun olacağı yazıyor.",
+          ],
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Yukarıdaki üç istek de cihazına hiçbir şey yazmaz; bu yüzden ",
+          "İlk üç istek cihazına hiçbir şey yazmaz; bu yüzden ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
-          " yer almazlar. Tablo yalnızca cihazına gerçekten yazılanları " +
-            "listeler. Hangi tedarikçiye hangi verinin ulaştığının tam listesi ",
+          " yer almazlar. Tablo yalnızca ",
+          { kind: "strong", text: "bizim" },
+          " cihazına yazdıklarımızı listeler; gömülü oynatıcının yazdığı " +
+            "çerezler bize ait olmadığı için oraya giremez. Hangi tedarikçiye " +
+            "hangi verinin ulaştığının tam listesi ",
           {
             kind: "link",
             text: "Gizlilik ve Aydınlatma Metni'ndeki aktarım ve tedarikçiler",

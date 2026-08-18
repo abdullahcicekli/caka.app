@@ -751,6 +751,31 @@ export const gizlilikSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
+          { kind: "strong", text: "Gömülü oynatıcılar. " },
+          "YouTube ve Spotify kartları sayfa açılışında hiçbir şey yüklemez; " +
+            "kapak görseli yukarıdaki gibi bizim sunucumuzdan gelir. ",
+          { kind: "strong", text: "Oynat düğmesine bastığın anda" },
+          " oynatıcı yüklenir ve tarayıcın doğrudan YouTube'a ya da " +
+            "Spotify'a bağlanır: IP adresin ve User Agent'ın onlara ulaşır, " +
+            "cihazına kendi çerezlerini yazabilirler ve o oturumu kendi " +
+            "hesabınla ilişkilendirebilirler. Bu aktarım bizim aracılığımızla " +
+            "değil, doğrudan gerçekleşir ve her biri kendi veri sorumlusudur; " +
+            "aktarılan verinin akıbeti için ",
+          { kind: "strong", text: "onların kendi politikaları" },
+          " geçerlidir. Düğmeye basmadığın sürece bu isteklerin hiçbiri " +
+            "yapılmaz — bunu bilinçli olarak böyle kurduk ve düğmenin " +
+            "üstünde de yazıyor. Ayrıntı: ",
+          {
+            kind: "link",
+            text: "Çerez Politikası",
+            href: "/cerez-politikasi",
+          },
+          ".",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
           "Bunların dışında, yalnızca yasal bir zorunluluk doğduğunda yetkili " +
             "kamu kurum ve kuruluşlarına aktarım yapılır (KVKK m.8/2-a).",
         ],
