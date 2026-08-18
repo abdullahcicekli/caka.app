@@ -11,9 +11,33 @@
 // kalıcı olarak `ogImage`'a yazardı — kaynak adres geri döndürülemez biçimde
 // kaybolurdu. `githubCalendars` zaten aynı deseni kullanıyor (bkz.
 // `server/github.ts`); bu ona kardeş.
-import type { ProfileLayout } from "@caka/shared";
+import {
+  classifyYouTubeUrl,
+  youtubeThumbnailUrl,
+  type ProfileLayout,
+} from "@caka/shared";
 
 import { signImageProxyPath } from "./image-proxy";
+
+/**
+ * Kayıtlı `ogImage` yoksa adresten TÜRETİLEBİLİR bir önizleme var mı?
+ *
+ * Bugün yalnız YouTube: küçük görselin adresi video kimliğinden kurulabiliyor,
+ * yani hiç ağa çıkmadan. Bu, geriye dönük bir veri doldurmayı gereksiz
+ * kılıyor — `link` bloğu `ogImage` alanını ancak bu sürümle kazandı, dolayısıyla
+ * MEVCUT bütün YouTube bağlantılarının alanı boş ve sahibi editörü açmadan
+ * dolmayacaktı. Ayrıca YouTube'un `og:image` etiketi ~694 KB'ta duruyor;
+ * kazımak pahalı, türetmek bedava.
+ *
+ * `mqdefault` seçildi çünkü HER videoda var. `maxresdefault` daha keskin ama
+ * eski videolarda ve Shorts'ta 404 yerine 1097 baytlık gri bir vekil dönüyor,
+ * yani doğrulamadan kullanmak kırık kart üretirdi (KTD35).
+ */
+function derivedPreview(url: string): string {
+  if (!url) return "";
+  const ref = classifyYouTubeUrl(url);
+  return ref.kind === "video" ? youtubeThumbnailUrl(ref.videoId, "mq") : "";
+}
 
 /** Blok kimliği → imzalı birinci taraf görsel yolu. */
 export type SignedImageMap = Record<string, string>;
@@ -23,7 +47,7 @@ function remoteImageOf(block: ProfileLayout["blocks"][number]): string {
   switch (block.type) {
     case "social":
     case "link":
-      return block.data.ogImage;
+      return block.data.ogImage || derivedPreview(block.data.url);
     case "youtube":
     case "spotify":
       return block.data.thumbnail;

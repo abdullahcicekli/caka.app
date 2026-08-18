@@ -336,3 +336,26 @@ describe("parseYouTubeChannelFeed — gerçek RSS akışı", () => {
     expect(parseYouTubeChannelFeed("<feed><title>Kanal</title></feed>")).toBeNull();
   });
 });
+
+describe("adresten türetilen önizleme (kayıtlı ogImage olmadan)", () => {
+  it("youtu.be kısa adresinden video kimliği ve mqdefault çıkar", () => {
+    // Üretimdeki mevcut link blokları `ogImage` alanını hiç taşımıyor
+    // (alan bu sürümle geldi). Küçük görsel kimlikten türetilebildiği için
+    // geriye dönük veri doldurmaya gerek kalmıyor.
+    const ref = classifyYouTubeUrl("https://youtu.be/hnzdyBGnXLg?si=i4UJ1Q909Wn-V7R6");
+    expect(ref.kind).toBe("video");
+    if (ref.kind !== "video") return;
+    expect(ref.videoId).toBe("hnzdyBGnXLg");
+    expect(youtubeThumbnailUrl(ref.videoId, "mq")).toBe(
+      "https://i.ytimg.com/vi/hnzdyBGnXLg/mqdefault.jpg",
+    );
+  });
+
+  it("kanal adresinden video küçük görseli TÜRETİLMEZ", () => {
+    // Kanalın videosu yok; türetme yalnız video için geçerli.
+    expect(classifyYouTubeUrl("https://www.youtube.com/@MrBeast").kind).not.toBe("video");
+    expect(classifyYouTubeUrl("https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT").kind).toBe(
+      "none",
+    );
+  });
+});
