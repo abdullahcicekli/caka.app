@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 
-import { remoteImageProxyPath } from "@caka/shared";
 import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
@@ -51,10 +50,18 @@ function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
 export function ProfileBlockCard({
   block,
   githubCalendars,
+  signedImages,
 }: {
   block: ProfileBlock;
   githubCalendars?: GithubCalendarMap;
+  /** blok kimliği → imzalı proxy yolu (loader doldurur; bkz.
+      `server/layout-images.ts`). Proxy imzalı olduğu için adres render
+      sırasında saf fonksiyonla türetilemez. */
+  signedImages?: Readonly<Record<string, string>>;
 }) {
+  // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
+  // tanımsız veya blokta görsel yok) kart görselsiz tasarımına düşer.
+  const signedImage = signedImages?.[block.id] ?? "";
   // switch + never: yeni bir blok tipi eklendiğinde bu dosya derleme hatası
   // verir. Eskiden `if` zinciriydi ve tanınmayan tip sessizce `status`
   // dalına düşüp `block.data.text` üzerinde çalışma anında patlıyordu.
@@ -86,11 +93,10 @@ export function ProfileBlockCard({
     // düşmesin diye o bantta og'a geri çekilir. display:none + loading="lazy"
     // olduğundan grafik görünürken tarayıcı görseli indirmez.
     // Uzak host'a doğrudan gidilmez: görsel birinci taraf proxy'sinden
-    // servis edilir (backlog #6 — ziyaretçi IP/UA sızıntısı ve üçüncü taraf
-    // çerezi). Adres saf bir fonksiyonla türetilir; SSR ve hydration aynı.
-    const ogImage = block.size !== "1x1" && block.data.ogImage
-      ? remoteImageProxyPath(block.data.ogImage)
-      : "";
+    // servis edilir (ziyaretçi IP/UA sızıntısı ve üçüncü taraf çerezi).
+    // Adres loader'da imzalanır; imza sırra ve HMAC'e bağlı olduğu için
+    // burada türetilemez.
+    const ogImage = block.size !== "1x1" ? signedImage : "";
     const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
@@ -195,7 +201,7 @@ export function ProfileBlockCard({
       const data = block.data;
       // Küçük görsel uzak host'tan gelir; ziyaretçi tarayıcısı YouTube'a
       // doğrudan istek atmasın diye birinci taraf proxy'sinden geçer (R58).
-      const thumbnail = data.thumbnail ? remoteImageProxyPath(data.thumbnail) : "";
+      const thumbnail = signedImage;
       const title =
         data.kind === "video"
           ? data.title
@@ -236,12 +242,15 @@ export function ProfileCanvas({
   theme,
   compact = false,
   githubCalendars,
+  signedImages,
 }: {
   layout: ProfileLayout;
   theme: ProfileTheme;
   compact?: boolean;
   /** login → GitHub katkı takvimi (loader doldurur; yoksa özellik kapalı) */
   githubCalendars?: GithubCalendarMap;
+  /** blok kimliği → imzalı proxy yolu (loader doldurur) */
+  signedImages?: Readonly<Record<string, string>>;
 }) {
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
@@ -276,7 +285,11 @@ export function ProfileCanvas({
                 className={`profile-grid-item size-${block.size} ${pos ? "has-pos" : ""}`}
                 style={style}
               >
-                <ProfileBlockCard block={block} githubCalendars={githubCalendars} />
+                <ProfileBlockCard
+                  block={block}
+                  githubCalendars={githubCalendars}
+                  signedImages={signedImages}
+                />
               </div>
             );
           })}

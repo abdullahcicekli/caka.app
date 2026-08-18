@@ -23,6 +23,7 @@ import {
 import { recordProfileView } from "../../server/analytics";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
+import { signLayoutImages } from "../../server/layout-images";
 import { ogImagePathForProfile } from "../../server/og-image";
 import { resolveUsername } from "../../server/profile";
 import type { Route } from "./+types/username";
@@ -147,14 +148,20 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     isOwner,
     // GitHub katkı grafikleri: D1 önbelleğinden okunur; token yoksa boş.
     githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
+    signedImages: await signLayoutImages(env, layout),
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
-  const { username, isOwner, layout, theme, githubCalendars } = loaderData;
+  const { username, isOwner, layout, theme, githubCalendars, signedImages } = loaderData;
   return (
     <main className="relative min-h-svh">
-      <ProfileCanvas layout={layout} theme={theme} githubCalendars={githubCalendars} />
+      <ProfileCanvas
+        layout={layout}
+        theme={theme}
+        githubCalendars={githubCalendars}
+        signedImages={signedImages}
+      />
       {/* Tıklama ölçümü yalnız ziyaretçide çalışır; sahibin kendi tıklaması
           sayaca girmez. Bağlantıların href'i değişmez — JS kapalıyken
           bağlantılar aynen çalışır, yalnızca sayılmaz. */}

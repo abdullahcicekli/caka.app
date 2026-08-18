@@ -47,6 +47,7 @@ import {
 } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
+import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 
@@ -73,6 +74,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     hasDraft: Boolean(draft),
     // Editör WYSIWYG kalsın: GitHub kartı canlıdaki heatmap'iyle görünür.
     githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
+    // Yüklenişteki bloklar için imzalı görsel yolları. Editörde SONRADAN
+    // eklenen bloklar burada yok; onların imzalı yolu /api/og-image
+    // yanıtındaki `proxied` alanından gelir.
+    signedImages: await signLayoutImages(env, layout),
   };
 }
 
@@ -789,7 +794,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                 if (event.key === "Enter" || event.key === " ") setSelectedId(profileBlock.id);
               }}
             >
-              <ProfileBlockCard block={profileBlock} />
+              <ProfileBlockCard block={profileBlock} signedImages={loaderData.signedImages} />
               {selectedId === profileBlock.id ? <span className="selected-label">Genel bilgi</span> : null}
             </div>
           ) : null}
@@ -838,7 +843,11 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     onClose={() => setSelectedId(null)}
                   />
                 ) : (
-                  <ProfileBlockCard block={block} githubCalendars={loaderData.githubCalendars} />
+                  <ProfileBlockCard
+                    block={block}
+                    githubCalendars={loaderData.githubCalendars}
+                    signedImages={loaderData.signedImages}
+                  />
                 )
               }
             />

@@ -25,6 +25,7 @@ import {
 import { getProfileAnalytics } from "../../server/analytics";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
+import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/dashboard";
 
@@ -77,6 +78,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     hasDraft: profile.draftLayout ? parseProfileLayout(profile.draftLayout) !== null : false,
     // Önizlemedeki GitHub kartları da canlı sayfayla aynı grafiği göstersin.
     githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
+    signedImages: await signLayoutImages(env, layout),
     account: {
       name: card?.data.name || profile.username,
       username: profile.username,
@@ -220,7 +222,8 @@ function DashAnalytics({ analytics }: { analytics: Analytics }) {
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { username, layout, theme, account, hasDraft, githubCalendars, analytics } = loaderData;
+  const { username, layout, theme, account, hasDraft, githubCalendars, analytics, signedImages } =
+    loaderData;
 
   return (
     <main className="dash-shell">
@@ -242,7 +245,13 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="dashboard-preview" aria-hidden>
           <div className="dashboard-preview-scale">
-            <ProfileCanvas layout={layout} theme={theme} compact githubCalendars={githubCalendars} />
+            <ProfileCanvas
+              layout={layout}
+              theme={theme}
+              compact
+              githubCalendars={githubCalendars}
+              signedImages={signedImages}
+            />
           </div>
         </div>
         <DashAnalytics analytics={analytics} />
