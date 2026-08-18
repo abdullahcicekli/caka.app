@@ -117,8 +117,10 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
 
 - `layout` içindeki her şey kullanıcının kendi girdiğidir: ad, tanıtım yazısı,
   bağlantılar, sosyal hesap kullanıcı adları, zengin metin, görsel referansları
-  ve **sosyal blokların `ogImage` alanı** (uzak host adresi — `server/og.ts`
-  sunucu tarafında çeker, içerik proxy'lenmez).
+  ve **blokların `ogImage` / YouTube küçük görsel alanı** (uzak host adresi —
+  `server/og.ts` adresi sunucu tarafında bulur; görselin kendisi de
+  `server/image-proxy.ts` üzerinden birinci taraftan servis edilir, yani
+  ziyaretçinin tarayıcısı uzak host'a hiç istek atmaz).
 - `onboarding_data` ilk kurulumda verilen yanıtları tutar.
 - **Amaç:** public profilin yayınlanması. **Sebep:** m.5/2-c.
 - **Süre:** hesap yaşadığı sürece. `draft_layout` yayınlanana kadar; ayrı bir

@@ -542,36 +542,32 @@ export const cerezPolitikasiSections: LegalSection[] = [
               kind: "strong",
               text: "Profillerdeki bağlantı önizleme görselleri. ",
             },
-            "Bir Caka profilinde, profil sahibinin eklediği bağlantıların " +
-              "önizleme görselleri bizim sunucumuzdan geçmez: tarayıcın o " +
-              "görseli ",
+            "Bu görseller ",
             {
               kind: "strong",
-              text: "doğrudan profil sahibinin seçtiği sitenin sunucusundan",
+              text: "kendi sunucumuz üzerinden",
             },
-            " çeker. Bu istekte IP adresin ve User Agent'ın o siteye ulaşır " +
-              "ve ",
+            " servis edilir: görseli uzak siteden Caka'nın sunucusu çeker, " +
+              "tarayıcın değil. Bu nedenle o siteye IP adresin de User " +
+              "Agent'ın da ulaşmaz ve ",
             {
               kind: "strong",
-              text: "o site tarayıcına kendi çerezini yazabilir",
+              text: "o site tarayıcına çerez yazamaz",
             },
-            ". Aynı çerez farklı Caka profillerinde de okunabileceği için o " +
-              "site ziyaretlerini birbirine bağlayabilir. Bu istekler bizim " +
-              "denetimimizde değildir, şu anda engellenmiş de değildir; " +
-              "görselleri kendi sunucumuz üzerinden geçirerek bu sızıntıyı " +
-              "kapatmak iş listemizde duruyor.",
+            " — yanıt bizde sıfırdan kurulur, uzak sitenin gönderdiği " +
+              "başlıklar sana iletilmez. Daha önce bu istek doğrudan " +
+              "tarayıcından gidiyordu ve üçüncü taraf çerezi yazılabiliyordu; " +
+              "18 Ağustos 2026'da kapatıldı.",
           ],
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Önizleme görselini veren sitenin yazdığı çerez ",
-          { kind: "strong", text: "bize ait değildir" },
-          ": onu biz yazmayız, okuyamayız ve silemeyiz — bu yüzden ",
+          "Yukarıdaki üç istek de cihazına hiçbir şey yazmaz; bu yüzden ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
-          " yer almaz. O çerez için o sitenin kendi politikası geçerlidir. " +
-            "Hangi tedarikçiye hangi verinin ulaştığının tam listesi ",
+          " yer almazlar. Tablo yalnızca cihazına gerçekten yazılanları " +
+            "listeler. Hangi tedarikçiye hangi verinin ulaştığının tam listesi ",
           {
             kind: "link",
             text: "Gizlilik ve Aydınlatma Metni'ndeki aktarım ve tedarikçiler",

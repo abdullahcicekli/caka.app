@@ -70,11 +70,13 @@ Fark önemli, çünkü:
 
 - Zorunlu çerezler **var** (oturum, CSRF, adres taşıma). Tablo bunları
   listeliyor.
-- **Profil sayfalarındaki uzak önizleme görselleri üçüncü taraf çerezi
-  yazabilir** — ama bunu *biz* yazmıyoruz, host'u profil sahibi seçiyor
-  (`vendor-register.md` §A). `/gizlilik` §6 bu sızıntıyı olduğu gibi
-  anlatıyor. Bu yüzden ifade "hiç üçüncü taraf çerezi yok" biçimine
-  **genişletilemez**; genişletilirse yanlış olur.
+- Profil sayfalarındaki uzak önizleme görselleri **artık üçüncü taraf çerezi
+  yazamaz**: görseller birinci taraf proxy'sinden servis ediliyor ve yanıt
+  bizde sıfırdan kuruluyor, uzak sitenin `Set-Cookie`'si ziyaretçiye hiç
+  geçmiyor (`vendor-register.md` §B). Bu, ifadenin genişletilebileceği
+  anlamına **gelmez**: ölçüm beacon'ı hâlâ cihaza yazmıyor ama Fontshare
+  yazı tipleri her sayfa yüklemesinde uzak host'tan çekiliyor. "Hiçbir
+  üçüncü taraf isteği yok" demek bu yüzden hâlâ yanlış olurdu.
 - Ölçüm beacon'ı cihaza yazmasa da isteğin kendisinde IP ve User Agent
   Cloudflare'e ulaşır. "Hiçbir veri toplamıyoruz" demek de bu yüzden yanlış
   olurdu ve denmedi.

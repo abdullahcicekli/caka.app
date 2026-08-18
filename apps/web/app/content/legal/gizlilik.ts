@@ -731,24 +731,21 @@ export const gizlilikSections: LegalSection[] = [
         text: [
           { kind: "strong", text: "Profillerdeki önizleme görselleri. " },
           "Bir profilde, profil sahibinin eklediği bağlantıların önizleme " +
-            "görselleri bizim sunucumuzdan geçmez: tarayıcın o görseli ",
+            "görselleri ",
           {
             kind: "strong",
-            text: "doğrudan profil sahibinin seçtiği sitenin sunucusundan",
+            text: "kendi sunucumuz üzerinden",
           },
-          " çeker. Bu istekte IP adresin ve User Agent'ın o siteye ulaşır ve " +
-            "o site tarayıcına kendi çerezini yazabilir. Aynı çerez farklı " +
-            "Caka profillerinde de okunabileceği için o site ziyaretlerini " +
-            "birbirine bağlayabilir. Bu istekler bizim denetimimizde değildir " +
-            "ve şu anda engellenmiş de değildir; görselleri kendi sunucumuz " +
-            "üzerinden geçirerek bu sızıntıyı kapatmak iş listemizde duruyor. " +
-            "Bu çerezler bize ait olmadığı için ",
-          {
-            kind: "link",
-            text: "Çerez Politikası",
-            href: "/cerez-politikasi",
-          },
-          " tablosunda da yer almazlar.",
+          " servis edilir. Görseli uzak siteden Caka'nın sunucusu çeker, " +
+            "tarayıcın değil. Bu nedenle o siteye IP adresin de User Agent'ın " +
+            "da ulaşmaz ve o site tarayıcına çerez yazamaz: yanıt bizde " +
+            "sıfırdan kurulur, uzak sitenin gönderdiği başlıklar sana " +
+            "iletilmez. Uzak siteye giden istekte yalnızca profil sahibinin " +
+            "seçtiği görselin adresi bulunur; seni tanımlayan bir bilgi " +
+            "taşımaz. Tam olmak adına: görsel sunucumuzda önbelleğe " +
+            "alınmadığı ilk seferde, o isteğin zamanlaması uzak siteye " +
+            "profilin o sıralarda görüntülendiğini gösterir — ama bunu kimin " +
+            "yaptığını göstermez.",
         ],
       },
       {

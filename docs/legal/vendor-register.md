@@ -54,28 +54,28 @@ tedarikçiye ulaşır. Aydınlatma yükümlülüğü buradan doğar.
 | **Indian Type Foundry (Fontshare)** | Yazı tipleri; `api.fontshare.com` (CSS) + `cdn.fontshare.com` (font dosyaları) | **Her sayfa yüklemesinde** IP adresi ve User Agent. Cihaza yazma yok | Fiilen ayrı veri sorumlusu (kendi altyapısı, bizim talimatımız yok) | Hindistan merkezli firma; **CDN sunucu konumu doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Google LLC** — Sign in with Google | Kimlik doğrulama yönlendirmesi | Kullanıcı girişi **başlattığında** Google'a yönlendirilir; istek ve dönüşte bize iletilen hesap bilgisi Google'ın kendi politikasıyla işlenir | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Apple Inc.** — Sign in with Apple | Kimlik doğrulama yönlendirmesi | Aynı akış | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
-| **Profil sahibinin seçtiği uzak görsel host'ları** ⚠️ | `/:username` sayfalarındaki sosyal blok önizleme görselleri | IP adresi ve User Agent o siteye ulaşır **ve o site tarayıcıya kendi çerezini yazabilir** | Bizim tedarikçimiz değil; her biri kendi veri sorumlusu | Belirsiz — host'u profil sahibi seçer | **Evet, ama önceden bilinemez** | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
 
-### ⚠️ Uzak `ogImage` — bu kaydın en zayıf noktası
+### ✅ Uzak `ogImage` — kapatıldı (2026-08-18)
 
-`apps/web/app/components/profile-block.tsx:101`'deki `<img src={ogImage}>`
-etiketinin host'unu **profil sahibi** belirler. Sonuç:
+Bu bölüm daha önce kaydın en zayıf noktasıydı: önizleme görselinin host'unu
+profil sahibi belirliyordu ve ziyaretçinin tarayıcısı o siteye **doğrudan**
+gidiyordu. Sonuç, üçüncü taraf çerezi yazılabilmesi ve IP/UA sızıntısıydı.
 
-- İstek bizim sunucumuzdan geçmez; ziyaretçinin tarayıcısı doğrudan o siteye
-  gider.
-- O site yanıtta `Set-Cookie` gönderip **üçüncü taraf çerezi** yazabilir ve aynı
-  çerezle ziyaretçiyi **farklı Caka profilleri arasında** eşleyebilir.
-- `referrerPolicy="no-referrer"` yalnızca `Referer` başlığını keser; çerezi de
-  IP/UA sızıntısını da engellemez.
-- Bu çerezler bize ait olmadığı için `cookie-inventory.md` tablosunda **yer
-  almazlar** — envanter yalnız kendi yazdıklarımızı kapsar. `/gizlilik` §6 bu
-  ayrımı açıkça anlatıyor.
+Artık görseller birinci taraf proxy'sinden (`GET /api/gorsel`) servis ediliyor:
 
-Gerçek çözüm Worker proxy'sidir ve bu planın kapsamı dışına alınmıştır
-(`docs/backlog.md`). **Bu maddeyi kapatana kadar "üçüncü taraf çerezi yok"
-şeklinde bir iddia kullanılamaz** — footer'daki ifade bilerek "reklam ve
-analitik çerezi kullanmıyoruz" (yani *biz* yazmıyoruz) biçiminde dar
-tutulmuştur; bkz. `trust-claims.md`.
+- İsteği Worker atar; ziyaretçinin IP'si ve User Agent'ı uzak siteye **ulaşmaz**.
+- Yanıt bizde **sıfırdan kurulur**; uzak sitenin `Set-Cookie` dâhil hiçbir
+  başlığı ziyaretçiye geçmez. Üçüncü taraf çerezi yazılamaz.
+- `Referer` gönderilmez; uzak site hangi profilden gelindiğini göremez.
+- Uç **HMAC ile imzalıdır**: yalnız Caka'nın ürettiği adresler proxy'lenir,
+  yani açık bir görsel geçidi değildir. İmza sırrı tanımsızsa uç tamamen
+  kapanır (fail-closed) ve önizleme görselleri hiç gösterilmez.
+
+Kalan artık risk, dürüstlük gereği: görsel önbelleğe alınmadığı **ilk**
+seferde, isteğin zamanlaması uzak siteye profilin o sıralarda görüntülendiğini
+gösterir. Ziyaretçiyi tanımlamaz. `/gizlilik` §6 bunu açıkça yazıyor.
+
+Tedarikçi satırı bu nedenle **A bölümünden B bölümüne taşındı**.
 
 ---
 
@@ -90,7 +90,9 @@ yapar, dolayısıyla ziyaretçinin IP adresi tedarikçiye ulaşmaz.
 | **Cloudflare, Inc.** — R2 (`caka-assets`) | Dosya deposu | Yüklenen görseller, avatar kopyaları | Veri işleyen | **Doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Cloudflare, Inc.** — Workers Logs | Çalışma kayıtları (`observability.enabled: true`) | İstek adresi, yanıt kodu, süre, hata izleri; istek meta verisi | Veri işleyen | **Doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
 | **GitHub, Inc.** | Katkı grafiği verisinin alınması (public HTML parçası `/users/<login>/contributions`, `server/github.ts`; kimlik doğrulaması yok) | Yalnızca gösterilecek **GitHub kullanıcı adı**. Ziyaretçinin IP'si GitHub'a ulaşmaz | Veri kaynağı / ayrı veri sorumlusu | ABD | **Evet** (giden handle bakımından) | ⬚ *(boş — OQ2a)* |
-| **og:image kazıması** — hedef siteler (`server/og.ts`) | Sosyal blok bağlantısının önizleme görselinin bulunması | Profil sahibinin girdiği **URL**; isteği Worker atar, sayfanın ilk 128 KB'ı okunur, içerik proxy'lenmez | Bizim tedarikçimiz değil | Belirsiz — URL'i profil sahibi girer | Duruma göre | ⬚ *(uygulanamaz)* |
+| **og:image kazıması** — hedef siteler (`server/og.ts`) | Bağlantının önizleme görselinin bulunması | Profil sahibinin girdiği **URL**; isteği Worker atar, gövde akış hâlinde ve en fazla 1 MB okunur | Bizim tedarikçimiz değil | Belirsiz — URL'i profil sahibi girer | Duruma göre | ⬚ *(uygulanamaz)* |
+| **Önizleme görseli proxy'si** — hedef host'lar (`server/image-proxy.ts`) | Uzak önizleme görselinin birinci taraftan servis edilmesi | Yalnızca görselin **adresi**; isteği Worker atar, ziyaretçinin IP'si ve User Agent'ı uzak host'a ulaşmaz | Bizim tedarikçimiz değil; host'u profil sahibi seçer | Belirsiz | Duruma göre | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
+| **YouTube (Google LLC)** — oEmbed, kanal sayfası, RSS akışı (`server/youtube.ts`) | Video/kanal bilgisinin ve en son videonun alınması | Profil sahibinin girdiği **video/kanal adresi**; istek Worker'dan gider, ziyaretçinin IP'si YouTube'a ulaşmaz | Ayrı veri sorumlusu | ABD | **Evet** (giden adres bakımından) | ⬚ *(boş — OQ2a)* |
 | **Google (googleusercontent.com)** — avatar kopyası (`server/avatar.ts`) | Google profil fotoğrafının R2'ye kopyalanması | Yalnızca görsel URL'i; istek Worker'dan gider | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 
 ---

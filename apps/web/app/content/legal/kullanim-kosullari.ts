@@ -772,9 +772,9 @@ export const kullanimKosullariSections: LegalSection[] = [
           "Caka'yı çalıştırmak için kullandığımız üçüncü taraf servisleri de " +
             "vardır: girişte Google ve Apple, yazı tipleri için bir font " +
             "servisi, katkı grafiği için GitHub ve barındırma için " +
-            "Cloudflare. Profillerdeki bağlantı önizleme görselleri de " +
-            "doğrudan profil sahibinin seçtiği siteden yüklenir. Bu " +
-            "isteklerde hangi verinin kime ulaştığını ",
+            "Cloudflare. Profillerdeki bağlantı önizleme görselleri ise " +
+            "uzak siteden bizim sunucumuz tarafından çekilir; tarayıcın o " +
+            "siteye istek atmaz. Bu isteklerde hangi verinin kime ulaştığını ",
           {
             kind: "link",
             text: "Aktarım ve tedarikçiler",

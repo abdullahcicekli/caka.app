@@ -102,7 +102,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/gizlilik",
     title: "Gizlilik ve Aydınlatma Metni",
     navLabel: "Gizlilik ve Aydınlatma",
-    version: "0.1",
+    version: "0.2",
     updatedAt: "2026-08-18",
   },
   "kullanim-kosullari": {
@@ -110,7 +110,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/kullanim-kosullari",
     title: "Kullanım Koşulları",
     navLabel: "Kullanım Koşulları",
-    version: "0.1",
+    version: "0.2",
     updatedAt: "2026-08-18",
   },
   "cerez-politikasi": {
@@ -118,8 +118,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/cerez-politikasi",
     title: "Çerez Politikası",
     navLabel: "Çerez Politikası",
-    version: "0.1",
-    updatedAt: "2026-08-17",
+    version: "0.2",
+    updatedAt: "2026-08-18",
   },
 };
 

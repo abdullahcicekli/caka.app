@@ -150,8 +150,10 @@ güncellenir:
 3. Yeni bir üçüncü taraf script eklenir (ölçüm, chat, reklam) — cihaza yazıp
    yazmadığı **iddia edilmez, tarayıcıda doğrulanır** (KTD31).
 4. Bir bileşen `localStorage`/`sessionStorage`/`IndexedDB` kullanmaya başlar.
-5. Uzak `ogImage` için Worker proxy'si eklenir — o zaman profil sayfalarındaki
-   üçüncü taraf çerez yüzeyi kapanır ve `/gizlilik` §6'daki uyarı güncellenir.
+5. ~~Uzak `ogImage` için Worker proxy'si eklenir~~ — **yapıldı (2026-08-18)**.
+   Profil sayfalarındaki üçüncü taraf çerez yüzeyi kapandı; `/gizlilik` §6
+   ve `vendor-register.md` aynı commit'te güncellendi. Bundan sonraki tetik:
+   proxy'nin kapsamı dışında kalan yeni bir uzak görsel yüzeyi eklenirse.
 
 ### Manuel doğrulama yordamı
 
