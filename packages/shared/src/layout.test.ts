@@ -121,32 +121,42 @@ describe("boyut sözlüğü", () => {
     }
   });
 
-  it("sizeToDims etiketi ölçüye çevirir", () => {
-    expect(sizeToDims("1x2")).toEqual({ w: 1, h: 2 });
-    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 1 });
-    expect(sizeToDims("4x2")).toEqual({ w: 4, h: 2 });
+  // Etiketin yüksekliği TAM satır, ızgaranınki YARIM satır (GRID_ROW_UNIT).
+  it("sizeToDims etiketi yarım satır ölçüsüne çevirir", () => {
+    expect(sizeToDims("1x2")).toEqual({ w: 1, h: 4 });
+    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 2 });
+    expect(sizeToDims("4x2")).toEqual({ w: 4, h: 4 });
   });
 
   // KTD33: eski sözlükte yalnız 1x1/2x1/2x2 vardı; dikey tile ve tam
   // genişlik etiketleri kayboluyordu.
   it("dikey tile ve tam genişlik artık kaybolmuyor", () => {
-    expect(sizeFromDims(1, 2)).toBe("1x2");
-    expect(sizeFromDims(4, 1)).toBe("4x1");
-    expect(sizeFromDims(4, 2)).toBe("4x2");
+    expect(sizeFromDims(1, 4)).toBe("1x2");
+    expect(sizeFromDims(4, 2)).toBe("4x1");
+    expect(sizeFromDims(4, 4)).toBe("4x2");
   });
 
   it("sözlükte karşılığı olmayan ara ölçüler bir alt basamağa yuvarlanır", () => {
-    expect(sizeFromDims(3, 1)).toBe("2x1");
-    expect(sizeFromDims(3, 3)).toBe("2x2");
-    expect(sizeFromDims(1, 4)).toBe("1x2");
+    expect(sizeFromDims(3, 2)).toBe("2x1");
+    // 3 yarım satır (240px) sözlükte yok: tek satırlık etikete yuvarlanır.
+    expect(sizeFromDims(3, 3)).toBe("2x1");
+    expect(sizeFromDims(1, 6)).toBe("1x2");
     expect(sizeFromDims(0, 0)).toBe("1x1");
+  });
+
+  it("gidiş-dönüş: etiket → ölçü → etiket kendisi kalır", () => {
+    for (const size of ["1x1", "1x2", "2x1", "2x2", "4x1", "4x2"] as const) {
+      const { w, h } = sizeToDims(size);
+      expect(sizeFromDims(w, h)).toBe(size);
+    }
   });
 });
 
 describe("grid position helpers", () => {
   it("converts sizes to dims and back", () => {
-    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 1 });
-    expect(sizeFromDims(2, 2)).toBe("2x2");
+    // Yükseklik yarım satır: "2x1" = 1 tam satır = 2 birim.
+    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 2 });
+    expect(sizeFromDims(2, 4)).toBe("2x2");
   });
 
   it("derives mobile positions in desktop reading order with width clamped to 2", () => {
@@ -173,6 +183,7 @@ describe("grid position helpers", () => {
   it("fills missing positions from legacy sizes without overlap", () => {
     const layout: ProfileLayout = {
       version: 1,
+      rows: 2,
       blocks: [
         { ...profileBlock },
         { id: "blk_1", type: "link", size: "1x1", data: { title: "a", url: "" } },
@@ -183,9 +194,9 @@ describe("grid position helpers", () => {
     const ensured = ensureLayoutPositions(layout);
     const positions = ensured.blocks.filter((b) => b.type !== "profile").map((b) => b.pos!.lg);
     expect(positions).toEqual([
-      { x: 0, y: 0, w: 1, h: 1 },
-      { x: 1, y: 0, w: 2, h: 1 },
-      { x: 3, y: 0, w: 1, h: 1 },
+      { x: 0, y: 0, w: 1, h: 2 },
+      { x: 1, y: 0, w: 2, h: 2 },
+      { x: 3, y: 0, w: 1, h: 2 },
     ]);
     // Idempotent: ikinci çağrı değişiklik yapmaz.
     expect(ensureLayoutPositions(ensured)).toEqual(ensured);

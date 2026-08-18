@@ -39,6 +39,51 @@ const futureBlock = {
 };
 
 const doc = (blocks: unknown[]) => JSON.stringify({ version: 1, blocks });
+/** Yarım satır işaretiyle yazılmış (yeni) belge. */
+const halfRowDoc = (blocks: unknown[]) => JSON.stringify({ version: 1, rows: 2, blocks });
+
+describe("yükseklik birimi göçü (tam satır → yarım satır)", () => {
+  const sized = (h: number) => ({
+    id: "blk_link_h",
+    type: "link",
+    size: "2x1",
+    pos: { lg: { x: 0, y: 1, w: 2, h }, sm: { x: 0, y: 1, w: 2, h } },
+    data: { title: "x", url: "https://caka.app/" },
+  });
+
+  it("işaretsiz (eski) kayıtta y ve h ikiye katlanır", () => {
+    const layout = parseProfileLayout(doc([profileBlock, sized(2)]))!;
+    const block = layout.blocks.find((item) => item.id === "blk_link_h")!;
+    expect(block.pos?.lg).toEqual({ x: 0, y: 2, w: 2, h: 4 });
+    expect(block.pos?.sm).toEqual({ x: 0, y: 2, w: 2, h: 4 });
+  });
+
+  it("x ve w değişmez — göç yalnız dikey eksende", () => {
+    const layout = parseProfileLayout(doc([profileBlock, sized(1)]))!;
+    const block = layout.blocks.find((item) => item.id === "blk_link_h")!;
+    expect(block.pos?.lg.x).toBe(0);
+    expect(block.pos?.lg.w).toBe(2);
+  });
+
+  it("işaretli kayıt olduğu gibi kalır (göç idempotent)", () => {
+    const layout = parseProfileLayout(halfRowDoc([profileBlock, sized(3)]))!;
+    const block = layout.blocks.find((item) => item.id === "blk_link_h")!;
+    expect(block.pos?.lg).toEqual({ x: 0, y: 1, w: 2, h: 3 });
+  });
+
+  it("yazılan belge her zaman işaretlenir: oku → yaz → oku aynı kalır", () => {
+    const once = parseProfileLayout(doc([profileBlock, sized(2)]))!;
+    const twice = parseProfileLayout(serializeProfileLayout(once))!;
+    expect(twice.blocks).toEqual(once.blocks);
+  });
+
+  it("yazma şeması bayat sekmeden gelen işaretsiz belgeyi çevirir", () => {
+    const parsed = profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, sized(2)])));
+    expect(parsed.success).toBe(true);
+    const block = parsed.data?.blocks.find((item) => item.id === "blk_link_h");
+    expect(block?.pos?.lg.h).toBe(4);
+  });
+});
 
 describe("parseProfileLayout — geçerli düzen", () => {
   it("tanınan blokları şemadan geçirip döner", () => {
@@ -230,7 +275,7 @@ describe("R6 sunucu tarafı boyut sınırları", () => {
       {
         blockId: "blk_status",
         type: "status",
-        limits: { minW: 1, minH: 1, maxW: 4, maxH: 1 },
+        limits: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
       },
     ]);
   });
@@ -452,7 +497,7 @@ describe("yeni tiplerin ızgara sınırları", () => {
   it("ensureLayoutPositions galeri varsayılanını 4 track olarak yerleştirir", () => {
     const layout = ensureLayoutPositions(parseProfileLayout(doc([profileBlock, gallery("blk_g", 1)]))!);
     const block = layout.blocks.find((item) => item.id === "blk_g")!;
-    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 4, h: 1 });
+    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 4, h: 2 });
     // Mobilde 2 sütun: genişlik kırpılır (GRID_COLUMNS.sm = 2).
     expect(block.pos?.sm.w).toBe(2);
   });
@@ -473,15 +518,16 @@ describe("ensureLayoutPositions — tip tavanına kırpma", () => {
   it("mevcut pos'u tip tavanına kırpar ve yazma şeması kabul eder", () => {
     const layout = ensureLayoutPositions(parseProfileLayout(doc([profileBlock, oversized]))!);
     const block = layout.blocks.find((item) => item.id === "blk_status")!;
-    expect(block.pos?.lg.h).toBe(1);
-    expect(block.pos?.sm.h).toBe(1);
+    // status tavanı 2 yarım satır (= 1 tam satır).
+    expect(block.pos?.lg.h).toBe(2);
+    expect(block.pos?.sm.h).toBe(2);
     expect(profileLayoutWriteSchema.safeParse(layout).success).toBe(true);
   });
 
   it("pos'suz eski bloğu da tavana göre yerleştirir", () => {
     const legacy = { id: "blk_s2", type: "status", size: "2x2", data: { text: "x", url: "" } };
     const layout = ensureLayoutPositions(parseProfileLayout(doc([profileBlock, legacy]))!);
-    expect(layout.blocks.find((item) => item.id === "blk_s2")?.pos?.lg.h).toBe(1);
+    expect(layout.blocks.find((item) => item.id === "blk_s2")?.pos?.lg.h).toBe(2);
   });
 
   it("sınır içindeki bloğa dokunmaz (idempotent)", () => {

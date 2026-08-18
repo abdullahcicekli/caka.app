@@ -82,7 +82,9 @@ export function EditorGrid({
         const grid = GridStack.init(
           {
             column: GRID_COLUMNS.lg,
-            cellHeight: 168,
+            // Yarım satır: içerik 72px + 2×6 margin. Eski 168 (=156+12)
+            // basamağı 2 birim olarak aynı yerde duruyor (bkz. GRID_ROW_UNIT).
+            cellHeight: 84,
             margin: 6,
             animate: true,
             float: false,
