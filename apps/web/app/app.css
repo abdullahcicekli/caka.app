@@ -1673,30 +1673,23 @@ a.profile-block:focus-visible {
     flex: none;
     border-radius: 0;
   }
-  /* Rozet kendi zeminini taşır; bu yüzden görselin tamamına perde çekmek
-     gerekmez (perde bütün fotoğrafı karartırdı). */
+  /* GÖRSELİN ÜSTÜNE HİÇBİR ŞEY BİNMEZ. Önce başlık burada cam bir rozetti;
+     ölçüde og görselinin kendi yazısının tam üstüne oturuyordu (og'lar
+     yazılarını sol ortaya koyuyor, rozetin yeri de orası). Görsel çıkmışsa
+     zaten kartın söyleyeceğini söylüyor.
+     Metin DOM'da kalır, yalnız GÖRÜNMEZ: kart bir bağlantı ve erişilebilir
+     adı bu satırlardan geliyor — `display:none` verilse ekran okuyucuya
+     adsız bir bağlantı kalırdı. */
   .profile-block-link.has-og .link-body {
-    position: relative;
-    z-index: 1;
-    max-width: calc(100% - 24px);
-    flex: none;
-    align-items: center;
-    flex-direction: row;
-    gap: 9px;
-    margin: 12px;
-    border-radius: var(--radius-xl);
-    background: rgb(0 0 0 / 0.55);
-    padding: 7px 12px 7px 7px;
-    color: white;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
-  .profile-block-link.has-og .link-mark { width: 30px; height: 30px; border-radius: 9px; font-size: 15px; }
-  /* Rozet içeriği kadar geniştir; `width:100%` + `flex:1` onu kartın tamamına
-     yayardı. */
-  .profile-block-link.has-og .link-lines { width: auto; min-width: 0; flex: 0 1 auto; }
-  .profile-block-link.has-og strong { -webkit-line-clamp: 1; font-size: 14px; }
-  .profile-block-link.has-og small { color: rgb(255 255 255 / 0.72); }
 }
 
 /* --- GENİŞ + KISA (4×1): önizleme yanda, tam ve kırpılmamış ---- */

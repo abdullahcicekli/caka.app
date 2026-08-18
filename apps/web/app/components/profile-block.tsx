@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
+import { classifyYouTubeUrl, type ProfileBlock, type ProfileLayout, type ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
 import { SpotifyCard, YoutubePlayMark, YoutubeVideoCard } from "~/components/media-embed";
@@ -112,6 +112,38 @@ export function ProfileBlockCard({
     );
 
     case "social": {
+    // YAPIŞTIRILAN ADRES BLOĞUN TİPİNDEN DAHA GÜÇLÜDÜR. Sosyal kart bir
+    // PROFİL kartıdır; oraya bir video adresi (youtube.com/watch?v=…)
+    // yapıştırıldığında kart "YouTube / watch" diye anlamsız bir kimlik
+    // satırına dönüşüyor ve tıklayınca ziyaretçiyi siteden çıkarıyordu —
+    // oysa aynı adres YouTube bloğuna girseydi kartın içinde oynayacaktı.
+    // Kimlik adresten türetiliyor, kayıtlı veri değişmiyor (aynı desen:
+    // `server/layout-images.ts` küçük görseli de adresten türetiyor).
+    const videoRef =
+      block.data.platform === "youtube" ? classifyYouTubeUrl(block.data.url) : null;
+    if (videoRef?.kind === "video") {
+      return (
+        <YoutubeVideoCard
+          data={{
+            kind: "video",
+            url: block.data.url,
+            videoId: videoRef.videoId,
+            // Başlık ve kanal adı ağ çağrısı ister; sosyal blokta ikisi de
+            // yok (label "YouTube", handle "watch"). Kart yedek başlığa
+            // düşer — uydurmaktansa boş bırakmak doğru.
+            title: "",
+            channelName: "",
+            shorts: videoRef.shorts,
+            // Türetilen küçük görsel `mqdefault`, yani 16:9. Shorts'un
+            // dikey karesi ancak kayıt anında doğrulanabiliyor.
+            verticalThumbnail: false,
+            thumbnail: "",
+          }}
+          thumbnail={signedImage}
+          allowEmbeds={allowEmbeds}
+        />
+      );
+    }
     const platform = platformById(block.data.platform);
     // GitHub kartında görsel odak katkı grafiğidir. Veri yoksa (token yok /
     // hata / bilinmeyen kullanıcı) kart eski davranışına döner.
