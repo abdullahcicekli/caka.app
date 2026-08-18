@@ -16,7 +16,10 @@ import { AccountCard } from "~/components/ayarlar/account-card";
 import { AddressCard } from "~/components/ayarlar/address-card";
 import { ShareImageCard, type SaveState } from "~/components/ayarlar/share-image-card";
 import { DashSidebar } from "~/components/dash-sidebar";
-import { ayarlarContent, ayarlarSections, type AddressErrorId } from "~/content/ayarlar";
+import { AYARLAR_SECTION_IDS, ayarlarCatalog, type AddressErrorId } from "~/content/ayarlar";
+import { LanguageCard } from "~/components/ayarlar/language-card";
+import { commonCatalog } from "~/content/common";
+import { useCatalog } from "~/lib/locale";
 import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "~/content/legal";
 import { noIndexMeta } from "~/lib/seo";
 import {
@@ -37,6 +40,7 @@ import {
 } from "../../server/profile";
 import { hasSameOrigin } from "../../server/request";
 import type { Route } from "./+types/ayarlar";
+import { localizedRedirect } from "../../server/locale";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Ayarlar — Caka");
@@ -44,10 +48,10 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/login");
+  if (!session) throw localizedRedirect(request, "/login");
   const profile = await getProfileByUserId(env, session.user.id);
-  if (!profile) throw redirect("/onboarding");
-  if (!profile.onboardingCompletedAt) throw redirect("/onboarding/kurulum/profil");
+  if (!profile) throw localizedRedirect(request, "/onboarding");
+  if (!profile.onboardingCompletedAt) throw localizedRedirect(request, "/onboarding/kurulum/profil");
   const layout = parseProfileLayout(profile.layout);
   if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
 
@@ -128,7 +132,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (!hasSameOrigin(request)) return fail("origin", 403);
   const session = await getSession(env, request);
-  if (!session) throw redirect("/login");
+  if (!session) throw localizedRedirect(request, "/login");
 
   const form = await request.formData();
   if (form.get("intent") !== "address") return fail("unknown", 400);
@@ -156,6 +160,8 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Ayarlar({ loaderData }: Route.ComponentProps) {
   const { username, account, accountInfo, addressChange, imageBlocks, previews } = loaderData;
+  const content = useCatalog(ayarlarCatalog);
+  const common = useCatalog(commonCatalog);
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
   return (
@@ -164,23 +170,25 @@ export default function Ayarlar({ loaderData }: Route.ComponentProps) {
 
       <section className="dash-main ayarlar-main">
         <header className="ayarlar-header">
-          <h1>{ayarlarContent.title}</h1>
+          <h1>{content.title}</h1>
           <span aria-live="polite" className="ayarlar-save-state" data-state={saveState}>
-            {saveState === "saving" && ayarlarContent.saveState.saving}
-            {saveState === "saved" && ayarlarContent.saveState.saved}
-            {saveState === "error" && ayarlarContent.saveState.error}
+            {saveState === "saving" && common.saveState.saving}
+            {saveState === "saved" && common.saveState.saved}
+            {saveState === "error" && common.saveState.error}
           </span>
         </header>
 
-        <nav className="ayarlar-nav" aria-label={ayarlarContent.sectionNavLabel}>
-          {ayarlarSections.map((section) => (
-            <a key={section.id} href={`#${section.id}`}>
-              {section.label}
+        <nav className="ayarlar-nav" aria-label={content.sectionNavLabel}>
+          {AYARLAR_SECTION_IDS.map((id) => (
+            <a key={id} href={`#${id}`}>
+              {content.sectionLabels[id]}
             </a>
           ))}
         </nav>
 
         <AddressCard username={username} change={addressChange} />
+
+        <LanguageCard />
 
         <ShareImageCard
           ogTemplate={loaderData.ogTemplate}

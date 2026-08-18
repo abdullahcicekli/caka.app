@@ -18,6 +18,7 @@ import { USERNAME_ERROR_MESSAGES, validateUsername } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { claimUsername, getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/onboarding";
+import { localizedRedirect } from "../../server/locale";
 
 export const CLAIM_COOKIE = "caka_claim";
 
@@ -40,7 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 /** Oturumlu kullanıcı için doğrudan claim (Google adımı atlanır). */
 export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/onboarding");
+  if (!session) throw localizedRedirect(request, "/onboarding");
   const form = await request.formData();
   let result;
   try {
@@ -51,7 +52,7 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ error: "hata" as const }, { status: 500 });
   }
   if (!result.ok) return data({ error: result.error }, { status: 409 });
-  throw redirect("/onboarding/kurulum/profil");
+  throw localizedRedirect(request, "/onboarding/kurulum/profil");
 }
 
 type Availability =

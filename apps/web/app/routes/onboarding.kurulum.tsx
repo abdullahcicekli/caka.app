@@ -48,6 +48,7 @@ import {
   type OnboardingLink,
 } from "../../server/profile";
 import type { Route } from "./+types/onboarding.kurulum";
+import { localizedRedirect } from "../../server/locale";
 
 const STEPS = [
   "profil",
@@ -102,14 +103,14 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/login");
+  if (!session) throw localizedRedirect(request, "/login");
   const profile = await getProfileByUserId(env, session.user.id);
-  if (!profile) throw redirect("/onboarding");
+  if (!profile) throw localizedRedirect(request, "/onboarding");
   const step = asStep(params.step);
   if (!step) throw redirect(stepPath("profil"));
 
   const finishStep = step === "hazirlaniyor" || step === "hazir";
-  if (profile.onboardingCompletedAt && !finishStep) throw redirect("/edit");
+  if (profile.onboardingCompletedAt && !finishStep) throw localizedRedirect(request, "/edit");
   if (!profile.onboardingCompletedAt && finishStep) throw redirect(stepPath("profil"));
 
   const onboarding = parseOnboardingData(profile.onboardingData);
@@ -134,9 +135,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export async function action({ request, params }: Route.ActionArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/login");
+  if (!session) throw localizedRedirect(request, "/login");
   const profile = await getProfileByUserId(env, session.user.id);
-  if (!profile) throw redirect("/onboarding");
+  if (!profile) throw localizedRedirect(request, "/onboarding");
   const step = asStep(params.step);
   if (!step || step === "hazirlaniyor" || step === "hazir") {
     throw redirect(stepPath("profil"));

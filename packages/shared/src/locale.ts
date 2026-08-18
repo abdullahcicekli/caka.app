@@ -39,6 +39,31 @@ export const OG_LOCALES: Record<Locale, string> = {
 };
 
 /**
+ * Kullanıcının açık dil seçimini taşıyan çerez (L19). Adı ve ömrü hem sunucu
+ * (okuma) hem tarayıcı (yazma) tarafından kullanılıyor; tek yerde durur.
+ */
+export const LOCALE_COOKIE_NAME = "caka_dil";
+
+/** Bir yıl: seçim oturumdan bağımsız olarak cihazda kalır. */
+export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/**
+ * Dil seçimini kalıcılaştıran çerez dizesi.
+ *
+ * `HttpOnly` YOKTUR ve olamaz: çerezi tarayıcıdaki dil seçici yazıyor. İçinde
+ * yalnız dil kodu var, kimlik taşımıyor (envanterdeki gerekçe).
+ */
+export function localeCookieString(locale: Locale): string {
+  return [
+    `${LOCALE_COOKIE_NAME}=${locale}`,
+    "Path=/",
+    `Max-Age=${LOCALE_COOKIE_MAX_AGE}`,
+    "SameSite=Lax",
+    "Secure",
+  ].join("; ");
+}
+
+/**
  * Dilin URL öneki. Türkçe boş string alır — öneksizdir.
  *
  * Önekler küçük harftir (`pt-br`); `pt-BR` yalnızca kod içi dil kimliğidir.
@@ -161,4 +186,28 @@ export function resolveLocale({
   if (pathLocale) return pathLocale;
   if (cookie && isSupportedLocale(cookie)) return cookie;
   return parseAcceptLanguage(acceptLanguage) ?? DEFAULT_LOCALE;
+}
+
+/**
+ * `2026-09-16` → dile göre uzun tarih (`16 Eylül 2026`, `September 16, 2026`).
+ *
+ * Türkçe çıktısı `formatLegalDate`'in bugünkü çıktısıyla aynıdır; yayındaki
+ * hukuki metinlerin tarih biçimi değişmez.
+ *
+ * Gün UTC'ye göre kesilir: `new Date("2026-01-01")` yerel saat diliminde bir
+ * gün geri kayabiliyor ve tarih "31 Aralık 2025" görünüyordu.
+ *
+ * Ayrıştırılamayan girdi (`"yakında"` gibi serbest metin) olduğu gibi döner —
+ * hukuki künyelerde bu değerler geçebiliyor.
+ */
+export function formatDate(iso: string, locale: Locale): string {
+  const trimmed = iso.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return iso;
+
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${trimmed}T00:00:00Z`));
 }

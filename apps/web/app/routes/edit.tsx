@@ -64,6 +64,7 @@ import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
+import { localizedRedirect } from "../../server/locale";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Editör — Caka");
@@ -71,10 +72,10 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/login");
+  if (!session) throw localizedRedirect(request, "/login");
   const profile = await getProfileByUserId(env, session.user.id);
-  if (!profile) throw redirect("/onboarding");
-  if (!profile.onboardingCompletedAt) throw redirect("/onboarding/kurulum/profil");
+  if (!profile) throw localizedRedirect(request, "/onboarding");
+  if (!profile.onboardingCompletedAt) throw localizedRedirect(request, "/onboarding/kurulum/profil");
   const published = parseProfileLayout(profile.layout);
   if (!published) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
   // Editör her zaman taslağı açar; taslak yoksa yayınlanmış hâlden devam eder.

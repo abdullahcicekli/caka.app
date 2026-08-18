@@ -2429,6 +2429,13 @@ a.profile-block:focus-visible {
 .ayarlar-card h2 { font-size: 16.5px; font-weight: 700; }
 .ayarlar-card h3 { margin-top: 10px; font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: color-mix(in srgb, var(--color-murekkep) 60%, transparent); }
 .ayarlar-hint { font-size: 13.5px; color: color-mix(in srgb, var(--color-murekkep) 60%, transparent); }
+/* Dil seçici (L17). Tarayıcının kendi <select> okunu gizleyip marka oku
+   koyuyoruz; alan .ayarlar-field ile aynı yüksekliği tutsun diye padding
+   oradan kopyalandı. */
+.ayarlar-select { appearance: none; width: 100%; max-width: 320px; border: 1px solid var(--color-sinir); border-radius: var(--radius-xl); background: white; padding: 11px 40px 11px 16px; font-size: 15px; font-weight: 600; color: var(--color-murekkep); cursor: pointer; transition: border-color .15s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2314141a' stroke-width='1.6'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; background-size: 18px; }
+.ayarlar-select:focus-visible { outline: none; border-color: var(--color-murekkep); }
 .ayarlar-hero { border: 1px solid var(--color-sinir); border-radius: var(--radius-xl); overflow: hidden; background: var(--color-zemin); }
 .ayarlar-hero img { display: block; width: 100%; height: auto; }
 .ayarlar-template-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }

@@ -4,10 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRevalidator } from "react-router";
 
-import { ayarlarContent } from "~/content/ayarlar";
+import { ayarlarCatalog } from "~/content/ayarlar";
+import { useCatalog } from "~/lib/locale";
 import { OG_TEMPLATE_OPTIONS, type OgTemplate } from "@caka/shared";
-
-const copy = ayarlarContent.share;
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -28,6 +27,7 @@ export function ShareImageCard({
   account,
   onSaveStateChange,
 }: ShareImageCardProps) {
+  const copy = useCatalog(ayarlarCatalog).share;
   const [template, setTemplate] = useState<OgTemplate>(ogTemplate);
   const [photoAssetId, setPhotoAssetId] = useState<string | null>(ogPhotoAssetId);
   const revalidator = useRevalidator();

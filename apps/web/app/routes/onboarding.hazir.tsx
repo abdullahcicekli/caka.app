@@ -8,6 +8,7 @@ import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/onboarding.hazir";
+import { localizedRedirect } from "../../server/locale";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Sayfan hazır — Caka");
@@ -15,9 +16,9 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/onboarding");
+  if (!session) throw localizedRedirect(request, "/onboarding");
   const profile = await getProfileByUserId(env, session.user.id);
-  if (!profile) throw redirect("/onboarding");
+  if (!profile) throw localizedRedirect(request, "/onboarding");
   const seed = parseSeedProfile(profile.layout);
   return {
     username: profile.username,

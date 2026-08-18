@@ -4,21 +4,19 @@
 // sinyal toplanır. Route dosyalarına iş mantığı yazılmaz (AGENTS.md).
 
 import { isbot } from "isbot";
+import { redirect } from "react-router";
 
 import {
   DEFAULT_LOCALE,
+  LOCALE_COOKIE_NAME,
   type Locale,
   isSupportedLocale,
+  localeCookieString,
+  localizeHref,
   parseLocalizedPath,
   pathFor,
   resolveLocale,
 } from "@caka/shared";
-
-/** Kullanıcının açık dil seçimini taşıyan çerez (L19). */
-export const LOCALE_COOKIE_NAME = "caka_dil";
-
-/** Bir yıl: seçim, oturumdan bağımsız olarak cihazda kalır. */
-export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /**
  * Çerez başlığından dil değerini okur.
@@ -39,13 +37,7 @@ export function readLocaleCookie(request: Request): string | null {
 
 /** Dil seçimini kalıcılaştıran `Set-Cookie` değeri. */
 export function localeCookieHeader(locale: Locale): string {
-  return [
-    `${LOCALE_COOKIE_NAME}=${locale}`,
-    "Path=/",
-    `Max-Age=${LOCALE_COOKIE_MAX_AGE}`,
-    "SameSite=Lax",
-    "Secure",
-  ].join("; ");
+  return localeCookieString(locale);
 }
 
 /**
@@ -118,4 +110,19 @@ export function localeRedirect(request: Request): Response | null {
 /** Çerez değeri desteklenen bir dilse onu döner. */
 export function localeFromCookieValue(value: string | null): Locale | null {
   return value && isSupportedLocale(value) ? value : null;
+}
+
+/**
+ * İsteğin diline göre yönlendirir.
+ *
+ * Loader'lardaki `redirect("/login")` çağrılarının yerini alır: Almanca
+ * gezinen bir kullanıcı oturumu düşünce Türkçe `/login`e atılmamalı. Yol
+ * Türkçe hâliyle yazılır, çeviri burada yapılır (`localizeHref`).
+ */
+export function localizedRedirect(
+  request: Request,
+  path: string,
+  init?: number | ResponseInit,
+): Response {
+  return redirect(localizeHref(path, localeFromRequest(request)), init);
 }

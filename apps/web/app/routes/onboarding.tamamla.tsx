@@ -9,6 +9,7 @@ import {
   getProfileByUserId,
 } from "../../server/profile";
 import type { Route } from "./+types/onboarding.tamamla";
+import { localizedRedirect } from "../../server/locale";
 
 const CLAIM_COOKIE = "caka_claim";
 const CLEAR_CLAIM_COOKIE = `${CLAIM_COOKIE}=; Path=/; Max-Age=0`;
@@ -29,7 +30,7 @@ function readClaimCookie(request: Request): string | null {
  */
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/onboarding");
+  if (!session) throw localizedRedirect(request, "/onboarding");
 
   const existing = await getProfileByUserId(env, session.user.id);
   if (existing) {
@@ -41,7 +42,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const desired = readClaimCookie(request);
-  if (!desired) throw redirect("/onboarding");
+  if (!desired) throw localizedRedirect(request, "/onboarding");
 
   let result;
   try {
@@ -59,7 +60,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
     });
   }
-  throw redirect("/onboarding/kurulum/profil", {
+  throw localizedRedirect(request, "/onboarding/kurulum/profil", {
     headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
   });
 }

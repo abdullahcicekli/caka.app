@@ -5,10 +5,9 @@
 // SiteFooter ve FaqSection aynı kuralı uygular; `publishedLegal` loader'dan gelir.
 import { Link } from "react-router";
 
-import { ayarlarContent, providerLabel } from "~/content/ayarlar";
+import { ayarlarCatalog, providerLabel } from "~/content/ayarlar";
+import { useCatalog } from "~/lib/locale";
 import type { LegalDocumentId } from "@caka/shared";
-
-const copy = ayarlarContent.account;
 
 export function AccountCard({
   providers,
@@ -21,6 +20,7 @@ export function AccountCard({
   emailVerified: boolean;
   publishedLegal: readonly LegalDocumentId[];
 }) {
+  const copy = useCatalog(ayarlarCatalog).account;
   const privacyPublished = publishedLegal.includes("gizlilik");
 
   return (

@@ -3,7 +3,10 @@ import { Link } from "react-router";
 import type { LegalDocumentId } from "@caka/shared";
 import { logoBlackText } from "~/assets/brand";
 import { SocialIcon } from "~/components/icons/social";
+import { LocaleSelect } from "~/components/locale-select";
 import type { LandingContent, LegalAwareLink } from "~/content/landing";
+import { ayarlarCatalog } from "~/content/ayarlar";
+import { useCatalog } from "~/lib/locale";
 import { useHref } from "~/lib/locale";
 
 const LINK_CLASS = "text-[15px] text-murekkep hover:opacity-70";
@@ -57,6 +60,7 @@ export function SiteFooter({
   publishedLegal: readonly LegalDocumentId[];
 }) {
   const localizeHome = useHref();
+  const localeSelectLabel = useCatalog(ayarlarCatalog).language.fieldLabel;
   const isVisible = (link: LegalAwareLink) =>
     !link.legalDocument || publishedLegal.includes(link.legalDocument);
 
@@ -113,6 +117,12 @@ export function SiteFooter({
             <span className="text-sm text-murekkep/50">{footer.copyright}</span>
           </div>
           <div className="flex items-center gap-3">
+            {/* L18: oturumsuz ziyaretçinin dili değiştirebileceği tek yer —
+                ayarlar sayfası giriş arkasında. */}
+            <LocaleSelect
+              label={localeSelectLabel}
+              className="rounded-full border border-sinir bg-white px-3 py-1.5 text-sm text-murekkep"
+            />
             {footer.social.map((item) => (
               <a
                 key={item.platform}

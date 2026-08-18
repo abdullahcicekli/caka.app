@@ -29,6 +29,7 @@ import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/dashboard";
+import { localizedRedirect } from "../../server/locale";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Panel — Caka");
@@ -36,10 +37,10 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(env, request);
-  if (!session) throw redirect("/login");
+  if (!session) throw localizedRedirect(request, "/login");
   const profile = await getProfileByUserId(env, session.user.id);
-  if (!profile) throw redirect("/onboarding");
-  if (!profile.onboardingCompletedAt) throw redirect("/onboarding/kurulum/profil");
+  if (!profile) throw localizedRedirect(request, "/onboarding");
+  if (!profile.onboardingCompletedAt) throw localizedRedirect(request, "/onboarding/kurulum/profil");
   const layout = parseProfileLayout(profile.layout);
   if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
   // Hesap menüsünün adı/avatarı profil bloğundan gelir; ek sorgu gerekmez.

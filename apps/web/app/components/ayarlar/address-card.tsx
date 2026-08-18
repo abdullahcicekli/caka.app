@@ -7,17 +7,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
-import {
-  addressCooldownNotice,
-  addressErrorMessage,
-  addressRedirectNotice,
-  addressSuccessNotice,
-  ayarlarContent,
-  type AddressErrorId,
-} from "~/content/ayarlar";
-import { USERNAME_ERROR_MESSAGES, normalizeUsername, validateUsername } from "@caka/shared";
-
-const copy = ayarlarContent.address;
+import { ayarlarCatalog, type AddressErrorId, type AyarlarContent } from "~/content/ayarlar";
+import { commonCatalog, type CommonContent } from "~/content/common";
+import { useCatalog } from "~/lib/locale";
+import { normalizeUsername, validateUsername } from "@caka/shared";
 
 export interface AddressChangeState {
   allowed: boolean;
@@ -39,6 +32,8 @@ type Availability =
 
 /** Onboarding'deki canlı kontrolün Ayarlar sürümü: "kendi adresin" hâli eklenir. */
 function useAvailability(value: string, current: string): Availability {
+  const copy = useCatalog(ayarlarCatalog);
+  const common = useCatalog(commonCatalog);
   const [availability, setAvailability] = useState<Availability>({ state: "idle" });
   const requestId = useRef(0);
 
@@ -52,12 +47,12 @@ function useAvailability(value: string, current: string): Availability {
     if (!local.ok) {
       setAvailability({
         state: "unavailable",
-        message: USERNAME_ERROR_MESSAGES[local.error],
+        message: common.usernameErrors[local.error],
       });
       return;
     }
     if (local.username === normalizeUsername(current)) {
-      setAvailability({ state: "unavailable", message: addressErrorMessage("same") });
+      setAvailability({ state: "unavailable", message: copy.addressErrors.same });
       return;
     }
     setAvailability({ state: "checking" });
@@ -69,7 +64,7 @@ function useAvailability(value: string, current: string): Availability {
         setAvailability(
           body.available
             ? { state: "available", username: body.username ?? local.username }
-            : { state: "unavailable", message: copy.unavailable },
+            : { state: "unavailable", message: copy.address.unavailable },
         );
       } catch {
         // Ağ hatasında engelleme: sunucu son sözü zaten söyler.
@@ -77,9 +72,27 @@ function useAvailability(value: string, current: string): Availability {
       }
     }, 350);
     return () => clearTimeout(timer);
-  }, [value, current]);
+  }, [value, current, copy, common]);
 
   return availability;
+}
+
+/**
+ * Hata kimliğini metne çevirir. Biçim hataları ortak katalogda (onboarding de
+ * aynı dört mesajı gösteriyor), kalanlar ayarlar kataloğunda.
+ */
+function errorMessage(
+  content: AyarlarContent,
+  common: CommonContent,
+  error: AddressErrorId,
+): string {
+  if (error in common.usernameErrors) {
+    return common.usernameErrors[error as keyof CommonContent["usernameErrors"]];
+  }
+  if (error in content.addressErrors) {
+    return content.addressErrors[error as keyof AyarlarContent["addressErrors"]];
+  }
+  return content.addressErrors.unknown;
 }
 
 export function AddressCard({
@@ -89,6 +102,9 @@ export function AddressCard({
   username: string;
   change: AddressChangeState;
 }) {
+  const content = useCatalog(ayarlarCatalog);
+  const common = useCatalog(commonCatalog);
+  const copy = content.address;
   const fetcher = useFetcher<AddressActionData>();
   const [value, setValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -127,7 +143,7 @@ export function AddressCard({
           <ul className="ayarlar-list">
             {change.activeRedirects.map((item) => (
               <li key={item.oldUsername}>
-                {addressRedirectNotice(item.oldUsername, item.expiresOn)}
+                {content.notices.redirect(item.oldUsername, item.expiresOn)}
               </li>
             ))}
           </ul>
@@ -143,7 +159,7 @@ export function AddressCard({
 
       {!change.allowed && change.availableOn ? (
         <p className="ayarlar-notice" data-tone="info">
-          {addressCooldownNotice(change.availableOn, change.remainingDays)}
+          {content.notices.cooldown(change.availableOn, change.remainingDays)}
         </p>
       ) : (
         <fetcher.Form method="post" className="ayarlar-address-form">
@@ -200,8 +216,8 @@ export function AddressCard({
       {result && (
         <p className="ayarlar-notice" data-tone={result.ok ? "ok" : "error"} role="status">
           {result.ok
-            ? addressSuccessNotice(result.previousUsername, result.username, result.expiresOn)
-            : addressErrorMessage(result.error)}
+            ? content.notices.success(result.previousUsername, result.username, result.expiresOn)
+            : errorMessage(content, common, result.error)}
         </p>
       )}
     </section>

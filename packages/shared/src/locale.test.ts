@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_LOCALE,
   OG_LOCALES,
+  formatDate,
   LOCALE_LABELS,
   SUPPORTED_LOCALES,
   isSupportedLocale,
@@ -158,5 +159,27 @@ describe("resolveLocale", () => {
   it("hiçbir sinyal yoksa Türkçeye düşer", () => {
     expect(resolveLocale({})).toBe("tr");
     expect(resolveLocale({ acceptLanguage: "zh-CN" })).toBe("tr");
+  });
+});
+
+describe("formatDate", () => {
+  it("Türkçede yayındaki hukuki biçimi korur", () => {
+    // formatLegalDate ile aynı çıktı: "16 Eylül 2026".
+    expect(formatDate("2026-09-16", "tr")).toBe("16 Eylül 2026");
+  });
+
+  it("her dilde o dilin uzun tarih biçimini verir", () => {
+    expect(formatDate("2026-09-16", "en")).toBe("September 16, 2026");
+    expect(formatDate("2026-09-16", "de")).toBe("16. September 2026");
+    expect(formatDate("2026-01-05", "es")).toBe("5 de enero de 2026");
+  });
+
+  it("gün UTC'ye göre kesilir — saat dilimi tarihi kaydırmaz", () => {
+    expect(formatDate("2026-01-01", "en")).toBe("January 1, 2026");
+  });
+
+  it("tanımadığı girdiyi olduğu gibi döner", () => {
+    expect(formatDate("yakında", "tr")).toBe("yakında");
+    expect(formatDate("", "tr")).toBe("");
   });
 });
