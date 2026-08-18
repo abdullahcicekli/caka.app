@@ -237,3 +237,28 @@ Yapılacak (istenirse): ya gridstack `cellHeight`'i duyarlı yap (dar ekranda
 138), ya da public `grid-auto-rows`'u 156'ya çıkar. İkincisi **yayındaki her
 mobil profilin görünümünü değiştirir**, o yüzden kendi başına bir iş olarak
 planlanmalı; ölçüm/regresyon yüzeyi geniş.
+
+## 15. İkincil metin kontrastı iki temada AA eşiğinin altında
+
+Ölçüm (2026-08-18, canlı sayfa, alfa kompozisyonu dâhil hesaplanmış WCAG
+oranları). Kart içindeki ikincil metin (`--profile-muted` / `--profile-card-muted`
+— link kartındaki hedef adres, sosyal karttaki handle, YouTube kartındaki
+kanal adı):
+
+| Tema | İkincil metin | Başlık |
+|---|---|---|
+| light | **4,19** | 18,35 |
+| dark | 6,00 | 14,89 |
+| lavanta | **3,98** | 17,89 |
+| ufuk | 5,32 | 11,16 |
+| neon | 5,87 | 15,00 |
+| zumrut | 5,85 | 14,87 |
+
+Metin 12-13px olduğu için AA eşiği **4,5**. `light` ve `lavanta` altında
+kalıyor; diğer dördü geçiyor. Başlıklar her temada rahat geçiyor.
+
+Bu **yeni widget'lara özgü değil**: token ürün genelinde kullanılıyor, kusur
+widget yenilemesinden önce de vardı. Düzeltmek (`--profile-muted` opaklığını
+%56'dan ~%68'e çekmek) **yayındaki her profilin görünümünü** değiştirir, o
+yüzden kendi başına bir iş olarak planlanmalı — tercihen altı temanın
+tamamı yeniden gözden geçirilerek.
