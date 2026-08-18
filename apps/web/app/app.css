@@ -3058,9 +3058,12 @@ html[data-profile-theme] body {
   .error-copy { padding-bottom: clamp(180px, 46svh, 420px); }
 }
 
+/* YALNIZ ölçek, kaydırma YOK. `transform-origin` alt kenarda olduğu için
+   ölçek büyürken alt kenar yerinde kalır; `translateY` eklenirse görsel
+   yukarı kayar ve altta zemin renginde bir şerit açılır (bir kez oldu). */
 @keyframes error-art-drift {
-  from { transform: scale(1.02) translateY(0); }
-  to   { transform: scale(1.07) translateY(-1.4%); }
+  from { transform: scale(1.02); }
+  to   { transform: scale(1.08); }
 }
 
 @media (prefers-reduced-motion: reduce) {
