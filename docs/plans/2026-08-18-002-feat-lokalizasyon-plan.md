@@ -260,9 +260,14 @@ olduğu.
 Eksik çeviri için ayrı test yazılmaz: tip sözleşmesi (LKD1) bunu `pnpm typecheck`
 kapısına bağlar.
 
-Curl duman testleri (lokal ve deploy sonrası): beş dilin kökü, bir hukuki sayfa
-her dilde, `Googlebot` User-Agent ile yönlendirme yapılmadığı, `caka_dil`
-çerezinin algılamayı ezdiği, `Vary: Accept-Language` başlığının varlığı.
+Duman testleri (lokal ve deploy sonrası): beş dilin kökü, bir hukuki sayfa her
+dilde, `Googlebot` User-Agent ile yönlendirme yapılmadığı, `caka_dil` çerezinin
+algılamayı ezdiği, `Vary: Accept-Language, Cookie` başlığının varlığı.
+
+**Dil kapısını test ederken gerçek bir tarayıcı User-Agent'ı gönderilmeli.**
+`isbot` `curl`, `wget` ve çıplak `fetch` istemcilerini bot sayar; kapı da
+bot'ları bilerek yönlendirmez (L8). User-Agent verilmezse test her zaman
+"yönlendirme yok" görür ve kırık bir kapı doğru sanılır.
 
 ## Definition of Done
 

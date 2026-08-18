@@ -1,5 +1,6 @@
 import { createRequestHandler } from "react-router";
 import { honoApp } from "../server";
+import { localeRedirect } from "../server/locale";
 
 const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
@@ -25,6 +26,12 @@ export default {
     ) {
       return honoApp.fetch(request, env, ctx);
     }
+
+    // Dil kapısı (L7): API ve sitemap yollarından SONRA, React Router'dan
+    // ÖNCE. Böylece yalnız sayfa istekleri değerlendirilir ve karar tek
+    // noktada verilir.
+    const redirect = localeRedirect(request);
+    if (redirect) return redirect;
 
     return requestHandler(request);
   },

@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { SUPPORTED_LOCALES, prefixForLocale } from "./locale";
+import { ROUTE_KEYS, ROUTE_SLUGS } from "./routes";
 import {
   RESERVED_USERNAMES,
   USERNAME_CHANGE_COOLDOWN_DAYS,
@@ -158,13 +160,29 @@ const ROUTES_PATH = fileURLToPath(
   new URL("../../../apps/web/app/routes.ts", import.meta.url),
 );
 
-/** `route("onboarding/tamamla", …)` → `onboarding`. Parametrik segment atlanır. */
-function topLevelRouteSlugs(source: string): string[] {
+/** `route("...")` çağrılarındaki literal yollar — elle yazılmış route'lar. */
+function literalRoutePaths(source: string): string[] {
+  return [...source.matchAll(/\broute\(\s*["']([^"']+)["']/g)]
+    .map((match) => match[1])
+    .filter((path): path is string => Boolean(path));
+}
+
+/**
+ * Adres alanında gerçekten yer kaplayan segmentler: Türkçe route slug'larının
+ * ilk segmenti (Türkçe öneksizdir, slug'ları top-level'dır) ve dil önekleri.
+ *
+ * Çevrilmiş slug'lar (`privacy`, `datenschutz`) buraya girmez; onlar bir dil
+ * önekinin altında yaşar ve kullanıcı adı alanıyla çakışmaz.
+ */
+function topLevelSlugs(): string[] {
   const slugs = new Set<string>();
-  for (const match of source.matchAll(/\broute\(\s*["']([^"']+)["']/g)) {
-    const first = match[1]?.split("/")[0];
-    if (!first || first.startsWith(":")) continue;
-    slugs.add(first);
+  for (const key of ROUTE_KEYS) {
+    const first = ROUTE_SLUGS[key].tr.split("/")[0];
+    if (first) slugs.add(first);
+  }
+  for (const locale of SUPPORTED_LOCALES) {
+    const prefix = prefixForLocale(locale);
+    if (prefix) slugs.add(prefix);
   }
   return [...slugs];
 }
@@ -178,19 +196,32 @@ describe("route tablosu ↔ rezerve liste", () => {
     ).toBe(true);
   });
 
-  it("route tablosundan slug çıkarılabiliyor", () => {
-    const slugs = topLevelRouteSlugs(readFileSync(ROUTES_PATH, "utf8"));
-    // Ayrıştırma bozulursa (route tanımı biçimi değişirse) boş küme dönüp test
-    // yanlışlıkla yeşile düşerdi; alt sınır bunu engeller.
-    expect(slugs.length, "route tablosundan hiç slug çıkmadı").toBeGreaterThan(5);
-    expect(slugs, "hukuki sayfalar route tablosunda").toContain("gizlilik");
+  it("route dosyası slug tablosundan üretilir", () => {
+    // Lokalizasyondan sonra route'lar elle yazılmaz (L6). Biri elle bir route
+    // eklerse o adres hreflang'de, sitemap'te ve dil değiştiricide görünmez —
+    // ve bu test, sessizce olmasın diye burada duruyor.
+    const source = readFileSync(ROUTES_PATH, "utf8");
+    expect(source, "app/routes.ts slug tablosundan üretilmiyor").toContain("pathFor");
+    expect(
+      literalRoutePaths(source),
+      "elle yazılan tek route :username catch-all'u olmalı",
+    ).toEqual([":username"]);
   });
 
-  it("her top-level route slug'ı rezerve listede", () => {
-    for (const slug of topLevelRouteSlugs(readFileSync(ROUTES_PATH, "utf8"))) {
+  it("slug tablosundan top-level segment çıkarılabiliyor", () => {
+    // Tablo boşalır veya biçimi değişirse aşağıdaki test yanlışlıkla yeşile
+    // düşerdi; alt sınır bunu engeller.
+    const slugs = topLevelSlugs();
+    expect(slugs.length, "slug tablosundan hiç segment çıkmadı").toBeGreaterThan(5);
+    expect(slugs, "hukuki sayfalar tabloda").toContain("gizlilik");
+    expect(slugs, "dil önekleri tabloda").toContain("pt-br");
+  });
+
+  it("her top-level segment rezerve listede", () => {
+    for (const slug of topLevelSlugs()) {
       expect(
         RESERVED_USERNAMES.has(slug),
-        `"/${slug}" route'u var ama RESERVED_USERNAMES'te yok (packages/shared/src/username.ts)`,
+        `"/${slug}" adres alanında yer kaplıyor ama RESERVED_USERNAMES'te yok (packages/shared/src/username.ts)`,
       ).toBe(true);
     }
   });

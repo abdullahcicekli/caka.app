@@ -6,11 +6,13 @@ import {
   Scripts,
   ScrollRestoration,
   useMatches,
+  useRouteLoaderData,
 } from "react-router";
 
-import type { ProfileTheme } from "@caka/shared";
+import { DEFAULT_LOCALE, type Locale, type ProfileTheme } from "@caka/shared";
 
 import type { Route } from "./+types/root";
+import { localeFromRequest } from "../server/locale";
 import "./app.css";
 
 /** Public profil sayfasında kök zemin (html/body) ve tarayıcı çubuğu
@@ -48,7 +50,20 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+/**
+ * Kök loader tek iş yapar: isteğin dilini çözüp ağaca duyurur (L2). Bütün
+ * sayfalar `useLocale()` ile buradan okur, böylece dil tek noktada belirlenir.
+ */
+export function loader({ request }: Route.LoaderArgs) {
+  return { locale: localeFromRequest(request) };
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  // Hata sınırı çalıştığında kök loader verisi olmayabilir; o hâlde Türkçeye
+  // düşülür (L2'nin son adımı).
+  const rootData = useRouteLoaderData<typeof loader>("root");
+  const locale: Locale = rootData?.locale ?? DEFAULT_LOCALE;
+
   // Yalnız /:username route'u eşleşince tema kök elemana taşınır; landing,
   // panel ve editör zeminleri (bg-zemin) etkilenmez. Route hata verdiğinde
   // (404 vb.) data boş kalır ve varsayılan zemin kullanılır.
@@ -61,7 +76,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       ? (profileData.theme as ProfileTheme)
       : null;
   return (
-    <html lang="tr" data-profile-theme={profileTheme ?? undefined}>
+    <html lang={locale} data-profile-theme={profileTheme ?? undefined}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
