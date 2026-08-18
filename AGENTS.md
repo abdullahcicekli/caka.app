@@ -1,8 +1,9 @@
 # AGENTS.md — Caka için ajan rehberi
 
 Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
-(Hono API + React Router v8 SSR, D1 + Drizzle, R2, Better Auth). Ürün dili
-**Türkçe**dir: kullanıcıya görünen her metin Türkçe yazılır.
+(Hono API + React Router v8 SSR, D1 + Drizzle, R2, Better Auth). Ürün **beş
+dilde** yayındadır: `en`, `tr`, `es`, `pt-BR`, `de`. **Türkçe kanoniktir** —
+yeni metin önce Türkçe yazılır, tip sözleşmesi ondan türer.
 
 ## Komutlar
 
@@ -23,6 +24,8 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 - Mimari özet: `ARCHITECTURE.md`. Çelişki görürsen plan kazanır.
 - Ertelenmiş açık işler: `docs/backlog.md`. Bir madde bitince oradan **silinir**
   (durum git'ten okunur, "yapıldı" yazılmaz).
+- **Lokalizasyon planı:** `docs/plans/2026-08-18-002-feat-lokalizasyon-plan.md`
+  (`L`/`LKD` kimlikleri oradan gelir).
 - Hukuki denetim kaydı: `docs/legal/` — `data-map.md` (hangi veri nerede, hangi
   sebeple), `cookie-inventory.md`, `vendor-register.md`, `trust-claims.md`
   (footer iddialarının dayanağı), `placeholders.md` (yayın kapısı). Yayındaki
@@ -51,8 +54,15 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
    dosyalarındaki `bg-popover` gibi sınıflar bu yüzden markayla uyumlu.
    **İkon kütüphanesi `iconoir-react`** — lucide kaldırıldı, geri getirme.
    Iconoir'da `size` prop'u YOKTUR; ölçü `width`/`height` ile verilir.
-5. **İçerik/görünüm ayrımı:** Landing metin ve linkleri
-   `apps/web/app/content/landing.ts`'te; bileşenlere metin gömme.
+5. **İçerik/görünüm ayrımı ve dil:** Kullanıcıya görünen her metin
+   `apps/web/app/content/<alan>/{tr,en,es,pt-BR,de}.ts` kataloglarındadır;
+   bileşene metin GÖMME. Türkçe dosya kanoniktir ve tipi verir
+   (`export type XContent = typeof tr`), diğer dördü `satisfies XContent`
+   der — bir anahtar eklenip bir dile eklenmezse `pnpm typecheck` kırılır.
+   Kataloglardaki adresler Türkçe hâliyle yazılır (`/gizlilik`); render'da
+   `useHref()` ile ziyaretçinin diline çevrilir. Paylaşılan katman
+   (`packages/shared`) kullanıcıya görünen metin TAŞIMAZ: kimlik döndürür
+   (`BlockIssueId` gibi), metni katalog kurar.
 6. **Sır disiplini:** Gerçek anahtarlar yalnızca `apps/web/.dev.vars`
    (gitignore'da) ve `wrangler secret`'ta. `.dev.vars.example`'a asla gerçek
    değer yazma. Secrets: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID/SECRET`,
@@ -80,9 +90,15 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 
 ## Sık yapılan işler
 
-- **Yeni sayfa/route:** `app/routes.ts`'e `:username`'den önce ekle + rezerve
-  listeye ekle + gerekiyorsa footer/nav linkini `content/landing.ts`'te güncelle.
-  Public pazarlama sayfalarına `SiteFooter` eklenir; `/:username` sayfalarına eklenmez.
+- **Yeni sayfa/route:** `app/routes.ts` ELLE YAZILMAZ; route'lar
+  `packages/shared/src/routes.ts`'teki slug tablosundan üretilir. Yeni route
+  o tabloya beş dilde eklenir, `ROUTE_FILES`'a dosyası yazılır, top-level
+  segment rezerve listeye girer (Değişmez #1) ve gerekiyorsa footer/nav linki
+  `content/landing/`'te güncellenir. Public pazarlama sayfalarına `SiteFooter`
+  eklenir; `/:username` sayfalarına eklenmez (profil sayfaları dil öneki almaz).
+- **Dil kapısını test ederken gerçek tarayıcı User-Agent'ı gönder.** `isbot`
+  `curl`'ü ve çıplak `fetch`'i bot sayar, kapı da bot'ları bilerek
+  yönlendirmez; User-Agent verilmezse test her zaman "yönlendirme yok" görür.
 - **Yeni çerez veya cihaz depolaması:** ziyaretçinin cihazına yazan (çerez,
   `localStorage`, `sessionStorage`, IndexedDB) her şey **önce**
   `packages/shared/src/cookies.ts` envanterine girer. `/cerez-politikasi`
