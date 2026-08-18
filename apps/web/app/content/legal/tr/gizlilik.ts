@@ -453,6 +453,17 @@ export const gizlilikSections: LegalSection[] = [
                 "hukuki sebepten muaf tutmaz; sebep budur.",
             ],
           ],
+          [
+            [
+              "Seçtiğin arayüz dilinin hatırlanması, böylece bir sonraki " +
+                "ziyaretinde site o dilde açılır.",
+            ],
+            [
+              "m.5/2-f — meşru menfaat: siteyi senin istediğin dilde " +
+                "göstermek. Çerez yalnızca bir dil kodu tutar, kimlik " +
+                "taşımaz.",
+            ],
+          ],
         ],
       },
       {
@@ -504,8 +515,9 @@ export const gizlilikSections: LegalSection[] = [
           ],
           [
             { kind: "strong", text: "Zorunlu çerezler" },
-            " — oturumun taşınması ve giriş akışının güvenliği için " +
-              "tarayıcına yazılan az sayıda çerez.",
+            " — oturumun taşınması, giriş akışının güvenliği ve seçtiğin " +
+              "arayüz dilinin hatırlanması için tarayıcına yazılan az " +
+              "sayıda çerez.",
           ],
           [
             { kind: "strong", text: "Sunucu tarafı dış çağrılar" },
@@ -819,7 +831,8 @@ export const gizlilikSections: LegalSection[] = [
             { kind: "strong", text: "Oturum: 7 gün. " },
             "Oturum çerezinin ve oturum kaydının ömrü 7 gündür; çıkış " +
               "yaptığında daha erken sona erer. Giriş akışındaki güvenlik " +
-              "çerezleri 5 ve 15 dakika yaşar. Ayrıntı için ",
+              "çerezleri 5 ve 15 dakika yaşar. Dil çerezi 1 yıl yaşar ve " +
+              "dilediğin an tarayıcından silebilirsin. Ayrıntı için ",
             {
               kind: "link",
               text: "Çerez Politikası",
@@ -1061,8 +1074,9 @@ export const gizlilikSections: LegalSection[] = [
         text: [
           "Caka yalnızca ",
           { kind: "strong", text: "zorunlu çerezleri" },
-          " kullanır: oturumunu taşıyan çerez ve giriş akışını güvenli " +
-            "tutan kısa ömürlü çerezler. Reklam çerezi, analitik çerezi ve " +
+          " kullanır: oturumunu taşıyan çerez, giriş akışını güvenli tutan " +
+            "kısa ömürlü çerezler ve seçtiğin arayüz dilini hatırlayan " +
+            "çerez. Reklam çerezi, analitik çerezi ve " +
             "çapraz site takibi yoktur; ziyaret istatistikleri, herkese açık " +
             "profil sayfaları dâhil tüm sayfalarda, cihazına hiçbir şey " +
             "yazmadan çerezsiz biçimde ölçülür. Bu yüzden onay istemek " +

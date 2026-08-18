@@ -147,7 +147,8 @@ export const kullanimKosullariSections: LegalSection[] = [
           "Bazı adlar kimseye verilmez. Bunlar uygulamanın kendi sayfa " +
             "adresleri (örneğin giris, ayarlar, api), yetki ve altyapı rolü " +
             "taklidi yapan adlar (admin, destek, guvenlik), dinî değerleri " +
-            "taklit eden adlar ve marka koruması gereği ",
+            "taklit eden adlar, sitenin adreslerinde kullandığı dil önekleri " +
+            "ve marka koruması gereği ",
           { kind: "strong", text: "caka" },
           " ile başlayan her addır. Rezerve bir ad seçmeye çalışırsan " +
             "editör seni uyarır.",

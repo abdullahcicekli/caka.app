@@ -17,7 +17,7 @@ import {
   legalTitles,
   legalTurkishVersionLabel,
 } from "~/content/legal/meta";
-import { useCatalog, useLocale } from "~/lib/locale";
+import { useCatalog, useHref, useLocale } from "~/lib/locale";
 import {
   LEGAL_DOCUMENTS,
   formatDate,
@@ -73,6 +73,7 @@ function renderInline(
   node: LegalInline,
   key: number,
   published: readonly LegalDocumentId[],
+  localize: (href: string) => string,
 ): ReactNode {
   if (typeof node === "string") return node;
   if (node.kind === "strong") {
@@ -91,9 +92,13 @@ function renderInline(
   if (isDeadLegalTarget(href, published)) return <span key={key}>{text}</span>;
 
   // Uygulama içi yollar client-side gezinir; anchor ve dış hedefler düz <a>.
+  //
+  // Hedef Türkçe hâliyle yazılır ve burada okuyucunun diline çevrilir: İngilizce
+  // belgenin gövdesinden Türkçe /cerez-politikasi'na link vermek okuyucuyu
+  // anlamadığı bir metne düşürürdü.
   if (href.startsWith("/")) {
     return (
-      <Link key={key} to={href} className={INLINE_LINK_CLASS}>
+      <Link key={key} to={localize(href)} className={INLINE_LINK_CLASS}>
         {text}
       </Link>
     );
@@ -121,14 +126,16 @@ function renderInline(
 function renderRichText(
   text: LegalRichText,
   published: readonly LegalDocumentId[],
+  localize: (href: string) => string,
 ): ReactNode[] {
-  return text.map((node, index) => renderInline(node, index, published));
+  return text.map((node, index) => renderInline(node, index, published, localize));
 }
 
 /** Blok bileşenleri yayın listesini context'ten alır; prop zinciri yok. */
 function useRichText() {
   const published = useContext(PublishedLegalContext);
-  return (text: LegalRichText) => renderRichText(text, published);
+  const localize = useHref();
+  return (text: LegalRichText) => renderRichText(text, published, localize);
 }
 
 /* ------------------------------------------------------------------ *
