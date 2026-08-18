@@ -8,6 +8,12 @@
 // Köşeli parantezli her alan doğrulanmamış olgudur ve R33 kapısını tetikler:
 // doldurulmadan belge prod'da 404 döner. Köşeli parantez metinde başka hiçbir
 // amaçla kullanılmaz — parantez gerektiğinde normal parantez yazılır.
+//
+// Kalan tek alan §1'deki `[AD SOYAD]`. Üç belgenin tamamındaki son kapı budur:
+// KVKK Rehberi No: 60 (Mart 2025) §3.1.1 gerçek kişi veri sorumlusu için adı
+// soyadı ister ve alan adı bunun yerine geçmez. İletişim uzvu seçenekli
+// olduğundan tek kanal (hello@caka.app) yeterlidir; adres ve telefon
+// yayınlanmaz.
 import type { LegalSection } from "@caka/shared";
 
 export const gizlilikSections: LegalSection[] = [
@@ -33,32 +39,45 @@ export const gizlilikSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          { kind: "strong", text: "Eksik olanı da olduğu gibi yazalım. " },
-          "KVKK m.10, veri sorumlusunun ",
+          { kind: "strong", text: "Veri sorumlusu bir kişidir, bir alan adı değil. " },
+          "KVKK m.10 ve Aydınlatma Tebliği m.5, veri sorumlusunun ",
           { kind: "strong", text: "kimliğinin" },
-          " bildirilmesini ister; bir alan adı ise ne gerçek ne de tüzel " +
-            "kişidir. Caka'nın arkasında bugün kurulmuş bir tüzel kişilik yok, " +
-            "ticari bir faaliyet ve buna bağlı bir sicil kaydı da yok. Bu " +
-            "yüzden aşağıda bir unvan, vergi veya MERSİS numarası " +
-            "göremezsin: olmayan bir şirketin bilgisini uydurmaktansa eksiği " +
-            "söylemeyi seçtik. Yani bu bölüm, m.10'daki kimlik bilgisini " +
-            "bugün karşılamıyor; ürün ticarileştiğinde ve bir tüzel kişilik " +
-            "kurulduğunda burası o bilgiyle güncellenecektir. Bu arada " +
-            "başvurularının düşeceği kutu gerçek ve okunuyor.",
+          " bildirilmesini ister. Kurum'un Aydınlatma Yükümlülüğünün Yerine " +
+            "Getirilmesinde Uyulacak Usul ve Esaslar Rehberi (No: 60, Mart " +
+            "2025) §3.1.1 bunu gerçek kişiler için açıkça ",
+          { kind: "strong", text: "adı ve soyadı" },
+          " olarak tarif eder; bir alan adı ne gerçek ne de tüzel kişi " +
+            "olduğundan “caka.app” tek başına bu bilgiyi karşılamaz. Bu " +
+            "yüzden aşağıdaki tabloda ad ve soyad ayrıca yazılıdır. Caka'nın " +
+            "arkasında kurulmuş bir tüzel kişilik, ticari faaliyet veya sicil " +
+            "kaydı olmadığı için bir unvan, vergi ya da MERSİS numarası " +
+            "göremezsin: olmayan bir şirketin bilgisini uydurmaktansa durumu " +
+            "olduğu gibi yazıyoruz. Ürün ticarileşip bir tüzel kişilik " +
+            "kurulduğunda burası o bilgilerle güncellenecektir.",
         ],
       },
       {
         kind: "table",
         columns: ["Bilgi", "Değer"],
         rows: [
-          [["Siteyi işleten"], ["caka.app — açık kaynaklı kişisel proje"]],
+          [["Veri sorumlusu"], ["[AD SOYAD]"]],
+          [
+            ["Sıfatı"],
+            [
+              "Gerçek kişi — caka.app'i açık kaynaklı kişisel bir proje " +
+                "olarak işletir",
+            ],
+          ],
           [["İletişim ve KVKK başvuru adresi"], ["hello@caka.app"]],
           [["Web sitesi"], ["caka.app"]],
         ],
         caption:
-          "Caka'ya ulaşmanın tek yolu bu e-posta adresidir; ilgili kişi " +
-          "başvuruları da aynı kutuya düşer. Posta adresi yayınlamıyoruz, " +
-          "çünkü ortada bir işyeri değil kişisel bir ev adresi olurdu.",
+          "Aynı düzenlemeler iletişim bilgisini “telefon, e-posta, internet " +
+          "adresi veya posta adresi gibi” diye seçenekli sayar; sayım " +
+          "seçenekli olduğu için çalışan tek bir kanal yeterlidir. Telefon " +
+          "ve posta adresi yayınlamıyoruz, çünkü ortada bir işyeri değil " +
+          "kişisel bir ev adresi olurdu. İlgili kişi başvuruları da bu " +
+          "kutuya düşer ve okunur.",
       },
       {
         kind: "paragraph",
@@ -528,7 +547,10 @@ export const gizlilikSections: LegalSection[] = [
                 "ölçüm script'ini indirir ve bu istekte IP adresin ile User " +
                 "Agent'ın Cloudflare'e ulaşır. Cihazına hiçbir şey yazılmaz.",
             ],
-            ["Evet — [AKTARIM MEKANİZMASI]"],
+            [
+              "Evet — bugün Kanun'un aradığı güvencelerden birine " +
+                "bağlanamıyor; bkz. aşağıdaki “Yurt dışına aktarım”.",
+            ],
           ],
           [
             ["Google LLC"],
@@ -538,7 +560,10 @@ export const gizlilikSections: LegalSection[] = [
                 "isteği ve dönüşte bize ilettiği hesap bilgisini kendi " +
                 "politikası uyarınca işler.",
             ],
-            ["Evet — [AKTARIM MEKANİZMASI]"],
+            [
+              "Evet — bugün Kanun'un aradığı güvencelerden birine " +
+                "bağlanamıyor; bkz. aşağıdaki “Yurt dışına aktarım”.",
+            ],
           ],
           [
             ["Apple Inc."],
@@ -548,7 +573,10 @@ export const gizlilikSections: LegalSection[] = [
                 "ve dönüşte bize ilettiği hesap bilgisini kendi politikası " +
                 "uyarınca işler.",
             ],
-            ["Evet — [AKTARIM MEKANİZMASI]"],
+            [
+              "Evet — bugün Kanun'un aradığı güvencelerden birine " +
+                "bağlanamıyor; bkz. aşağıdaki “Yurt dışına aktarım”.",
+            ],
           ],
           [
             ["Indian Type Foundry (Fontshare)"],
@@ -559,7 +587,10 @@ export const gizlilikSections: LegalSection[] = [
               { kind: "strong", text: "IP adresin ve User Agent'ın" },
               " servise ulaşır. Cihazına hiçbir şey yazılmaz.",
             ],
-            ["Evet — [AKTARIM MEKANİZMASI]"],
+            [
+              "Evet — bugün Kanun'un aradığı güvencelerden birine " +
+                "bağlanamıyor; bkz. aşağıdaki “Yurt dışına aktarım”.",
+            ],
           ],
           [
             ["GitHub, Inc."],
@@ -569,7 +600,10 @@ export const gizlilikSections: LegalSection[] = [
                 "sunucumuzdan gider; ziyaretçinin tarayıcısı GitHub'a istek " +
                 "atmaz, dolayısıyla ziyaretçinin IP adresi GitHub'a ulaşmaz.",
             ],
-            ["Evet — [AKTARIM MEKANİZMASI]"],
+            [
+              "Evet — bugün Kanun'un aradığı güvencelerden birine " +
+                "bağlanamıyor; bkz. aşağıdaki “Yurt dışına aktarım”.",
+            ],
           ],
           [
             ["Ziyaret ettiğin profilin sahibi"],
@@ -610,13 +644,77 @@ export const gizlilikSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           { kind: "strong", text: "Yurt dışına aktarım. " },
-          "Yukarıdaki alıcıların sunucuları Türkiye dışında da bulunur. KVKK " +
-            "m.9 uyarınca yurt dışına aktarım ancak Kanun'un saydığı " +
-            "mekanizmalardan birine dayanılarak yapılabilir. Caka'nın bu " +
-            "aktarımlarda dayandığı mekanizma ",
-          { kind: "strong", text: "[AKTARIM MEKANİZMASI]" },
-          " olarak belirlenecektir; bu alan doldurulmadan metin yayına " +
-            "alınmaz.",
+          "Yukarıdaki alıcıların sunucuları Türkiye dışındadır. Uygulama, " +
+            "veritabanı, dosya deposu ve loglar Cloudflare'de çalıştığı için " +
+            "bu aktarım hizmetin çalışması bakımından teknik bir zorunluluktur " +
+            "ve her istekte gerçekleşir. Durumu olduğu gibi yazıyoruz: ",
+          {
+            kind: "strong",
+            text:
+              "bu aktarımlar bugün KVKK m.9'un aradığı güvencelerden birine " +
+              "bağlanmış değildir.",
+          },
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Nedeni tek tek şudur. m.9'un ilk basamağı yeterlilik kararıdır; " +
+            "Kurul bugüne kadar hiçbir ülke için yeterlilik kararı " +
+            "yayımlamadı. İkinci basamak uygun güvencelerdir ve bunların en " +
+            "erişilebiliri Kurul'un yayımladığı standart sözleşmedir; ancak " +
+            "bu sözleşmenin Türkçe metninin ",
+          { kind: "strong", text: "iki tarafça da imzalanması" },
+          " gerekir. Cloudflare'in yürürlükteki veri işleme ek sözleşmesinde " +
+            "(v6.4, yürürlük 3 Nisan 2026) Türkiye'ye, Türkçe bir metne veya " +
+            "KVKK'ya yapılmış tek bir atıf yoktur; sunulan mekanizmalar AB " +
+            "standart sözleşme hükümleri, Birleşik Krallık ile İsviçre " +
+            "ekleri, Data Privacy Framework ve Global CBPR ile sınırlıdır. " +
+            "Yani karşı taraf bu metni imzalamıyor. Taahhütname yolu Kurul " +
+            "iznine bağlıdır ve tek taraflı olarak tamamlanamaz; bağlayıcı " +
+            "şirket kuralları ise bir şirketler topluluğu içindir, ortada " +
+            "topluluk yok. Aktarımın küçüklüğünden doğan bir muafiyet de " +
+            "bulunmuyor.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "“Açık rıza alsanız olmaz mı?” " },
+          "Olmuyor. m.9/6'daki istisnalar — açık rıza dâhil — yalnızca ",
+          { kind: "strong", text: "arızi" },
+          " aktarımlar için açıktır. Kişisel Verilerin Yurt Dışına " +
+            "Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik " +
+            "m.16/1 bu terimi tanımlar: “Düzenli olmayan, tek veya birkaç " +
+            "sefer gerçekleşen, süreklilik arz etmeyen ve olağan faaliyet " +
+            "akışı içinde bulunmayan aktarımlar arızi niteliktedir.” " +
+            "Barındırma aktarımı bunun tam tersidir: süreklidir ve olağan " +
+            "faaliyet akışının kendisidir. Arızilik şartı m.9/6'nın tamamını " +
+            "kapsadığı için sana bir onay kutusu göstermek bu boşluğu " +
+            "kapatmaz, yalnızca kapatılmış gibi gösterirdi. Kurum da bu " +
+            "istisnaların dar yorumlanması gerektiğini belirtiyor.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "İki ayrıntı daha: Google ile giriş, kurumsal bir veri işleme " +
+            "sözleşmesi altında değil, Google'ın tüketicilere yönelik Hizmet " +
+            "Şartları altında çalışır; bu ilişkide Google bizim veri " +
+            "işleyenimiz değil, büyük olasılıkla kendi başına ayrı bir veri " +
+            "sorumlusudur. Apple tarafındaki hukuki konumu doğrulayamadık, bu " +
+            "yüzden burada bir şey iddia etmiyoruz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Bu yüzden bu bölümde bir mekanizma adı yazmıyor. Boşluk gerçek ve " +
+            "bunu bilmen, aktarımın hiç olmadığını sanmandan iyidir. Uygun " +
+            "bir güvenceye bağlanması için çalışmalarımız sürüyor; bir yol " +
+            "açıldığında bu bölüm güncellenir ve belgenin sürüm numarası " +
+            "artar. Kişisel Verileri Koruma Kurumu'na şikâyette bulunma " +
+            "hakkın bu metinden etkilenmez.",
         ],
       },
       {
@@ -701,31 +799,135 @@ export const gizlilikSections: LegalSection[] = [
           [
             {
               kind: "strong",
-              text: "Sayfa istatistiği sayaçları: bugün silinmiyor. ",
+              text: "Sayfa istatistiği sayaçları: süresiz tutulur. ",
             },
-            "Panelde yalnızca son 30 gün gösterilir, ama bunu yapan şey bir " +
-              "silme değil, bir görüntüleme filtresidir: ",
+            "Bu satırlar kişiyi değil günü, iki harfli ülke kodunu ve blok " +
+              "kimliğini taşıyan sayaçlardır; zaman damgası, kimlik ve IP " +
+              "türevi içermedikleri için tek bir kişiye geri götürülemezler. " +
+              "Gerçekten anonim oldukları için bir imha süresine bağlı " +
+              "değiller. Panelde yalnızca son 30 gün gösterilir, ama bunu " +
+              "yapan şey bir silme değil, bir görüntüleme filtresidir: ",
             {
               kind: "strong",
               text: "daha eski sayaç satırları veritabanında kalmaya devam eder",
             },
-            ". Bu satırları düzenli olarak budayan bir iş henüz yazılmadı; " +
-              "yazıldığında süre bu listeye yazılacak. Olduğundan iyi " +
-              "göstermemek için bunu böyle yazıyoruz. Satırlar kişiyi değil " +
-              "günü, ülkeyi ve blok kimliğini taşıyan sayaçlardır ve " +
-              "profilin silinmesi hâlinde birlikte silinirler.",
+            ". Profilin silinmesi hâlinde bu satırlar da birlikte silinir.",
           ],
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Hesap verisi, profil içeriği, yüklenen dosyalar, operasyon " +
-            "kayıtları, sayfa istatistiği sayaçları ve destek yazışmaları " +
-            "için uygulanacak saklama süreleri ",
-          { kind: "strong", text: "[SAKLAMA SÜRELERİ]" },
-          " olarak belirlenecektir. Uydurma bir süre yazmaktansa alanı boş " +
-            "bıraktık; bu alan doldurulmadan metin yayına alınmaz.",
+          "Geri kalan veri kategorileri için uyguladığımız süreler şunlardır:",
+        ],
+      },
+      {
+        kind: "table",
+        columns: ["Veri", "Saklama süresi"],
+        rows: [
+          [
+            ["Hesap verisi, profil içeriği ve yüklediğin dosyalar"],
+            [
+              "Sen silene kadar. Hesabını kapattığında ya da silme talep " +
+                "ettiğinde en geç ",
+              { kind: "strong", text: "3 ay" },
+              " içinde silinir.",
+            ],
+          ],
+          [
+            ["Oturum kayıtları (IP adresi ve User Agent)"],
+            [
+              "Oturumun kendi ömrü 7 gündür. Kayıt, oturum sona erdikten " +
+                "sonra kısa bir pencere boyunca kalır ve ",
+              { kind: "strong", text: "en geç 90 gün" },
+              " içinde silinir.",
+            ],
+          ],
+          [
+            ["Kimlik sağlayıcı token'ları (erişim ve yenileme token'ları)"],
+            [
+              "Çıkış yaptığında veya hesabın silindiğinde geçersiz kılınır; " +
+                "ayrıca saklanmaz.",
+            ],
+          ],
+          [
+            ["Eski kullanıcı adı kaydı (username_redirect)"],
+            [
+              "30 gün. Süre dolduğunda kayıt kalıcı olarak silinir; " +
+                "arşivlenmez.",
+            ],
+          ],
+          [
+            ["GitHub katkı grafiği önbelleği (github_calendar)"],
+            [
+              "Başarılı kayıt 6 saat, olumsuz sonuç 24 saat taze sayılır; " +
+                "grafik profilden kaldırıldığında veri yeniden çekilmez ve " +
+                "kayıt ",
+              { kind: "strong", text: "ay değil gün ölçeğinde" },
+              " tasfiye edilir. Listenin en zayıf halkası budur: verinin " +
+                "sahibi olan kişinin Caka ile hiçbir ilişkisi yok, bu yüzden " +
+                "pencereyi bilerek kısa tutuyoruz.",
+            ],
+          ],
+          [
+            ["Destek yazışmaları"],
+            ["Talep kapandıktan sonra en geç 3 ay içinde silinir."],
+          ],
+          [
+            ["Operasyon kayıtları (Cloudflare Workers Logs)"],
+            [
+              "En çok 30 gün. Bu süreyi biz değil ",
+              { kind: "strong", text: "Cloudflare" },
+              " belirler: kayıtlar Cloudflare'in saklama penceresi dolduğunda " +
+                "kendiliğinden düşer, elimizde ayrı bir kopya tutmuyoruz.",
+            ],
+          ],
+          [
+            ["Çerezsiz ziyaret istatistikleri (Cloudflare Web Analytics)"],
+            [
+              "Toplu sayılardan ibarettir ve Cloudflare'in kendi saklama " +
+                "penceresine tabidir; bizde ayrı bir kopyası yoktur.",
+            ],
+          ],
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Üç ay neden üç ay. " },
+          "Kişisel Verilerin Silinmesi, Yok Edilmesi veya Anonim Hale " +
+            "Getirilmesi Hakkında Yönetmelik m.5/1, yazılı bir saklama ve " +
+            "imha politikası hazırlama ödevini VERBİS'e kayıt yükümlülüğüne " +
+            "bağlar. Caka bu kayıt yükümlülüğünden muaf (Kurul'un 2025/1572 " +
+            "sayılı kararı), dolayısıyla yazılı politika ödevi de doğmuyor. " +
+            "Ama bu bir gevşeme değil, tersi: politika yazanlar altı ayı " +
+            "geçmeyen periyodik imha döngüsünden yararlanırken, yazmayanlar " +
+            "için m.11/3 daha sıkı bir kural koyar ve silme yükümlülüğünün " +
+            "doğduğu tarihten itibaren ",
+          { kind: "strong", text: "üç ay" },
+          " içinde silmeyi emreder. Yukarıdaki üç aylık süre bu hükümden " +
+            "gelir; bizim seçtiğimiz bir rakam değildir.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Talebini ne kadar sürede sonuçlandırırız. " },
+          "Aynı Yönetmelik m.12/1-(a) uyarınca silme talebini en geç ",
+          { kind: "strong", text: "30 gün" },
+          " içinde sonuçlandırırız. m.7/3 gereği silme işleminin kendisine " +
+            "ilişkin kayıtlar — silinen verinin kendisi değil, işlemin kaydı " +
+            "— en az üç yıl saklanır.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Bugün bu sürelerden daha uzun bir saklamayı zorunlu kılan bir " +
+            "mevzuat yok: Caka'nın geliri yok, fatura kesmiyor ve ticari " +
+            "defter tutmuyor; Vergi Usul Kanunu ile Türk Ticaret Kanunu'nun " +
+            "saklama süreleri bu yüzden devreye girmiyor. Ücretli bir plan " +
+            "sunduğumuz gün bu bölüm değişir.",
         ],
       },
     ],

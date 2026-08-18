@@ -17,10 +17,20 @@ kayıttan türetildi.
 > izni, veya bağlayıcı şirket kuralları. Yeterlilik kararı yayımlanmış ülke
 > yok.
 >
-> Bu boşluk **OQ2a**'dır ve `/gizlilik` §6'da `[AKTARIM MEKANİZMASI]` olarak
-> bir yayın kapısına bağlanmıştır (`placeholders.md` §2). **Bugün mevcut bir
-> açıktır** — hukuki sayfalar hiç yayınlanmasa bile uygulama, veritabanı,
-> dosya deposu ve loglar zaten Cloudflare'de.
+> Bu boşluk **OQ2a**'dır. Artık bir yayın kapısı değil: `/gizlilik` §6 bunu
+> bir placeholder olarak saklamak yerine **açıkça ifşa ediyor** — aktarım
+> gerçekleşiyor, hizmetin çalışması için teknik olarak zorunlu, uygun bir
+> güvenceye bağlanmış değil ve bağlanması için çalışma sürüyor. Gerekçe zinciri
+> (standart sözleşmenin iki taraflı imza şartı, Cloudflare DPA v6.4'te Türkiye
+> ve KVKK atfının hiç bulunmaması, arızilik tanımı nedeniyle açık rızanın da
+> kapalı olması) `placeholders.md`'dedir. **Bugün mevcut bir açıktır** — hukuki
+> sayfalar hiç yayınlanmasa bile uygulama, veritabanı, dosya deposu ve loglar
+> zaten Cloudflare'de.
+>
+> Ek not: **açık rıza bu boşluğu kapatmaz.** Yurt Dışına Aktarım Yönetmeliği
+> m.16/1 arıziliği "süreklilik arz etmeyen ve olağan faaliyet akışı içinde
+> bulunmayan" aktarım olarak tanımlar; arızilik şartı m.9/6'nın **tamamını**,
+> açık rıza bendi dâhil, kapsar.
 
 > ### Rol sütunu hakkında dürüstlük notu
 > "İşleyen / ayrı veri sorumlusu" ayrımı, imzalanmış bir veri işleme

@@ -103,7 +103,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     title: "Gizlilik ve Aydınlatma Metni",
     navLabel: "Gizlilik ve Aydınlatma",
     version: "0.1",
-    updatedAt: "2026-08-17",
+    updatedAt: "2026-08-18",
   },
   "kullanim-kosullari": {
     id: "kullanim-kosullari",
@@ -111,7 +111,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     title: "Kullanım Koşulları",
     navLabel: "Kullanım Koşulları",
     version: "0.1",
-    updatedAt: "2026-08-17",
+    updatedAt: "2026-08-18",
   },
   "cerez-politikasi": {
     id: "cerez-politikasi",

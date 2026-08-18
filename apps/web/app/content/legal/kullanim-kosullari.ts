@@ -8,9 +8,15 @@
 // Ürünün bugün yapmadığı hiçbir şey için koşul yazılmadı: ücretli plan, ödeme,
 // pazar yeri, self-servis hesap silme, dışa aktarma ve gömülü oynatıcı yok.
 //
-// Köşeli parantezli her alan doğrulanmamış olgu ya da avukat incelemesi bekleyen
-// hükümdür ve R33 kapısını tetikler: doldurulmadan belge prod'da 404 döner.
-// Köşeli parantez metinde başka hiçbir amaçla kullanılmaz.
+// Bu belgede doldurulmamış alan (`[...]`) kalmadı; R33 kapısı yalnız
+// `gizlilik.ts` §1'deki `[AD SOYAD]` üzerinden işliyor. Köşeli parantez bu
+// metinde başka hiçbir amaçla kullanılmaz — parantez gerektiğinde normal
+// parantez yazılır.
+//
+// §11 (sorumluluk) ve §14 (uyuşmazlık) bilinçli olarak sınırlama değil kapsam
+// üzerine kuruldu: haksız şart yasağı ve HMK m.17 karşısında geçersiz olacak
+// bir kaydı yazmak, hiç yazmamaktan kötüdür. Gerekçeler
+// `docs/legal/placeholders.md`'de.
 import type { LegalSection } from "@caka/shared";
 
 export const kullanimKosullariSections: LegalSection[] = [
@@ -552,7 +558,8 @@ export const kullanimKosullariSections: LegalSection[] = [
               "görsel, hangi metin.",
           ],
           [
-            "Sorunun ne olduğu ve neden hukuka aykırı olduğunu düşündüğün.",
+            "Sorunun ne olduğu ve hangi hukuki dayanakla aykırı olduğunu " +
+              "düşündüğün.",
           ],
           [
             "Telif veya marka ihlali bildiriyorsan hak sahibi olduğunu ya da " +
@@ -567,11 +574,20 @@ export const kullanimKosullariSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           { kind: "strong", text: "Sonrasında ne olur. " },
-          "Bildirimi inceleriz. Açıkça hukuka aykırı ve gecikmeye tahammülü " +
-            "olmayan durumlarda içeriği hemen erişime kapatırız; diğer " +
-            "hâllerde önce profil sahibine yazar ve yanıt için makul bir süre " +
-            "veririz. Kararımızı hem sana hem profil sahibine bildiririz. " +
-            "Profil sahibi karara itiraz edebilir.",
+          "Bildirimi ",
+          { kind: "strong", text: "gecikmeksizin" },
+          " inceleriz. Açıkça hukuka aykırı ve gecikmeye tahammülü olmayan " +
+            "durumlarda içeriği hemen erişime kapatırız; diğer hâllerde önce " +
+            "profil sahibine yazar ve yanıt için makul bir süre veririz. " +
+            "Kararımızı hem sana hem profil sahibine bildiririz. Profil " +
+            "sahibi karara itiraz edebilir. Belirli bir yanıt süresi " +
+            "taahhüt etmiyoruz; nedenini ",
+          {
+            kind: "link",
+            text: "9. bölümde",
+            href: "#yer-saglayici",
+          },
+          " yazdık.",
         ],
       },
       {
@@ -602,11 +618,111 @@ export const kullanimKosullariSections: LegalSection[] = [
   },
 
   /* ---------------------------------------------------------------- *
-   * 9. Üçüncü taraf servisleri ve dış bağlantılar
+   * 9. Yer sağlayıcılık — 5651
+   * ---------------------------------------------------------------- */
+  {
+    id: "yer-saglayici",
+    heading: "9. Yer sağlayıcı sıfatımız ve 5651 sayılı Kanun",
+    blocks: [
+      {
+        kind: "paragraph",
+        text: [
+          "Caka, kullanıcıların hazırladığı sayfaları barındırıp yayınladığı " +
+            "için 5651 sayılı Kanun m.2/1-(m) anlamında bir ",
+          { kind: "strong", text: "yer sağlayıcıdır" },
+          ". Bu sıfat bir ölçek ya da ticarilik eşiğine bağlı değildir: " +
+            "hizmet ücretsiz olsa ve arkasında bir şirket bulunmasa da yer " +
+            "sağlayıcıyız. Sitenin kendi sayfaları — ana sayfa ve bu hukuki " +
+            "metinler — bakımından ise aynı anda içerik sağlayıcıyız; orada " +
+            "yazanı biz yazıyoruz ve ondan biz sorumluyuz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "İçeriği önceden denetlemiyoruz. " },
+          "Kanun m.5/1, yer sağlayıcıya barındırdığı içeriği kontrol etme ve " +
+            "hukuka aykırı bir durum olup olmadığını araştırma yükümlülüğü " +
+            "getirmez. Caka'da da her profili yayından önce okuyan bir " +
+            "moderasyon süreci yoktur; yayınla dediğin an içerik doğrudan " +
+            "canlıya çıkar. Bir sayfayı barındırmak, orada yazanı onaylamak " +
+            "anlamına gelmez.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Bize bildirilen içerik. " },
+          "Barındırdığımız bir içeriğin hukuka aykırı olduğu bildirildiğinde, " +
+            "teknik olarak mümkün olduğu ölçüde ve ",
+          { kind: "strong", text: "gecikmeksizin" },
+          " kaldırırız. Burada bir yanıt süresi taahhüt etmiyoruz; sebebini " +
+            "de yazalım. Kaldırma için 24 saatlik süre öngören 5651 m.9, " +
+            "Anayasa Mahkemesi'nin 11/10/2023 tarihli, E.2020/76 K.2023/172 " +
+            "sayılı kararıyla ",
+          { kind: "strong", text: "tümüyle iptal edildi" },
+          " (Resmî Gazete 10.01.2024, sayı 32425; iptal 10.10.2024'te " +
+            "yürürlüğe girdi) ve yerine bir süre konmadı. Yürürlükte olmayan " +
+            "bir süreyi metne yazmak, tutamayacağımız bir borcu kendi " +
+            "elimizle yaratmak olurdu; tek kişilik bir projede bu, kimseye " +
+            "fayda sağlamayan bir vaat olur.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Resmî talepler: dört saat. " },
+          "Buna karşılık kanunun bize yüklediği somut bir süre vardır. " +
+            "m.8/5 ve m.8/A/1 uyarınca bir ",
+          { kind: "strong", text: "hâkim, savcı veya Siber Güvenlik Başkanlığı" },
+          " tarafından verilen erişim engelleme ya da içerik kaldırma " +
+            "kararını ",
+          { kind: "strong", text: "derhâl ve en geç dört saat içinde" },
+          " yerine getiririz. Bu, bizim verdiğimiz bir taahhüt değil, " +
+            "kanunun koyduğu süredir.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Bildirimini nereye gönderirsin. " },
+          "Bildirimlerini ",
+          { kind: "strong", text: "hello@caka.app" },
+          " adresine yaz. Bir bildirimin işleme alınabilmesi için şikâyet " +
+            "edilen sayfanın tam adresini, sayfadaki hangi ögenin sorunlu " +
+            "olduğunu, hangi hukuki dayanakla aykırı olduğunu düşündüğünü ve " +
+            "kim olduğunu içermesi gerekir. Bu dördünü ve bildirimin " +
+            "ardından işleyen süreci ",
+          {
+            kind: "link",
+            text: "8. bölümde",
+            href: "#bildirim-ve-kaldirma",
+          },
+          " ayrıntılı yazdık. Eksik bir bildirim üzerine hareket " +
+            "edemeyebiliriz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "5651'e bağlı Yönetmelik'in ana sayfada ad, adres, telefon ve " +
+            "vergi/TC kimlik numarası gösterilmesini isteyen tanıtıcı bilgi " +
+            "yükümlülüğü, ",
+          { kind: "strong", text: "ticari veya ekonomik amaçlı" },
+          " yer sağlayıcılar içindir. Caka bugün ücretsiz olduğu ve bir gelir " +
+            "elde etmediği için bu yükümlülük doğmuyor; hizmet ticarileşirse " +
+            "devreye girer ve bu bölüm o zaman güncellenir.",
+        ],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------- *
+   * 10. Üçüncü taraf servisleri ve dış bağlantılar
    * ---------------------------------------------------------------- */
   {
     id: "dis-baglantilar",
-    heading: "9. Dış bağlantılar ve üçüncü taraf servisleri",
+    heading: "10. Dış bağlantılar ve üçüncü taraf servisleri",
     blocks: [
       {
         kind: "paragraph",
@@ -672,11 +788,11 @@ export const kullanimKosullariSections: LegalSection[] = [
   },
 
   /* ---------------------------------------------------------------- *
-   * 10. Hizmet sürekliliği ve sorumluluk sınırı
+   * 11. Hizmet sürekliliği ve sorumluluk
    * ---------------------------------------------------------------- */
   {
     id: "hizmet-surekliligi",
-    heading: "10. Hizmetin sürekliliği ve sorumluluk sınırı",
+    heading: "11. Hizmetin sürekliliği ve sorumluluk",
     blocks: [
       {
         kind: "paragraph",
@@ -709,25 +825,103 @@ export const kullanimKosullariSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          { kind: "strong", text: "Sorumluluk sınırı. " },
-          "Tarafların sorumluluğunun kapsamı ve sınırı ",
-          { kind: "strong", text: "[SORUMLULUK SINIRI — AVUKAT İNCELEMESİ]" },
-          " olarak belirlenecektir. Bu hükmü kendimiz yazıp seni bağlayıcı " +
-            "bir sınırla karşılaştırmak yerine alanı boş bıraktık; hukuki " +
-            "inceleme tamamlanmadan bu metin yayına alınmaz. Tüketici " +
-            "mevzuatının ve emredici hukuk kurallarının tanıdığı haklar her " +
-            "hâlükârda saklıdır.",
+          { kind: "strong", text: "Sorumluluk: burada bir tavan yok. " },
+          "Bu bölümde sorumluluğumuzu bir para sınırına bağlamıyoruz ve " +
+            "“dolaylı zararlardan sorumlu değiliz” gibi bir cümle " +
+            "yazmıyoruz. Sebebi basit: tüketici sözleşmelerinde böyle " +
+            "kayıtlar geçersizdir. Tüketici Sözleşmelerindeki Haksız Şartlar " +
+            "Hakkında Yönetmelik EK-1 (1)(a), sözleşmeyi düzenleyenin kendi " +
+            "eylem veya ihmaliyle yol açtığı ölüm, yaralanma ve maddi zarar " +
+            "bakımından sorumluluğunu kaldıran ya da ",
+          { kind: "strong", text: "sınırlayan" },
+          " şartları haksız sayar — parayla ifade edilmiş bir üst sınır da " +
+            "bu kapsamdadır. EK-1 (1)(b) tüketicinin başvurabileceği hukuki " +
+            "yolları kaldıran veya ölçüsüzce kısıtlayan şartları, TBK m.115/1 " +
+            "ise kasıt ve ağır ihmal için baştan konulan sorumsuzluk kaydını " +
+            "geçersiz kılar. Geçersiz bir şart yazıp sana geçerliymiş gibi " +
+            "göstermektense, gerçekten geçerli olanı yazmayı seçtik.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: ["Geçerli olan çerçeve şudur:"],
+      },
+      {
+        kind: "list",
+        style: "bullet",
+        items: [
+          [
+            { kind: "strong", text: "Hizmetin kapsamı. " },
+            "Caka, senin yazdığın içeriği barındıran ve yayınlayan bir sayfa " +
+              "hizmetidir. Kesintisiz erişilebilirlik, belirli bir hız, " +
+              "arama motorlarında görünürlük veya belirli bir ziyaretçi " +
+              "sayısı taahhüt etmiyoruz. Profiline eklediğin bağlantıların " +
+              "gittiği siteleri de biz seçmiyor ve denetlemiyoruz; oradaki " +
+              "içerikten ve orada olan bitenden sorumlu değiliz.",
+          ],
+          [
+            { kind: "strong", text: "Hizmet ücretsizdir ve bu hukuken önemlidir. " },
+            "Caka'dan hiçbir ücret almıyoruz ve bu kullanımdan bir gelir " +
+              "elde etmiyoruz. TBK m.114/1'in son cümlesi şöyle der: “İş " +
+              "özellikle borçlu için bir yarar sağlamıyorsa, sorumluluk daha " +
+              "hafif olarak değerlendirilir.” Yani ücretsizlik, bizim " +
+              "koyduğumuz bir sınır değil, kanunun kendisinin öngördüğü bir " +
+              "ölçüdür ve özen borcumuzun değerlendirilmesinde dikkate " +
+              "alınır. Ücretli bir plan sunduğumuz gün bu ölçü de ortadan " +
+              "kalkar.",
+          ],
+          [
+            { kind: "strong", text: "Yardımcı kişilerin fiilleri. " },
+            "TBK m.116/2, yardımcı kişilerin fiillerinden doğan sorumluluğun " +
+              "önceden kaldırılmasına izin verir. Hizmeti çalıştırmak için " +
+              "kullandığımız üçüncü tarafların — barındırma sağlayıcısı, " +
+              "kimlik sağlayıcıları, içerik dağıtım ağı — kendi fiillerinden " +
+              "doğan sorumluluğu bu hükme dayanarak ",
+            { kind: "strong", text: "önceden kaldırıyoruz" },
+            ". Bir altyapı sağlayıcısındaki kesinti, arıza veya veri kaybı " +
+              "için bize karşı talepte bulunulamaz. Bu tarafları seçerken " +
+              "veya gözetirken kendi kusurumuz bunun dışındadır.",
+          ],
+          [
+            { kind: "strong", text: "Senin yükümlülüklerin. " },
+            "Profilindeki içeriğin hukuka uygunluğu sana aittir; ayrıntısı " +
+              "4. bölümdedir. Üçüncü bir kişi profilindeki bir içerik " +
+              "nedeniyle bize talep yöneltirse, o talebin sorumluluğu " +
+              "içeriği koyan kişidedir.",
+          ],
+          [
+            { kind: "strong", text: "Üçüncü kişilerin fiilleri ve mücbir sebep. " },
+            "Saldırı, kötüye kullanım, yetkili bir merciin erişim engeli, " +
+              "elektrik ve iletişim altyapısındaki arıza gibi denetimimiz " +
+              "dışındaki olaylardan doğan kesintilerden sorumlu " +
+              "tutulamayız.",
+          ],
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Hiçbir hâlde sınırlanmayanlar. " },
+          "Yukarıdakilerin hiçbiri şunlara dokunmaz: kastımızdan veya ağır " +
+            "ihmalimizden doğan sorumluluk, ölüm ve bedensel zarardan doğan " +
+            "sorumluluk ve tüketici mevzuatının emredici hükümlerinin sana " +
+            "tanıdığı haklar. 6502 sayılı Kanun m.5/2 uyarınca bu " +
+            "koşullardaki bir şart haksız sayılırsa yalnızca o şart " +
+            "hükümsüz olur, sözleşmenin geri kalanı geçerliliğini korur. " +
+            "m.5/3 uyarınca bu koşulların tek taraflı hazırlandığı ve " +
+            "seninle ayrıca müzakere edilmediği kabul edilir; aksini ileri " +
+            "sürmek isteyen taraf bunu ispatla yükümlüdür ve o taraf biziz.",
         ],
       },
     ],
   },
 
   /* ---------------------------------------------------------------- *
-   * 11. Ücretlendirme
+   * 12. Ücretlendirme
    * ---------------------------------------------------------------- */
   {
     id: "ucretlendirme",
-    heading: "11. Ücretlendirme",
+    heading: "12. Ücretlendirme",
     blocks: [
       {
         kind: "paragraph",
@@ -737,6 +931,14 @@ export const kullanimKosullariSections: LegalSection[] = [
             "akışı bulunmuyor. Bu yüzden bu bölümde abonelik, fatura, iade " +
             "veya cayma koşulu yazmıyoruz: olmayan bir hizmetin koşullarını " +
             "yazmak metni gerçeğe aykırı hâle getirirdi.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Hizmet tamamen ücretsizdir; platform üzerinden mal veya hizmet " +
+            "satışı, sözleşme kurulması ya da sipariş verilmesi mümkün " +
+            "değildir.",
         ],
       },
       {
@@ -753,11 +955,11 @@ export const kullanimKosullariSections: LegalSection[] = [
   },
 
   /* ---------------------------------------------------------------- *
-   * 12. Hesap kapatma ve veri silme
+   * 13. Hesap kapatma ve veri silme
    * ---------------------------------------------------------------- */
   {
     id: "hesap-kapatma",
-    heading: "12. Hesabını kapatmak",
+    heading: "13. Hesabını kapatmak",
     blocks: [
       {
         kind: "paragraph",
@@ -819,35 +1021,79 @@ export const kullanimKosullariSections: LegalSection[] = [
   },
 
   /* ---------------------------------------------------------------- *
-   * 13. Uygulanacak hukuk ve yetki
+   * 14. Uygulanacak hukuk ve uyuşmazlık
    * ---------------------------------------------------------------- */
   {
     id: "uygulanacak-hukuk",
-    heading: "13. Uygulanacak hukuk ve yetkili mahkeme",
+    heading: "14. Uygulanacak hukuk ve uyuşmazlık çözümü",
     blocks: [
       {
         kind: "paragraph",
         text: [
-          "Bu koşullardan doğan uyuşmazlıklarda uygulanacak hukuk ve " +
-            "yetkili mahkeme ",
-          {
-            kind: "strong",
-            text: "[UYGULANACAK HUKUK VE YETKİLİ MAHKEME — AVUKAT İNCELEMESİ]",
-          },
-          " olarak belirlenecektir. Bu alanı kendimiz doldurmadık: yetki " +
-            "kaydı, uyuşmazlık hâlinde nereye başvurabileceğini doğrudan " +
-            "etkiler ve hukuki inceleme gerektirir. Alan doldurulmadan bu " +
-            "metin yayına alınmaz.",
+          "Bu koşullara ve Caka'nın kullanımına ",
+          { kind: "strong", text: "Türk hukuku" },
+          " uygulanır.",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Tüketici sıfatıyla sahip olduğun başvuru yolları — tüketici " +
-            "hakem heyetleri ve tüketici mahkemeleri dâhil — her hâlükârda " +
-            "saklıdır. Kişisel verilere ilişkin şikâyetlerini Kişisel " +
-            "Verileri Koruma Kurumu'na iletme hakkın da bu metinden " +
-            "etkilenmez.",
+          { kind: "strong", text: "Yetkili mahkemeyi burada seçmiyoruz. " },
+          "Bu bir eksiklik değil, bilinçli bir tercih. HMK m.17'ye göre " +
+            "yetki sözleşmesi yalnızca tacirler veya kamu tüzel kişileri " +
+            "arasında yapılabilir; bir tüketiciye karşı sözleşmeye konulan " +
+            "“şu ilin mahkemeleri yetkilidir” kaydı geçersizdir. Haksız " +
+            "Şartlar Yönetmeliği EK-1 (1)(n) aynı kaydı ikinci kez sakatlar: " +
+            "tüketicinin mahkemeye başvurma hakkını kısıtlayan, onu kanunda " +
+            "öngörülmeyen bir tahkime zorlayan veya ispat yükünü ters " +
+            "çeviren şartlar haksız şart sayılır. Böyle bir kayıt yazsaydık " +
+            "Ticaret Bakanlığı, Yönetmelik m.8 uyarınca 30 gün içinde " +
+            "kaldırılmasını isteyebilir; kaldırılmazsa 6502 m.77 uyarınca " +
+            "sözleşme başına idari para cezası uygulanabilirdi.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Nereye başvurursun. " },
+          "Tüketici uyuşmazlıklarında görevli merciler kanunla belirlenmiştir " +
+            "ve bu görev kesindir (6502 m.73/1). Tüketici hakem " +
+            "heyetlerinin parasal sınırı ",
+          { kind: "strong", text: "2026 yılı için 186.000 TL'dir" },
+          " (23.12.2025 tarihli ve 33116 sayılı Resmî Gazete; 1 Ocak 2026'da " +
+            "yürürlüğe girdi). Bu tutar her yıl aralık ayında Ticaret " +
+            "Bakanlığı tebliğiyle yeniden belirlenir, yani ",
+          {
+            kind: "strong",
+            text: "yukarıdaki rakam 2026'ya aittir ve her ocakta değişir",
+          },
+          "; güncel tutarı Bakanlığın son tebliğinden doğrulayabilirsin. " +
+            "Sınırın altındaki uyuşmazlıklarda tüketici hakem heyetine " +
+            "başvurmak zorunludur (m.68/1); üstündeki uyuşmazlıklarda ise " +
+            "hakem heyetine başvurulamaz, doğrudan tüketici mahkemesine " +
+            "gidilir. Tüketici mahkemesinde görülecek uyuşmazlıklarda dava " +
+            "açmadan önce arabulucuya başvurmak dava şartıdır (m.73/A); " +
+            "hakem heyetinin görev alanındaki uyuşmazlıklar bunun " +
+            "dışındadır.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Kendi yerleşim yerinde de başvurabilirsin. " },
+          "6502 m.73/5, tüketicinin davasını kendi yerleşim yerindeki " +
+            "mahkemede ",
+          { kind: "strong", text: "de" },
+          " açabileceğini söyler. Buradaki “de” önemli: bu, genel yetkili " +
+            "mahkemelere eklenen bir seçenektir, onların yerine geçen bir " +
+            "zorunluluk değil. Seçim senin.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Kişisel verilere ilişkin şikâyetlerini Kişisel Verileri Koruma " +
+            "Kurumu'na iletme hakkın bu metinden etkilenmez.",
         ],
       },
       {
@@ -861,11 +1107,11 @@ export const kullanimKosullariSections: LegalSection[] = [
   },
 
   /* ---------------------------------------------------------------- *
-   * 14. Değişiklikler ve iletişim
+   * 15. Değişiklikler ve iletişim
    * ---------------------------------------------------------------- */
   {
     id: "degisiklikler-ve-iletisim",
-    heading: "14. Değişiklikler ve iletişim",
+    heading: "15. Değişiklikler ve iletişim",
     blocks: [
       {
         kind: "paragraph",

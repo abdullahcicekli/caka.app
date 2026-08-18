@@ -95,12 +95,12 @@ Fontshare satırı ve `/gizlilik` §6'daki karşılığı kalkar.
 
 ## 8. Self-servis silme ve dışa aktarma
 
-Bugün hesap silme akışı var ama **veri dışa aktarma yok** ve KVKK m.11
+Bugün ne self-servis hesap silme ne de **veri dışa aktarma** var; KVKK m.11
 haklarının hiçbiri ürün içinden kullanılamıyor; hepsi e-postayla ve elle
 karşılanıyor. Ertelendi çünkü doğru yapılması JSON dışa aktarma formatı, R2
 nesnelerinin paketlenmesi ve silme sonrası yedek politikası kararı istiyor —
-sonuncusu zaten `docs/legal/placeholders.md` §1'deki `[SAKLAMA SÜRELERİ]`
-alanına bağlı. Kullanıcı sayısı düşükken elle karşılamak makul; ölçek
+sonuncusu artık `/gizlilik` §7'de yazılı (silme talebinden sonra en geç 3 ay,
+Silme Yönetmeliği m.11/3) — yani hedef süre belli, uygulaması yok. Kullanıcı sayısı düşükken elle karşılamak makul; ölçek
 büyüdüğünde bu bir yük olur.
 
 ## 9. İlgili kişi başvuru yordamı

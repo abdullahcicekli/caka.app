@@ -14,10 +14,16 @@ Doldurulmamış alanlar: `docs/legal/placeholders.md`.
 R2 `caka-assets`.
 
 **Saklama süreleri hakkında genel not.** Aşağıda "Süre" sütununda yalnızca
-koddan okunabilen teknik süreler yazılıdır. Hesap kapandıktan sonra veri ve
-yedeklerin ne kadar tutulacağı **belirlenmemiştir**; bu, `/gizlilik` §7'de
-`[SAKLAMA SÜRELERİ]` olarak boş bırakılmış bir yayın kapısıdır
-(`placeholders.md` §1).
+koddan okunabilen teknik süreler yazılıdır. Kod dışındaki süreler artık
+`/gizlilik` §7'deki tabloda yazılıdır ve orası tek gerçek kaynaktır: hesap
+verisi, profil içeriği ve dosyalar kullanıcı silene kadar, silme talebinden
+sonra **en geç 3 ay**; oturum kayıtları oturum bittikten sonra **en çok 90
+gün**; destek yazışmaları kapanıştan sonra **en geç 3 ay**; Workers Logs
+**en çok 30 gün** (süreyi Cloudflare belirler). Üç aylık süre Silme
+Yönetmeliği **m.11/3**'ten gelir: VERBİS'ten muaf olduğumuz için yazılı imha
+politikası ödevi doğmuyor, bu da altı aylık periyodik döngü yerine daha sıkı
+olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
+`placeholders.md`'dedir.
 
 ---
 
@@ -227,7 +233,7 @@ tutmaz; sebep m.5/2-f'tir ve `/gizlilik` §4 bunu böyle yazıyor.
 
 | Kaynak | Veri | Amaç / sebep | Süre |
 |---|---|---|---|
-| Destek yazışmaları (`hello@caka.app`) | E-posta içeriği, gönderen adresi, ekler | Talebin yanıtlanması — m.5/2-c veya m.5/2-f | **Belirlenmedi** (`[SAKLAMA SÜRELERİ]`) |
+| Destek yazışmaları (`hello@caka.app`) | E-posta içeriği, gönderen adresi, ekler | Talebin yanıtlanması — m.5/2-c veya m.5/2-f | Talep kapandıktan sonra en geç **3 ay** (Silme Yönetmeliği m.11/3) |
 | Çerezler ve cihaz depolaması | `cookie-inventory.md` | Oturum ve giriş güvenliği — m.5/2-c | Envanterdeki ömürler |
 
 ---
