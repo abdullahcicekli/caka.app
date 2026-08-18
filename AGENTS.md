@@ -8,7 +8,7 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 
 | Komut | Not |
 |---|---|
-| `pnpm dev` | Vite + Miniflare (lokal D1/R2); port 5173 doluysa 5174'e kayar |
+| `pnpm dev` | Vite + Miniflare (lokal D1/R2); port 5173 doluysa 5174'e kayar. **İşin bitince kapat** — bkz. "Arkada bırakma" |
 | `pnpm typecheck` | Her değişiklikten sonra çalıştır; temiz olmalı |
 | `pnpm test` | Vitest (`packages/shared`) |
 | `pnpm --filter @caka/web run deploy` | **Prod'a çıkışın tek yolu** (Değişmez #11): build + bekleyen D1 migration'larını `--remote` uygula + `wrangler deploy` → caka.app. **`run` sözcüğü şart:** pnpm'in rezerve `deploy` komutu script'i gölgeler; çıplak `pnpm deploy` kökte `ERR_PNPM_NOTHING_TO_DEPLOY` verir |
@@ -97,3 +97,26 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 Değişiklik sonrası asgari: `pnpm typecheck` + `pnpm test` yeşil; davranış
 değiştiyse ilgili akış lokalde (`pnpm dev`) veya deploy sonrası curl/smoke ile
 doğrulanır. Deploy `main`'den yapılır; commit mesajları Conventional Commits.
+
+## Arkada bırakma (dev sunucusu ve tarayıcı)
+
+**Açtığın her `pnpm dev` sunucusunu ve her Playwright/tarayıcı oturumunu, işin
+biter bitmez kapat.** Bu bir temizlik ricası değil, kural: her `pnpm dev` bir
+sonraki boş porta kayıyor, dolayısıyla kapatılmayan sunucular 5173-5179 aralığını
+sessizce doldurup birbirinin üstüne yığılıyor ve hangi portun canlı olduğu
+belirsizleşiyor. Birden fazla ajan paralel çalışıyorsa sorun katlanıyor.
+
+Bitirmeden önce:
+
+```bash
+pkill -f "react-router dev"                       # açtığın dev sunucuları
+lsof -nP -iTCP -sTCP:LISTEN | awk '$9 ~ /:517[0-9]$/'   # boş kalmalı
+```
+
+Playwright/tarayıcı kullandıysan sayfayı ve açtığın her `browser.newContext()`
+bağlamını kapat (`ctx.close()`); ekranı açık bırakma. Tarayıcı test çıktıları
+`.playwright-mcp/` altına düşüyor ve gitignore'lu — yine de depo kökünde
+ekran görüntüsü bırakma.
+
+Mümkünse kendi sunucunu açmadan önce ayakta olanı kullan: `curl -s -o /dev/null
+-w '%{http_code}' http://localhost:5173` ile kontrol et.
