@@ -1,13 +1,27 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { asset, createDb } from "@caka/db";
+import { assetQuotaError, type AssetUsage } from "@caka/shared";
 import { getSession } from "./auth";
 import { sniffImageType } from "./avatar";
 import { hasSameOrigin, readLimitedBody } from "./request";
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png"]);
+
+/** R16 kotası için kullanıcının mevcut asset sayısı ve toplam boyutu. */
+async function readAssetUsage(env: Env, userId: string): Promise<AssetUsage> {
+  const rows = await createDb(env.DB)
+    .select({
+      count: sql<number>`count(*)`,
+      bytes: sql<number>`coalesce(sum(${asset.size}), 0)`,
+    })
+    .from(asset)
+    .where(eq(asset.userId, userId));
+  const row = rows[0];
+  return { count: Number(row?.count ?? 0), bytes: Number(row?.bytes ?? 0) };
+}
 
 export const onboardingApi = new Hono<{ Bindings: Env }>();
 
@@ -27,6 +41,15 @@ onboardingApi.post("/avatar", async (c) => {
   if (!contentType || !ACCEPTED_TYPES.has(contentType) || contentType !== declaredType) {
     return c.json({ error: "Fotoğraf türü doğrulanamadı" }, 400);
   }
+
+  // R16 kullanıcı kotası: en fazla 50 asset ve toplam 100 MB. Kontrol
+  // R2'ye yazmadan ÖNCE yapılır, yoksa reddedilen yükleme yine de nesne
+  // bırakırdı (silme Değişmez #9 gereği yalnız hesap silmede yapılıyor).
+  const quotaError = assetQuotaError(
+    await readAssetUsage(c.env, session.user.id),
+    bytes.byteLength,
+  );
+  if (quotaError) return c.json({ error: quotaError }, 403);
 
   const id = crypto.randomUUID();
   await c.env.BUCKET.put(id, bytes, { httpMetadata: { contentType } });

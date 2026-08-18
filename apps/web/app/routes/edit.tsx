@@ -26,6 +26,7 @@ import { ProfileBlockCard } from "~/components/profile-block";
 import { onboardingPlatforms, onboardingTemplates, platformById } from "~/content/onboarding";
 import { noIndexMeta } from "~/lib/seo";
 import {
+  BLOCK_TYPE_LABELS,
   GRID_COLUMNS,
   blockIssue,
   createBlockId,
@@ -80,14 +81,45 @@ type SaveState = "saved" | "saving" | "error" | "conflict";
 // Yeni bloklar BOŞ doğar: örnek metin gömülürse kullanıcı yazmaya başlayınca
 // başta kalıyor. Eksik alanlar "Aksiyon gerekli" rozetiyle işaretlenir ve
 // yayınlamayı bloklar (blockIssue).
+// switch + never: yeni bir blok tipi eklendiğinde derleyici burayı işaret
+// eder. Eskiden `if` zinciriydi ve unutulan tip sessizce İKİNCİ bir profil
+// bloğuna dönüşüp "tam olarak bir profil bloğu" kuralını kırıyordu.
 function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
-  if (type === "link") return { id, type, size: "1x1", data: { title: "", url: "" } };
-  if (type === "social") return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "" } };
-  if (type === "text") return { id, type, size: "2x1", data: { text: "" } };
-  if (type === "image") return { id, type, size: "2x1", data: { title: "", url: "" } };
-  if (type === "status") return { id, type, size: "2x1", data: { text: "", url: "" } };
-  return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
+  switch (type) {
+    case "link":
+      return { id, type, size: "1x1", data: { title: "", url: "" } };
+    case "social":
+      return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "" } };
+    case "text":
+      return { id, type, size: "2x1", data: { text: "" } };
+    case "image":
+      return { id, type, size: "2x1", data: { title: "", url: "" } };
+    case "status":
+      return { id, type, size: "2x1", data: { text: "", url: "" } };
+    case "profile":
+      return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
+    default: {
+      const exhaustive: never = type;
+      throw new Error(`Bilinmeyen blok tipi: ${String(exhaustive)}`);
+    }
+  }
+}
+
+// Dashboard kısayolu (/edit?add=…) ile eklenebilen tipler. Record olduğu için
+// yeni bir tip eklendiğinde burada da karar vermek zorunludur.
+const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
+  profile: false,
+  // social galeriyi açar, doğrudan eklenmez.
+  social: false,
+  link: true,
+  text: true,
+  image: true,
+  status: true,
+};
+
+function isDeepLinkAddable(value: string): value is ProfileBlock["type"] {
+  return Object.hasOwn(DEEP_LINK_ADDABLE, value) && DEEP_LINK_ADDABLE[value as ProfileBlock["type"]];
 }
 
 function Inspector({
@@ -102,6 +134,9 @@ function Inspector({
   close: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  // Yükleme hatası (kota, tür, boyut) sessizce yutulmaz: sunucunun Türkçe
+  // mesajı panelde gösterilir.
+  const [uploadError, setUploadError] = useState<string | null>(null);
   // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
   // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
   const [socialLink, setSocialLink] = useState(() =>
@@ -138,33 +173,37 @@ function Inspector({
 
   async function uploadImage(file: File) {
     setUploading(true);
+    setUploadError(null);
     try {
       const response = await fetch("/api/onboarding/avatar", {
         method: "POST",
         headers: { "Content-Type": file.type },
         body: file,
       });
-      const result = (await response.json()) as { id?: string };
+      const result = (await response.json()) as { id?: string; error?: string };
       if (response.ok && result.id) update({ assetId: result.id });
+      else setUploadError(result.error ?? "Görsel yüklenemedi");
+    } catch {
+      setUploadError("Görsel yüklenemedi");
     } finally {
       setUploading(false);
     }
   }
 
-  return (
-    <aside className="editor-inspector">
-      <header>
-        <strong>{block.type === "profile" ? "Profil" : block.type === "social" ? "Sosyal medya" : block.type === "link" ? "Bağlantı" : block.type === "text" ? "Metin" : block.type === "image" ? "Görsel" : "Duyuru"} bloğu</strong>
-        <button type="button" aria-label="Paneli kapat" onClick={close}><X size={18} /></button>
-      </header>
-      <div className="inspector-fields">
-        {block.type === "profile" ? (
+  // Alanlar tip başına tek bir switch'te toplanır: `never` default'u sayesinde
+  // yeni bir blok tipi eklendiğinde derleyici burada durur (eskiden art arda
+  // `if` bloklarıydı; unutulan tip sessizce alansız bir panel açıyordu).
+  function fields() {
+    switch (block.type) {
+      case "profile":
+        return (
           <>
             <label>Ad<input value={block.data.name} onChange={(event) => update({ name: event.target.value })} /></label>
             <label>Açıklama<textarea value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
           </>
-        ) : null}
-        {block.type === "social" ? (
+        );
+      case "social":
+        return (
           <>
             <label>Platform
               <select
@@ -199,14 +238,16 @@ function Inspector({
               </small>
             </label>
           </>
-        ) : null}
-        {block.type === "link" ? (
+        );
+      case "link":
+        return (
           <>
             <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
-        ) : null}
-        {block.type === "image" ? (
+        );
+      case "image":
+        return (
           <>
             <label>Görsel
               <span className="inspector-upload">
@@ -223,16 +264,37 @@ function Inspector({
                 />
               </span>
             </label>
+            {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
             <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
-        ) : null}
-        {block.type === "status" ? (
+        );
+      case "status":
+        return (
           <>
             <label>Duyuru<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
-        ) : null}
+        );
+      // Metin bloğu tuval üzerinde Tiptap ile düzenlenir; panelde alanı yok.
+      case "text":
+        return null;
+      default: {
+        const exhaustive: never = block;
+        void exhaustive;
+        return null;
+      }
+    }
+  }
+
+  return (
+    <aside className="editor-inspector">
+      <header>
+        <strong>{BLOCK_TYPE_LABELS[block.type]} bloğu</strong>
+        <button type="button" aria-label="Paneli kapat" onClick={close}><X size={18} /></button>
+      </header>
+      <div className="inspector-fields">
+        {fields()}
       </div>
       <footer>
         {block.type !== "profile" ? <button type="button" onClick={remove}><Trash2 size={16} /> Sil</button> : <span />}
@@ -530,7 +592,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     const addParam = searchParams.get("add");
     const panelParam = searchParams.get("panel");
     if (!addParam && !panelParam) return;
-    if (addParam === "link" || addParam === "text" || addParam === "image" || addParam === "status") {
+    if (addParam && isDeepLinkAddable(addParam)) {
       add(addParam);
     } else if (addParam === "social") {
       setPanel("gallery");

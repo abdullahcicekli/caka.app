@@ -1697,6 +1697,7 @@
 .inspector-fields label, .inspector-fields fieldset { display: flex; gap: 8px; flex-direction: column; font-size: 12px; font-weight: 500; }
 .inspector-fields input, .inspector-fields textarea, .inspector-fields select { min-height: 42px; border: 1px solid var(--color-sinir); border-radius: var(--radius-lg); padding: 9px 11px; background: white; outline: none; font-size: 13px; font-weight: 400; }
 .inspector-fields textarea { min-height: 78px; resize: vertical; }
+.inspector-error { margin-top: -2px; color: var(--color-destructive); font-size: 11.5px; font-weight: 500; line-height: 1.45; }
 .inspector-hint { margin-top: -2px; color: color-mix(in srgb, var(--color-murekkep) 52%, transparent); font-size: 11.5px; font-weight: 400; line-height: 1.45; }
 .inspector-upload { position: relative; display: flex; min-height: 88px; align-items: center; justify-content: center; border: 1px dashed var(--color-sinir); border-radius: var(--radius-lg); flex-direction: column; gap: 6px; color: color-mix(in srgb, var(--color-murekkep) 56%, transparent); font-size: 11px; font-weight: 400; overflow: hidden; }
 .inspector-upload input { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }

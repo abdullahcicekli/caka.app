@@ -168,18 +168,45 @@ export interface TrackableLink {
 }
 
 /** Blok gerçekten dış bir adrese gidiyor mu? (mailto dahil değil.) */
+// switch + never: yeni bir tıklanabilir blok tipi eklendiğinde derleme
+// hatası verir. Eskiden `if` zinciriydi ve yeni tip sessizce ölçüme hiç
+// girmiyordu.
 function blockUrl(block: ProfileBlock): string {
-  if (block.type === "social" || block.type === "link") return block.data.url;
-  if (block.type === "image" || block.type === "status") return block.data.url;
-  return "";
+  switch (block.type) {
+    case "social":
+    case "link":
+    case "image":
+    case "status":
+      return block.data.url;
+    case "profile":
+    case "text":
+      return "";
+    default: {
+      const exhaustive: never = block;
+      void exhaustive;
+      return "";
+    }
+  }
 }
 
 function blockLabel(block: ProfileBlock): string {
-  if (block.type === "social") return block.data.label || block.data.handle;
-  if (block.type === "link") return block.data.title;
-  if (block.type === "image") return block.data.title;
-  if (block.type === "status") return block.data.text;
-  return "";
+  switch (block.type) {
+    case "social":
+      return block.data.label || block.data.handle;
+    case "link":
+    case "image":
+      return block.data.title;
+    case "status":
+      return block.data.text;
+    case "profile":
+    case "text":
+      return "";
+    default: {
+      const exhaustive: never = block;
+      void exhaustive;
+      return "";
+    }
+  }
 }
 
 /**

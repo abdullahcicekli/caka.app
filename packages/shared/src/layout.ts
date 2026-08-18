@@ -231,30 +231,98 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   statusBlockSchema,
 ]);
 
+export const MAX_LAYOUT_BLOCKS = 50;
+
+/** Belgeyi ayakta tutan tek yapısal kural; hem şemada hem kurtarmalı
+ * ayrıştırmada aynı yerden okunur ki ikisi ayrışmasın. */
+function profileBlockCountIssue(blocks: readonly { type: string }[]): string | null {
+  return blocks.filter((block) => block.type === "profile").length === 1
+    ? null
+    : "Düzende tam olarak bir profil bloğu bulunmalı";
+}
+
 export const profileLayoutSchema = z.object({
+  // NEDEN hâlâ z.literal(1): sürümü yükseltmek eski deploy'lar için tek yönlü
+  // kapı olurdu (eski kod version:2'yi hiç okuyamaz). İleri/geri uyum artık
+  // belge sürümünde değil, blok birleşiminde çözülüyor — tanınmayan bloklar
+  // parseProfileLayoutDetailed ile ayıklanıp ham hâlleriyle korunuyor. Belge
+  // gövdesi gerçekten değişene kadar bu sabit kalmalı.
   version: z.literal(1),
-  blocks: z.array(profileBlockSchema).max(50),
+  blocks: z.array(profileBlockSchema).max(MAX_LAYOUT_BLOCKS),
 }).superRefine((layout, context) => {
-  const profileBlockCount = layout.blocks.filter((block) => block.type === "profile").length;
-  if (profileBlockCount !== 1) {
-    context.addIssue({
-      code: "custom",
-      path: ["blocks"],
-      message: "Düzende tam olarak bir profil bloğu bulunmalı",
-    });
+  const message = profileBlockCountIssue(layout.blocks);
+  if (message) {
+    context.addIssue({ code: "custom", path: ["blocks"], message });
   }
 });
 
 export type ProfileBlock = z.infer<typeof profileBlockSchema>;
 export type ProfileLayout = z.infer<typeof profileLayoutSchema>;
 
-export function parseProfileLayout(value: string): ProfileLayout | null {
+// Blok dizisi bilinçli olarak `unknown[]`: belge gövdesi (sürüm + dizi + üst
+// sınır) sıkı doğrulanır, blokların tek tek doğrulaması ayrı turda yapılır.
+const layoutEnvelopeSchema = z.object({
+  version: z.literal(1),
+  blocks: z.array(z.unknown()).max(MAX_LAYOUT_BLOCKS),
+});
+
+export interface ParsedProfileLayout {
+  /** Tanınan bloklardan oluşan, şemadan geçmiş düzen. */
+  layout: ProfileLayout;
+  /** Ayrıştırılamayan bloklar — ham hâlleriyle, sırayla. */
+  unknownBlocks: unknown[];
+}
+
+/**
+ * Düzeni kurtarmalı ayrıştırır: ayrıştırılamayan **blok** düşürülür (ama
+ * `unknownBlocks` içinde ham hâliyle saklanır), gerisi ayakta kalır. Yapısal
+ * olarak bozuk **belge** (JSON değil, sürüm tutmuyor, `blocks` dizi değil,
+ * 50 blok üstü, profil bloğu tam bir tane değil) yine `null` döner — kapalı
+ * biçimde başarısız olur.
+ *
+ * Böylece yeni bir blok tipi tek yönlü kapı olmaktan çıkar: eski bir deploy
+ * yeni tipi tanımaz, sayfayı yine de render eder, kaydederken de kaybetmez
+ * (bkz. serializeProfileLayout).
+ */
+export function parseProfileLayoutDetailed(value: string): ParsedProfileLayout | null {
+  let raw: unknown;
   try {
-    const parsed = profileLayoutSchema.safeParse(JSON.parse(value));
-    return parsed.success ? parsed.data : null;
+    raw = JSON.parse(value);
   } catch {
     return null;
   }
+  const envelope = layoutEnvelopeSchema.safeParse(raw);
+  if (!envelope.success) return null;
+
+  const blocks: ProfileBlock[] = [];
+  const unknownBlocks: unknown[] = [];
+  for (const candidate of envelope.data.blocks) {
+    const parsed = profileBlockSchema.safeParse(candidate);
+    if (parsed.success) blocks.push(parsed.data);
+    else unknownBlocks.push(candidate);
+  }
+  if (profileBlockCountIssue(blocks)) return null;
+  return { layout: { version: 1, blocks }, unknownBlocks };
+}
+
+export function parseProfileLayout(value: string): ProfileLayout | null {
+  return parseProfileLayoutDetailed(value)?.layout ?? null;
+}
+
+/**
+ * Kaydetmeye hazır JSON. Tanınmayan bloklar dizinin sonuna ham hâlleriyle
+ * geri eklenir: kullanıcı eski bir deploy'da sayfasını kaydetse bile yeni
+ * tipteki blokları silinmez, deploy geri alındığında aynen geri gelir.
+ */
+export function serializeProfileLayout(
+  layout: ProfileLayout,
+  unknownBlocks: readonly unknown[] = [],
+): string {
+  if (unknownBlocks.length === 0) return JSON.stringify(layout);
+  return JSON.stringify({
+    ...layout,
+    blocks: [...layout.blocks, ...unknownBlocks],
+  });
 }
 
 export function createBlockId(): string {
@@ -263,7 +331,7 @@ export function createBlockId(): string {
 
 // Taslak/yayınla modeli: şema yarım bloklara izin verir (taslak kaydı),
 // yayın öncesi eksikler aşağıdaki kurallarla yüzeye çıkarılır.
-const BLOCK_TYPE_LABELS: Record<ProfileBlock["type"], string> = {
+export const BLOCK_TYPE_LABELS: Record<ProfileBlock["type"], string> = {
   profile: "Profil",
   social: "Sosyal medya",
   link: "Bağlantı",
@@ -310,7 +378,8 @@ export function layoutIssues(layout: ProfileLayout): BlockIssue[] {
 export type BentoBlockType = Exclude<ProfileBlock["type"], "profile">;
 
 // R6: blok tipi başına grid min/maks boyutları — editörde gridstack
-// constraint'i, sunucuda doğrulama olarak aynı kaynaktan uygulanır.
+// constraint'i (`editor/grid.tsx`), sunucuda `profileLayoutWriteSchema`
+// üzerinden doğrulama; ikisi de bu tek kaynaktan okur.
 export const BLOCK_GRID_LIMITS: Record<
   BentoBlockType,
   { minW: number; minH: number; maxW: number; maxH: number }
@@ -321,6 +390,51 @@ export const BLOCK_GRID_LIMITS: Record<
   image: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
   status: { minW: 1, minH: 1, maxW: 4, maxH: 1 },
 };
+
+/** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa Türkçe mesaj. */
+export function blockGridLimitIssue(block: ProfileBlock): string | null {
+  if (block.type === "profile" || !block.pos) return null;
+  const limits = BLOCK_GRID_LIMITS[block.type];
+  // Hem masaüstü hem mobil konum aynı tavana uyar; mobil genişlik zaten
+  // kolon sayısıyla (2) ayrıca sınırlı.
+  for (const pos of [block.pos.lg, block.pos.sm]) {
+    if (
+      pos.w < limits.minW ||
+      pos.h < limits.minH ||
+      pos.w > limits.maxW ||
+      pos.h > limits.maxH
+    ) {
+      return `${BLOCK_TYPE_LABELS[block.type]} bloğu en az ${limits.minW}×${limits.minH}, en fazla ${limits.maxW}×${limits.maxH} olabilir`;
+    }
+  }
+  return null;
+}
+
+/** Tip sınırlarını aşan blokların listesi; boşsa düzen kaydedilebilir. */
+export function layoutGridLimitIssues(layout: ProfileLayout): BlockIssue[] {
+  return layout.blocks.flatMap((block) => {
+    const message = blockGridLimitIssue(block);
+    return message
+      ? [{ blockId: block.id, label: BLOCK_TYPE_LABELS[block.type], message }]
+      : [];
+  });
+}
+
+/**
+ * Yazma şeması (R6): okuma şemasının üstüne tip başına min/maks boyut
+ * kontrolünü ekler. Okuma tarafına bilinçli olarak eklenmez — eskiden
+ * yazılmış, sınırı aşan bir blok yüzünden yayındaki sayfa kararmasın.
+ */
+export const profileLayoutWriteSchema = profileLayoutSchema.superRefine(
+  (layout, context) => {
+    layout.blocks.forEach((block, index) => {
+      const message = blockGridLimitIssue(block);
+      if (message) {
+        context.addIssue({ code: "custom", path: ["blocks", index, "pos"], message });
+      }
+    });
+  },
+);
 
 export function sizeToDims(size: BlockSize): { w: number; h: number } {
   const [w, h] = size.split("x");
@@ -400,8 +514,32 @@ export function ensureLayoutPositions(layout: ProfileLayout): ProfileLayout {
     block.type !== "profile" && block.pos ? [block.pos.lg] : [],
   );
   const blocks = layout.blocks.map((block) => {
-    if (block.type === "profile" || block.pos) return block;
-    const { w, h } = sizeToDims(block.size);
+    if (block.type === "profile") return block;
+    // Tip tavanı burada uygulanır — hem eski `size`'dan türetirken ("2x2"
+    // bir status bloğu için h=2 üretir, oysa maxH 1) hem de sınır yalnız
+    // istemcide dururken yazılmış mevcut `pos` kayıtlarında. Yazma şeması
+    // artık bunları reddediyor; kırpılmasalar kullanıcı sayfasını bir daha
+    // kaydedemez ve kendi başına düzeltemezdi. Kırpma idempotent ve
+    // yalnızca küçültücü olduğu için `x + w <= kolon` refine'ı bozulmaz.
+    const limits = BLOCK_GRID_LIMITS[block.type];
+    if (block.pos) {
+      const clamp = (p: GridPosition): GridPosition => ({
+        ...p,
+        w: Math.min(Math.max(p.w, limits.minW), limits.maxW),
+        h: Math.min(Math.max(p.h, limits.minH), limits.maxH),
+      });
+      const lg = clamp(block.pos.lg);
+      const sm = clamp(block.pos.sm);
+      return lg.w === block.pos.lg.w &&
+        lg.h === block.pos.lg.h &&
+        sm.w === block.pos.sm.w &&
+        sm.h === block.pos.sm.h
+        ? block
+        : { ...block, pos: { lg, sm } };
+    }
+    const dims = sizeToDims(block.size);
+    const w = Math.min(Math.max(dims.w, limits.minW), limits.maxW);
+    const h = Math.min(Math.max(dims.h, limits.minH), limits.maxH);
     const { x, y } = firstFit(occupied, w, h, GRID_COLUMNS.lg);
     const lg = { x, y, w: Math.min(w, GRID_COLUMNS.lg), h };
     occupied.push(lg);

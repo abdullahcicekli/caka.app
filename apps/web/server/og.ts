@@ -1,13 +1,16 @@
 // og:image çekimi: sosyal blok bağlantısının önizleme görseli. Sayfanın
 // yalnız ilk 128KB'ı okunur; og:image / twitter:image meta'sı aranır.
-// Görsel URL'si layout'ta saklanır, içerik proxy'lenmez.
+// Görsel URL'si layout'ta saklanır; ziyaretçiye ise doğrudan değil,
+// `/api/gorsel` proxy'si üzerinden servis edilir (server/image-proxy.ts).
 import { Hono } from "hono";
 
-import type { ProfileLayout } from "@caka/shared";
+import { checkProxyImageUrl, type ProfileLayout } from "@caka/shared";
 import { getSession } from "./auth";
+import { fetchFollowingCheckedRedirects } from "./image-proxy";
 
+// Zaman aşımı ve yönlendirme sınırı ortak fetch yardımcısından gelir
+// (server/image-proxy.ts).
 const MAX_HTML_BYTES = 128 * 1024;
-const FETCH_TIMEOUT_MS = 5000;
 
 async function readHtmlHead(response: Response): Promise<string> {
   const reader = response.body?.getReader();
@@ -57,29 +60,28 @@ function extractOgImage(html: string, baseUrl: string): string | null {
 
 /** Hedef sayfanın og:image URL'sini döner; bulunamazsa null (best-effort). */
 export async function fetchOgImage(target: string): Promise<string | null> {
-  let url: URL;
+  // Oturum gerektirse de bu, kullanıcı girdisiyle tetiklenen bir dış istek:
+  // proxy ile aynı SSRF kurallarından geçer (özel/loopback/metadata kapalı).
+  const checked = checkProxyImageUrl(target);
+  if (!checked.ok) return null;
+  const url = new URL(checked.url);
   try {
-    url = new URL(target);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-  try {
-    const response = await fetch(url.toString(), {
-      redirect: "follow",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        // Bazı platformlar bot UA'larına og meta'sız sayfa döner.
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-      },
+    // Yönlendirmeler elle izlenir ve her hop yeniden doğrulanır: aksi hâlde
+    // temiz görünen bir adres 302 ile 169.254.169.254'e sapabilirdi
+    // (`redirect: "follow"` bunu bizim adımıza denetlemez).
+    const response = await fetchFollowingCheckedRedirects(url.toString(), {
+      accept: "text/html,application/xhtml+xml",
+      // Bazı platformlar bot UA'larına og meta'sız sayfa döner.
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
     });
-    if (!response.ok) return null;
+    if (!response || !response.ok) return null;
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.includes("html")) return null;
     const html = await readHtmlHead(response);
-    return extractOgImage(html, response.url || url.toString());
+    const image = extractOgImage(html, response.url || url.toString());
+    // Proxy'nin servis edemeyeceği bir adresi layout'a hiç yazma.
+    return image && checkProxyImageUrl(image).ok ? image : null;
   } catch {
     return null;
   }

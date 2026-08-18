@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { remoteImageProxyPath } from "@caka/shared";
 import type { ProfileBlock, ProfileLayout, ProfileTheme } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
@@ -54,8 +55,12 @@ export function ProfileBlockCard({
   block: ProfileBlock;
   githubCalendars?: GithubCalendarMap;
 }) {
-  if (block.type === "profile") {
-    return (
+  // switch + never: yeni bir blok tipi eklendiğinde bu dosya derleme hatası
+  // verir. Eskiden `if` zinciriydi ve tanınmayan tip sessizce `status`
+  // dalına düşüp `block.data.text` üzerinde çalışma anında patlıyordu.
+  switch (block.type) {
+    case "profile":
+      return (
       <article className="profile-block profile-block-profile">
         <ProfileAvatar
           name={block.data.name}
@@ -66,9 +71,8 @@ export function ProfileBlockCard({
         <p>{block.data.title}</p>
       </article>
     );
-  }
 
-  if (block.type === "social") {
+    case "social": {
     const platform = platformById(block.data.platform);
     // GitHub kartında görsel odak katkı grafiğidir. Veri yoksa (token yok /
     // hata / bilinmeyen kullanıcı) kart eski davranışına döner.
@@ -81,7 +85,12 @@ export function ProfileBlockCard({
     // sığmadığı en kısa kartta (dashboard önizlemesi) kart çıplak bir etikete
     // düşmesin diye o bantta og'a geri çekilir. display:none + loading="lazy"
     // olduğundan grafik görünürken tarayıcı görseli indirmez.
-    const ogImage = block.size !== "1x1" ? block.data.ogImage : "";
+    // Uzak host'a doğrudan gidilmez: görsel birinci taraf proxy'sinden
+    // servis edilir (backlog #6 — ziyaretçi IP/UA sızıntısı ve üçüncü taraf
+    // çerezi). Adres saf bir fonksiyonla türetilir; SSR ve hydration aynı.
+    const ogImage = block.size !== "1x1" && block.data.ogImage
+      ? remoteImageProxyPath(block.data.ogImage)
+      : "";
     const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
@@ -129,27 +138,25 @@ export function ProfileBlockCard({
       );
     }
     return <article className={className}>{content}</article>;
-  }
+    }
 
-  if (block.type === "link") {
-    return (
+    case "link":
+      return (
       <a className="profile-block profile-block-link" href={block.data.url || undefined} target="_blank" rel="noreferrer">
         <span>↗</span>
         <strong>{block.data.title}</strong>
         <small>{block.data.url.replace(/^https?:\/\//, "")}</small>
       </a>
     );
-  }
 
-  if (block.type === "text") {
-    return (
+    case "text":
+      return (
       <article className="profile-block profile-block-text">
         {block.data.doc ? <RichTextView doc={block.data.doc} /> : block.data.text}
       </article>
     );
-  }
 
-  if (block.type === "image") {
+    case "image": {
     const content = block.data.assetId ? (
       <img src={`/i/${block.data.assetId}`} alt={block.data.title} draggable={false} />
     ) : (
@@ -160,16 +167,27 @@ export function ProfileBlockCard({
     ) : (
       <article className="profile-block profile-block-image">{content}</article>
     );
-  }
+    }
 
-  const statusContent = block.data.doc ? <RichTextView doc={block.data.doc} /> : block.data.text;
-  return block.data.url ? (
+    case "status": {
+    const statusContent = block.data.doc ? <RichTextView doc={block.data.doc} /> : block.data.text;
+    return block.data.url ? (
     <a className="profile-block profile-block-status" href={block.data.url} target="_blank" rel="noreferrer">
       {statusContent}
     </a>
   ) : (
     <article className="profile-block profile-block-status">{statusContent}</article>
   );
+    }
+
+    default: {
+      // Tanınmayan tip: derleyici burada hata verir. Çalışma anında (eski
+      // deploy + yeni blok) sessizce boş kalır, sayfayı düşürmez.
+      const exhaustive: never = block;
+      void exhaustive;
+      return null;
+    }
+  }
 }
 
 export function ProfileCanvas({

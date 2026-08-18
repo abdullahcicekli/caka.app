@@ -15,16 +15,21 @@ export type GalleryPick =
 
 type Category = "social" | "content";
 
-const CONTENT_ITEMS: {
-  type: Exclude<ProfileBlock["type"], "profile" | "social">;
-  label: string;
-  icon: typeof Link2;
-}[] = [
-  { type: "link", label: "Bağlantı", icon: Link2 },
-  { type: "text", label: "Metin", icon: Type },
-  { type: "image", label: "Görsel", icon: ImageIcon },
-  { type: "status", label: "Duyuru", icon: Megaphone },
-];
+type ContentBlockType = Exclude<ProfileBlock["type"], "profile" | "social">;
+
+// Record: yeni bir içerik bloğu tipi eklendiğinde katalog derleme hatası
+// verir (dizi olarak yazılsaydı tip sessizce galeride görünmezdi).
+const CONTENT_CATALOG: Record<ContentBlockType, { label: string; icon: typeof Link2 }> = {
+  link: { label: "Bağlantı", icon: Link2 },
+  text: { label: "Metin", icon: Type },
+  image: { label: "Görsel", icon: ImageIcon },
+  status: { label: "Duyuru", icon: Megaphone },
+};
+
+const CONTENT_ITEMS = (Object.entries(CONTENT_CATALOG) as [
+  ContentBlockType,
+  { label: string; icon: typeof Link2 },
+][]).map(([type, item]) => ({ type, ...item }));
 
 export function BlockGallery({ onPick }: { onPick: (pick: GalleryPick) => void }) {
   const [query, setQuery] = useState("");

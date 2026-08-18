@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { validateUsername } from "@caka/shared";
 import { analyticsApi } from "./analytics-api";
 import { getAuth } from "./auth";
+import { imageProxyApi } from "./image-proxy";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
 import { ogApi } from "./og";
@@ -29,6 +30,9 @@ honoApp.route("/api/profile", layoutApi);
 // Birinci taraf ölçüm (R48): POST /api/olcum/tiklama — çerezsiz, gövdesiz 204.
 honoApp.route("/api/olcum", analyticsApi);
 honoApp.route("/api/og-image", ogApi);
+// Uzak önizleme görselleri birinci taraftan servis edilir (backlog #6):
+// ziyaretçinin IP/UA'sı uzak host'a gitmez, üçüncü taraf çerezi yazılamaz.
+honoApp.route("/api/gorsel", imageProxyApi);
 // Kullanıcıya özel og:image: /og/u/:username/:hash.png (hash'li, immutable)
 honoApp.route("/og", ogImageApi);
 

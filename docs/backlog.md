@@ -25,6 +25,24 @@ dashboard → Security → WAF → Rate limiting rules.
 (her şablon için bir tane). Eşik bunu meşru trafik saymalı, yoksa kullanıcı
 kendi ayar sayfasında rate limit yer.
 
+**Aynı kural `/api/gorsel` için de gerekiyor.** Uzak görsel proxy'si
+(`server/image-proxy.ts`) oturumsuz ve hedef adresi çağıran seçiyor; SSRF
+kuralları özel/dahili hedefleri kapatıyor ama **public** bir hedefe istek
+üretmeyi engellemiyor. Önbellek anahtarı hedef adresten türediği için
+saldırgan her istekte farklı bir `?u=` vererek önbelleği atlayabilir; sonuç,
+Cloudflare IP'lerinden çıkan istek başına 2 MB'a kadar dış trafik (yansıtıcı +
+alt istek maliyeti). Bugünkü sınırlayıcılar: 2 MB gövde tavanı, 5 s zaman
+aşımı, en fazla 3 yönlendirme, `image/*` allowlist'i, kendi origin'ine
+proxy yasağı ve başarısızlıklarda 5 dk negatif önbellek.
+
+Gerçek çözüm iki adımlı: (a) zone seviyesinde rate limit, (b) adresi
+`remoteImageProxyPath` üretirken HMAC ile imzalayıp uçta doğrulamak — böylece
+yalnızca *bizim* layout'umuzdaki adresler proxy'lenebilir. (b) bugün
+yapılmadı çünkü imza sunucu tarafı bir sır (`BETTER_AUTH_SECRET`) ve async
+kripto istiyor; `ProfileBlockCard` ise editörde istemci state'inden de
+render ediliyor. Doğru yeri: loader'ın layout'u imzalı adreslerle
+zenginleştirmesi — kendi başına bir iş.
+
 ## 2. `/ayarlar` önizlemeleri tam boy PNG çekiyor
 
 Şablon ızgarasındaki 6 önizleme ~110 px kutuda gösteriliyor ama 1200×630
@@ -67,19 +85,40 @@ Türkçe.
 
 Karar bekliyor: Türkçeleştirilecekse tek dosyada tek değişiklik.
 
-## 6. Uzak `ogImage` için Worker proxy'si — **bu listenin en değerlisi**
+## 6. Yerini kaybeden R2 nesneleri (orphan asset)
 
-`profile-block.tsx:101`'deki `<img src={ogImage}>` etiketinin host'unu profil
-sahibi seçiyor: ziyaretçinin tarayıcısı o siteye doğrudan gidiyor, IP'si ve
-User Agent'ı oraya ulaşıyor ve o site yanıtta `Set-Cookie` göndererek
-tarayıcıya **üçüncü taraf çerezi** yazabiliyor — aynı çerezle ziyaretçiyi
-farklı Caka profilleri arasında eşleyebilir. `referrerPolicy="no-referrer"`
-yalnızca `Referer`'ı kesiyor. Ertelenme sebebi kapsam: proxy demek yeni bir
-Hono route'u, boyut/tip/timeout sınırları, cache stratejisi ve SSRF koruması
-demek — hukuki yüzey planına sığmıyordu. Bugünkü durum gizlenmiyor:
-`/gizlilik` §6 sızıntıyı olduğu gibi anlatıyor ve `docs/legal/vendor-register.md`
-kaydediyor. **Kapatılana kadar footer'daki çerez ifadesi "hiç üçüncü taraf
-çerezi yok" biçimine genişletilemez** (`docs/legal/trust-claims.md`).
+Bir görsel bloğundaki görsel değiştirildiğinde yalnızca `assetId` üzerine
+yazılır; eski `asset` satırı ve R2 nesnesi yerinde kalır. Aynısı yükleyip
+sayfaya hiç eklenmeyen görseller için de geçerli.
+
+Bugün kanama sınırlı: R16 kotası (50 asset / 100 MB, `server/onboarding-api.ts`)
+artık **uygulanıyor**, yani sızıntı sınırsız değil — ama kullanıcının kotasını
+yiyor ve kotayı doldurduğunda kullanıcının yer açmak için bir yolu yok.
+
+Silme bilinçli olarak yapılmadı çünkü **Değişmez #9** asset silmeyi yalnızca
+hesap silmeye bırakıyor ve tek bir `assetId` şu dört yerden herhangi birinde
+hâlâ referanslı olabilir:
+
+1. `profile.layout` içindeki görsel blokları,
+2. `profile.draft_layout` içindeki görsel blokları (yayınlanmamış taslak),
+3. `profile.og_photo_asset_id` (paylaşım görseli seçimi),
+4. profil kartının `avatarAssetId`'si.
+
+Yani güvenli silme bir referans sayımı ister; "değiştirilen görseli hemen sil"
+kısayolu taslak/yayın ayrımı yüzünden yayındaki sayfayı kırabilir.
+
+Ayrıca kota kontrolü oku-sonra-yaz (`server/onboarding-api.ts`): D1'de işlem
+yok, yani eşzamanlı yüklemelerde sınır **eşzamanlılık × 5 MB** kadar aşılabilir.
+Sınırlı ve kendini toparlayan bir sapma. `server/avatar.ts:copyGoogleAvatar`
+ise kotayı hiç kontrol etmiyor — bugün zararsız, çünkü yalnızca hesap
+açılışında bir kez, kullanıcının ilk asset'i olarak çalışıyor.
+
+Yapılacak (sırayla): (a) bu dört kaynağı tarayan bir referans kümesi
+fonksiyonu — saf ve test edilebilir olması için `packages/shared`'da,
+(b) hesap silme akışına (backlog #8) bağlı toplu temizlik, (c) istenirse
+kullanıcının kendi görsellerini görüp silebildiği bir medya listesi
+(`ayarlar/share-image-card.tsx` bunun yarısı). Değişmez #9 (c) ile birlikte
+güncellenmeli.
 
 ## 7. Fontshare self-host
 
@@ -122,10 +161,11 @@ Tüm SSR ve API yanıtlarına middleware'den uygulanacak başlıklar hâlâ yok:
 `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`.
 Ertelendi çünkü CSP'yi doğru yazmak için üçüncü taraf yüzeylerinin sabitlenmesi
 gerekiyordu — ölçüm beacon'ı (`static.cloudflareinsights.com`), Fontshare
-(`api`/`cdn.fontshare.com`) ve profil sayfalarındaki **host'u önceden
-bilinemeyen** uzak görseller. Sonuncusu tek başına `img-src`'yi geniş bırakmayı
-zorunlu kılıyor; §6'daki proxy işi bittiğinde CSP de gerçekten dar yazılabilir.
-Bu ikisi sırayla yapılmalı.
+(`api`/`cdn.fontshare.com`). Profil sayfalarındaki **host'u önceden
+bilinemeyen** uzak görseller artık engel değil: önizleme görselleri
+`/api/gorsel` proxy'sinden birinci taraf olarak servis ediliyor, yani
+`img-src` bu iş yapıldığında `'self'` + ölçüm kaynağı kadar dar yazılabilir.
+Kalan tek genişletici Fontshare (#7).
 
 ## 11. `caka_claim` çerezinde `Secure` bayrağı yok
 

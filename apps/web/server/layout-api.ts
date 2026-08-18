@@ -4,17 +4,22 @@ import { z } from "zod";
 
 import { createDb, profile } from "@caka/db";
 import {
+  MAX_LAYOUT_BLOCKS,
   layoutIssues,
   ogTemplateSchema,
   parseProfileLayout,
-  profileLayoutSchema,
+  parseProfileLayoutDetailed,
+  profileLayoutWriteSchema,
+  serializeProfileLayout,
   themeSchema,
 } from "@caka/shared";
 import { getSession } from "./auth";
 import { hasSameOrigin, readLimitedJson } from "./request";
 
 const saveSchema = z.object({
-  layout: profileLayoutSchema,
+  // Yazma şeması: okuma şemasının üstüne R6 tip-boyut sınırlarını uygular
+  // (örn. status bloğu 4x4 kaydedilemez).
+  layout: profileLayoutWriteSchema,
   theme: themeSchema,
   version: z.number().int().min(1),
 });
@@ -47,10 +52,41 @@ layoutApi.put("/layout", async (c) => {
     if (!body.success) {
       return c.json({ error: "Sayfa verisi geçersiz", issues: body.error.issues }, 400);
     }
-    const updated = await createDb(c.env.DB)
+    const db = createDb(c.env.DB);
+    // İleri/geri uyum: bu deploy'un tanımadığı bloklar istemciye hiç
+    // gitmez, bu yüzden istemcinin gönderdiği düzende de yoktur. Kaydederken
+    // sunucudaki mevcut belgeden ham hâlleriyle geri eklenir — aksi hâlde
+    // eski bir deploy'da yapılan tek bir autosave, yeni tipteki blokları
+    // kalıcı olarak silerdi.
+    const current = await db.query.profile.findFirst({
+      columns: { draftLayout: true, layout: true },
+      where: eq(profile.userId, session.user.id),
+    });
+    if (!current) return c.json({ error: "Profil bulunamadı" }, 404);
+    // Editör hangi belgeyi açtıysa korunan bloklar da oradan gelir
+    // (taslak ayrıştırılamıyorsa yayınlanmış hâl — loader ile aynı sıra).
+    const source =
+      (current.draftLayout ? parseProfileLayoutDetailed(current.draftLayout) : null) ??
+      parseProfileLayoutDetailed(current.layout);
+    // KAPALI BİÇİMDE BAŞARISIZ OL: kaynak belge okunamıyorsa korunacak
+    // blokları da bilemeyiz. Boş dizi varsayıp yazmak, bu özelliğin
+    // engellemek için var olduğu veri kaybının ta kendisi olurdu.
+    if (!source) {
+      return c.json({ error: "Sayfa verisi okunamadı; sayfayı yenile" }, 409);
+    }
+    const carried = source.unknownBlocks;
+    // Korunan bloklar üst sınırı aşarsa yazılan belge bir daha okunamaz
+    // (zarf 50 blokla sınırlı); kaydı burada net bir mesajla kes.
+    if (body.data.layout.blocks.length + carried.length > MAX_LAYOUT_BLOCKS) {
+      return c.json(
+        { error: `Sayfanda en fazla ${MAX_LAYOUT_BLOCKS} blok olabilir` },
+        400,
+      );
+    }
+    const updated = await db
       .update(profile)
       .set({
-        draftLayout: JSON.stringify(body.data.layout),
+        draftLayout: serializeProfileLayout(body.data.layout, carried),
         draftTheme: body.data.theme,
         version: body.data.version + 1,
         updatedAt: new Date(),
@@ -151,13 +187,13 @@ layoutApi.post("/publish", async (c) => {
       return c.json({ version: row.version, published: false });
     }
 
-    let draftJson: unknown;
-    try {
-      draftJson = JSON.parse(row.draftLayout);
-    } catch {
+    // Kurtarmalı ayrıştırma: tanınmayan bloklar yayını düşürmez, ham
+    // hâlleriyle yayınlanan belgeye taşınır.
+    const parsed = parseProfileLayoutDetailed(row.draftLayout);
+    if (!parsed) {
       return c.json({ error: "Taslak verisi geçersiz" }, 400);
     }
-    const draft = profileLayoutSchema.safeParse(draftJson);
+    const draft = profileLayoutWriteSchema.safeParse(parsed.layout);
     if (!draft.success) {
       return c.json({ error: "Taslak verisi geçersiz", issues: draft.error.issues }, 400);
     }
@@ -170,8 +206,9 @@ layoutApi.post("/publish", async (c) => {
     const updated = await db
       .update(profile)
       .set({
-        // Ham taslak string'i değil, zod'dan geçmiş normalize hâli yayınlanır.
-        layout: JSON.stringify(draft.data),
+        // Ham taslak string'i değil, zod'dan geçmiş normalize hâli yayınlanır
+        // (tanınmayan bloklar ham hâlleriyle korunur).
+        layout: serializeProfileLayout(draft.data, parsed.unknownBlocks),
         theme: row.draftTheme ?? row.theme,
         draftLayout: null,
         draftTheme: null,
