@@ -21,6 +21,7 @@ import {
   classifyYouTubeUrl,
   isYouTubeChannelId,
   parseYouTubeChannelFeed,
+  parseYouTubeChannelAvatarFromHtml,
   parseYouTubeChannelIdFromHtml,
   parseYouTubeOEmbed,
   youtubeChannelFeedUrl,
@@ -73,6 +74,8 @@ export type ResolvedYouTubeChannel = {
   channelId: string;
   channelName: string | null;
   channelUrl: string;
+  /** Kanal sayfasının `og:image`'ı; RSS avatar vermiyor. Yoksa null. */
+  avatarUrl: string | null;
 };
 
 export type ResolvedYouTube = ResolvedYouTubeVideo | ResolvedYouTubeChannel;
@@ -215,25 +218,37 @@ async function fetchVideoMeta(videoId: string) {
  * gövde akış hâlinde okunur ve `og:url` görülür görülmez bağlantı kesilir.
  * oEmbed burada KULLANILAMAZ: kanallarda 404 dönüyor.
  */
-async function resolveChannelId(
-  refKind: "handle" | "custom" | "user",
-  ref: string,
-): Promise<string | null> {
-  const response = await youtubeFetch(youtubeChannelRefUrl(refKind, ref), {
+async function fetchChannelPage(url: string): Promise<{
+  channelId: string | null;
+  avatar: string | null;
+}> {
+  const empty = { channelId: null, avatar: null };
+  const response = await youtubeFetch(url, {
     accept: "text/html",
     timeoutMs: CHANNEL_PAGE_TIMEOUT_MS,
   });
-  if (!response) return null;
+  if (!response) return empty;
   if (!response.ok) {
     await response.body?.cancel().catch(() => {});
-    return null;
+    return empty;
   }
   let channelId: string | null = null;
+  let avatar: string | null = null;
+  // İkisi de aynı okumadan çıkar: avatar için ayrı bir istek atmak, kanal
+  // sayfası ~1,3 MB olduğu için pahalı olurdu.
   await readTextStreaming(response, CHANNEL_PAGE_MAX_BYTES, (window) => {
-    channelId = parseYouTubeChannelIdFromHtml(window);
-    return channelId !== null;
+    channelId ??= parseYouTubeChannelIdFromHtml(window);
+    avatar ??= parseYouTubeChannelAvatarFromHtml(window);
+    return channelId !== null && avatar !== null;
   });
-  return channelId;
+  return { channelId, avatar };
+}
+
+async function resolveChannelId(
+  refKind: "handle" | "custom" | "user",
+  ref: string,
+): Promise<{ channelId: string | null; avatar: string | null }> {
+  return fetchChannelPage(youtubeChannelRefUrl(refKind, ref));
 }
 
 /**
@@ -314,12 +329,15 @@ export async function resolveYouTubeLink(url: string): Promise<ResolvedYouTube |
     };
   }
 
-  const channelId =
+  if (ref.kind !== "channel" && ref.kind !== "channel-ref") return null;
+
+  // `/channel/UC…` adresinde kimlik hazır ama avatar yok; onun için de sayfa
+  // okunur. Maliyet kayıt anında bir kez, karşılığı kanal kartının kimliği.
+  const page =
     ref.kind === "channel"
-      ? ref.channelId
-      : ref.kind === "channel-ref"
-        ? await resolveChannelId(ref.refKind, ref.ref)
-        : null;
+      ? await fetchChannelPage(youtubeChannelUrl(ref.channelId))
+      : await resolveChannelId(ref.refKind, ref.ref);
+  const channelId = ref.kind === "channel" ? ref.channelId : page.channelId;
   if (!channelId) return null;
 
   // Kanal adı için ayrı bir istek gerekmiyor: RSS zaten başlığı taşıyor ve
@@ -330,5 +348,6 @@ export async function resolveYouTubeLink(url: string): Promise<ResolvedYouTube |
     channelId,
     channelName: feed?.channelTitle || null,
     channelUrl: youtubeChannelUrl(channelId),
+    avatarUrl: page.avatar,
   };
 }

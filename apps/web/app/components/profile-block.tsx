@@ -328,9 +328,6 @@ export function ProfileBlockCard({
               )}
               <YoutubePlayMark />
               {data.shorts ? <span className="yt-pill">{youtubeShortsRozeti}</span> : null}
-              {data.duration ? (
-                <span className="yt-pill is-duration">{data.duration}</span>
-              ) : null}
             </span>
             <span className="youtube-meta">
               <strong>{data.title || youtubeVideoYedekBasligi}</strong>
@@ -356,7 +353,7 @@ export function ProfileBlockCard({
       const latest: YoutubeFeedCard | undefined = youtubeFeeds?.[block.id];
       const handle = data.handle ? `@${data.handle}` : "";
       const channelName = data.channelName || latest?.channelName || youtubeKanalYedekBasligi;
-      const channelMeta = [handle, data.subscribers].filter(Boolean).join(" · ");
+      const channelMeta = handle;
       const content = (
         <>
           <span className="yt-channel-head">

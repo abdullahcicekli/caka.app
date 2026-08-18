@@ -5,6 +5,22 @@ export function hasSameOrigin(request: Request): boolean {
   return Boolean(origin && origin === new URL(request.url).origin);
 }
 
+/**
+ * İstek BAŞKA bir kökenden mi geliyor? `hasSameOrigin`'in GET karşılığı.
+ *
+ * Neden ayrı: tarayıcılar aynı köken GET isteklerinde `Origin` başlığı
+ * GÖNDERMEZ (yalnız çapraz kökenli isteklerde ve GET/HEAD dışı metotlarda).
+ * `hasSameOrigin`'i bir GET ucuna koymak editörün kendi çağrılarını
+ * kırardı. Bu yüzden kural tersine çevrildi: başlık YOKSA geç, VARSA ve
+ * tutmuyorsa reddet. Başka bir sitenin sayfasından yapılan `fetch` böylece
+ * elenir; sunucudan atılan başlıksız istek elenmez — onun için oturum
+ * kontrolü ve (henüz yok) hız sınırı var.
+ */
+export function isCrossOriginRequest(request: Request): boolean {
+  const origin = request.headers.get("Origin");
+  return Boolean(origin && origin !== new URL(request.url).origin);
+}
+
 export async function readLimitedBody(
   request: Request,
   limit: number,

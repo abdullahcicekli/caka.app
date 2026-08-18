@@ -11,7 +11,9 @@
  * Baş harf + marka rengi hiç istek atmadan aynı işi görüyor.
  *
  * Saf ve senkron: SSR ile hidrasyon aynı sonucu üretmek zorunda, bu yüzden
- * ne rastgelelik ne de `Intl`/`Date` kullanılır.
+ * rastgelelik ve `Date` kullanılmaz. Tek yerelleştirme `toLocaleUpperCase("tr")`
+ * — Türkçe'de i/İ eşleşmesi için gerekli ve sabit yerel verildiği için
+ * sunucu ile istemci aynı sonucu üretir.
  */
 
 /** Alan adının son etiketiyle birlikte atılan ikinci düzey ekler. */

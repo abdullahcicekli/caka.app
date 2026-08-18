@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  GRID_COLUMNS,
   PROFILE_BIO_MAX,
   blockIssue,
   detectSocialFromUrl,
   ensureLayoutPositions,
   layoutIssues,
+  parseProfileLayout,
   placeNewBlock,
   profileLayoutSchema,
   sizeFromDims,
@@ -317,5 +319,41 @@ describe("socialUrl", () => {
 
   it("email için bağlantı üretmez", () => {
     expect(socialUrl("email", "merhaba@caka.app")).toBe("");
+  });
+});
+
+describe("ensureLayoutPositions — genişleten kırpma ızgarayı taşırmaz", () => {
+  it("minW bloğu genişletirken x'i sola çeker", () => {
+    // youtube.minW = 2; mobilde (2 sütun) x=1,w=1 bir blok w=2'ye çıkınca
+    // x + w = 3 ederdi ve yazma şeması sonraki kaydı kalıcı olarak reddederdi.
+    const layout = parseProfileLayout(
+      JSON.stringify({
+        version: 1,
+        blocks: [
+          {
+            id: "blk_p",
+            type: "profile",
+            size: "2x2",
+            pos: { lg: { x: 0, y: 0, w: 2, h: 2 }, sm: { x: 0, y: 0, w: 2, h: 2 } },
+            data: { name: "A", title: "" },
+          },
+          {
+            id: "blk_yt",
+            type: "youtube",
+            size: "2x1",
+            pos: { lg: { x: 3, y: 0, w: 1, h: 1 }, sm: { x: 1, y: 2, w: 1, h: 1 } },
+            data: { kind: "video", url: "", videoId: "", title: "", channelName: "", shorts: false, verticalThumbnail: false, thumbnail: "" },
+          },
+        ],
+      }),
+    );
+    expect(layout).not.toBeNull();
+    const fixed = ensureLayoutPositions(layout!);
+    const yt = fixed.blocks.find((b) => b.id === "blk_yt")!;
+    expect(yt.pos!.sm.w).toBe(2);
+    expect(yt.pos!.sm.x + yt.pos!.sm.w).toBeLessThanOrEqual(GRID_COLUMNS.sm);
+    expect(yt.pos!.lg.x + yt.pos!.lg.w).toBeLessThanOrEqual(GRID_COLUMNS.lg);
+    // İdempotent olmalı: ikinci geçiş bir şey değiştirmemeli.
+    expect(ensureLayoutPositions(fixed)).toEqual(fixed);
   });
 });

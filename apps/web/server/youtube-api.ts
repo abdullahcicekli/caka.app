@@ -14,6 +14,7 @@ import { Hono } from "hono";
 
 import { classifyYouTubeUrl, youtubeVideoUrl } from "@caka/shared";
 import { getSession } from "./auth";
+import { isCrossOriginRequest } from "./request";
 import { signImageProxyPath } from "./image-proxy";
 import { resolveYouTubeLink } from "./youtube";
 
@@ -28,6 +29,7 @@ const CLASSIFY_ERRORS: Record<"invalid" | "not-youtube" | "unsupported", string>
 export const youtubeApi = new Hono<{ Bindings: Env }>();
 
 youtubeApi.get("/", async (c) => {
+  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: "Geçersiz istek kaynağı" }, 403);
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
 
@@ -54,8 +56,8 @@ youtubeApi.get("/", async (c) => {
       channelId: resolved.channelId,
       channelName: resolved.channelName ?? "",
       handle: ref.kind === "channel-ref" && ref.refKind === "handle" ? ref.ref : "",
-      thumbnail: "",
-      proxied: null,
+      thumbnail: resolved.avatarUrl ?? "",
+      proxied: resolved.avatarUrl ? await signImageProxyPath(c.env, resolved.avatarUrl) : null,
     });
   }
 

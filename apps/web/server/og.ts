@@ -9,6 +9,7 @@ import { Hono } from "hono";
 
 import { checkProxyImageUrl, type ProfileLayout } from "@caka/shared";
 import { getSession } from "./auth";
+import { isCrossOriginRequest } from "./request";
 import { fetchFollowingCheckedRedirects, signImageProxyPath } from "./image-proxy";
 
 // Zaman aşımı ve yönlendirme sınırı ortak fetch yardımcısından gelir
@@ -86,7 +87,10 @@ function resolveOgImage(found: Map<string, string>, baseUrl: string): string | n
 }
 
 /** Hedef sayfanın og:image URL'sini döner; bulunamazsa null (best-effort). */
-export async function fetchOgImage(target: string): Promise<string | null> {
+export async function fetchOgImage(
+  target: string,
+  selfHost?: string,
+): Promise<string | null> {
   // Oturum gerektirse de bu, kullanıcı girdisiyle tetiklenen bir dış istek:
   // proxy ile aynı SSRF kurallarından geçer (özel/loopback/metadata kapalı).
   const checked = checkProxyImageUrl(target);
@@ -101,6 +105,9 @@ export async function fetchOgImage(target: string): Promise<string | null> {
       // Bazı platformlar bot UA'larına og meta'sız sayfa döner.
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+      // Kendi sitemizi kazımanın anlamı yok ve yönlendirmeyle kendimize
+      // dönmek iç içe Worker çağrısı doğurur.
+      selfHost,
     });
     if (!response || !response.ok) return null;
     const contentType = response.headers.get("content-type") ?? "";
@@ -141,9 +148,10 @@ export const ogApi = new Hono<{ Bindings: Env }>();
 // `image` layout'a yazılacak ham adres, `proxied` ise doğrudan `<img src>`'e
 // konabilecek imzalı birinci taraf adrestir (imzasız adres proxy'den geçmez).
 ogApi.get("/", async (c) => {
+  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: "Geçersiz istek kaynağı" }, 403);
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
-  const image = await fetchOgImage(c.req.query("url") ?? "");
+  const image = await fetchOgImage(c.req.query("url") ?? "", new URL(c.req.url).host);
   const proxied = image ? await signImageProxyPath(c.env, image) : null;
   return c.json({ image, proxied });
 });

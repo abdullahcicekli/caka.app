@@ -224,6 +224,26 @@ const META_TAG_PATTERN = /<meta\s[^>]*>/gi;
  * döndürüyor (ölçüldü: @MrBeast sayfasında ilk eşleşme `UCvFHBqiftcFfbYGsMchSMTC`,
  * doğrusu `UCX6OQ3DkcsbYNE6H8uQQuVA`). `og:url` kanonik kanal adresidir.
  */
+/**
+ * Kanal avatarı: kanal sayfasının `og:image`'ı. RSS akışı avatar vermiyor ve
+ * abone sayısı bu sayfadan güvenilir biçimde okunamıyor (fixture'da o veri
+ * hiç yok), ama `og:image` standart bir meta etiketi — kırılganlığı düşük.
+ * Kanal kimliğiyle AYNI okumadan çıkar, ek istek gerekmez.
+ */
+export function parseYouTubeChannelAvatarFromHtml(html: string): string | null {
+  for (const tag of html.match(META_TAG_PATTERN) ?? []) {
+    const key = /(?:property|name)\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase();
+    if (key !== "og:image") continue;
+    const content = /content\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1];
+    if (!content) continue;
+    const url = decodeXmlEntities(content);
+    // Yalnız Google'ın kendi görsel host'ları; sayfa başka bir adres
+    // yerleştirirse proxy'ye yabancı bir hedef sokmuş oluruz.
+    if (/^https:\/\/(yt3|i)\.(ggpht|ytimg|googleusercontent)\.com\//.test(url)) return url;
+  }
+  return null;
+}
+
 export function parseYouTubeChannelIdFromHtml(html: string): string | null {
   const candidates: string[] = [];
   for (const tag of html.match(META_TAG_PATTERN) ?? []) {

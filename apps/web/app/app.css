@@ -1422,7 +1422,6 @@ a.profile-block:focus-visible {
 }
 /* Shorts rozeti ile süre pili aynı köşeye düşmesin. */
 .profile-block-youtube.is-shorts .yt-pill { right: auto; left: 8px; }
-.profile-block-youtube.is-shorts .yt-pill.is-duration { right: 8px; left: auto; }
 
 /* Short: dikey oran. Kapak yanda dar bir şerit olur — kartın silueti tek
    bakışta "bu bir Short" der. */

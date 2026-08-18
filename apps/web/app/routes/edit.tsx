@@ -129,7 +129,6 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
           videoId: "",
           title: "",
           channelName: "",
-          duration: "",
           shorts: false,
           verticalThumbnail: false,
           thumbnail: "",
@@ -184,6 +183,7 @@ type YoutubeResolveResponse =
       title: string;
       channelName: string;
       shorts: boolean;
+      verticalThumbnail: boolean;
       thumbnail: string;
       proxied: string | null;
     }
@@ -335,8 +335,6 @@ function Inspector({
           channelId: result.channelId,
           channelName: result.channelName,
           handle: result.handle,
-          subscribers: "",
-          views: "",
           thumbnail: result.thumbnail,
         });
       } else {
@@ -346,13 +344,15 @@ function Inspector({
           videoId: result.videoId,
           title: result.title,
           channelName: result.channelName,
-          // Süre planda ertelendi (1,3 MB'lık kazıma); şema alanı boş kalır.
-          duration: "",
           shorts: result.shorts,
+          // Sunucu `oardefault`'u kayıt anında doğruluyor; bu bayrak düşerse
+          // 9:16 çerçeve hiç uygulanmaz ve dikey görsel yatay kırpılır.
+          verticalThumbnail: result.verticalThumbnail,
           thumbnail: result.thumbnail,
         });
       }
-      if (result.proxied) onSignedImage(result.proxied);
+      // `proxied` yoksa (kanal: avatar dönmüyor) eski kaydı temizle.
+      onSignedImage(result.proxied ?? "");
       // Kanonik adresi alana yaz: kullanıcı neyin eklendiğini görsün. Ref de
       // güncellenir, yoksa değişen değer yeni bir çözümleme tetiklerdi.
       youtubeAttemptedRef.current = result.url;
@@ -428,7 +428,17 @@ function Inspector({
         return (
           <>
             <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
-            <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
+            <label>
+              Bağlantı
+              <input
+                value={block.data.url}
+                // Adres değişince eski önizleme görselini SİL: zenginleştirme
+                // döngüsü `ogImage` doluysa atlıyor, yani nytimes.com'dan
+                // gelen görsel yeni adrese yapışıp o hâliyle yayınlanıyordu.
+                // `social` bloğu bunu zaten yapıyor (`onSocialLink`).
+                onChange={(event) => update({ url: event.target.value, ogImage: "" })}
+              />
+            </label>
           </>
         );
       case "image":
@@ -733,10 +743,21 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     () => ({ ...loaderData.signedImages, ...editorSignedImages }),
     [loaderData.signedImages, editorSignedImages],
   );
+  /**
+   * Blok için imzalı görsel yolunu hatırlar. Boş yol kaydı SİLER: video
+   * bloğunu kanal adresiyle değiştiren kullanıcı, aksi hâlde editörde eski
+   * videonun kapağını kanal avatarı sanıyordu (yayında ise baş harf çipi
+   * çıkıyordu) — WYSIWYG kırılması.
+   */
   function rememberSignedImage(blockId: string, path: string) {
-    setEditorSignedImages((current) =>
-      current[blockId] === path ? current : { ...current, [blockId]: path },
-    );
+    setEditorSignedImages((current) => {
+      if (!path) {
+        if (!(blockId in current)) return current;
+        const { [blockId]: _drop, ...rest } = current;
+        return rest;
+      }
+      return current[blockId] === path ? current : { ...current, [blockId]: path };
+    });
   }
 
   // R62: hesap başına galeri sınırı sunucuda (`profileLayoutWriteSchema`)

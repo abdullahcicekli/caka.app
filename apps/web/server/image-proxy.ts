@@ -84,12 +84,16 @@ async function readCapped(response: Response, limit: number): Promise<Uint8Array
  */
 export async function fetchFollowingCheckedRedirects(
   startUrl: string,
-  init: { accept: string; userAgent: string },
+  init: { accept: string; userAgent: string; selfHost?: string },
 ): Promise<Response | null> {
   let target = startUrl;
   for (let hop = 0; hop <= PROXY_MAX_REDIRECTS; hop += 1) {
     const checked = checkProxyImageUrl(target);
     if (!checked.ok) return null;
+    // Kendi host'umuza YÖNLENDİRME de reddedilir. Giriş adresi kontrol
+    // ediliyordu ama hoplar edilmiyordu: `evil.com -> 302 -> caka.app/api/gorsel?…`
+    // zinciri iç içe Worker çağrısı doğururdu (her katman ayrı alt istek).
+    if (init.selfHost && new URL(checked.url).host === init.selfHost) return null;
     let response: Response;
     try {
       response = await fetch(checked.url, {
@@ -184,6 +188,7 @@ imageProxyApi.get("/", async (c) => {
   const upstream = await fetchFollowingCheckedRedirects(checked.url, {
     accept: "image/*",
     userAgent: "CakaImageProxy/1.0 (+https://caka.app)",
+    selfHost,
   });
   if (!upstream || !upstream.ok) {
     await upstream?.body?.cancel().catch(() => {});

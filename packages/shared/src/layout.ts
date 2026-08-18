@@ -274,7 +274,6 @@ const youtubeVideoDataSchema = z.object({
   title: z.string().trim().max(140).default(""),
   channelName: z.string().trim().max(80).default(""),
   /** Gösterime hazır süre dizesi ("12:34"); çözülemezse boş. */
-  duration: z.string().trim().max(16).default(""),
   /** `/shorts/` yolundan geldi mi? Adres şeklinden gelir, render türetmez. */
   shorts: z.boolean().default(false),
   /**
@@ -297,9 +296,10 @@ const youtubeChannelDataSchema = z.object({
   /** `@` olmadan saklanır. */
   handle: z.string().trim().max(80).default(""),
   /** Gösterime hazır, yerelleştirilmiş dizeler; çözülemezse boş kalır. */
-  subscribers: z.string().trim().max(32).default(""),
-  views: z.string().trim().max(32).default(""),
-  /** Kanal avatarı (uzak adres; render proxy'den geçirir). */
+  /**
+   * Kanal avatarı — kanal sayfasının `og:image`'ı, kayıt anında çözülür.
+   * Uzak adres; render imzalı proxy'den geçirir. RSS akışı avatar vermiyor.
+   */
   thumbnail: optionalHttpUrlSchema.default(""),
 });
 
@@ -669,19 +669,30 @@ export function ensureLayoutPositions(layout: ProfileLayout): ProfileLayout {
     // bir status bloğu için h=2 üretir, oysa maxH 1) hem de sınır yalnız
     // istemcide dururken yazılmış mevcut `pos` kayıtlarında. Yazma şeması
     // artık bunları reddediyor; kırpılmasalar kullanıcı sayfasını bir daha
-    // kaydedemez ve kendi başına düzeltemezdi. Kırpma idempotent ve
-    // yalnızca küçültücü olduğu için `x + w <= kolon` refine'ı bozulmaz.
+    // kaydedemez ve kendi başına düzeltemezdi.
+    //
+    // Kırpma HER ZAMAN küçültücü DEĞİL: `minW` (ör. youtube 2) bir bloğu
+    // genişletebilir ve `x + w <= kolon` refine'ını taşırabilir — mobilde
+    // (2 sütun) x=1,w=1 bir youtube bloğu w=2'ye çıkınca 3 ederdi ve
+    // sonraki kayıt kalıcı 400 verirdi. Bu yüzden genişlerken `x` sola
+    // çekilir; sonuç hem sınırlara hem ızgaraya uyar ve idempotenttir.
     const limits = BLOCK_GRID_LIMITS[block.type];
     if (block.pos) {
-      const clamp = (p: GridPosition): GridPosition => ({
-        ...p,
-        w: Math.min(Math.max(p.w, limits.minW), limits.maxW),
-        h: Math.min(Math.max(p.h, limits.minH), limits.maxH),
-      });
-      const lg = clamp(block.pos.lg);
-      const sm = clamp(block.pos.sm);
-      return lg.w === block.pos.lg.w &&
+      const clamp = (p: GridPosition, columns: number): GridPosition => {
+        const w = Math.min(Math.max(p.w, limits.minW), Math.min(limits.maxW, columns));
+        return {
+          ...p,
+          x: Math.max(0, Math.min(p.x, columns - w)),
+          w,
+          h: Math.min(Math.max(p.h, limits.minH), limits.maxH),
+        };
+      };
+      const lg = clamp(block.pos.lg, GRID_COLUMNS.lg);
+      const sm = clamp(block.pos.sm, GRID_COLUMNS.sm);
+      return lg.x === block.pos.lg.x &&
+        lg.w === block.pos.lg.w &&
         lg.h === block.pos.lg.h &&
+        sm.x === block.pos.sm.x &&
         sm.w === block.pos.sm.w &&
         sm.h === block.pos.sm.h
         ? block
