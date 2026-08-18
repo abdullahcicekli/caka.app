@@ -50,8 +50,10 @@ Bu repo tek Cloudflare Worker'da çalışan bir link-in-bio uygulamasıdır
 6. **Sır disiplini:** Gerçek anahtarlar yalnızca `apps/web/.dev.vars`
    (gitignore'da) ve `wrangler secret`'ta. `.dev.vars.example`'a asla gerçek
    değer yazma. Secrets: `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID/SECRET`,
-   `APPLE_PRIVATE_KEY`, `GITHUB_TOKEN` (opsiyonel; yoksa GitHub katkı grafiği
-   sessizce kapalı). Kod içinde loglara token/PII yazma.
+   `APPLE_PRIVATE_KEY`. GitHub katkı grafiği sır İSTEMEZ: GitHub'ın genel
+   katkı HTML parçası okunur (`server/github.ts`); parça çekilemez veya
+   ayrıştırılamazsa özellik sessizce kapalıdır. Kod içinde loglara token/PII
+   yazma.
 7. **Auth kimliği** provider `sub`'ına bağlıdır; e-posta tabanlı account
    linking kapalıdır (`server/auth.ts`) — açma.
 8. **Kullanıcı URL'leri** yalnız `http(s)` şemasıyla; kullanıcı metni meta'ya

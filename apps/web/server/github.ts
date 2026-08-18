@@ -1,26 +1,42 @@
-// GitHub katkı takvimi: resmî GraphQL API + Personal Access Token.
-// `GITHUB_TOKEN` sırrı tanımlı değilse özellik sessizce kapalıdır (boş sözlük
-// döner); hata/timeout durumunda da sayfa ASLA bu yüzden düşmez.
+// GitHub katkı takvimi: profil sayfasının GENEL HTML parçası
+// (`https://github.com/users/<login>/contributions`). Token gerekmez; hata/
+// timeout/markup değişikliği durumunda özellik sessizce kapanır (boş sözlük
+// döner) ve sayfa ASLA bu yüzden düşmez.
+//
+// NEDEN GraphQL DEĞİL: `contributionsCollection` yalnızca token'ın görebildiği
+// katkıları sayar. "Include private contributions on my profile" açık olan bir
+// kullanıcıda üçüncü taraf token'ı yalnız genel katkıları görür — ölçüldü:
+// abdullahcicekli için GraphQL 2.005, GitHub profili 3.476 diyordu (367 günün
+// 214'ü boş görünüyordu, gerçekte 143). Bu parça ise ziyaretçinin gördüğünün
+// birebir aynısıdır.
+//
+// TAKAS: bu bir scrape'tir, API değil — GitHub markup'ı habersiz değiştirebilir.
+// Ayrıştırıcının bağımlı olduğu markup ve bozulunca nereye bakılacağı
+// `packages/shared/src/github-contributions.ts` başındaki notta yazılı;
+// gerçek bir parça üzerinde test edilir (github-contributions.test.ts).
 //
 // Önbellek D1'dedir (github_calendar tablosu), Cache API DEĞİL: Cache API
 // colo-başına çalışır ve aynı login her veri merkezinde ayrı GitHub isteği
-// doğururdu — tek token'ın saatlik puanı colo sayısıyla çarpılıp erirdi.
-// D1 global tek kayıttır: istek sayısı ≈ benzersiz login × günde 4.
+// doğururdu. D1 global tek kayıttır: istek sayısı ≈ benzersiz login × günde 4.
+// Bu, kimliksiz istekler için GitHub'ın IP başına hız sınırına karşı da asıl
+// korumadır (aşağıda tek deneme; retry YOK).
 import { waitUntil } from "cloudflare:workers";
 import { and, eq, inArray, lt } from "drizzle-orm";
 
 import { createDb, githubCalendar } from "@caka/db";
-import type { ProfileLayout } from "@caka/shared";
+import { parseGithubContributionsHtml, type ProfileLayout } from "@caka/shared";
 
 import {
   githubLoginKey,
   type GithubCalendar,
-  type GithubCalendarLevel,
   type GithubCalendarMap,
 } from "../app/lib/github-calendar";
 
-const GRAPHQL_URL = "https://api.github.com/graphql";
+const CONTRIBUTIONS_URL = "https://github.com/users";
 const FETCH_TIMEOUT_MS = 4000;
+// Parça ~230 KB'dır. Beklenmedik bir yanıt (hata sayfası, yönlendirme gövdesi)
+// worker belleğini/CPU'sunu yemesin diye üst sınır konur.
+const MAX_HTML_BYTES = 2 * 1024 * 1024;
 // Katkı verisi günde bir değişir; başarılı kayıt 6 saat taze sayılır.
 const FRESH_TTL_MS = 6 * 60 * 60 * 1000;
 // Negatif kayıt YALNIZCA kesin "kullanıcı yok" içindir (NOT_FOUND); geçici
@@ -35,98 +51,66 @@ const RETRY_DELAY_MS = 15 * 60 * 1000;
 // Biçimsiz handle'lar için API'ye hiç gidilmez.
 const LOGIN_PATTERN = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
 
-const LEVEL_BY_ENUM: Record<string, GithubCalendarLevel> = {
-  NONE: 0,
-  FIRST_QUARTILE: 1,
-  SECOND_QUARTILE: 2,
-  THIRD_QUARTILE: 3,
-  FOURTH_QUARTILE: 4,
-};
-
-const CALENDAR_QUERY = `query($login: String!) {
-  user(login: $login) {
-    contributionsCollection {
-      contributionCalendar {
-        totalContributions
-        weeks { contributionDays { date contributionCount contributionLevel } }
-      }
-    }
-  }
-}`;
-
-type GraphQLPayload = {
-  data?: {
-    user?: {
-      contributionsCollection?: {
-        contributionCalendar?: {
-          totalContributions?: number;
-          weeks?: {
-            contributionDays?: {
-              date?: string;
-              contributionCount?: number;
-              contributionLevel?: string;
-            }[];
-          }[];
-        };
-      };
-    } | null;
-  };
-  // GitHub, HTTP 200 + data.user: null kombinasyonunu FORBIDDEN /
-  // SAML_ENFORCEMENT / askıya alınmış hesap gibi durumlarda da döndürür;
-  // ayrım errors[].type üzerinden yapılır.
-  errors?: { type?: string }[];
-};
-
 type FetchOutcome =
   | { kind: "ok"; calendar: GithubCalendar }
   | { kind: "not_found" }
   | { kind: "error" };
 
-async function fetchCalendar(token: string, login: string): Promise<FetchOutcome> {
+/** Teşhis için tek satır; gürültü olmasın diye YALNIZ beklenmedik durumlarda. */
+function logFailure(login: string, reason: string, detail?: unknown) {
+  console.warn(`github-calendar: ${login}: ${reason}`, detail ?? "");
+}
+
+/**
+ * Genel katkı parçasını çeker ve ayrıştırır. Tek deneme yapılır — retry YOK:
+ * kimliksiz istekler GitHub'ın IP başına sınırına tabidir ve tazeleme zaten
+ * D1 kilidi + TTL ile seyrekleştirilmiştir. Başarısızlık her zaman `error`
+ * (geçici) sayılır; yalnız 404 kesin "kullanıcı yok"tur.
+ */
+async function fetchCalendar(login: string): Promise<FetchOutcome> {
   try {
-    const response = await fetch(GRAPHQL_URL, {
-      method: "POST",
+    const response = await fetch(`${CONTRIBUTIONS_URL}/${encodeURIComponent(login)}/contributions`, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
-        Authorization: `bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        // GitHub API User-Agent başlığı olmadan 403 döner.
-        "User-Agent": "caka.app",
+        Accept: "text/html",
+        // GitHub, User-Agent'sız isteklere 403 döner; kim olduğumuz da belli olsun.
+        "User-Agent": "caka.app (+https://caka.app; profile contribution graph)",
       },
-      body: JSON.stringify({ query: CALENDAR_QUERY, variables: { login } }),
     });
-    if (!response.ok) return { kind: "error" };
-    const payload = (await response.json()) as GraphQLPayload;
-    const raw = payload.data?.user?.contributionsCollection?.contributionCalendar;
-    if (raw?.weeks) {
-      return {
-        kind: "ok",
-        calendar: {
-          total: raw.totalContributions ?? 0,
-          weeks: raw.weeks.map((week) => ({
-            days: (week.contributionDays ?? []).map((day) => ({
-              date: day.date ?? "",
-              count: day.contributionCount ?? 0,
-              level: LEVEL_BY_ENUM[day.contributionLevel ?? ""] ?? 0,
-            })),
-          })),
-        },
-      };
+    // 404 = login gerçekten yok → 24 saatlik negatif önbellek hak eder.
+    if (response.status === 404) return { kind: "not_found" };
+    // 429/5xx/403 (hız sınırı, geçici blok) → geçici hata, ~15 dk sonra yeniden.
+    if (!response.ok) {
+      logFailure(login, `HTTP ${response.status}`);
+      return { kind: "error" };
     }
-    // errors varsa yalnız açık NOT_FOUND kesin bilgidir; FORBIDDEN /
-    // SAML_ENFORCEMENT / RATE_LIMITED vb. geçici sayılır — 24 saatlik negatif
-    // önbelleğe girmesinler.
-    if (Array.isArray(payload.errors) && payload.errors.length > 0) {
-      return payload.errors.some((error) => error?.type === "NOT_FOUND")
-        ? { kind: "not_found" }
-        : { kind: "error" };
+    const contentLength = Number(response.headers.get("content-length") ?? "0");
+    if (contentLength > MAX_HTML_BYTES) {
+      logFailure(login, `yanıt çok büyük (${contentLength} bayt)`);
+      return { kind: "error" };
     }
-    // errors yok + user: null → login gerçekten yok (kesin bilgi, negatif önbellek).
-    if (payload.data && payload.data.user === null) return { kind: "not_found" };
-    return { kind: "error" };
-  } catch {
+    const html = await response.text();
+    if (html.length > MAX_HTML_BYTES) {
+      logFailure(login, `yanıt çok büyük (${html.length} karakter)`);
+      return { kind: "error" };
+    }
+    const parsed = parseGithubContributionsHtml(html);
+    // Ayrıştırma başarısız: büyük ihtimalle markup değişti ya da GitHub bir
+    // ara sayfa (hız sınırı/challenge) döndürdü. Sayfa yaşar, kart heatmap'siz
+    // kalır. Teşhis için yanıtın başı loglanır.
+    if (!parsed) {
+      logFailure(login, "katkı grid'i ayrıştırılamadı", html.slice(0, 200));
+      return { kind: "error" };
+    }
+    if (!parsed.countsAvailable) {
+      // Seviyeler doğru, gün sayıları 0: tooltip markup'ı değişmiş demektir.
+      // Kart yine çizilir (tooltip başlıkları yanlış olur) ama iz bırakılır.
+      logFailure(login, "gün başına sayı okunamadı (tooltip markup'ı değişmiş olabilir)");
+    }
+    return { kind: "ok", calendar: { total: parsed.total, weeks: parsed.weeks } };
+  } catch (error) {
     // Timeout / ağ hatası: sayfa yaşar, kart heatmap'siz kalır.
+    logFailure(login, "istek başarısız", error instanceof Error ? error.message : error);
     return { kind: "error" };
   }
 }
@@ -155,7 +139,6 @@ type ClaimTarget =
  */
 async function fetchAndStore(
   env: Env,
-  token: string,
   login: string,
   target: ClaimTarget,
 ): Promise<GithubCalendar | null> {
@@ -185,7 +168,7 @@ async function fetchAndStore(
     return null;
   }
 
-  const outcome = await fetchCalendar(token, login);
+  const outcome = await fetchCalendar(login);
   // Hata geri almasında satırın TABİ OLDUĞU TTL esas alınır: iyi payload'lu
   // satır 6 saatlik, payload'suz (negatif/yeni) satır 24 saatlik sayaçtadır.
   const ttlMs = target.kind === "stale" && target.hasPayload ? FRESH_TTL_MS : NEGATIVE_TTL_MS;
@@ -237,16 +220,15 @@ export function collectGithubLogins(layout: ProfileLayout): string[] {
 }
 
 /**
- * login → takvim sözlüğü. Token yoksa/boşsa özellik kapalıdır: boş sözlük
- * döner, log'a hiçbir şey yazılmaz.
+ * login → takvim sözlüğü. Kimlik doğrulama gerekmez; GitHub'ın genel katkı
+ * parçası okunur. Parça çekilemez/ayrıştırılamazsa ilgili login sözlükte hiç
+ * görünmez ve kart heatmap'siz render edilir.
  *
  * Okuma yolu sayfayı GitHub'a bekletmez: D1'deki kayıt bayat olsa bile hemen
  * döndürülür, tazeleme `waitUntil` ile arka plana atılır. Yalnız D1'de hiç
  * görülmemiş login satır içi (kısa timeout'la) çekilir.
  */
 export async function getGithubCalendars(env: Env, logins: string[]): Promise<GithubCalendarMap> {
-  const token = typeof env.GITHUB_TOKEN === "string" ? env.GITHUB_TOKEN.trim() : "";
-  if (!token) return {};
   const unique = [...new Set(logins.map(githubLoginKey))].filter((login) =>
     LOGIN_PATTERN.test(login),
   );
@@ -289,7 +271,7 @@ export async function getGithubCalendars(env: Env, logins: string[]): Promise<Gi
   if (missing.length > 0) {
     const fetched = await Promise.all(
       missing.map(
-        async (login) => [login, await fetchAndStore(env, token, login, { kind: "missing" })] as const,
+        async (login) => [login, await fetchAndStore(env, login, { kind: "missing" })] as const,
       ),
     );
     for (const [login, calendar] of fetched) {
@@ -304,7 +286,7 @@ export async function getGithubCalendars(env: Env, logins: string[]): Promise<Gi
     waitUntil(
       Promise.allSettled(
         stale.map(({ login, staleBefore, hasPayload }) =>
-          fetchAndStore(env, token, login, { kind: "stale", staleBefore, hasPayload }),
+          fetchAndStore(env, login, { kind: "stale", staleBefore, hasPayload }),
         ),
       ),
     );
