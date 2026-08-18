@@ -46,6 +46,7 @@ function AccountMenuContent({
       panelin kendi kenar çubuğunda bulunduğun yere bağlantı olurdu. */
   showDashboard?: boolean;
 }) {
+  const app = useCatalog(appCatalog);
   return (
     <>
       <div className="flex items-center gap-2.5 px-2 py-1.5">
@@ -76,12 +77,12 @@ function AccountMenuContent({
           ) : null}
           <DropdownMenuItem asChild>
             <a href={`/${user.username}`} target="_blank" rel="noreferrer">
-              <OpenNewWindow /> Profili gör
+              <OpenNewWindow /> {app.nav.viewProfile}
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/edit">
-              <EditPencil /> Profili düzenle
+              <EditPencil /> {app.nav.editProfile}
             </Link>
           </DropdownMenuItem>
         </>
@@ -94,14 +95,14 @@ function AccountMenuContent({
       )}
       {/* Ayarlar sayfası henüz yok; menüde yerini tutar ama tıklanamaz. */}
       <DropdownMenuItem disabled>
-        <Settings /> Hesap ayarları
+        <Settings /> {app.nav.accountSettings}
         <span className="ml-auto rounded-full bg-zemin px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-          Yakında
+          {app.nav.comingSoon}
         </span>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onSelect={signOut} variant="destructive">
-        <LogOut /> Çıkış yap
+        <LogOut /> {app.auth.signOut}
       </DropdownMenuItem>
     </>
   );

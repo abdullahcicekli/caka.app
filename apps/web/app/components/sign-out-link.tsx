@@ -5,6 +5,7 @@ import { useCatalog } from "~/lib/locale";
 
 /** Sade app.auth.signOut bağlantısı; çıkışta ana sayfaya döner. */
 export function SignOutLink({ className }: { className?: string }) {
+  const app = useCatalog(appCatalog);
   function signOut() {
     void authClient.signOut({
       fetchOptions: {
@@ -21,7 +22,7 @@ export function SignOutLink({ className }: { className?: string }) {
       onClick={signOut}
       className={cn("text-sm text-murekkep/50 hover:text-murekkep", className)}
     >
-      Çıkış yap
+      {app.auth.signOut}
     </button>
   );
 }

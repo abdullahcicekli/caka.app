@@ -103,14 +103,14 @@ export function BlockGallery({
             className={category === "social" ? "is-active" : ""}
             onClick={() => setCategory(category === "social" ? null : "social")}
           >
-            Sosyal medya
+            {app.editor.pickerSocial}
           </button>
           <button
             type="button"
             className={category === "content" ? "is-active" : ""}
             onClick={() => setCategory(category === "content" ? null : "content")}
           >
-            İçerik
+            {app.editor.pickerContent}
           </button>
           {category !== null ? (
             <button type="button" aria-label="Filtreyi temizle" onClick={() => setCategory(null)}>
@@ -164,7 +164,7 @@ export function BlockGallery({
             </div>
           ) : null}
           {!showSocial && !showContent ? (
-            <p className="gallery-empty">“{query}” için sonuç yok.</p>
+            <p className="gallery-empty">{app.editor.pickerNoResults(query)}</p>
           ) : null}
         </div>
     </div>

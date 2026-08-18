@@ -2453,10 +2453,16 @@ a.profile-block:focus-visible {
 .ayarlar-photo[aria-checked="true"] { border-color: var(--color-murekkep); }
 
 /* Bölüm gezinmesi + Adres/Hesap bölümlerinin ortak parçaları */
+/* Ayarlar sekmeleri (L17 sonrası): bölümler artık aynı anda değil, sekme
+   başına gösteriliyor. Çipler `role="tab"`, panel `role="tabpanel"`; seçili
+   sekme dolu zeminle işaretlenir çünkü yalnız kenarlık farkı dokunmatikte ve
+   yüksek kontrast modunda okunmuyordu. */
 .ayarlar-nav { display: flex; flex-wrap: wrap; gap: 8px; }
-.ayarlar-nav a { border: 1px solid var(--color-sinir); border-radius: 999px; background: white; padding: 6px 14px; font-size: 13px; font-weight: 600; color: color-mix(in srgb, var(--color-murekkep) 75%, transparent); transition: border-color .15s ease, color .15s ease; }
-.ayarlar-nav a:hover { border-color: var(--color-murekkep); color: var(--color-murekkep); }
-.ayarlar-main > section[id] { scroll-margin-top: 20px; }
+.ayarlar-nav button { border: 1px solid var(--color-sinir); border-radius: 999px; background: white; padding: 6px 14px; font-size: 13px; font-weight: 600; color: color-mix(in srgb, var(--color-murekkep) 75%, transparent); cursor: pointer; transition: border-color .15s ease, color .15s ease, background-color .15s ease; }
+.ayarlar-nav button:hover { border-color: var(--color-murekkep); color: var(--color-murekkep); }
+.ayarlar-nav button[aria-selected="true"] { background: var(--color-murekkep); border-color: var(--color-murekkep); color: white; }
+.ayarlar-nav button:focus-visible { outline: 2px solid var(--color-mavi); outline-offset: 2px; }
+.ayarlar-panel { display: flex; flex-direction: column; gap: 18px; }
 .ayarlar-link { font-weight: 600; color: var(--color-mavi); text-decoration: underline; text-underline-offset: 2px; }
 .ayarlar-link:hover { opacity: .7; }
 .ayarlar-current { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; border: 1px solid var(--color-sinir); border-radius: var(--radius-xl); background: var(--color-zemin); padding: 12px 16px; }

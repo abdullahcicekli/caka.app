@@ -36,7 +36,7 @@ export default function Login() {
   return (
     <main className="grid min-h-svh bg-white lg:grid-cols-2">
       <div className="relative flex flex-col px-6 py-6 sm:px-10">
-        <Link to="/" aria-label="Caka ana sayfa">
+        <Link to="/" aria-label={app.auth.homeAria}>
           <img src={logoBlackText} alt="Caka" className="h-7 w-auto" />
         </Link>
 
@@ -50,7 +50,7 @@ export default function Login() {
             className="mt-8 flex w-full items-center justify-center gap-2 rounded-full border border-sinir bg-white py-3 font-medium hover:bg-zemin"
           >
             <GoogleIcon />
-            Google ile giriş yap
+            {app.auth.signInGoogle}
           </button>
           <button
             type="button"
@@ -58,13 +58,13 @@ export default function Login() {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-murekkep py-3 font-medium text-white hover:bg-murekkep/85"
           >
             <AppleIcon />
-            Apple ile giriş yap
+            {app.auth.signInApple}
           </button>
 
           <p className="mt-8 text-sm text-murekkep/60">
-            Hesabın yok mu?{" "}
+            {app.auth.noAccount}{" "}
             <Link to="/onboarding" className="font-medium text-murekkep hover:underline">
-              Adresini al
+              {app.auth.claimAddress}
             </Link>
           </p>
         </div>
@@ -80,20 +80,20 @@ export default function Login() {
           />
           <p className="mt-4 text-center font-bold">Selin Aydemir</p>
           <p className="mt-0.5 text-center text-sm text-murekkep/50">
-            seramik atölyesi · İzmir
+            {app.auth.demoRole}
           </p>
           <div className="mx-auto mt-3 w-fit rounded-full bg-murekkep px-3 py-1 text-xs font-medium text-white">
             caka.app/selin
           </div>
           <div className="mt-5 space-y-2">
             <div className="rounded-xl bg-murekkep px-4 py-3 text-sm font-medium text-white">
-              Atölye takvimi
+              {app.auth.demoLinkCalendar}
             </div>
             <div className="rounded-xl bg-white px-4 py-3 text-sm font-medium">
               Instagram
             </div>
             <div className="rounded-xl bg-white px-4 py-3 text-sm font-medium">
-              İletişim
+              {app.auth.demoLinkContact}
             </div>
           </div>
         </div>

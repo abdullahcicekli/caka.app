@@ -235,6 +235,7 @@ function DashAnalytics({ analytics }: { analytics: Analytics }) {
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
+  const app = useCatalog(appCatalog);
   const {
     username,
     layout,
@@ -255,15 +256,15 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
       <section className="dash-main">
         {hasDraft ? (
           <p className="dash-draft-note">
-            Yayınlanmamış değişikliklerin var — aşağıdaki önizleme yayındaki hâli gösteriyor.
+            {app.nav.draftNotice}
           </p>
         ) : null}
         <div className="dash-actions">
           <Link className="dash-edit" to="/edit">
-            <EditPencil width={16} height={16} /> Sayfayı düzenle
+            <EditPencil width={16} height={16} /> {app.nav.editPage}
           </Link>
           <a href={`/${username}`} target="_blank" rel="noreferrer">
-            <OpenNewWindow width={16} height={16} /> Sayfayı aç
+            <OpenNewWindow width={16} height={16} /> {app.nav.openPage}
           </a>
         </div>
         <div className="dashboard-preview" aria-hidden>

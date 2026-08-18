@@ -157,7 +157,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const bio = readText(form.get("bio"));
     if (bio.length > PROFILE_BIO_MAX) {
       return data(
-        { error: `Açıklama en fazla ${PROFILE_BIO_MAX} karakter olabilir` },
+        { error: app.setup.bioTooLong(PROFILE_BIO_MAX) },
         { status: 400 },
       );
     }
@@ -242,13 +242,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 function Progress({ step }: { step: Step }) {
+  const app = useCatalog(appCatalog);
   const firstFlow = ["profil", "platformlar", "amac", "kesif"] as Step[];
   const secondFlow = ["sablon", "baglantilar", "hazirlaniyor"] as Step[];
   const flow = firstFlow.includes(step) ? firstFlow : secondFlow;
   if (step === "hazir") return null;
   const active = Math.max(0, flow.indexOf(step));
   return (
-    <div className="onboarding-progress" aria-label={`Adım ${active + 1}/${flow.length}`}>
+    <div className="onboarding-progress" aria-label={app.setup.stepAria(active + 1, flow.length)}>
       {flow.map((item, index) => (
         <span key={item} className={index === active ? "is-active" : ""} />
       ))}
@@ -265,6 +266,7 @@ function BottomActions({
   canSkip?: boolean;
   disabled?: boolean;
 }) {
+  const app = useCatalog(appCatalog);
   const navigation = useNavigation();
   const pending = navigation.state !== "idle";
   return (
@@ -274,7 +276,7 @@ function BottomActions({
       </button>
       {canSkip ? (
         <button className="onboarding-skip" type="submit" name="intent" value="skip">
-          Bu adımı geç
+          {app.setup.skipStep}
         </button>
       ) : null}
     </div>
@@ -347,7 +349,7 @@ function ProfileStep({
     <Form method="post" className="onboarding-form onboarding-profile-form">
       <input type="hidden" name="avatarAssetId" value={avatarAssetId} />
       <p className="onboarding-account-note">
-        <AtSign width={18} height={18} /> {username} hesabından alındı
+        <AtSign width={18} height={18} /> {app.setup.takenFromAccount(username)}
       </p>
       <button
         className="onboarding-avatar-button"
@@ -406,7 +408,7 @@ function ProfileStep({
       </div>
       <p id="bio-error" className={`onboarding-validation-message ${bioTooLong ? "is-visible" : ""}`}>
         {bioTooLong
-          ? `Açıklama ${Math.abs(remaining)} karakter fazla. Devam etmek için metni kısalt.`
+          ? app.setup.bioOverBy(Math.abs(remaining))
           : ""}
       </p>
       <BottomActions canSkip={false} disabled={bioTooLong || !name.trim()} />

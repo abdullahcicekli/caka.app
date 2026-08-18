@@ -54,7 +54,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
       description: loaderData.description,
       path: `/${loaderData.username}`,
       image: loaderData.ogImage,
-      imageAlt: `${loaderData.name} adlı Caka profilinin paylaşım görseli`,
+      imageAlt: appCatalog[DEFAULT_LOCALE].profile.shareImageAlt(loaderData.name),
       type: "profile",
       schema: {
         "@context": "https://schema.org",
@@ -122,7 +122,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const name = seed.name ?? p.username;
   const description =
     (profileCard?.type === "profile" ? profileCard.data.title.trim() : "") ||
-    `${name} adlı kişinin bağlantıları, projeleri ve ürettikleri.`;
+    appCatalog[DEFAULT_LOCALE].profile.description(name);
   const isOwner = session?.user.id === p.userId;
   // Görüntülenme ölçümü (R48). `await` YOK: fonksiyon senkron döner, D1
   // yazması `waitUntil` içinde yanıtın dışında koşar. Yazma hatası da orada
@@ -203,7 +203,7 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
           <DropdownMenuContent align="end" sideOffset={8} className="w-40">
             <DropdownMenuItem asChild>
               <Link to="/edit">
-                <EditPencil /> Düzenle
+                <EditPencil /> {app.profile.edit}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -249,7 +249,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           to="/"
           className="mt-8 rounded-full bg-murekkep px-8 py-3.5 font-medium text-white hover:bg-murekkep/85"
         >
-          Ana sayfaya dön
+          {app.errors.backHome}
         </Link>
       </main>
     );
@@ -259,7 +259,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
       <h1 className="text-3xl font-bold">{app.profile.availableAddress}</h1>
       <p className="mt-3 text-murekkep/60">
-        caka.app/{username || "…"} henüz kimsenin değil.
+        {app.profile.unclaimed(username || "…")}
       </p>
       <Link
         to={`/onboarding${username ? `?u=${encodeURIComponent(username)}` : ""}`}

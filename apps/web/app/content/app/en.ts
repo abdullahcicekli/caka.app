@@ -101,6 +101,42 @@ export const en = {
     closePanel: "Close panel",
     deleteBlock: "Delete block",
 
+    fieldName: "Name",
+    fieldPlatform: "Platform",
+    fieldSocialTarget: "Link or username",
+    socialHint:
+      "You can paste the profile link or just type the username — we understand both.",
+    fieldImage: "Image",
+    fieldAnnouncement: "Announcement",
+    galleryTitleHint:
+      "The title only shows on galleries two rows tall. On short galleries it is used for screen readers.",
+    photosLegend: (count: number, max: number) => `Photos (${count}/${max})`,
+    galleryMaxPhotos: (max: number, room: number) =>
+      `A gallery can hold at most ${max} photos; the first ${room} of your selection were added.`,
+    photoAltAria: (index: number) => `Alt text for photo ${index}`,
+    photoUpAria: (index: number) => `Move photo ${index} up`,
+    photoDownAria: (index: number) => `Move photo ${index} down`,
+    photoRemoveAria: (index: number) => `Remove photo ${index}`,
+    pickerSocial: "Social media",
+    pickerContent: "Content",
+    pickerNoResults: (query: string) => `No results for “${query}”.`,
+
+    galleryFullHint: (max: number) =>
+      `A gallery can hold at most ${max} photos. Remove one before adding a new photo.`,
+    galleryUploadStep: (done: number, total: number) => `Uploading… (${done}/${total})`,
+    galleryBlockLimit: (max: number) =>
+      `Your page can have at most ${max} photo galleries. Remove one before adding another.`,
+    youtubeLinkLabel: "YouTube link",
+    youtubeHint:
+      "We tell video and channel addresses apart — whichever you paste is what we add.",
+    optionalTitle: "Title (optional)",
+    spotifyLinkLabel: "Spotify link",
+    spotifyHint:
+      "Tracks, albums, playlists, artists, podcasts and episodes can be added — whatever you paste is what we add.",
+    fixIssue: "Fix",
+    removeBlock: "Remove",
+    editedElsewhere: "The page was edited somewhere else.",
+
     richText: {
       placeholder: "Write something…",
       linkUrl: "Link address",
@@ -150,6 +186,18 @@ export const en = {
     readyTitle: "Your new page is live",
     readyCta: "Keep editing my page",
 
+    bioTooLong: (max: number) => `The bio can be at most ${max} characters`,
+    bioOverBy: (over: number) =>
+      `The bio is ${over} characters too long. Shorten it to continue.`,
+    stepAria: (current: number, total: number) => `Step ${current} of ${total}`,
+    skipStep: "Skip this step",
+    takenFromAccount: (username: string) => `taken from your ${username} account`,
+    haveAccountSignIn: "Already have an account? Log in",
+    claimingAddress: (username: string) => `You're claiming caka.app/${username}.`,
+    termsNotice: "By signing up you accept the terms of use and the privacy policy.",
+    gridSoon: "The grid editor is coming very soon — your page is already live.",
+
+    almostDone: "Almost done",
     claimTitle: "Welcome",
     claimBody: "Which address should your page be published at?",
     claimAvailable: "✓ this address is free",
@@ -161,6 +209,15 @@ export const en = {
     loginTitle: "Welcome back",
     loginBody: "Pick up where you left off.",
     loginCta: "log in",
+    signInGoogle: "Sign in with Google",
+    signInApple: "Sign in with Apple",
+    noAccount: "Don't have an account?",
+    claimAddress: "Claim your address",
+    homeAria: "Caka home page",
+    demoRole: "ceramics studio · İzmir",
+    demoLinkCalendar: "Studio calendar",
+    demoLinkContact: "Contact",
+
     signOut: "Sign out",
     accountMenu: "Account menu",
   },
@@ -168,6 +225,17 @@ export const en = {
   nav: {
     copied: "Copied",
     copyLink: "Copy link",
+    pages: "Pages",
+    analytics: "Analytics",
+    settings: "Settings",
+    viewProfile: "View profile",
+    editProfile: "Edit profile",
+    accountSettings: "Account settings",
+    draftNotice:
+      "You have unpublished changes — the preview below shows the live version.",
+    editPage: "Edit page",
+    openPage: "Open page",
+
     comingSoon: "Coming soon",
   },
 
@@ -175,6 +243,11 @@ export const en = {
     menuLabel: "Caka menu",
     blocksLabel: "Links and content",
     addImage: "Add an image",
+    shareImageAlt: (name: string) => `Share image of ${name}'s Caka profile`,
+    description: (name: string) => `${name}'s links, projects and work.`,
+    edit: "Edit",
+    unclaimed: (username: string) => `caka.app/${username} isn't taken yet.`,
+
     availableAddress: "This address is free",
     availableCta: "this address is free, grab it!",
   },

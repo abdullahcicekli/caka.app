@@ -102,6 +102,42 @@ export const de = {
     closePanel: "Panel schließen",
     deleteBlock: "Block löschen",
 
+    fieldName: "Name",
+    fieldPlatform: "Plattform",
+    fieldSocialTarget: "Link oder Benutzername",
+    socialHint:
+      "Du kannst den Profillink einfügen oder nur den Benutzernamen schreiben — wir verstehen beides.",
+    fieldImage: "Bild",
+    fieldAnnouncement: "Ankündigung",
+    galleryTitleHint:
+      "Der Titel erscheint nur bei Galerien mit zwei Zeilen Höhe. Bei flachen Galerien wird er für Screenreader genutzt.",
+    photosLegend: (count: number, max: number) => `Fotos (${count}/${max})`,
+    galleryMaxPhotos: (max: number, room: number) =>
+      `Eine Galerie kann höchstens ${max} Fotos enthalten; die ersten ${room} deiner Auswahl wurden hinzugefügt.`,
+    photoAltAria: (index: number) => `Alternativtext für Foto ${index}`,
+    photoUpAria: (index: number) => `Foto ${index} nach oben schieben`,
+    photoDownAria: (index: number) => `Foto ${index} nach unten schieben`,
+    photoRemoveAria: (index: number) => `Foto ${index} entfernen`,
+    pickerSocial: "Soziale Medien",
+    pickerContent: "Inhalt",
+    pickerNoResults: (query: string) => `Keine Treffer für „${query}“.`,
+
+    galleryFullHint: (max: number) =>
+      `Eine Galerie kann höchstens ${max} Fotos enthalten. Entferne erst eines, um ein neues hinzuzufügen.`,
+    galleryUploadStep: (done: number, total: number) => `Wird hochgeladen… (${done}/${total})`,
+    galleryBlockLimit: (max: number) =>
+      `Deine Seite kann höchstens ${max} Fotogalerien haben. Entferne erst eine, um eine neue hinzuzufügen.`,
+    youtubeLinkLabel: "YouTube-Link",
+    youtubeHint:
+      "Wir unterscheiden Video- und Kanaladressen — wir fügen das ein, was du einfügst.",
+    optionalTitle: "Titel (optional)",
+    spotifyLinkLabel: "Spotify-Link",
+    spotifyHint:
+      "Titel, Alben, Playlists, Künstler, Podcasts und Folgen lassen sich hinzufügen — wir fügen das ein, was du einfügst.",
+    fixIssue: "Beheben",
+    removeBlock: "Entfernen",
+    editedElsewhere: "Die Seite wurde an anderer Stelle bearbeitet.",
+
     richText: {
       placeholder: "Schreib etwas…",
       linkUrl: "Adresse des Links",
@@ -151,6 +187,19 @@ export const de = {
     readyTitle: "Deine neue Seite ist online",
     readyCta: "Meine Seite weiter bearbeiten",
 
+    bioTooLong: (max: number) => `Die Kurzbeschreibung darf höchstens ${max} Zeichen haben`,
+    bioOverBy: (over: number) =>
+      `Die Kurzbeschreibung ist ${over} Zeichen zu lang. Kürze sie, um weiterzumachen.`,
+    stepAria: (current: number, total: number) => `Schritt ${current} von ${total}`,
+    skipStep: "Diesen Schritt überspringen",
+    takenFromAccount: (username: string) => `aus deinem Konto ${username} übernommen`,
+    haveAccountSignIn: "Schon ein Konto? Meld dich an",
+    claimingAddress: (username: string) => `Du sicherst dir caka.app/${username}.`,
+    termsNotice:
+      "Mit der Registrierung akzeptierst du die Nutzungsbedingungen und die Datenschutzerklärung.",
+    gridSoon: "Der Grid-Editor kommt sehr bald — deine Seite ist schon online.",
+
+    almostDone: "Fast fertig",
     claimTitle: "Willkommen",
     claimBody: "Unter welcher Adresse soll deine Seite online gehen?",
     claimAvailable: "✓ diese Adresse ist frei",
@@ -162,6 +211,15 @@ export const de = {
     loginTitle: "Willkommen zurück",
     loginBody: "Mach da weiter, wo du aufgehört hast.",
     loginCta: "anmelden",
+    signInGoogle: "Mit Google anmelden",
+    signInApple: "Mit Apple anmelden",
+    noAccount: "Noch kein Konto?",
+    claimAddress: "Sichere dir deine Adresse",
+    homeAria: "Caka Startseite",
+    demoRole: "Keramikwerkstatt · İzmir",
+    demoLinkCalendar: "Werkstattkalender",
+    demoLinkContact: "Kontakt",
+
     signOut: "Abmelden",
     accountMenu: "Kontomenü",
   },
@@ -169,6 +227,17 @@ export const de = {
   nav: {
     copied: "Kopiert",
     copyLink: "Link kopieren",
+    pages: "Seiten",
+    analytics: "Analytics",
+    settings: "Einstellungen",
+    viewProfile: "Profil ansehen",
+    editProfile: "Profil bearbeiten",
+    accountSettings: "Kontoeinstellungen",
+    draftNotice:
+      "Du hast unveröffentlichte Änderungen — die Vorschau unten zeigt die veröffentlichte Fassung.",
+    editPage: "Seite bearbeiten",
+    openPage: "Seite öffnen",
+
     comingSoon: "Demnächst",
   },
 
@@ -176,6 +245,11 @@ export const de = {
     menuLabel: "Caka-Menü",
     blocksLabel: "Links und Inhalte",
     addImage: "Bild hinzufügen",
+    shareImageAlt: (name: string) => `Teilen-Bild des Caka-Profils von ${name}`,
+    description: (name: string) => `Die Links, Projekte und Arbeiten von ${name}.`,
+    edit: "Bearbeiten",
+    unclaimed: (username: string) => `caka.app/${username} gehört noch niemandem.`,
+
     availableAddress: "Diese Adresse ist frei",
     availableCta: "diese Adresse ist frei, schnapp sie dir!",
   },

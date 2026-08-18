@@ -387,7 +387,7 @@ function Inspector({
     // Yükleme hatası varsa o mesaj kalır — daha acil olan odur.
     if (added.length === picked.length && files.length > room) {
       setUploadError(
-        `Bir galeride en fazla ${GALLERY_MAX_PHOTOS} fotoğraf olabilir; seçtiklerinin ilk ${room} tanesi eklendi.`,
+        app.editor.galleryMaxPhotos(GALLERY_MAX_PHOTOS, room),
       );
     }
   }
@@ -518,14 +518,14 @@ function Inspector({
       case "profile":
         return (
           <>
-            <label>Ad<input value={block.data.name} onChange={(event) => update({ name: event.target.value })} /></label>
+            <label>{app.editor.fieldName}<input value={block.data.name} onChange={(event) => update({ name: event.target.value })} /></label>
             <label>{app.editor.fieldDescription}<textarea value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
           </>
         );
       case "social":
         return (
           <>
-            <label>Platform
+            <label>{app.editor.fieldPlatform}
               <select
                 value={block.data.platform}
                 onChange={(event) => {
@@ -543,7 +543,7 @@ function Inspector({
                 ))}
               </select>
             </label>
-            <label>Bağlantı ya da kullanıcı adı
+            <label>{app.editor.fieldSocialTarget}
               <input
                 value={socialLink}
                 placeholder={onboarding.byId(block.data.platform).placeholder}
@@ -553,8 +553,7 @@ function Inspector({
                 }}
               />
               <small className="inspector-hint">
-                Profil bağlantısını yapıştırabilir ya da sadece kullanıcı adını yazabilirsin —
-                ikisini de anlıyoruz.
+                {app.editor.socialHint}
               </small>
             </label>
           </>
@@ -564,7 +563,7 @@ function Inspector({
           <>
             <label>{app.editor.fieldTitle}<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
             <label>
-              Bağlantı
+              {app.editor.fieldLink}
               <input
                 value={block.data.url}
                 // Adres değişince eski önizleme görselini SİL: zenginleştirme
@@ -579,7 +578,7 @@ function Inspector({
       case "image":
         return (
           <>
-            <label>Görsel
+            <label>{app.editor.fieldImage}
               <span className="inspector-upload">
                 <MediaImage width={18} height={18} />
                 {uploading
@@ -606,7 +605,7 @@ function Inspector({
       case "status":
         return (
           <>
-            <label>Duyuru<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
+            <label>{app.editor.fieldAnnouncement}<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
             <label>{app.editor.fieldLink}<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
         );
@@ -626,7 +625,7 @@ function Inspector({
         return (
           <>
             <label>
-              Başlık
+              {app.editor.fieldTitle}
               <input
                 value={block.data.title}
                 onChange={(event) => update({ title: event.target.value })}
@@ -635,11 +634,10 @@ function Inspector({
             {/* Başlık kısa tile'da hücrelerin üstüne binmeden sığmıyor ve
                 gizleniyor. Kullanıcı yazdığı şeyi neden göremediğini bilmeli. */}
             <p className="inspector-hint">
-              Başlık yalnız iki satır yüksekliğindeki galerilerde görünür. Kısa
-              galerilerde ekran okuyucular için kullanılır.
+              {app.editor.galleryTitleHint}
             </p>
             <fieldset>
-              <legend>Fotoğraflar ({photos.length}/{GALLERY_MAX_PHOTOS})</legend>
+              <legend>{app.editor.photosLegend(photos.length, GALLERY_MAX_PHOTOS)}</legend>
               {photos.length === 0 ? (
                 <p className="inspector-hint">{app.editor.galleryEmpty}</p>
               ) : (
@@ -659,7 +657,7 @@ function Inspector({
                         className="min-w-0 flex-1"
                         value={photo.alt}
                         placeholder={app.editor.galleryAltPlaceholder}
-                        aria-label={`${index + 1}. fotoğrafın alt metni`}
+                        aria-label={app.editor.photoAltAria(index + 1)}
                         onChange={(event) =>
                           update({
                             photos: photos.map((item, other) =>
@@ -671,7 +669,7 @@ function Inspector({
                       <span className="flex flex-none flex-col">
                         <button
                           type="button"
-                          aria-label={`${index + 1}. fotoğrafı yukarı taşı`}
+                          aria-label={app.editor.photoUpAria(index + 1)}
                           disabled={index === 0}
                           className="disabled:opacity-30"
                           onClick={() => move(index, -1)}
@@ -680,7 +678,7 @@ function Inspector({
                         </button>
                         <button
                           type="button"
-                          aria-label={`${index + 1}. fotoğrafı aşağı taşı`}
+                          aria-label={app.editor.photoDownAria(index + 1)}
                           disabled={index === photos.length - 1}
                           className="disabled:opacity-30"
                           onClick={() => move(index, 1)}
@@ -690,7 +688,7 @@ function Inspector({
                       </span>
                       <button
                         type="button"
-                        aria-label={`${index + 1}. fotoğrafı kaldır`}
+                        aria-label={app.editor.photoRemoveAria(index + 1)}
                         className="flex-none text-destructive"
                         onClick={() =>
                           update({ photos: photos.filter((_, other) => other !== index) })
@@ -706,15 +704,14 @@ function Inspector({
                   reddedilen bir buton kullanıcıya sınırı öğretmez. */}
               {full ? (
                 <p className="inspector-hint">
-                  Bir galeride en fazla {GALLERY_MAX_PHOTOS} fotoğraf olabilir. Yeni fotoğraf
-                  eklemek için önce birini kaldır.
+                  {app.editor.galleryFullHint(GALLERY_MAX_PHOTOS)}
                 </p>
               ) : (
                 <span className="inspector-upload">
                   <MediaImage width={18} height={18} />
                   {uploading
                     ? uploadStep && uploadStep.total > 1
-                      ? `Yükleniyor… (${Math.min(uploadStep.done + 1, uploadStep.total)}/${uploadStep.total})`
+                      ? app.editor.galleryUploadStep(Math.min(uploadStep.done + 1, uploadStep.total), uploadStep.total)
                       : app.editor.imageUploading
                     : app.editor.galleryAdd}
                   {uploading ? null : (
@@ -756,14 +753,14 @@ function Inspector({
               : null;
         return (
           <>
-            <label>YouTube bağlantısı
+            <label>{app.editor.youtubeLinkLabel}
               <input
                 value={youtubeInput}
                 placeholder="youtube.com/watch?v=… ya da youtube.com/@kanal"
                 onChange={(event) => setYoutubeInput(event.target.value)}
               />
               <small className="inspector-hint">
-                Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.
+                {app.editor.youtubeHint}
               </small>
             </label>
             {youtubeBusy ? <p className="inspector-hint">{app.editor.resolving}</p> : null}
@@ -778,7 +775,7 @@ function Inspector({
                 yalnız video olarak durur. */}
             {block.data.kind === "video" ? (
               <label>
-                Başlık (isteğe bağlı)
+                {app.editor.optionalTitle}
                 <input
                   value={block.data.title}
                   placeholder={app.editor.youtubeTitlePlaceholder}
@@ -801,15 +798,14 @@ function Inspector({
           : null;
         return (
           <>
-            <label>Spotify bağlantısı
+            <label>{app.editor.spotifyLinkLabel}
               <input
                 value={spotifyInput}
                 placeholder="open.spotify.com/track/… ya da spotify:album:…"
                 onChange={(event) => setSpotifyInput(event.target.value)}
               />
               <small className="inspector-hint">
-                Parça, albüm, çalma listesi, sanatçı, podcast ve bölüm eklenebilir — ne
-                yapıştırdıysan onu ekleriz.
+                {app.editor.spotifyHint}
               </small>
             </label>
             {spotifyBusy ? <p className="inspector-hint">{app.editor.resolving}</p> : null}
@@ -993,7 +989,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   // kaydederken hata almamalı.
   const galleryBlocked =
     layout.blocks.filter((block) => block.type === "gallery").length >= MAX_GALLERY_BLOCKS
-      ? `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} fotoğraf galerisi olabilir. Yenisini eklemek için önce birini kaldır.`
+      ? app.editor.galleryBlockLimit(MAX_GALLERY_BLOCKS)
       : null;
   const addBlockers: BlockAddBlockers = useMemo(
     () => (galleryBlocked ? { gallery: galleryBlocked } : {}),
@@ -1311,7 +1307,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           <span className={`save-dot is-${saveState}`} aria-hidden />
           {/* Dar ekranda adres gizlenir; yalnız nokta + durum metni kalır (CSS) */}
           <span className="address-host" aria-hidden>caka.app/{loaderData.username}</span>
-          {hasDraft ? <span className="draft-chip" aria-hidden>Taslak</span> : null}
+          {hasDraft ? <span className="draft-chip" aria-hidden>{app.editor.draftShort}</span> : null}
           <span className="address-status" aria-hidden>{hasDraft ? app.editor.draftShort : app.editor.liveShort}</span>
           <OpenNewWindow width={13} height={13} aria-hidden className="address-open" />
         </a>
@@ -1360,7 +1356,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                   <b>{issue.label}</b> — {issue.message}
                 </span>
                 <button type="button" onClick={() => focusBlock(issue.blockId)}>
-                  Düzelt
+                  {app.editor.fixIssue}
                 </button>
                 {/* Profil kartı zorunludur (düzende tam bir tane); kaldırılamaz. */}
                 {issue.blockId === profileBlock?.id ? null : (
@@ -1369,7 +1365,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     className="is-remove"
                     onClick={() => removeBlock(issue.blockId)}
                   >
-                    Kaldır
+                    {app.editor.removeBlock}
                   </button>
                 )}
               </li>
@@ -1382,7 +1378,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <div className="editor-alert" role="alert">
           {saveState === "conflict" ? (
             <>
-              Sayfa başka bir yerde düzenlendi.
+              {app.editor.editedElsewhere}
               <button type="button" onClick={() => window.location.reload()}>Yenile</button>
             </>
           ) : (

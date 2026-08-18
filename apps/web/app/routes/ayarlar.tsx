@@ -10,13 +10,18 @@
 // bağlamasından ve bölümlerin dizilişinden sorumludur.
 import { useState } from "react";
 import { env } from "cloudflare:workers";
-import { data, redirect } from "react-router";
+import { data, redirect, useSearchParams } from "react-router";
 
 import { AccountCard } from "~/components/ayarlar/account-card";
 import { AddressCard } from "~/components/ayarlar/address-card";
 import { ShareImageCard, type SaveState } from "~/components/ayarlar/share-image-card";
 import { DashSidebar } from "~/components/dash-sidebar";
-import { AYARLAR_SECTION_IDS, ayarlarCatalog, type AddressErrorId } from "~/content/ayarlar";
+import {
+  AYARLAR_SECTION_IDS,
+  ayarlarCatalog,
+  type AddressErrorId,
+  type AyarlarSectionId,
+} from "~/content/ayarlar";
 import { LanguageCard } from "~/components/ayarlar/language-card";
 import { commonCatalog } from "~/content/common";
 import { useCatalog } from "~/lib/locale";
@@ -159,11 +164,28 @@ export async function action({ request }: Route.ActionArgs) {
   } satisfies AddressActionData);
 }
 
+/** Adresten gelen bölüm kimliği geçerli mi (kullanıcı elle yazmış olabilir). */
+function isSectionId(value: string | null): value is AyarlarSectionId {
+  return value !== null && (AYARLAR_SECTION_IDS as readonly string[]).includes(value);
+}
+
 export default function Ayarlar({ loaderData }: Route.ComponentProps) {
   const { username, account, accountInfo, addressChange, imageBlocks, previews } = loaderData;
   const content = useCatalog(ayarlarCatalog);
   const common = useCatalog(commonCatalog);
   const [saveState, setSaveState] = useState<SaveState>("idle");
+
+  // Aktif sekme adreste durur (`?bolum=dil`): sayfa yenilenince veya bağlantı
+  // paylaşılınca aynı bölüm açılır. Anahtar dilden bağımsızdır — etiketler
+  // çevrilir, kimlikler çevrilmez.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get("bolum");
+  const active: AyarlarSectionId = isSectionId(requested) ? requested : AYARLAR_SECTION_IDS[0];
+
+  function selectSection(id: AyarlarSectionId) {
+    // `replace`: sekme gezinmesi geri tuşunu kirletmesin.
+    setSearchParams(id === AYARLAR_SECTION_IDS[0] ? {} : { bolum: id }, { replace: true });
+  }
 
   return (
     <main className="dash-shell">
@@ -179,33 +201,54 @@ export default function Ayarlar({ loaderData }: Route.ComponentProps) {
           </span>
         </header>
 
-        <nav className="ayarlar-nav" aria-label={content.sectionNavLabel}>
+        <div className="ayarlar-nav" role="tablist" aria-label={content.sectionNavLabel}>
           {AYARLAR_SECTION_IDS.map((id) => (
-            <a key={id} href={`#${id}`}>
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={`ayarlar-sekme-${id}`}
+              aria-selected={id === active}
+              aria-controls={`ayarlar-panel-${id}`}
+              onClick={() => selectSection(id)}
+            >
               {content.sectionLabels[id]}
-            </a>
+            </button>
           ))}
-        </nav>
+        </div>
 
-        <AddressCard username={username} change={addressChange} />
+        <div
+          className="ayarlar-panel"
+          role="tabpanel"
+          id={`ayarlar-panel-${active}`}
+          aria-labelledby={`ayarlar-sekme-${active}`}
+        >
+          {active === "adres" ? (
+            <AddressCard username={username} change={addressChange} />
+          ) : null}
 
-        <LanguageCard />
+          {active === "dil" ? <LanguageCard /> : null}
 
-        <ShareImageCard
-          ogTemplate={loaderData.ogTemplate}
-          ogPhotoAssetId={loaderData.ogPhotoAssetId}
-          imageBlocks={imageBlocks}
-          previews={previews}
-          account={account}
-          onSaveStateChange={setSaveState}
-        />
+          {active === "paylasim-gorseli" ? (
+            <ShareImageCard
+              ogTemplate={loaderData.ogTemplate}
+              ogPhotoAssetId={loaderData.ogPhotoAssetId}
+              imageBlocks={imageBlocks}
+              previews={previews}
+              account={account}
+              onSaveStateChange={setSaveState}
+            />
+          ) : null}
 
-        <AccountCard
-          providers={accountInfo.providers}
-          email={accountInfo.email}
-          emailVerified={accountInfo.emailVerified}
-          publishedLegal={loaderData.publishedLegal}
-        />
+          {active === "hesap" ? (
+            <AccountCard
+              providers={accountInfo.providers}
+              email={accountInfo.email}
+              emailVerified={accountInfo.emailVerified}
+              publishedLegal={loaderData.publishedLegal}
+            />
+          ) : null}
+        </div>
       </section>
     </main>
   );

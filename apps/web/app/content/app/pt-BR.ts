@@ -102,6 +102,42 @@ export const ptBR = {
     closePanel: "Fechar o painel",
     deleteBlock: "Excluir bloco",
 
+    fieldName: "Nome",
+    fieldPlatform: "Plataforma",
+    fieldSocialTarget: "Link ou nome de usuário",
+    socialHint:
+      "Você pode colar o link do perfil ou escrever só o nome de usuário — a gente entende os dois.",
+    fieldImage: "Imagem",
+    fieldAnnouncement: "Aviso",
+    galleryTitleHint:
+      "O título só aparece em galerias com duas linhas de altura. Em galerias baixas ele é usado pelos leitores de tela.",
+    photosLegend: (count: number, max: number) => `Fotos (${count}/${max})`,
+    galleryMaxPhotos: (max: number, room: number) =>
+      `Uma galeria pode ter no máximo ${max} fotos; as ${room} primeiras da sua seleção foram adicionadas.`,
+    photoAltAria: (index: number) => `Texto alternativo da foto ${index}`,
+    photoUpAria: (index: number) => `Mover a foto ${index} para cima`,
+    photoDownAria: (index: number) => `Mover a foto ${index} para baixo`,
+    photoRemoveAria: (index: number) => `Remover a foto ${index}`,
+    pickerSocial: "Redes sociais",
+    pickerContent: "Conteúdo",
+    pickerNoResults: (query: string) => `Nenhum resultado para “${query}”.`,
+
+    galleryFullHint: (max: number) =>
+      `Uma galeria pode ter no máximo ${max} fotos. Remova uma antes de adicionar outra.`,
+    galleryUploadStep: (done: number, total: number) => `Enviando… (${done}/${total})`,
+    galleryBlockLimit: (max: number) =>
+      `Sua página pode ter no máximo ${max} galerias de fotos. Remova uma antes de adicionar outra.`,
+    youtubeLinkLabel: "Link do YouTube",
+    youtubeHint:
+      "A gente diferencia endereços de vídeo e de canal — adicionamos o que você colar.",
+    optionalTitle: "Título (opcional)",
+    spotifyLinkLabel: "Link do Spotify",
+    spotifyHint:
+      "Dá para adicionar faixas, álbuns, playlists, artistas, podcasts e episódios — adicionamos o que você colar.",
+    fixIssue: "Corrigir",
+    removeBlock: "Remover",
+    editedElsewhere: "A página foi editada em outro lugar.",
+
     richText: {
       placeholder: "Escreva alguma coisa…",
       linkUrl: "Endereço do link",
@@ -151,6 +187,19 @@ export const ptBR = {
     readyTitle: "Sua nova página está no ar",
     readyCta: "Continuar editando minha página",
 
+    bioTooLong: (max: number) => `A descrição pode ter no máximo ${max} caracteres`,
+    bioOverBy: (over: number) =>
+      `A descrição está ${over} caracteres maior. Encurte para continuar.`,
+    stepAria: (current: number, total: number) => `Etapa ${current} de ${total}`,
+    skipStep: "Pular esta etapa",
+    takenFromAccount: (username: string) => `obtido da sua conta ${username}`,
+    haveAccountSignIn: "Já tem conta? Entre",
+    claimingAddress: (username: string) => `Você está pegando caka.app/${username}.`,
+    termsNotice:
+      "Ao se cadastrar, você aceita os termos de uso e a política de privacidade.",
+    gridSoon: "O editor em grade chega muito em breve — sua página já está no ar.",
+
+    almostDone: "Quase lá",
     claimTitle: "Boas-vindas",
     claimBody: "Em qual endereço sua página deve ficar no ar?",
     claimAvailable: "✓ este endereço está livre",
@@ -162,6 +211,15 @@ export const ptBR = {
     loginTitle: "Que bom te ver de novo",
     loginBody: "Continue de onde parou.",
     loginCta: "entrar",
+    signInGoogle: "Entrar com o Google",
+    signInApple: "Entrar com a Apple",
+    noAccount: "Não tem conta?",
+    claimAddress: "Pegue seu endereço",
+    homeAria: "Página inicial do Caka",
+    demoRole: "ateliê de cerâmica · İzmir",
+    demoLinkCalendar: "Agenda do ateliê",
+    demoLinkContact: "Contato",
+
     signOut: "Sair",
     accountMenu: "Menu da conta",
   },
@@ -169,6 +227,17 @@ export const ptBR = {
   nav: {
     copied: "Copiado",
     copyLink: "Copiar link",
+    pages: "Páginas",
+    analytics: "Analytics",
+    settings: "Configurações",
+    viewProfile: "Ver o perfil",
+    editProfile: "Editar o perfil",
+    accountSettings: "Configurações da conta",
+    draftNotice:
+      "Você tem alterações não publicadas — a prévia abaixo mostra a versão no ar.",
+    editPage: "Editar a página",
+    openPage: "Abrir a página",
+
     comingSoon: "Em breve",
   },
 
@@ -176,6 +245,11 @@ export const ptBR = {
     menuLabel: "Menu do Caka",
     blocksLabel: "Links e conteúdo",
     addImage: "Adicionar uma imagem",
+    shareImageAlt: (name: string) => `Imagem de compartilhamento do perfil de ${name} no Caka`,
+    description: (name: string) => `Os links, os projetos e os trabalhos de ${name}.`,
+    edit: "Editar",
+    unclaimed: (username: string) => `caka.app/${username} ainda não é de ninguém.`,
+
     availableAddress: "Este endereço está livre",
     availableCta: "este endereço está livre, pegue!",
   },

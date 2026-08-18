@@ -62,16 +62,16 @@ export function DashSidebar({
       <section>
         <div className="dash-page-list">
           <NavLink to="/dashboard">
-            <MultiplePages width={17} height={17} /> Sayfalar
+            <MultiplePages width={17} height={17} /> {nav.pages}
           </NavLink>
           {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
               /dashboard'da önizlemenin altında duruyor. nav.comingSoon etiketi
               artık gerçeği yansıtmıyordu. */}
           <NavLink to="/dashboard#analitik">
-            <StatsReport width={17} height={17} /> Analitik
+            <StatsReport width={17} height={17} /> {nav.analytics}
           </NavLink>
           <NavLink to="/ayarlar">
-            <Settings width={17} height={17} /> Ayarlar
+            <Settings width={17} height={17} /> {nav.settings}
           </NavLink>
         </div>
       </section>

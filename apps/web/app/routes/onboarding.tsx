@@ -191,16 +191,16 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
         </p>
 
         <Link to="/login" className="mt-10 text-sm text-murekkep/60 hover:text-murekkep">
-          Hesabın varsa giriş yap
+          {app.setup.haveAccountSignIn}
         </Link>
       </div>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="max-w-sm rounded-2xl text-center">
           <DialogHeader className="items-center">
-            <DialogTitle className="text-xl font-bold">Neredeyse tamam</DialogTitle>
+            <DialogTitle className="text-xl font-bold">{app.setup.almostDone}</DialogTitle>
             <DialogDescription>
-              caka.app/{username} adresini alıyorsun.
+              {app.setup.claimingAddress(username ?? "")}
             </DialogDescription>
           </DialogHeader>
           {loaderData.authed ? (
@@ -234,7 +234,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
             </div>
           )}
           <p className="text-xs text-murekkep/50">
-            Kaydolarak kullanım şartlarını ve gizlilik politikasını kabul edersin.
+            {app.setup.termsNotice}
           </p>
         </DialogContent>
       </Dialog>

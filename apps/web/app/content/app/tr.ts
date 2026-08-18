@@ -105,6 +105,42 @@ export const tr = {
     closePanel: "Paneli kapat",
     deleteBlock: "Bloğu sil",
 
+    fieldName: "Ad",
+    fieldPlatform: "Platform",
+    fieldSocialTarget: "Bağlantı ya da kullanıcı adı",
+    socialHint:
+      "Profil bağlantısını yapıştırabilir ya da sadece kullanıcı adını yazabilirsin — ikisini de anlıyoruz.",
+    fieldImage: "Görsel",
+    fieldAnnouncement: "Duyuru",
+    galleryTitleHint:
+      "Başlık yalnız iki satır yüksekliğindeki galerilerde görünür. Kısa galerilerde ekran okuyucular için kullanılır.",
+    photosLegend: (count: number, max: number) => `Fotoğraflar (${count}/${max})`,
+    galleryMaxPhotos: (max: number, room: number) =>
+      `Bir galeride en fazla ${max} fotoğraf olabilir; seçtiklerinin ilk ${room} tanesi eklendi.`,
+    photoAltAria: (index: number) => `${index}. fotoğrafın alt metni`,
+    photoUpAria: (index: number) => `${index}. fotoğrafı yukarı taşı`,
+    photoDownAria: (index: number) => `${index}. fotoğrafı aşağı taşı`,
+    photoRemoveAria: (index: number) => `${index}. fotoğrafı kaldır`,
+    pickerSocial: "Sosyal medya",
+    pickerContent: "İçerik",
+    pickerNoResults: (query: string) => `“${query}” için sonuç yok.`,
+
+    galleryFullHint: (max: number) =>
+      `Bir galeride en fazla ${max} fotoğraf olabilir. Yeni fotoğraf eklemek için önce birini kaldır.`,
+    galleryUploadStep: (done: number, total: number) => `Yükleniyor… (${done}/${total})`,
+    galleryBlockLimit: (max: number) =>
+      `Sayfanda en fazla ${max} fotoğraf galerisi olabilir. Yenisini eklemek için önce birini kaldır.`,
+    youtubeLinkLabel: "YouTube bağlantısı",
+    youtubeHint:
+      "Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.",
+    optionalTitle: "Başlık (isteğe bağlı)",
+    spotifyLinkLabel: "Spotify bağlantısı",
+    spotifyHint:
+      "Parça, albüm, çalma listesi, sanatçı, podcast ve bölüm eklenebilir — ne yapıştırdıysan onu ekleriz.",
+    fixIssue: "Düzelt",
+    removeBlock: "Kaldır",
+    editedElsewhere: "Sayfa başka bir yerde düzenlendi.",
+
     richText: {
       placeholder: "Bir şeyler yaz…",
       linkUrl: "Bağlantı adresi",
@@ -154,6 +190,18 @@ export const tr = {
     readyTitle: "Yeni sayfan yayında",
     readyCta: "Sayfamı düzenlemeye devam et",
 
+    bioTooLong: (max: number) => `Açıklama en fazla ${max} karakter olabilir`,
+    bioOverBy: (over: number) =>
+      `Açıklama ${over} karakter fazla. Devam etmek için metni kısalt.`,
+    stepAria: (current: number, total: number) => `Adım ${current}/${total}`,
+    skipStep: "Bu adımı geç",
+    takenFromAccount: (username: string) => `${username} hesabından alındı`,
+    haveAccountSignIn: "Hesabın varsa giriş yap",
+    claimingAddress: (username: string) => `caka.app/${username} adresini alıyorsun.`,
+    termsNotice: "Kaydolarak kullanım şartlarını ve gizlilik politikasını kabul edersin.",
+    gridSoon: "Grid editörü çok yakında — sayfan şimdiden yayında.",
+
+    almostDone: "Neredeyse tamam",
     claimTitle: "Hoş geldin",
     claimBody: "Sayfan hangi adreste yayınlansın?",
     claimAvailable: "✓ bu adres boşta",
@@ -165,6 +213,15 @@ export const tr = {
     loginTitle: "Tekrar hoş geldin",
     loginBody: "Kaldığın yerden devam et.",
     loginCta: "giriş yap",
+    signInGoogle: "Google ile giriş yap",
+    signInApple: "Apple ile giriş yap",
+    noAccount: "Hesabın yok mu?",
+    claimAddress: "Adresini al",
+    homeAria: "Caka ana sayfa",
+    demoRole: "seramik atölyesi · İzmir",
+    demoLinkCalendar: "Atölye takvimi",
+    demoLinkContact: "İletişim",
+
     signOut: "Çıkış yap",
     accountMenu: "Hesap menüsü",
   },
@@ -172,6 +229,17 @@ export const tr = {
   nav: {
     copied: "Kopyalandı",
     copyLink: "Bağlantıyı kopyala",
+    pages: "Sayfalar",
+    analytics: "Analitik",
+    settings: "Ayarlar",
+    viewProfile: "Profili gör",
+    editProfile: "Profili düzenle",
+    accountSettings: "Hesap ayarları",
+    draftNotice:
+      "Yayınlanmamış değişikliklerin var — aşağıdaki önizleme yayındaki hâli gösteriyor.",
+    editPage: "Sayfayı düzenle",
+    openPage: "Sayfayı aç",
+
     comingSoon: "Yakında",
   },
 
@@ -179,6 +247,12 @@ export const tr = {
     menuLabel: "Caka menüsü",
     blocksLabel: "Bağlantılar ve içerikler",
     addImage: "Görsel ekle",
+    shareImageAlt: (name: string) => `${name} adlı Caka profilinin paylaşım görseli`,
+    description: (name: string) =>
+      `${name} adlı kişinin bağlantıları, projeleri ve ürettikleri.`,
+    edit: "Düzenle",
+    unclaimed: (username: string) => `caka.app/${username} henüz kimsenin değil.`,
+
     availableAddress: "Bu adres boşta",
     availableCta: "bu adres boşta, kap!",
   },

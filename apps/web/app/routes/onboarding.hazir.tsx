@@ -37,8 +37,7 @@ export default function OnboardingHazir({ loaderData }: Route.ComponentProps) {
     <main className="flex min-h-svh flex-col items-center justify-center bg-white px-6 text-center">
       <h1 className="text-4xl font-bold">{app.setup.readyKicker}</h1>
       <p className="mt-3 max-w-sm text-murekkep/60">
-        Sayfan iyi bir başlangıç yaptı. Düzenlemeye devam ederek daha da
-        iyileştirebilirsin.
+        {app.setup.readyBody}
       </p>
 
       <div className="mt-10 w-64 rounded-[2rem] bg-zemin p-6 shadow-sm">
@@ -62,7 +61,7 @@ export default function OnboardingHazir({ loaderData }: Route.ComponentProps) {
         Sayfana git
       </Link>
       <p className="mt-4 text-sm text-murekkep/50">
-        Grid editörü çok yakında — sayfan şimdiden yayında.
+        {app.setup.gridSoon}
       </p>
       <SignOutLink className="mt-8" />
     </main>

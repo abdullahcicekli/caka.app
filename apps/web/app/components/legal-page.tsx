@@ -255,6 +255,11 @@ function SectionView({ section }: { section: LegalSection }) {
  * Sayfa
  * ------------------------------------------------------------------ */
 
+/**
+ * Yalnız dev/lokalde görünen geliştirici kutusu; prod'da kapı sayfayı 404'ler
+ * ve `warnings` her zaman boş döner. Bu kutu YALNIZCA geliştiriciye görünür,
+ * bu yüzden bilinçli olarak çevrilmiyor — katalogda yeri yok.
+ */
 function DevWarnings({ warnings }: { warnings: readonly string[] }) {
   return (
     <div
