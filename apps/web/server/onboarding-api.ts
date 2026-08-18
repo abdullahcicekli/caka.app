@@ -6,6 +6,8 @@ import { assetQuotaError, type AssetUsage } from "@caka/shared";
 import { getSession } from "./auth";
 import { sniffImageType } from "./avatar";
 import { hasSameOrigin, readLimitedBody } from "./request";
+import { appCatalog } from "../app/content/app";
+import { localeFromRequest } from "./locale";
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png"]);
@@ -26,20 +28,21 @@ async function readAssetUsage(env: Env, userId: string): Promise<AssetUsage> {
 export const onboardingApi = new Hono<{ Bindings: Env }>();
 
 onboardingApi.post("/avatar", async (c) => {
+  const app = appCatalog[localeFromRequest(c.req.raw)].api;
   if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+    return c.json({ error: app.origin }, 403);
   }
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
   const declaredType = c.req.header("Content-Type")?.split(";")[0] ?? "";
   if (!ACCEPTED_TYPES.has(declaredType)) {
-    return c.json({ error: "Yalnızca JPEG veya PNG yükleyebilirsin" }, 400);
+    return c.json({ error: app.uploadOnlyJpegPng }, 400);
   }
   const bytes = await readLimitedBody(c.req.raw, MAX_AVATAR_BYTES);
-  if (!bytes) return c.json({ error: "Fotoğraf en fazla 5 MB olabilir" }, 413);
+  if (!bytes) return c.json({ error: app.uploadTooLarge }, 413);
   const contentType = sniffImageType(bytes);
   if (!contentType || !ACCEPTED_TYPES.has(contentType) || contentType !== declaredType) {
-    return c.json({ error: "Fotoğraf türü doğrulanamadı" }, 400);
+    return c.json({ error: app.uploadTypeUnverified }, 400);
   }
 
   // R16 kullanıcı kotası: en fazla 50 asset ve toplam 100 MB. Kontrol
@@ -63,7 +66,7 @@ onboardingApi.post("/avatar", async (c) => {
   } catch (error) {
     await c.env.BUCKET.delete(id);
     console.error(JSON.stringify({ message: "onboarding avatar insert failed", error: String(error) }));
-    return c.json({ error: "Fotoğraf kaydedilemedi" }, 500);
+    return c.json({ error: app.uploadSaveFailed }, 500);
   }
   return c.json({ id, url: `/i/${id}` });
 });

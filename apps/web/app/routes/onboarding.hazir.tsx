@@ -9,9 +9,12 @@ import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/onboarding.hazir";
 import { localizedRedirect } from "../../server/locale";
+import { DEFAULT_LOCALE } from "@caka/shared";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Sayfan hazır — Caka");
+  return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.onboardingReady);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -28,10 +31,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function OnboardingHazir({ loaderData }: Route.ComponentProps) {
+  const app = useCatalog(appCatalog);
   const { username, name, avatarUrl } = loaderData;
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-white px-6 text-center">
-      <h1 className="text-4xl font-bold">Güzel görünüyor</h1>
+      <h1 className="text-4xl font-bold">{app.setup.readyKicker}</h1>
       <p className="mt-3 max-w-sm text-murekkep/60">
         Sayfan iyi bir başlangıç yaptı. Düzenlemeye devam ederek daha da
         iyileştirebilirsin.

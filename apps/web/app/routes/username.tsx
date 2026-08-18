@@ -29,9 +29,12 @@ import { resolveUsername } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/username";
 import { localeFromRequest } from "../../server/locale";
+import { DEFAULT_LOCALE } from "@caka/shared";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return noIndexMeta("Sayfa bulunamadı — Caka");
+  if (!loaderData) return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.notFound);
   const title = `${loaderData.name} — @${loaderData.username} | Caka`;
   const canonical = absoluteSiteUrl(`/${loaderData.username}`);
   const person: Record<string, unknown> = {
@@ -78,7 +81,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const username = normalizeUsername(params.username ?? "");
 
   // Rezerve veya biçimsiz yollar (edit, settings, admin, "ali veli"…) adres
-  // DEĞİLDİR — "bu adres boşta, kap!" göstermek yanlış; düz 404 verilir.
+  // DEĞİLDİR — app.profile.availableCta göstermek yanlış; düz 404 verilir.
   if (!validateUsername(username).ok) {
     throw data(
       { kind: "no_page" satisfies NotFoundKind, username },
@@ -167,6 +170,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
+  const app = useCatalog(appCatalog);
   const { username, isOwner, layout, theme, githubCalendars, signedImages, youtubeFeeds } =
     loaderData;
   return (
@@ -192,7 +196,7 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
       {isOwner ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" aria-label="Caka menüsü" className="brand-corner">
+            <button type="button" aria-label={app.profile.menuLabel} className="brand-corner">
               <img src={logoBlack} alt="" />
             </button>
           </DropdownMenuTrigger>
@@ -219,6 +223,7 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const app = useCatalog(appCatalog);
   const info =
     error && typeof error === "object" && "data" in error
       ? (error.data as { kind?: string; username?: string })
@@ -233,12 +238,12 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
         <p className="text-sm font-medium tracking-widest text-murekkep/40">404</p>
         <h1 className="mt-2 text-3xl font-bold">
-          {broken ? "Bu sayfa görüntülenemiyor" : "Sayfa bulunamadı"}
+          {broken ? app.errors.profileErrorTitle : app.errors.notFoundTitle}
         </h1>
         <p className="mt-3 max-w-sm text-murekkep/60">
           {broken
-            ? "Bir şeyler ters gitti; daha sonra tekrar dene."
-            : "Aradığın sayfa yok ya da taşınmış olabilir."}
+            ? app.errors.profileErrorBody
+            : app.errors.notFoundBody}
         </p>
         <Link
           to="/"
@@ -252,7 +257,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-zemin px-6 text-center">
-      <h1 className="text-3xl font-bold">Bu adres boşta</h1>
+      <h1 className="text-3xl font-bold">{app.profile.availableAddress}</h1>
       <p className="mt-3 text-murekkep/60">
         caka.app/{username || "…"} henüz kimsenin değil.
       </p>

@@ -16,6 +16,8 @@ import {
 import { ProfileBlockCard } from "~/components/profile-block";
 
 import "gridstack/dist/gridstack.min.css";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export type EditorDevice = "desktop" | "mobile";
 
@@ -46,6 +48,7 @@ export function EditorGrid({
   /** Bloğun yayına engel eksiği; varsa "Aksiyon gerekli" rozeti gösterilir. */
   issueOf?: (block: ProfileBlock) => string | null;
 }) {
+  const app = useCatalog(appCatalog);
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<GridStack | null>(null);
   const itemRefs = useRef(new Map<string, HTMLDivElement>());
@@ -152,7 +155,7 @@ export function EditorGrid({
     }
   }, [editingId]);
 
-  // Dokunmatikte "basılı tut → sürükle". Gridstack, touchstart'ı anında sentetik
+  // Dokunmatikte basılı tut → sürükle. Gridstack, touchstart'ı anında sentetik
   // mousedown'a çevirip preventDefault ile sayfa kaydırmayı öldürür (dd-touch.js);
   // parmakla scroll denemesi 3px sonra sürüklemeye dönüşür. Çözüm: touchstart'ı
   // capture fazında gridstack'in item dinleyicisine ULAŞMADAN durdur. 350ms
@@ -350,7 +353,7 @@ export function EditorGrid({
                 <button
                   type="button"
                   className="block-delete-badge"
-                  aria-label="Bloğu sil"
+                  aria-label={app.editor.deleteBlock}
                   onClick={(event) => {
                     event.stopPropagation();
                     onRemove(block.id);

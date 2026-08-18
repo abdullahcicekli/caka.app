@@ -47,7 +47,10 @@ import {
   type OnboardingLink,
 } from "../../server/profile";
 import type { Route } from "./+types/onboarding.kurulum";
-import { localizedRedirect } from "../../server/locale";
+import { localeFromRequest, localizedRedirect } from "../../server/locale";
+import { DEFAULT_LOCALE } from "@caka/shared";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 const STEPS = [
   "profil",
@@ -97,7 +100,7 @@ function readText(value: FormDataEntryValue | null) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Sayfanı hazırla — Caka");
+  return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.setup);
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -133,6 +136,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+  // Sunucu tarafı: hook yok, katalog doğrudan istekten çözülen dille okunur.
+  const app = appCatalog[localeFromRequest(request)];
   const session = await getSession(env, request);
   if (!session) throw localizedRedirect(request, "/login");
   const profile = await getProfileByUserId(env, session.user.id);
@@ -148,7 +153,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (step === "profil") {
     const name = sanitizeText(form.get("name"), PROFILE_NAME_MAX);
-    if (!name) return data({ error: "Adını yazmalısın" }, { status: 400 });
+    if (!name) return data({ error: app.setup.nameRequired }, { status: 400 });
     const bio = readText(form.get("bio"));
     if (bio.length > PROFILE_BIO_MAX) {
       return data(
@@ -158,7 +163,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     const avatarAssetId = sanitizeText(form.get("avatarAssetId"), 64);
     if (avatarAssetId && !(await isAssetOwnedByUser(env, avatarAssetId, session.user.id))) {
-      return data({ error: "Fotoğraf doğrulanamadı" }, { status: 400 });
+      return data({ error: app.setup.photoInvalid }, { status: 400 });
     }
     patch = {
       name,
@@ -226,7 +231,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       await completeOnboarding(env, session.user, { ...stored, links });
     } catch {
-      return data({ error: "Bağlantılardan biri geçerli değil" }, { status: 400 });
+      return data({ error: app.setup.linkInvalid }, { status: 400 });
     }
     throw redirect(stepPath("hazirlaniyor"));
   }
@@ -302,6 +307,7 @@ function ProfileStep({
   defaults: { name: string; bio: string; avatarUrl: string | null; avatarAssetId: string | null };
   username: string;
 }) {
+  const app = useCatalog(appCatalog);
   const [avatarUrl, setAvatarUrl] = useState(defaults.avatarUrl);
   const [avatarAssetId, setAvatarAssetId] = useState(defaults.avatarAssetId ?? "");
   const [uploading, setUploading] = useState(false);
@@ -326,12 +332,12 @@ function ProfileStep({
       });
       const result = (await response.json()) as { id?: string; url?: string; error?: string };
       if (!response.ok || !result.id || !result.url) {
-        throw new Error(result.error || "Fotoğraf yüklenemedi");
+        throw new Error(result.error || app.setup.photoUploadFailed);
       }
       setAvatarAssetId(result.id);
       setAvatarUrl(result.url);
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Fotoğraf yüklenemedi");
+      setUploadError(error instanceof Error ? error.message : app.setup.photoUploadFailed);
     } finally {
       setUploading(false);
     }
@@ -352,7 +358,7 @@ function ProfileStep({
           <ProfileAvatar name={name || defaults.name} avatarUrl={avatarUrl} className="size-28" />
           <span className="avatar-edit-badge" aria-hidden><EditPencil width={16} height={16} /></span>
         </span>
-        <span>{uploading ? "Yükleniyor…" : "Fotoğrafı değiştir"}</span>
+        <span>{uploading ? app.setup.photoUploading : app.setup.photoReplace}</span>
       </button>
       <input
         ref={fileRef}
@@ -371,7 +377,7 @@ function ProfileStep({
         value={name}
         onChange={(event) => setName(event.target.value)}
         maxLength={PROFILE_NAME_MAX}
-        aria-label="Adın"
+        aria-label={app.setup.nameLabel}
         required
       />
       <div className={`onboarding-bio-field ${bioTooLong ? "is-invalid" : ""}`}>
@@ -389,8 +395,8 @@ function ProfileStep({
               bioHighlightRef.current.scrollTop = event.currentTarget.scrollTop;
             }
           }}
-          placeholder="Kendini birkaç kelimeyle anlat."
-          aria-label="Kısa açıklama"
+          placeholder={app.setup.bioPlaceholder}
+          aria-label={app.setup.bioLabel}
           aria-invalid={bioTooLong}
           aria-describedby="bio-counter bio-error"
         />
@@ -409,6 +415,7 @@ function ProfileStep({
 }
 
 function PlatformsStep({ initial }: { initial: SocialPlatform[] }) {
+  const app = useCatalog(appCatalog);
   const lists = useOnboardingLists();
   const [selected, setSelected] = useState<SocialPlatform[]>(initial);
   return (
@@ -417,8 +424,8 @@ function PlatformsStep({ initial }: { initial: SocialPlatform[] }) {
         <input key={platform} type="hidden" name="platform" value={platform} />
       ))}
       <header className="onboarding-heading">
-        <h1>Hangi platformlardasın?</h1>
-        <p>Seçtiğin her platform sayfanda bir blok olarak görünür. Kullanıcı adlarını sonra da girebilirsin.</p>
+        <h1>{app.setup.platformsTitle}</h1>
+        <p>{app.setup.platformsBody}</p>
       </header>
       <div className="platform-grid">
         {lists.platforms.map((platform) => {
@@ -451,6 +458,7 @@ function PlatformsStep({ initial }: { initial: SocialPlatform[] }) {
 }
 
 function PurposeStep({ initial }: { initial: string[] }) {
+  const app = useCatalog(appCatalog);
   const lists = useOnboardingLists();
   const [selected, setSelected] = useState(initial);
   return (
@@ -459,8 +467,8 @@ function PurposeStep({ initial }: { initial: string[] }) {
         <input key={purpose} type="hidden" name="purpose" value={purpose} />
       ))}
       <header className="onboarding-heading">
-        <h1>Caka’yı ne için kullanacaksın?</h1>
-        <p>Sana uyanları seç. Sayfanı buna göre hazırlayalım, ayarlarla uğraşma.</p>
+        <h1>{app.setup.purposeTitle}</h1>
+        <p>{app.setup.purposeBody}</p>
       </header>
       <div className="selection-list">
         {lists.purposes.map((purpose) => {
@@ -492,13 +500,14 @@ function PurposeStep({ initial }: { initial: string[] }) {
 }
 
 function DiscoveryStep({ initial }: { initial: string }) {
+  const app = useCatalog(appCatalog);
   const lists = useOnboardingLists();
   const [selected, setSelected] = useState(initial);
   return (
     <Form method="post" className="onboarding-form">
       <header className="onboarding-heading">
-        <h1>Sayfana geçmeden son bir soru</h1>
-        <p>Caka’yı nereden duydun?</p>
+        <h1>{app.setup.discoveryKicker}</h1>
+        <p>{app.setup.discoveryTitle}</p>
       </header>
       <div className="selection-list discovery-list">
         {lists.discovery.map((option) => (
@@ -532,6 +541,7 @@ function TemplateStep({
   avatarUrl: string | null;
   platforms: SocialPlatform[];
 }) {
+  const app = useCatalog(appCatalog);
   const lists = useOnboardingLists();
   const [selected, setSelected] = useState(initial || "gece");
   const previewPlatforms = platforms.slice(0, 3);
@@ -539,8 +549,8 @@ function TemplateStep({
     <Form method="post" className="onboarding-form onboarding-wide-form">
       <input type="hidden" name="template" value={selected} />
       <header className="onboarding-heading compact">
-        <h1>Bir şablon seç</h1>
-        <p>Sana uyan stili seç, içeriğini sonra ekle.</p>
+        <h1>{app.setup.templateTitle}</h1>
+        <p>{app.setup.templateBody}</p>
       </header>
       <div className="template-grid">
         {lists.templates.map((template) => (
@@ -558,7 +568,7 @@ function TemplateStep({
             ) : null}
             <ProfileAvatar name={name} avatarUrl={avatarUrl} className="template-avatar" />
             <strong>{name.split(" ")[0]}</strong>
-            <small>Tasarım · İstanbul</small>
+            <small>{app.setup.templatePreviewRole}</small>
             <span className="template-social-list" aria-hidden>
               {(previewPlatforms.length ? previewPlatforms : [null, null, null]).map((platform, index) => {
                 const config = platform ? lists.byId(platform) : null;
@@ -575,12 +585,13 @@ function TemplateStep({
           </button>
         ))}
       </div>
-      <BottomActions label="Bu şablonla başla" />
+      <BottomActions label={app.setup.templateUse} />
     </Form>
   );
 }
 
 function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: OnboardingLink[] }) {
+  const app = useCatalog(appCatalog);
   const lists = useOnboardingLists();
   const selected = platforms.length ? platforms : (["website"] as SocialPlatform[]);
   const initial = new Map(links.map((link) => [link.platform, link.value]));
@@ -588,11 +599,11 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
   return (
     <Form method="post" className="onboarding-form links-form">
       <header className="onboarding-heading compact">
-        <h1>Bağlantılarını ekle</h1>
-        <p>Seçtiğin platformların kullanıcı adlarını gir.</p>
+        <h1>{app.setup.linksTitle}</h1>
+        <p>{app.setup.linksBody}</p>
       </header>
       <section className="link-fields">
-        <h2>Seçtiklerin</h2>
+        <h2>{app.setup.linksChosen}</h2>
         {selected.map((platform) => {
           const config = lists.byId(platform);
           return (
@@ -601,7 +612,7 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
                 <SocialIcon platform={config.id} width={18} height={18} strokeWidth={2.2} />
               </span>
               <span className="floating-input">
-                <small>{platform === "website" ? "Adres" : "Kullanıcı adı"}</small>
+                <small>{platform === "website" ? "Adres" : app.setup.usernameLabel}</small>
                 <input
                   name="linkValue"
                   defaultValue={initial.get(platform) ?? ""}
@@ -613,7 +624,7 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
             </label>
           );
         })}
-        <h2>Ek bağlantılar</h2>
+        <h2>{app.setup.extraLinks}</h2>
         {extras.map((value, index) => (
           <label key={index}>
             <span className="platform-mark platform-link">↗</span>
@@ -636,6 +647,7 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
 }
 
 function PreparingStep() {
+  const app = useCatalog(appCatalog);
   const navigate = useNavigate();
   useEffect(() => {
     const timer = window.setTimeout(() => navigate(stepPath("hazir")), 1600);
@@ -643,11 +655,11 @@ function PreparingStep() {
   }, [navigate]);
   return (
     <div className="preparing-card" aria-live="polite">
-      <h1><span className="loading-ring" /> İçeriğin bulunuyor…</h1>
+      <h1><span className="loading-ring" /> {app.setup.buildingContent}</h1>
       <div className="preparing-grid" aria-hidden>
         {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
       </div>
-      <p>Bağlantıların sayfana yerleştiriliyor</p>
+      <p>{app.setup.buildingLinks}</p>
     </div>
   );
 }
@@ -663,12 +675,13 @@ function ReadyStep({
   avatarUrl: string | null;
   links: OnboardingLink[];
 }) {
+  const app = useCatalog(appCatalog);
   const lists = useOnboardingLists();
   return (
     <div className="ready-screen">
       <header className="onboarding-heading compact">
-        <h1>Güzel görünüyor</h1>
-        <p>Sayfan iyi bir başlangıç yaptı. Düzenlemeye devam ederek daha da iyileştirebilirsin.</p>
+        <h1>{app.setup.readyKicker}</h1>
+        <p>{app.setup.readyBody}</p>
       </header>
       <div className="ready-preview">
         <ProfileAvatar name={name} avatarUrl={avatarUrl} className="size-16" />
@@ -686,14 +699,15 @@ function ReadyStep({
             );
           })}
         </div>
-        <p>Yeni sayfan yayında</p>
+        <p>{app.setup.readyTitle}</p>
       </div>
-      <Link className="ready-button" to="/edit">Sayfamı düzenlemeye devam et</Link>
+      <Link className="ready-button" to="/edit">{app.setup.readyCta}</Link>
     </div>
   );
 }
 
 export default function OnboardingSetup({ loaderData, actionData }: Route.ComponentProps) {
+  const app = useCatalog(appCatalog);
   const { step, onboarding, defaults, username } = loaderData;
   const back = PREVIOUS_STEP[step];
   const content = useMemo(() => {
@@ -728,7 +742,7 @@ export default function OnboardingSetup({ loaderData, actionData }: Route.Compon
   return (
     <main className="onboarding-shell">
       {step !== "hazir" ? (
-        <nav className="onboarding-topbar" aria-label="Kurulum adımları">
+        <nav className="onboarding-topbar" aria-label={app.setup.stepsLabel}>
           {back ? (
             <Link className="onboarding-back" to={stepPath(back)}>
               <NavArrowLeft width={17} height={17} strokeWidth={2} />

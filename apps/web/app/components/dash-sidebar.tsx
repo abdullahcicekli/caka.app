@@ -6,6 +6,8 @@ import { Link, NavLink } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
 import { SidebarUserMenu } from "~/components/user-menu";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export interface DashAccount {
   name: string;
@@ -20,6 +22,7 @@ export function DashSidebar({
   username: string;
   account: DashAccount;
 }) {
+  const nav = useCatalog(appCatalog).nav;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -48,7 +51,7 @@ export function DashSidebar({
           <span>caka.app/{username}</span>
           <button
             type="button"
-            aria-label={copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
+            aria-label={copied ? nav.copied : nav.copyLink}
             onClick={() => void copyAddress()}
           >
             {copied ? <Check width={16} height={16} /> : <Copy width={16} height={16} />}
@@ -62,7 +65,7 @@ export function DashSidebar({
             <MultiplePages width={17} height={17} /> Sayfalar
           </NavLink>
           {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
-              /dashboard'da önizlemenin altında duruyor. "Yakında" etiketi
+              /dashboard'da önizlemenin altında duruyor. nav.comingSoon etiketi
               artık gerçeği yansıtmıyordu. */}
           <NavLink to="/dashboard#analitik">
             <StatsReport width={17} height={17} /> Analitik

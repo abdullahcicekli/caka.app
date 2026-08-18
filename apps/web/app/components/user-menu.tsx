@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { authClient } from "~/lib/auth-client";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export interface SessionUser {
   name: string;
@@ -107,12 +109,13 @@ function AccountMenuContent({
 
 /** Oturumlu kullanıcının navbar profil menüsü. */
 export function UserMenu({ user }: { user: SessionUser }) {
+  const app = useCatalog(appCatalog);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Hesap menüsü"
+          aria-label={app.auth.accountMenu}
           className="cursor-pointer rounded-full ring-sinir transition hover:ring-4"
         >
           <ProfileAvatar name={user.name} avatarUrl={user.avatarUrl} className="size-10 text-sm" />
@@ -127,10 +130,11 @@ export function UserMenu({ user }: { user: SessionUser }) {
 
 /** Panel sol sütunundaki hesap menüsü: avatar + ad + adres, üste açılır. */
 export function SidebarUserMenu({ user }: { user: SessionUser }) {
+  const app = useCatalog(appCatalog);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="dash-account-trigger" aria-label="Hesap menüsü">
+        <button type="button" className="dash-account-trigger" aria-label={app.auth.accountMenu}>
           <ProfileAvatar
             name={user.name}
             avatarUrl={user.avatarUrl}

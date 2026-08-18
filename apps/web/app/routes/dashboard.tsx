@@ -31,6 +31,7 @@ import { getProfileByUserId } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/dashboard";
 import { localeFromRequest, localizedRedirect } from "../../server/locale";
+import { appCatalog } from "~/content/app";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Panel — Caka");
@@ -43,7 +44,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!profile) throw localizedRedirect(request, "/onboarding");
   if (!profile.onboardingCompletedAt) throw localizedRedirect(request, "/onboarding/kurulum/profil");
   const layout = parseProfileLayout(profile.layout);
-  if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
+  if (!layout) throw new Response(appCatalog[localeFromRequest(request)].editor.layoutUnreadable, { status: 500 });
   // Hesap menüsünün adı/avatarı profil bloğundan gelir; ek sorgu gerekmez.
   const card = layout.blocks.find(
     (block): block is Extract<ProfileBlock, { type: "profile" }> => block.type === "profile",

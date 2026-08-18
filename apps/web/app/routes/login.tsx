@@ -10,9 +10,12 @@ import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/login";
+import { DEFAULT_LOCALE } from "@caka/shared";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Giriş yap — Caka");
+  return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.login);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -20,7 +23,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!session) return null;
   const profile = await getProfileByUserId(env, session.user.id);
   // Oturum var ama profil yoksa yönlendirme yapma: /onboarding'den gelen
-  // "giriş yap" tıklaması sessiz bir döngüye girmesin, kullanıcı isterse
+  // app.auth.loginCta tıklaması sessiz bir döngüye girmesin, kullanıcı isterse
   // farklı hesapla giriş yapabilsin.
   if (!profile) return null;
   throw redirect(
@@ -29,6 +32,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Login() {
+  const app = useCatalog(appCatalog);
   return (
     <main className="grid min-h-svh bg-white lg:grid-cols-2">
       <div className="relative flex flex-col px-6 py-6 sm:px-10">
@@ -37,8 +41,8 @@ export default function Login() {
         </Link>
 
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center text-center">
-          <h1 className="text-3xl font-bold">Tekrar hoş geldin</h1>
-          <p className="mt-2 text-murekkep/60">Kaldığın yerden devam et.</p>
+          <h1 className="text-3xl font-bold">{app.auth.loginTitle}</h1>
+          <p className="mt-2 text-murekkep/60">{app.auth.loginBody}</p>
 
           <button
             type="button"

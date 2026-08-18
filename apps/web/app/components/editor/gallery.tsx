@@ -18,6 +18,8 @@ import {
 import { SocialIcon } from "~/components/icons/social";
 import type { ProfileBlock, SocialPlatform } from "@caka/shared";
 import { useOnboardingLists } from "~/lib/onboarding";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export type GalleryPick =
   | { kind: "content"; type: Exclude<ProfileBlock["type"], "profile" | "social"> }
@@ -27,23 +29,24 @@ type Category = "social" | "content";
 
 type ContentBlockType = Exclude<ProfileBlock["type"], "profile" | "social">;
 
-type CatalogItem = { label: string; icon: typeof LinkIcon; enabled: boolean };
+type CatalogItem = { icon: typeof LinkIcon; enabled: boolean };
 
 // Record: yeni bir içerik bloğu tipi eklendiğinde katalog derleme hatası
 // verir (dizi olarak yazılsaydı tip sessizce galeride görünmezdi).
 // `enabled`: şeması hazır ama editör/render tarafı henüz gelmemiş tip
 // katalogda görünmez. Kayıt tipi böylece eksiksiz kalır (yeni tip eklemeyi
 // unutmak hâlâ derleme hatası) ama kullanıcıya yarım bir blok sunulmaz.
+// Etiketler burada DEĞİL, `content/app`'teki `blockTypes`'ta: aynı adlar
+// editörün başlığında ve yayın engeli listesinde de görünüyor, tek sözlükten
+// okunmaları gerekiyor. Burada yalnız ikon ve açık/kapalı durumu var.
 const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
-  link: { label: "Bağlantı", icon: LinkIcon, enabled: true },
-  text: { label: "Metin", icon: Text, enabled: true },
-  image: { label: "Görsel", icon: MediaImage, enabled: true },
-  status: { label: "Duyuru", icon: Megaphone, enabled: true },
-  // "Galeri" DEĞİL: bu panelin kendi adı zaten "Blok galerisi". Aynı arayüzde
-  // iki ayrı şeyin aynı adı taşıması kullanıcıyı yanıltırdı.
-  gallery: { label: "Fotoğraf galerisi", icon: MediaImageList, enabled: true },
-  youtube: { label: "YouTube", icon: MediaVideo, enabled: true },
-  spotify: { label: "Spotify", icon: MusicDoubleNote, enabled: true },
+  link: { icon: LinkIcon, enabled: true },
+  text: { icon: Text, enabled: true },
+  image: { icon: MediaImage, enabled: true },
+  status: { icon: Megaphone, enabled: true },
+  gallery: { icon: MediaImageList, enabled: true },
+  youtube: { icon: MediaVideo, enabled: true },
+  spotify: { icon: MusicDoubleNote, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */
@@ -67,6 +70,7 @@ export function BlockGallery({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
 
+  const app = useCatalog(appCatalog);
   const needle = query.trim().toLocaleLowerCase("tr");
   const matches = (label: string) => !needle || label.toLocaleLowerCase("tr").includes(needle);
 
@@ -75,8 +79,8 @@ export function BlockGallery({
     [needle],
   );
   const contentItems = useMemo(
-    () => CONTENT_ITEMS.filter((item) => matches(item.label)),
-    [needle],
+    () => CONTENT_ITEMS.filter((item) => matches(app.blockTypes[item.type])),
+    [needle, app],
   );
   const showSocial = category !== "content" && socialItems.length > 0;
   const showContent = category !== "social" && contentItems.length > 0;
@@ -131,7 +135,7 @@ export function BlockGallery({
                     <span className="tile tile-content" aria-hidden>
                       <item.icon width={30} height={30} strokeWidth={1.8} />
                     </span>
-                    {item.label}
+                    {app.blockTypes[item.type]}
                     {blocked ? (
                       <small className="text-center text-[11px] leading-tight font-normal opacity-80">
                         {blocked}

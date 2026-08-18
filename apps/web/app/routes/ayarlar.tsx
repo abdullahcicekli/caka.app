@@ -41,6 +41,7 @@ import {
 import { hasSameOrigin } from "../../server/request";
 import type { Route } from "./+types/ayarlar";
 import { localeFromRequest, localizedRedirect } from "../../server/locale";
+import { appCatalog } from "~/content/app";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Ayarlar — Caka");
@@ -53,7 +54,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!profile) throw localizedRedirect(request, "/onboarding");
   if (!profile.onboardingCompletedAt) throw localizedRedirect(request, "/onboarding/kurulum/profil");
   const layout = parseProfileLayout(profile.layout);
-  if (!layout) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
+  if (!layout) throw new Response(appCatalog[localeFromRequest(request)].editor.layoutUnreadable, { status: 500 });
 
   const card = layout.blocks.find(
     (block): block is Extract<ProfileBlock, { type: "profile" }> => block.type === "profile",

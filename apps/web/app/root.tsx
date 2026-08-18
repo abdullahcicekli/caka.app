@@ -14,6 +14,8 @@ import { DEFAULT_LOCALE, type Locale, type ProfileTheme } from "@caka/shared";
 import type { Route } from "./+types/root";
 import { localeFromRequest } from "../server/locale";
 import "./app.css";
+import { appCatalog } from "./content/app";
+import { useCatalog } from "./lib/locale";
 
 /** Public profil sayfasında kök zemin (html/body) ve tarayıcı çubuğu
  * (theme-color) tema rengine boyanır; iOS overscroll'da açık renkli şerit
@@ -101,15 +103,16 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Bir şeyler ters gitti";
-  let details = "Beklenmeyen bir hata oluştu. Lütfen tekrar dene.";
+  const app = useCatalog(appCatalog);
+  let message = app.errors.genericTitle;
+  let details = app.errors.genericBody;
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "Sayfa bulunamadı" : "Bir şeyler ters gitti";
+    message = error.status === 404 ? app.errors.notFoundTitle : app.errors.genericTitle;
     details =
       error.status === 404
-        ? "Aradığın sayfa yok ya da taşınmış olabilir."
+        ? app.errors.notFoundBody
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
@@ -121,7 +124,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <h1 className="text-2xl font-bold">{message}</h1>
       <p className="mt-2">{details}</p>
       <a href="/" className="mt-6 inline-block font-medium underline">
-        Ana sayfaya dön
+        {app.errors.backHome}
       </a>
       {stack && (
         <pre className="w-full p-4 overflow-x-auto">

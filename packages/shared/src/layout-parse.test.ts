@@ -174,7 +174,8 @@ describe("R6 sunucu tarafı boyut sınırları", () => {
       JSON.parse(doc([profileBlock, withPos("status", 4, 4)])),
     );
     expect(result.success).toBe(false);
-    expect(result.error?.issues[0]?.message).toContain("en fazla 4×1");
+    // Mesaj dile bağlı değil, makine okunur bir kod (metin `content/app`'te).
+    expect(result.error?.issues[0]?.message).toBe("grid_limits:status");
   });
 
   it("link bloğu 4x3 kaydedilemez (maxH 2), 4x2 kabul edilir", () => {
@@ -223,13 +224,13 @@ describe("R6 sunucu tarafı boyut sınırları", () => {
     expect(layoutGridLimitIssues(layout)).toEqual([]);
   });
 
-  it("layoutGridLimitIssues sınırı aşan bloğu etiketiyle raporlar", () => {
+  it("layoutGridLimitIssues sınırı aşan bloğu sınırlarıyla raporlar", () => {
     const layout = parseProfileLayout(doc([profileBlock, withPos("status", 4, 4)]))!;
     expect(layoutGridLimitIssues(layout)).toEqual([
       {
         blockId: "blk_status",
-        label: "Duyuru",
-        message: "Duyuru bloğu en az 1×1, en fazla 4×1 olabilir",
+        type: "status",
+        limits: { minW: 1, minH: 1, maxW: 4, maxH: 1 },
       },
     ]);
   });
@@ -279,9 +280,7 @@ describe("galeri şeması (R62)", () => {
     expect(block.type === "gallery" && block.data.photos[0]!.alt).toBe("");
     expect(blockIssue(block)).toBeNull();
     const empty = parseProfileLayout(doc([profileBlock, gallery("blk_e", 0)]))!;
-    expect(blockIssue(empty.blocks.find((item) => item.id === "blk_e")!)).toBe(
-      "Galeriye fotoğraf ekle",
-    );
+    expect(blockIssue(empty.blocks.find((item) => item.id === "blk_e")!)).toBe("gallery_empty");
   });
 
   it(`hesap başına ${MAX_GALLERY_BLOCKS} galeri: ${MAX_GALLERY_BLOCKS + 1}. blok yazmada reddedilir`, () => {
@@ -296,7 +295,7 @@ describe("galeri şeması (R62)", () => {
     ]);
     const result = profileLayoutWriteSchema.safeParse(JSON.parse(tooMany));
     expect(result.success).toBe(false);
-    expect(result.error?.issues.some((issue) => issue.message.includes("2 galeri bloğu"))).toBe(true);
+    expect(result.error?.issues.some((issue) => issue.message === "gallery_count")).toBe(true);
   });
 
   it("okuma şeması galeri sayısını sınırlamaz — eski kayıt sayfayı düşürmez", () => {
@@ -354,9 +353,7 @@ describe("youtube şeması (KTD34)", () => {
   it("kimliği çözülmemiş blok yayına engel", () => {
     const draft = { ...video, data: { ...video.data, videoId: "", title: "" } };
     const layout = parseProfileLayout(doc([profileBlock, draft]))!;
-    expect(blockIssue(layout.blocks.find((block) => block.id === "blk_yt_v")!)).toBe(
-      "YouTube video bağlantısı gir",
-    );
+    expect(blockIssue(layout.blocks.find((block) => block.id === "blk_yt_v")!)).toBe("youtube_video_url");
   });
 
   it("tanınmayan kind düşer, ham hâliyle korunur", () => {

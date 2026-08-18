@@ -1,7 +1,9 @@
 import { authClient } from "~/lib/auth-client";
 import { cn } from "~/lib/utils";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
-/** Sade "Çıkış yap" bağlantısı; çıkışta ana sayfaya döner. */
+/** Sade app.auth.signOut bağlantısı; çıkışta ana sayfaya döner. */
 export function SignOutLink({ className }: { className?: string }) {
   function signOut() {
     void authClient.signOut({

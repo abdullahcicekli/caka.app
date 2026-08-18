@@ -17,6 +17,7 @@ import { linkBrand, linkHostLabel, prettyLinkTarget } from "~/lib/link-preview";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
 import { ProfileAvatar } from "./profile-avatar";
 import { useOnboardingLists } from "~/lib/onboarding";
+import { appCatalog } from "~/content/app";
 
 function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
   const w = useCatalog(widgetCatalog);
@@ -84,6 +85,7 @@ export function ProfileBlockCard({
    */
   allowEmbeds?: boolean;
 }) {
+  const app = useCatalog(appCatalog);
   const onboarding = useOnboardingLists();
   const w = useCatalog(widgetCatalog);
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
@@ -254,7 +256,7 @@ export function ProfileBlockCard({
     const content = block.data.assetId ? (
       <img src={`/i/${block.data.assetId}`} alt={block.data.title} draggable={false} />
     ) : (
-      <span className="profile-image-placeholder">{block.data.title || "Görsel ekle"}</span>
+      <span className="profile-image-placeholder">{block.data.title || app.profile.addImage}</span>
     );
     return block.data.url ? (
       <a className="profile-block profile-block-image" href={block.data.url} target="_blank" rel="noreferrer">{content}</a>
@@ -437,6 +439,7 @@ export function ProfileCanvas({
   /** Medya kartları yerinde oynatılabilsin mi? Yalnız public profil true geçer. */
   allowEmbeds?: boolean;
 }) {
+  const app = useCatalog(appCatalog);
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
 
@@ -446,7 +449,7 @@ export function ProfileCanvas({
         <aside className="profile-identity" aria-label="Profil bilgileri">
           {profileBlock ? <ProfileBlockCard block={profileBlock} /> : null}
         </aside>
-        <section className="profile-grid" aria-label="Bağlantılar ve içerikler">
+        <section className="profile-grid" aria-label={app.profile.blocksLabel}>
           {bentoBlocks.map((block) => {
             const pos = block.pos;
             // pos varsa editörle birebir aynı hücrelere yerleştir (KTD13);

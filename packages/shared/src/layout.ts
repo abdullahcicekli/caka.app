@@ -463,42 +463,53 @@ export function createBlockId(): string {
 
 // Taslak/yayınla modeli: şema yarım bloklara izin verir (taslak kaydı),
 // yayın öncesi eksikler aşağıdaki kurallarla yüzeye çıkarılır.
-export const BLOCK_TYPE_LABELS: Record<ProfileBlock["type"], string> = {
-  profile: "Profil",
-  social: "Sosyal medya",
-  link: "Bağlantı",
-  text: "Metin",
-  image: "Görsel",
-  status: "Duyuru",
-  gallery: "Galeri",
-  youtube: "YouTube",
-  spotify: "Spotify",
+/**
+ * Blok sorunlarının kimlikleri. Metin DEĞİL kimlik döndürülür: mesajlar
+ * kullanıcıya görünür ve beş dile çevrilir (`content/app`), bu katman ise saf
+ * kural katmanıdır ve dil bilmez.
+ */
+export const BLOCK_ISSUE_IDS = [
+  "profile_name",
+  "social_target",
+  "link_url",
+  "link_title",
+  "text_empty",
+  "status_empty",
+  "image_missing",
+  "gallery_empty",
+  "youtube_video_url",
+  "youtube_channel_url",
+  "spotify_url",
+] as const;
+
+export type BlockIssueId = (typeof BLOCK_ISSUE_IDS)[number];
+
+export type BlockIssue = {
+  blockId: string;
+  type: ProfileBlock["type"];
+  issue: BlockIssueId;
 };
 
-export type BlockIssue = { blockId: string; label: string; message: string };
-
-/** Blok yayına hazır mı? Değilse kullanıcıya gösterilecek Türkçe mesaj. */
-export function blockIssue(block: ProfileBlock): string | null {
+/** Blok yayına hazır mı? Değilse sorunun kimliği. */
+export function blockIssue(block: ProfileBlock): BlockIssueId | null {
   switch (block.type) {
     case "profile":
-      return block.data.name ? null : "Adını gir";
+      return block.data.name ? null : "profile_name";
     case "social":
       // E-posta gibi bazı platformlarda http(s) URL üretilmez (KTD8: kullanıcı
       // URL'leri yalnız http(s)); orada dolu `handle` yeterli sayılır.
-      return block.data.url || block.data.handle
-        ? null
-        : "Bağlantı ya da kullanıcı adı gir";
+      return block.data.url || block.data.handle ? null : "social_target";
     case "link":
-      if (!block.data.url) return "Bağlantı adresi gir";
-      return block.data.title ? null : "Başlık gir";
+      if (!block.data.url) return "link_url";
+      return block.data.title ? null : "link_title";
     case "text":
-      return block.data.text ? null : "Metin yaz";
+      return block.data.text ? null : "text_empty";
     case "status":
-      return block.data.text ? null : "Duyuru metni yaz";
+      return block.data.text ? null : "status_empty";
     case "image":
-      return block.data.assetId ? null : "Görsel yükle";
+      return block.data.assetId ? null : "image_missing";
     case "gallery":
-      return block.data.photos.length ? null : "Galeriye fotoğraf ekle";
+      return block.data.photos.length ? null : "gallery_empty";
     case "youtube":
       // KTD34: çözüm kayıt anında yapılır; kimliği boş bir blok, adres
       // yapıştırılmamış ya da çözülememiş demektir — ikisinde de render
@@ -506,24 +517,22 @@ export function blockIssue(block: ProfileBlock): string | null {
       return block.data.kind === "video"
         ? block.data.videoId
           ? null
-          : "YouTube video bağlantısı gir"
+          : "youtube_video_url"
         : block.data.channelId
           ? null
-          : "YouTube kanal bağlantısı gir";
+          : "youtube_channel_url";
     case "spotify":
       // YouTube'la aynı gerekçe: kimlik kayıt anında çözülür, boşsa gömülecek
       // bir şey yok.
-      return block.data.entityId ? null : "Spotify bağlantısı gir";
+      return block.data.entityId ? null : "spotify_url";
   }
 }
 
 /** Yayın öncesi eksik blokların listesi; boşsa yayınlanabilir. */
 export function layoutIssues(layout: ProfileLayout): BlockIssue[] {
   return layout.blocks.flatMap((block) => {
-    const message = blockIssue(block);
-    return message
-      ? [{ blockId: block.id, label: BLOCK_TYPE_LABELS[block.type], message }]
-      : [];
+    const issue = blockIssue(block);
+    return issue ? [{ blockId: block.id, type: block.type, issue }] : [];
   });
 }
 
@@ -538,10 +547,9 @@ export type BentoBlockType = Exclude<ProfileBlock["type"], "profile">;
 // düşürmek, o boyutta yazılmış canlı sayfaları ilk açılışta sessizce
 // daraltırdı — düzeltilen değil, üretilen bir kusur olurdu. Yeni tipler ise
 // sıfırdan karar veriliyor.
-export const BLOCK_GRID_LIMITS: Record<
-  BentoBlockType,
-  { minW: number; minH: number; maxW: number; maxH: number }
-> = {
+export type BlockGridLimits = { minW: number; minH: number; maxW: number; maxH: number };
+
+export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   link: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
   social: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
   text: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
@@ -563,8 +571,8 @@ export const BLOCK_GRID_LIMITS: Record<
   spotify: { minW: 2, minH: 1, maxW: 4, maxH: 2 },
 };
 
-/** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa Türkçe mesaj. */
-export function blockGridLimitIssue(block: ProfileBlock): string | null {
+/** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa bloğun sınırları. */
+export function blockGridLimitIssue(block: ProfileBlock): BlockGridLimits | null {
   if (block.type === "profile" || !block.pos) return null;
   const limits = BLOCK_GRID_LIMITS[block.type];
   // Hem masaüstü hem mobil konum aynı tavana uyar; mobil genişlik zaten
@@ -576,19 +584,23 @@ export function blockGridLimitIssue(block: ProfileBlock): string | null {
       pos.w > limits.maxW ||
       pos.h > limits.maxH
     ) {
-      return `${BLOCK_TYPE_LABELS[block.type]} bloğu en az ${limits.minW}×${limits.minH}, en fazla ${limits.maxW}×${limits.maxH} olabilir`;
+      return limits;
     }
   }
   return null;
 }
 
+export type GridLimitIssue = {
+  blockId: string;
+  type: ProfileBlock["type"];
+  limits: BlockGridLimits;
+};
+
 /** Tip sınırlarını aşan blokların listesi; boşsa düzen kaydedilebilir. */
-export function layoutGridLimitIssues(layout: ProfileLayout): BlockIssue[] {
+export function layoutGridLimitIssues(layout: ProfileLayout): GridLimitIssue[] {
   return layout.blocks.flatMap((block) => {
-    const message = blockGridLimitIssue(block);
-    return message
-      ? [{ blockId: block.id, label: BLOCK_TYPE_LABELS[block.type], message }]
-      : [];
+    const limits = blockGridLimitIssue(block);
+    return limits ? [{ blockId: block.id, type: block.type, limits }] : [];
   });
 }
 
@@ -596,11 +608,9 @@ export function layoutGridLimitIssues(layout: ProfileLayout): BlockIssue[] {
  * R62: hesap başına galeri sayısı sınırı. Tek blok kendi başına belgede kaç
  * galeri olduğunu bilemez, bu yüzden kural belge düzeyindedir.
  */
-export function galleryCountIssue(layout: ProfileLayout): string | null {
+export function galleryCountIssue(layout: ProfileLayout): boolean {
   const count = layout.blocks.filter((block) => block.type === "gallery").length;
-  return count > MAX_GALLERY_BLOCKS
-    ? `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} galeri bloğu olabilir`
-    : null;
+  return count > MAX_GALLERY_BLOCKS;
 }
 
 /**
@@ -614,14 +624,19 @@ export function galleryCountIssue(layout: ProfileLayout): string | null {
 export const profileLayoutWriteSchema = profileLayoutSchema.superRefine(
   (layout, context) => {
     layout.blocks.forEach((block, index) => {
-      const message = blockGridLimitIssue(block);
-      if (message) {
-        context.addIssue({ code: "custom", path: ["blocks", index, "pos"], message });
+      const limits = blockGridLimitIssue(block);
+      if (limits) {
+        // Mesaj dile bağlı olmamalı: doğrulama sunucuda çalışıyor, metni
+        // gösteren istemci ise kendi dilinde yazıyor (`content/app`).
+        context.addIssue({
+          code: "custom",
+          path: ["blocks", index, "pos"],
+          message: `grid_limits:${block.type}`,
+        });
       }
     });
-    const galleryMessage = galleryCountIssue(layout);
-    if (galleryMessage) {
-      context.addIssue({ code: "custom", path: ["blocks"], message: galleryMessage });
+    if (galleryCountIssue(layout)) {
+      context.addIssue({ code: "custom", path: ["blocks"], message: "gallery_count" });
     }
   },
 );

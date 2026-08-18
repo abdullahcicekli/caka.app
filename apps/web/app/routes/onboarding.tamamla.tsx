@@ -10,12 +10,15 @@ import {
 } from "../../server/profile";
 import type { Route } from "./+types/onboarding.tamamla";
 import { localizedRedirect } from "../../server/locale";
+import { DEFAULT_LOCALE } from "@caka/shared";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 const CLAIM_COOKIE = "caka_claim";
 const CLEAR_CLAIM_COOKIE = `${CLAIM_COOKIE}=; Path=/; Max-Age=0`;
 
 export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Hesabın hazırlanıyor — Caka");
+  return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.onboardingFinish);
 }
 
 function readClaimCookie(request: Request): string | null {

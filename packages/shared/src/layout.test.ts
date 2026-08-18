@@ -244,7 +244,7 @@ describe("blockIssue", () => {
     ).not.toThrow();
   });
 
-  it("eksik alanlar için Türkçe mesaj, tamam bloklar için null döner", () => {
+  it("eksik alanlar için sorun kimliği, tamam bloklar için null döner", () => {
     const parsed = profileLayoutSchema.parse({
       version: 1,
       blocks: [
@@ -258,13 +258,13 @@ describe("blockIssue", () => {
       ],
     });
     const byId = new Map(parsed.blocks.map((block) => [block.id, block]));
-    expect(blockIssue(byId.get("blk_p")!)).toBe("Adını gir");
-    expect(blockIssue(byId.get("blk_link")!)).toBe("Bağlantı adresi gir");
-    expect(blockIssue(byId.get("blk_link2")!)).toBe("Başlık gir");
-    expect(blockIssue(byId.get("blk_social")!)).toBe("Bağlantı ya da kullanıcı adı gir");
-    expect(blockIssue(byId.get("blk_text")!)).toBe("Metin yaz");
-    expect(blockIssue(byId.get("blk_status")!)).toBe("Duyuru metni yaz");
-    expect(blockIssue(byId.get("blk_image")!)).toBe("Görsel yükle");
+    expect(blockIssue(byId.get("blk_p")!)).toBe("profile_name");
+    expect(blockIssue(byId.get("blk_link")!)).toBe("link_url");
+    expect(blockIssue(byId.get("blk_link2")!)).toBe("link_title");
+    expect(blockIssue(byId.get("blk_social")!)).toBe("social_target");
+    expect(blockIssue(byId.get("blk_text")!)).toBe("text_empty");
+    expect(blockIssue(byId.get("blk_status")!)).toBe("status_empty");
+    expect(blockIssue(byId.get("blk_image")!)).toBe("image_missing");
     expect(blockIssue({ ...profileBlock })).toBeNull();
   });
 
@@ -289,7 +289,7 @@ describe("blockIssue", () => {
 });
 
 describe("layoutIssues", () => {
-  it("eksik blokları etiketiyle listeler, tam düzen için boş döner", () => {
+  it("eksik blokları kimliğiyle listeler, tam düzen için boş döner", () => {
     const incomplete = profileLayoutSchema.parse({
       version: 1,
       blocks: [
@@ -298,7 +298,7 @@ describe("layoutIssues", () => {
       ],
     });
     expect(layoutIssues(incomplete)).toEqual([
-      { blockId: "blk_1", label: "Bağlantı", message: "Bağlantı adresi gir" },
+      { blockId: "blk_1", type: "link", issue: "link_url" },
     ]);
 
     const complete = profileLayoutSchema.parse({

@@ -15,6 +15,8 @@ import {
 } from "@caka/shared";
 import { getSession } from "./auth";
 import { hasSameOrigin, readLimitedJson } from "./request";
+import { appCatalog } from "../app/content/app";
+import { localeFromRequest } from "./locale";
 
 const saveSchema = z.object({
   // Yazma şeması: okuma şemasının üstüne R6 tip-boyut sınırlarını uygular
@@ -36,6 +38,11 @@ const ogSettingsSchema = z.object({
 
 // /api/profile altına mount edilir: PUT /layout (taslağa kaydet),
 // POST /publish (taslağı canlıya al), PUT /og (paylaşım görseli ayarları).
+/** İsteğin dilindeki API metinleri. */
+function apiText(request: Request) {
+  return appCatalog[localeFromRequest(request)].api;
+}
+
 export const layoutApi = new Hono<{ Bindings: Env }>();
 
 // Taslak/yayınla modeli: editör kayıtları taslağa yazılır; yayınlanmış
@@ -72,14 +79,14 @@ layoutApi.put("/layout", async (c) => {
     // blokları da bilemeyiz. Boş dizi varsayıp yazmak, bu özelliğin
     // engellemek için var olduğu veri kaybının ta kendisi olurdu.
     if (!source) {
-      return c.json({ error: "Sayfa verisi okunamadı; sayfayı yenile" }, 409);
+      return c.json({ error: apiText(c.req.raw).layoutReadFailed }, 409);
     }
     const carried = source.unknownBlocks;
     // Korunan bloklar üst sınırı aşarsa yazılan belge bir daha okunamaz
     // (zarf 50 blokla sınırlı); kaydı burada net bir mesajla kes.
     if (body.data.layout.blocks.length + carried.length > MAX_LAYOUT_BLOCKS) {
       return c.json(
-        { error: `Sayfanda en fazla ${MAX_LAYOUT_BLOCKS} blok olabilir` },
+        { error: apiText(c.req.raw).layoutTooManyBlocks(MAX_LAYOUT_BLOCKS) },
         400,
       );
     }
@@ -195,12 +202,12 @@ layoutApi.post("/publish", async (c) => {
     }
     const draft = profileLayoutWriteSchema.safeParse(parsed.layout);
     if (!draft.success) {
-      return c.json({ error: "Taslak verisi geçersiz", issues: draft.error.issues }, 400);
+      return c.json({ error: apiText(c.req.raw).draftInvalid, issues: draft.error.issues }, 400);
     }
 
     const issues = layoutIssues(draft.data);
     if (issues.length > 0) {
-      return c.json({ error: "Bazı bloklar tamamlanmamış", issues }, 422);
+      return c.json({ error: apiText(c.req.raw).blocksIncomplete, issues }, 422);
     }
 
     const updated = await db

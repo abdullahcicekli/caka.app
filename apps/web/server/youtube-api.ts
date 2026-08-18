@@ -17,19 +17,22 @@ import { getSession } from "./auth";
 import { isCrossOriginRequest } from "./request";
 import { signImageProxyPath } from "./image-proxy";
 import { resolveYouTubeLink } from "./youtube";
+import { appCatalog, type AppContent } from "../app/content/app";
+import { localeFromRequest } from "./locale";
 
 /** `classifyYouTubeUrl` reddetme sebebi → kullanıcıya gösterilecek cümle. */
-const CLASSIFY_ERRORS: Record<"invalid" | "not-youtube" | "unsupported", string> = {
-  invalid: "Bu bir bağlantı gibi görünmüyor. Video ya da kanal adresini yapıştır.",
-  "not-youtube": "Bu adres YouTube'a ait değil. youtube.com ya da youtu.be adresi yapıştır.",
-  unsupported:
-    "Bu YouTube adresi bir video ya da kanal değil. Oynatma listesi, arama ve akış sayfaları eklenemez.",
-};
+/** Sınıflandırma hatası → katalog anahtarı. Metin dile göre çözülür. */
+const CLASSIFY_KEYS = {
+  invalid: "youtubeInvalid",
+  "not-youtube": "youtubeNotYoutube",
+  unsupported: "youtubeUnsupported",
+} as const satisfies Record<"invalid" | "not-youtube" | "unsupported", keyof AppContent["api"]>;
 
 export const youtubeApi = new Hono<{ Bindings: Env }>();
 
 youtubeApi.get("/", async (c) => {
-  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+  const app = appCatalog[localeFromRequest(c.req.raw)].api;
+  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: app.origin }, 403);
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
 
@@ -37,14 +40,14 @@ youtubeApi.get("/", async (c) => {
   // Ağa çıkmadan önce şekli eler: YouTube olmayan bir adres için dış istek
   // atmanın anlamı yok ve hata mesajı da buradan daha net çıkıyor.
   const ref = classifyYouTubeUrl(url);
-  if (ref.kind === "none") return c.json({ error: CLASSIFY_ERRORS[ref.reason] }, 400);
+  if (ref.kind === "none") return c.json({ error: app[CLASSIFY_KEYS[ref.reason]] }, 400);
 
   const resolved = await resolveYouTubeLink(url);
   if (!resolved) {
     // Buraya yalnız `@handle` / `/c/` / `/user/` yolları düşer: şekil doğru
     // ama kanal sayfası okunamadı (yok, kapalı ya da ad yanlış yazılmış).
     return c.json(
-      { error: "Bu kanal bulunamadı. Adresi kontrol et ya da kanalın /channel/UC… adresini dene." },
+      { error: app.youtubeChannelNotFound },
       404,
     );
   }
@@ -66,7 +69,7 @@ youtubeApi.get("/", async (c) => {
   // yerine kullanıcıya söyle: düzeltebileceği tek an bu.
   if (!resolved.title && !resolved.channelName) {
     return c.json(
-      { error: "Video bulunamadı. Video silinmiş, gizli olabilir ya da bağlantı eksik kopyalanmış." },
+      { error: app.youtubeVideoNotFound },
       404,
     );
   }

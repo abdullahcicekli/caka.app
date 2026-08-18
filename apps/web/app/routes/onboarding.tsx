@@ -19,6 +19,8 @@ import { getSession } from "../../server/auth";
 import { claimUsername, getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/onboarding";
 import { localizedRedirect } from "../../server/locale";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 export const CLAIM_COOKIE = "caka_claim";
 
@@ -101,6 +103,7 @@ function useAvailability(value: string): Availability {
 }
 
 export default function Onboarding({ loaderData, actionData }: Route.ComponentProps) {
+  const app = useCatalog(appCatalog);
   const [params] = useSearchParams();
   const [value, setValue] = useState(params.get("u") ?? "");
   const [confirming, setConfirming] = useState(false);
@@ -108,9 +111,9 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
 
   const takenError =
     params.get("error") === "taken" || actionData?.error === "taken"
-      ? "Bu adres az önce alındı, başka bir tane dene"
+      ? app.setup.claimTaken
       : params.get("error") === "hata" || actionData?.error === "hata"
-        ? "Bir şeyler ters gitti, lütfen tekrar dene"
+        ? app.setup.claimUnknownError
         : null;
 
   const ready = availability.state === "available";
@@ -129,8 +132,8 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
     <main className="flex min-h-svh flex-col items-center justify-center bg-white px-6">
       <div className="flex w-full max-w-sm flex-col items-center text-center">
         <img src={logoBlackText} alt="Caka" className="h-9 w-auto" />
-        <h1 className="mt-8 text-2xl font-bold">Hoş geldin</h1>
-        <p className="mt-2 text-murekkep/60">Sayfan hangi adreste yayınlansın?</p>
+        <h1 className="mt-8 text-2xl font-bold">{app.setup.claimTitle}</h1>
+        <p className="mt-2 text-murekkep/60">{app.setup.claimBody}</p>
 
         <form
           className="mt-8 w-full"
@@ -179,7 +182,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
           {takenError ? (
             <span className="text-destructive">⚠ {takenError}</span>
           ) : availability.state === "available" ? (
-            <span className="text-cam">✓ bu adres boşta</span>
+            <span className="text-cam">{app.setup.claimAvailable}</span>
           ) : availability.state === "unavailable" ? (
             <span className="text-destructive">⚠ {availability.message}</span>
           ) : availability.state === "checking" ? (

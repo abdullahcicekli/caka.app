@@ -14,6 +14,8 @@ import {
   NumberedListLeft,
   Quote,
 } from "iconoir-react";
+import { appCatalog } from "~/content/app";
+import { useCatalog } from "~/lib/locale";
 
 // Legacy düz metni Tiptap dokümanına çevirir (HTML olarak parse ETMEDEN).
 function docFromPlainText(text: string) {
@@ -42,6 +44,7 @@ export function InlineTextEditor({
   onChange: (doc: unknown, plain: string) => void;
   onClose: () => void;
 }) {
+  const rt = useCatalog(appCatalog).editor.richText;
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
@@ -57,7 +60,7 @@ export function InlineTextEditor({
       // Gerçek placeholder: boşken görünür, ilk karakterde kaybolur. Blok
       // içeriği olarak örnek metin YAZILMAZ (yoksa yazının başında kalır).
       Placeholder.configure({
-        placeholder: variant === "status" ? "Duyurunu yaz…" : "Bir şeyler yaz…",
+        placeholder: variant === "status" ? "Duyurunu yaz…" : rt.placeholder,
       }),
     ],
     content: (doc as object) ?? docFromPlainText(fallbackText),
@@ -81,19 +84,19 @@ export function InlineTextEditor({
       editor.chain().focus().unsetLink().run();
       return;
     }
-    const href = window.prompt("Bağlantı adresi");
+    const href = window.prompt(rt.linkUrl);
     if (!href) return;
     const url = /^[a-z][a-z\d+.-]*:/i.test(href) ? href : `https://${href}`;
     editor.chain().focus().setLink({ href: url }).run();
   }
 
   const tools = [
-    { label: "Kalın", icon: Bold, active: editor.isActive("bold"), run: () => editor.chain().focus().toggleBold().run() },
-    { label: "İtalik", icon: Italic, active: editor.isActive("italic"), run: () => editor.chain().focus().toggleItalic().run() },
+    { label: rt.bold, icon: Bold, active: editor.isActive("bold"), run: () => editor.chain().focus().toggleBold().run() },
+    { label: rt.italic, icon: Italic, active: editor.isActive("italic"), run: () => editor.chain().focus().toggleItalic().run() },
     { label: "Liste", icon: List, active: editor.isActive("bulletList"), run: () => editor.chain().focus().toggleBulletList().run() },
-    { label: "Sıralı liste", icon: NumberedListLeft, active: editor.isActive("orderedList"), run: () => editor.chain().focus().toggleOrderedList().run() },
-    { label: "Alıntı", icon: Quote, active: editor.isActive("blockquote"), run: () => editor.chain().focus().toggleBlockquote().run() },
-    { label: "Bağlantı", icon: LinkIcon, active: editor.isActive("link"), run: setLink },
+    { label: rt.orderedList, icon: NumberedListLeft, active: editor.isActive("orderedList"), run: () => editor.chain().focus().toggleOrderedList().run() },
+    { label: rt.quote, icon: Quote, active: editor.isActive("blockquote"), run: () => editor.chain().focus().toggleBlockquote().run() },
+    { label: rt.link, icon: LinkIcon, active: editor.isActive("link"), run: setLink },
   ];
 
   return (
@@ -102,7 +105,7 @@ export function InlineTextEditor({
       <div
         className="inline-text-toolbar"
         role="toolbar"
-        aria-label="Metin biçimlendirme"
+        aria-label={rt.toolbarLabel}
         onClick={(event) => event.stopPropagation()}
       >
         {tools.map((tool) => (

@@ -33,11 +33,9 @@ import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
 import { noIndexMeta } from "~/lib/seo";
 import {
-  BLOCK_TYPE_LABELS,
   GALLERY_MAX_PHOTOS,
   GRID_COLUMNS,
   MAX_GALLERY_BLOCKS,
-  SPOTIFY_KIND_LABELS,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
@@ -64,10 +62,15 @@ import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 import { localizedRedirect } from "../../server/locale";
+import { DEFAULT_LOCALE } from "@caka/shared";
+import { appCatalog } from "~/content/app";
+import { widgetCatalog } from "~/content/widget";
+import { useCatalog } from "~/lib/locale";
 import { useOnboardingLists } from "~/lib/onboarding";
+import { localeFromRequest } from "../../server/locale";
 
-export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Editör — Caka");
+export function meta({ loaderData }: Route.MetaArgs) {
+  return noIndexMeta(appCatalog[loaderData?.locale ?? DEFAULT_LOCALE].titles.editor);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -77,11 +80,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!profile) throw localizedRedirect(request, "/onboarding");
   if (!profile.onboardingCompletedAt) throw localizedRedirect(request, "/onboarding/kurulum/profil");
   const published = parseProfileLayout(profile.layout);
-  if (!published) throw new Response("Sayfa düzeni okunamadı", { status: 500 });
+  if (!published) throw new Response(appCatalog[localeFromRequest(request)].editor.layoutUnreadable, { status: 500 });
   // Editör her zaman taslağı açar; taslak yoksa yayınlanmış hâlden devam eder.
   const draft = profile.draftLayout ? parseProfileLayout(profile.draftLayout) : null;
   const layout = ensureLayoutPositions(draft ?? published);
   return {
+    locale: localeFromRequest(request),
     username: profile.username,
     layout,
     theme: normalizeTheme(draft ? (profile.draftTheme ?? profile.theme) : profile.theme),
@@ -177,13 +181,14 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
 };
 
 /**
- * Editörde gösterilecek blok adı. `BLOCK_TYPE_LABELS` şemanın adlandırması;
- * editörde "Galeri" adı ZATEN blok seçicinin ("Blok galerisi") adı, ikisi aynı
- * arayüzde çarpışıyor. Fotoğraf bloğu bu yüzden burada "Fotoğraf galerisi"
- * olarak görünür.
+ * Editörde gösterilecek blok adı. Katalogdaki `blockTypes` şemanın
+ * adlandırmasının editör karşılığıdır: "Galeri" adı blok seçicinin adıyla
+ * çarpıştığı için fotoğraf bloğu orada tam adıyla ("Fotoğraf galerisi")
+ * durur.
  */
-function editorBlockLabel(type: ProfileBlock["type"]): string {
-  return type === "gallery" ? "Fotoğraf galerisi" : BLOCK_TYPE_LABELS[type];
+function useBlockLabel(): (type: ProfileBlock["type"]) => string {
+  const app = useCatalog(appCatalog);
+  return (type) => app.blockTypes[type];
 }
 
 function isDeepLinkAddable(value: string): value is ProfileBlock["type"] {
@@ -252,6 +257,8 @@ function Inspector({
       eklenir ki kullanıcı kaydetmeyi beklemeden önizlemeyi görsün. */
   onSignedImage: (path: string) => void;
 }) {
+  const app = useCatalog(appCatalog);
+  const widget = useCatalog(widgetCatalog);
   const onboarding = useOnboardingLists();
   const [uploading, setUploading] = useState(false);
   // Çoklu seçimde tek bir "Yükleniyor…" beş fotoğraf boyunca donmuş görünür;
@@ -335,10 +342,10 @@ function Inspector({
       });
       const result = (await response.json()) as { id?: string; error?: string };
       if (response.ok && result.id) return result.id;
-      setUploadError(result.error ?? "Görsel yüklenemedi");
+      setUploadError(result.error ?? app.editor.imageUploadFailed);
       return null;
     } catch {
-      setUploadError("Görsel yüklenemedi");
+      setUploadError(app.editor.imageUploadFailed);
       return null;
     } finally {
       setUploading(false);
@@ -399,7 +406,7 @@ function Inspector({
       const result = (await response.json()) as YoutubeResolveResponse;
       if (!response.ok || !("kind" in result)) {
         setYoutubeError(
-          ("error" in result && result.error) || "YouTube bağlantısı çözümlenemedi.",
+          ("error" in result && result.error) || app.editor.youtubeFailed,
         );
         return;
       }
@@ -433,7 +440,7 @@ function Inspector({
       youtubeAttemptedRef.current = result.url;
       setYoutubeInput(result.url);
     } catch {
-      setYoutubeError("YouTube bağlantısı çözümlenemedi — bağlantını kontrol et.");
+      setYoutubeError(app.editor.youtubeFailedHint);
     } finally {
       setYoutubeBusy(false);
     }
@@ -464,7 +471,7 @@ function Inspector({
       const result = (await response.json()) as SpotifyResolveResponse;
       if (!response.ok || !("kind" in result)) {
         setSpotifyError(
-          ("error" in result && result.error) || "Spotify bağlantısı çözümlenemedi.",
+          ("error" in result && result.error) || app.editor.spotifyFailed,
         );
         return;
       }
@@ -486,7 +493,7 @@ function Inspector({
       spotifyAttemptedRef.current = result.url;
       setSpotifyInput(result.url);
     } catch {
-      setSpotifyError("Spotify bağlantısı çözümlenemedi — bağlantını kontrol et.");
+      setSpotifyError(app.editor.spotifyFailedHint);
     } finally {
       setSpotifyBusy(false);
     }
@@ -512,7 +519,7 @@ function Inspector({
         return (
           <>
             <label>Ad<input value={block.data.name} onChange={(event) => update({ name: event.target.value })} /></label>
-            <label>Açıklama<textarea value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+            <label>{app.editor.fieldDescription}<textarea value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
           </>
         );
       case "social":
@@ -555,7 +562,7 @@ function Inspector({
       case "link":
         return (
           <>
-            <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+            <label>{app.editor.fieldTitle}<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
             <label>
               Bağlantı
               <input
@@ -575,7 +582,11 @@ function Inspector({
             <label>Görsel
               <span className="inspector-upload">
                 <MediaImage width={18} height={18} />
-                {uploading ? "Yükleniyor…" : block.data.assetId ? "Görseli değiştir" : "Sürükle veya seç"}
+                {uploading
+                  ? app.editor.imageUploading
+                  : block.data.assetId
+                    ? app.editor.imageReplace
+                    : app.editor.imageDrop}
                 <input
                   type="file"
                   accept="image/jpeg,image/png"
@@ -588,15 +599,15 @@ function Inspector({
               </span>
             </label>
             {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
-            <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
-            <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
+            <label>{app.editor.fieldTitle}<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+            <label>{app.editor.fieldLink}<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
         );
       case "status":
         return (
           <>
             <label>Duyuru<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
-            <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
+            <label>{app.editor.fieldLink}<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
         );
       case "gallery": {
@@ -630,7 +641,7 @@ function Inspector({
             <fieldset>
               <legend>Fotoğraflar ({photos.length}/{GALLERY_MAX_PHOTOS})</legend>
               {photos.length === 0 ? (
-                <p className="inspector-hint">Henüz fotoğraf yok.</p>
+                <p className="inspector-hint">{app.editor.galleryEmpty}</p>
               ) : (
                 <ul className="flex list-none flex-col gap-2 p-0">
                   {photos.map((photo, index) => (
@@ -647,7 +658,7 @@ function Inspector({
                       <input
                         className="min-w-0 flex-1"
                         value={photo.alt}
-                        placeholder="Alt metin (isteğe bağlı)"
+                        placeholder={app.editor.galleryAltPlaceholder}
                         aria-label={`${index + 1}. fotoğrafın alt metni`}
                         onChange={(event) =>
                           update({
@@ -704,10 +715,10 @@ function Inspector({
                   {uploading
                     ? uploadStep && uploadStep.total > 1
                       ? `Yükleniyor… (${Math.min(uploadStep.done + 1, uploadStep.total)}/${uploadStep.total})`
-                      : "Yükleniyor…"
-                    : "Fotoğraf ekle (JPEG veya PNG)"}
+                      : app.editor.imageUploading
+                    : app.editor.galleryAdd}
                   {uploading ? null : (
-                    <small className="opacity-70">Birden fazla fotoğraf seçebilirsin</small>
+                    <small className="opacity-70">{app.editor.galleryMultiHint}</small>
                   )}
                   <input
                     type="file"
@@ -755,7 +766,7 @@ function Inspector({
                 Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.
               </small>
             </label>
-            {youtubeBusy ? <p className="inspector-hint">Çözümleniyor…</p> : null}
+            {youtubeBusy ? <p className="inspector-hint">{app.editor.resolving}</p> : null}
             {youtubeError ? (
               <p className="inspector-error" role="alert">{youtubeError}</p>
             ) : null}
@@ -770,7 +781,7 @@ function Inspector({
                 Başlık (isteğe bağlı)
                 <input
                   value={block.data.title}
-                  placeholder="Boş bırakırsan kartta yalnız video görünür"
+                  placeholder={app.editor.youtubeTitlePlaceholder}
                   onChange={(event) => update({ title: event.target.value })}
                 />
               </label>
@@ -784,7 +795,7 @@ function Inspector({
         // yapıştırdığı bağlantı zaten söylüyor. Ama SONUÇ gösterilir:
         // yanlış şeyi eklediyse anlaması gerek.
         const resolved = block.data.entityId
-          ? `${SPOTIFY_KIND_LABELS[block.data.kind]} olarak eklendi${
+          ? `${app.editor.spotifyAdded(widget.spotify.kind(block.data.kind))}${
               block.data.title ? ` — ${block.data.title}` : ""
             }`
           : null;
@@ -801,7 +812,7 @@ function Inspector({
                 yapıştırdıysan onu ekleriz.
               </small>
             </label>
-            {spotifyBusy ? <p className="inspector-hint">Çözümleniyor…</p> : null}
+            {spotifyBusy ? <p className="inspector-hint">{app.editor.resolving}</p> : null}
             {spotifyError ? (
               <p className="inspector-error" role="alert">{spotifyError}</p>
             ) : null}
@@ -825,8 +836,8 @@ function Inspector({
   return (
     <aside className="editor-inspector">
       <header>
-        <strong>{editorBlockLabel(block.type)} bloğu</strong>
-        <button type="button" aria-label="Paneli kapat" onClick={close}><Xmark width={18} height={18} /></button>
+        <strong>{app.blockTypes[block.type]}</strong>
+        <button type="button" aria-label={app.editor.closePanel} onClick={close}><Xmark width={18} height={18} /></button>
       </header>
       <div className="inspector-fields">
         {fields()}
@@ -840,6 +851,8 @@ function Inspector({
 }
 
 export default function Editor({ loaderData }: Route.ComponentProps) {
+  const app = useCatalog(appCatalog);
+  const blockLabel = useBlockLabel();
   const onboarding = useOnboardingLists();
   const [layout, setLayout] = useState<ProfileLayout>(loaderData.layout);
   const [theme, setTheme] = useState<ProfileTheme>(loaderData.theme);
@@ -1048,13 +1061,13 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   // Yayına engel olan eksik bloklar (boş sosyal kutu, metinsiz blok…).
   const issues = useMemo(() => {
     if (!publishTried) return [];
-    // Etiketler editör adlandırmasına çevrilir (bkz. editorBlockLabel).
-    const typeOf = new Map(layout.blocks.map((block) => [block.id, block.type]));
-    return layoutIssues(layout).map((issue) => {
-      const type = typeOf.get(issue.blockId);
-      return type ? { ...issue, label: editorBlockLabel(type) } : issue;
-    });
-  }, [publishTried, layout]);
+    // Kural katmanı kimlik döndürür; metin burada, kullanıcının dilinde kurulur.
+    return layoutIssues(layout).map((issue) => ({
+      blockId: issue.blockId,
+      label: blockLabel(issue.type),
+      message: app.blockIssues[issue.issue],
+    }));
+  }, [publishTried, layout, app, blockLabel]);
 
   function focusBlock(id: string) {
     setSelectedId(id);
@@ -1283,7 +1296,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="editor-shell">
-      <Link to="/dashboard" className="editor-back" aria-label="Panele dön">
+      <Link to="/dashboard" className="editor-back" aria-label={app.editor.backToDashboard}>
         <NavArrowLeft width={20} height={20} />
       </Link>
       <div className="editor-topbar">
@@ -1292,14 +1305,14 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           href={`/${loaderData.username}`}
           target="_blank"
           rel="noreferrer"
-          title={hasDraft ? "Yayınlanmamış değişiklikler var" : "Yayındaki sayfan"}
-          aria-label={`caka.app/${loaderData.username} — ${hasDraft ? "taslak var" : "yayında"}`}
+          title={hasDraft ? app.editor.draftTitle : app.editor.liveTitle}
+          aria-label={app.editor.addressLabel(loaderData.username, hasDraft)}
         >
           <span className={`save-dot is-${saveState}`} aria-hidden />
           {/* Dar ekranda adres gizlenir; yalnız nokta + durum metni kalır (CSS) */}
           <span className="address-host" aria-hidden>caka.app/{loaderData.username}</span>
           {hasDraft ? <span className="draft-chip" aria-hidden>Taslak</span> : null}
-          <span className="address-status" aria-hidden>{hasDraft ? "Taslak" : "Yayında"}</span>
+          <span className="address-status" aria-hidden>{hasDraft ? app.editor.draftShort : app.editor.liveShort}</span>
           <OpenNewWindow width={13} height={13} aria-hidden className="address-open" />
         </a>
         <button
@@ -1307,15 +1320,29 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           className="editor-publish"
           onClick={() => void publish()}
           disabled={publishing || !hasDraft}
-          aria-label={publishing ? "Yayınlanıyor" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
+          aria-label={
+            publishing
+              ? app.editor.publishing
+              : hasDraft
+                ? app.editor.publishFinish
+                : app.editor.liveShort
+          }
         >
           <SendDiagonal width={15} height={15} aria-hidden />
           {/* Mobilde kısa etiket görünür ("Yayınla"); erişilebilir ad aria-label'da */}
           <span className="publish-label" aria-hidden>
-            {publishing ? "Yayınlanıyor…" : hasDraft ? "Bitir ve yayınla" : "Yayında"}
+            {publishing
+              ? app.editor.publishingProgress
+              : hasDraft
+                ? app.editor.publishFinish
+                : app.editor.liveShort}
           </span>
           <span className="publish-label-short" aria-hidden>
-            {publishing ? "Yayınlanıyor…" : hasDraft ? "Yayınla" : "Yayında"}
+            {publishing
+              ? app.editor.publishingProgress
+              : hasDraft
+                ? app.editor.publishShort
+                : app.editor.liveShort}
           </span>
         </button>
       </div>
@@ -1325,7 +1352,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           <strong>
             <WarningTriangle width={15} height={15} aria-hidden /> Aksiyon gerekli
           </strong>
-          <p>Şu bloklar tamamlanmadan sayfan yayınlanamaz. Doldur ya da kaldır:</p>
+          <p>{app.editor.blockedTitle}</p>
           <ul>
             {issues.map((issue) => (
               <li key={issue.blockId}>
@@ -1359,7 +1386,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               <button type="button" onClick={() => window.location.reload()}>Yenile</button>
             </>
           ) : (
-            "Kaydedilemedi — bağlantını kontrol et."
+            app.editor.saveFailed
           )}
         </div>
       ) : null}
@@ -1374,7 +1401,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               className={`profile-identity editor-profile-identity ${selectedId === profileBlock.id ? "is-selected" : ""} ${blockIssue(profileBlock) ? "is-incomplete" : ""}`}
               role="button"
               tabIndex={0}
-              aria-label="Genel profil bilgilerini düzenle"
+              aria-label={app.editor.editProfileInfo}
               onClick={() => setSelectedId(profileBlock.id)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") setSelectedId(profileBlock.id);
@@ -1444,7 +1471,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
-      <nav className="editor-toolbar" aria-label="Editör araçları">
+      <nav className="editor-toolbar" aria-label={app.editor.toolbarLabel}>
         <button
           type="button"
           data-tooltip="Tema"
@@ -1455,7 +1482,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           <Palette width={19} height={19} />
         </button>
         <span className="toolbar-sep" aria-hidden />
-        <button type="button" data-tooltip="Bağlantı ekle" aria-label="Bağlantı ekle" onClick={() => add("link")}>
+        <button type="button" data-tooltip={app.editor.addLink} aria-label={app.editor.addLink} onClick={() => add("link")}>
           <LinkIcon width={19} height={19} />
         </button>
         <button type="button" data-tooltip="Metin ekle" aria-label="Metin ekle" onClick={() => add("text")}>
@@ -1464,7 +1491,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <button type="button" data-tooltip="Duyuru ekle" aria-label="Duyuru ekle" onClick={() => add("status")}>
           <Megaphone width={18} height={18} />
         </button>
-        <button type="button" data-tooltip="Görsel ekle" aria-label="Görsel ekle" onClick={() => add("image")}>
+        <button type="button" data-tooltip={app.editor.addImage} aria-label={app.editor.addImage} onClick={() => add("image")}>
           <MediaImage width={19} height={19} />
         </button>
         {/* "Fotoğraf galerisi": bu çubuktaki son düğme zaten "Blok galerisi"
@@ -1472,8 +1499,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
             arayüzde okunmazdı. */}
         <button
           type="button"
-          data-tooltip={galleryBlocked ?? "Fotoğraf galerisi ekle"}
-          aria-label={galleryBlocked ?? "Fotoğraf galerisi ekle"}
+          data-tooltip={galleryBlocked ?? app.editor.addGallery}
+          aria-label={galleryBlocked ?? app.editor.addGallery}
           disabled={Boolean(galleryBlocked)}
           className={galleryBlocked ? "cursor-not-allowed opacity-40" : ""}
           onClick={() => add("gallery")}
@@ -1495,8 +1522,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <span className="toolbar-sep" aria-hidden />
         <button
           type="button"
-          data-tooltip={device === "desktop" ? "Mobil önizleme" : "Masaüstü görünümü"}
-          aria-label={device === "desktop" ? "Mobil önizleme" : "Masaüstü görünümü"}
+          data-tooltip={device === "desktop" ? app.editor.mobilePreview : app.editor.desktopPreview}
+          aria-label={device === "desktop" ? app.editor.mobilePreview : app.editor.desktopPreview}
           className={device === "mobile" ? "is-active" : ""}
           onClick={() => setDevice(device === "desktop" ? "mobile" : "desktop")}
         >
@@ -1505,7 +1532,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       </nav>
 
       {panel === "theme" ? (
-        <div className="theme-popover editor-popover" role="group" aria-label="Tema seç">
+        <div className="theme-popover editor-popover" role="group" aria-label={app.editor.pickTheme}>
           {onboarding.templates.map((template) => (
             <button
               key={template.id}

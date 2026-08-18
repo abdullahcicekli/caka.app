@@ -12,25 +12,34 @@
 // üretmez, yanıttakini gösterir).
 import { Hono } from "hono";
 
-import { SPOTIFY_KIND_LABELS, classifySpotifyUrl } from "@caka/shared";
+import { classifySpotifyUrl, type SpotifyKind } from "@caka/shared";
+
+import { appCatalog, type AppContent } from "../app/content/app";
+import { widgetCatalog } from "../app/content/widget";
+import { localeFromRequest } from "./locale";
+
+/** Tür rozetinin isteğin dilindeki adı — widget kataloğuyla aynı sözlük. */
+function kindLabel(request: Request, kind: SpotifyKind): string {
+  return widgetCatalog[localeFromRequest(request)].spotify.kind(kind);
+}
 import { getSession } from "./auth";
 import { isCrossOriginRequest } from "./request";
 import { signImageProxyPath } from "./image-proxy";
 import { resolveSpotifyLink } from "./spotify";
 
 /** `classifySpotifyUrl` reddetme sebebi → kullanıcıya gösterilecek cümle. */
-const CLASSIFY_ERRORS: Record<"invalid" | "not-spotify" | "unsupported", string> = {
-  invalid: "Bu bir bağlantı gibi görünmüyor. Spotify'da “Paylaş → Bağlantıyı kopyala” ile aldığın adresi yapıştır.",
-  "not-spotify":
-    "Bu adres Spotify'a ait değil. open.spotify.com adresi ya da spotify:track:… biçimindeki bağlantıyı yapıştır.",
-  unsupported:
-    "Bu Spotify adresi eklenebilir bir içerik değil. Parça, albüm, çalma listesi, sanatçı, podcast ve bölüm eklenebilir; kullanıcı profili, arama ve kitaplık sayfaları eklenemez.",
-};
+/** Sınıflandırma hatası → katalog anahtarı. Metin dile göre çözülür. */
+const CLASSIFY_KEYS = {
+  invalid: "spotifyInvalid",
+  "not-spotify": "spotifyNotSpotify",
+  unsupported: "spotifyUnsupported",
+} as const satisfies Record<"invalid" | "not-spotify" | "unsupported", keyof AppContent["api"]>;
 
 export const spotifyApi = new Hono<{ Bindings: Env }>();
 
 spotifyApi.get("/", async (c) => {
-  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+  const app = appCatalog[localeFromRequest(c.req.raw)].api;
+  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: app.origin }, 403);
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
 
@@ -38,33 +47,33 @@ spotifyApi.get("/", async (c) => {
   // Ağa çıkmadan önce şekli eler: Spotify olmayan bir adres için dış istek
   // atmanın anlamı yok ve hata mesajı da buradan daha net çıkıyor.
   const ref = classifySpotifyUrl(url);
-  if (ref.kind === "none") return c.json({ error: CLASSIFY_ERRORS[ref.reason] }, 400);
+  if (ref.kind === "none") return c.json({ error: app[CLASSIFY_KEYS[ref.reason]] }, 400);
 
   const resolved = await resolveSpotifyLink(url);
   // `classifySpotifyUrl` geçtiyse buraya düşmez; yine de tip daraltmanın
   // ötesinde bir güvence olsun diye açık bir dal.
-  if (!resolved) return c.json({ error: CLASSIFY_ERRORS.unsupported }, 400);
+  if (!resolved) return c.json({ error: app.spotifyUnsupported }, 400);
 
   if (resolved.status === "not-found") {
     return c.json(
       {
-        error: `Bu ${SPOTIFY_KIND_LABELS[resolved.kind].toLocaleLowerCase("tr")} Spotify'da bulunamadı. İçerik kaldırılmış olabilir ya da bağlantı eksik kopyalanmış.`,
+        error: app.spotifyNotFound(kindLabel(c.req.raw, resolved.kind)),
       },
       404,
     );
   }
   if (resolved.status === "unavailable") {
     return c.json(
-      { error: "Spotify şu anda yanıt vermedi. Birazdan tekrar dene." },
+      { error: app.spotifyUnavailable },
       502,
     );
   }
 
   return c.json({
     kind: resolved.kind,
-    // Türün Türkçe adı da dönülür: editörün "Parça olarak eklendi" cümlesi
-    // ile ucun hata mesajları aynı sözlükten okusun.
-    kindLabel: SPOTIFY_KIND_LABELS[resolved.kind],
+    // Türün adı da dönülür: editörün "Parça olarak eklendi" cümlesi ile ucun
+    // hata mesajları aynı sözlükten, aynı dilde okusun.
+    kindLabel: kindLabel(c.req.raw, resolved.kind),
     url: resolved.url,
     entityId: resolved.entityId,
     title: resolved.title ?? "",
