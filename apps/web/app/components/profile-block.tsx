@@ -278,6 +278,13 @@ export function ProfileBlockCard({
           {count === 0 ? (
             <span className="profile-image-placeholder">{galeriBosMetni}</span>
           ) : null}
+          {/* Başlık her zaman basılır, GÖRÜNÜRLÜĞÜNE CSS karar verir: kısa
+              tile'larda (138-156px) hücrelerin üstüne bindirmeden sığmıyor.
+              Editörde başlık alanı var; hiçbir yerde göstermemek kullanıcının
+              yazdığı şeyi kaybetmek olurdu. */}
+          {block.data.title ? (
+            <span className="gallery-title">{block.data.title}</span>
+          ) : null}
           {GALLERY_BADGE_SLOTS.filter((capacity) => count > capacity).map((capacity) => (
             <span
               key={capacity}

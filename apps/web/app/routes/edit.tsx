@@ -476,7 +476,19 @@ function Inspector({
         };
         return (
           <>
-            <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+            <label>
+              Başlık
+              <input
+                value={block.data.title}
+                onChange={(event) => update({ title: event.target.value })}
+              />
+            </label>
+            {/* Başlık kısa tile'da hücrelerin üstüne binmeden sığmıyor ve
+                gizleniyor. Kullanıcı yazdığı şeyi neden göremediğini bilmeli. */}
+            <p className="inspector-hint">
+              Başlık yalnız iki satır yüksekliğindeki galerilerde görünür. Kısa
+              galerilerde ekran okuyucular için kullanılır.
+            </p>
             <fieldset>
               <legend>Fotoğraflar ({photos.length}/{GALLERY_MAX_PHOTOS})</legend>
               {photos.length === 0 ? (

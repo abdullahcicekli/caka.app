@@ -1278,6 +1278,32 @@ a.profile-block:focus-visible {
   object-fit: cover;
 }
 .profile-block-gallery .profile-image-placeholder { border-radius: var(--radius-lg); }
+/* Galeri başlığı yalnız DİKEY YER OLAN tile'larda görünür (2x2, 4x2).
+   Kısa tile'da (138-156px) hücrelerin üstüne binmeden sığmıyor; oradaki
+   görevini `aria-label` üstleniyor. Grid'e satır eklemek yerine bindirme
+   kullanıldı: mozaik düzenlerinin hiçbiri bozulmuyor. */
+.gallery-title { display: none; }
+
+@container (min-height: 200px) {
+  .gallery-title {
+    position: absolute;
+    display: block;
+    max-width: calc(100% - 24px);
+    overflow: hidden;
+    padding: 5px 10px;
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--profile-card) 82%, transparent);
+    color: var(--profile-card-text, var(--profile-text));
+    font-size: 12.5px;
+    font-weight: 600;
+    inset: 14px auto auto 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+}
+
 /* Pil son görünen hücrenin üstünde durur; o hücre her düzende sağ alttadır. */
 .gallery-more {
   position: absolute;
