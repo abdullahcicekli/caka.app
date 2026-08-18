@@ -28,6 +28,7 @@ import {
   youtubeChannelUrl,
   youtubeOEmbedUrl,
   youtubeThumbnailUrl,
+  youtubeVerticalThumbnailUrl,
 } from "@caka/shared";
 
 import { readTextStreaming } from "./og";
@@ -60,8 +61,10 @@ export type ResolvedYouTubeVideo = {
   title: string | null;
   channelName: string | null;
   channelUrl: string | null;
-  /** `maxresdefault` yalnız doğrulandıysa, aksi hâlde `mqdefault`. */
+  /** Short'ta doğrulanmış `oardefault`, yoksa `maxresdefault`/`mqdefault`. */
   thumbnailUrl: string;
+  /** Küçük görsel gerçekten dikey mi (9:16 çerçeve yalnız o zaman doğru). */
+  verticalThumbnail: boolean;
 };
 
 /** Kayıt anında çözülüp blokta saklanan kanal verisi. */
@@ -153,7 +156,27 @@ async function readCappedText(response: Response, maxBytes: number): Promise<str
  * 1097 baytlık gri bir vekil görsel döndürüyor (ölçüldü: eski videolarda 404,
  * bazı Shorts'larda 200). Bu yüzden boyut da eşiği geçmeli.
  */
-async function pickThumbnailUrl(videoId: string): Promise<string> {
+async function pickThumbnailUrl(
+  videoId: string,
+  shorts: boolean,
+): Promise<{ url: string; vertical: boolean }> {
+  // Short ise dikey görseli dene: `mqdefault` bir Short için de 16:9 gelir ve
+  // dikey çerçevede ağır kırpılır. Yoksa normal akışa düşülür — `/shorts/`
+  // yolundan gelen her adres gerçekten dikey içerik olmayabilir.
+  if (shorts) {
+    const vertical = youtubeVerticalThumbnailUrl(videoId);
+    const probe = await youtubeFetch(vertical, {
+      accept: "image/*",
+      timeoutMs: FETCH_TIMEOUT_MS,
+      method: "HEAD",
+    });
+    await probe?.body?.cancel().catch(() => {});
+    const size = Number(probe?.headers.get("content-length") ?? "0");
+    if (probe?.ok && size >= YOUTUBE_THUMBNAIL_MIN_BYTES) {
+      return { url: vertical, vertical: true };
+    }
+  }
+
   const maxres = youtubeThumbnailUrl(videoId, "maxres");
   const response = await youtubeFetch(maxres, {
     accept: "image/*",
@@ -162,8 +185,10 @@ async function pickThumbnailUrl(videoId: string): Promise<string> {
   });
   await response?.body?.cancel().catch(() => {});
   const declared = Number(response?.headers.get("content-length") ?? "0");
-  if (response?.ok && declared >= YOUTUBE_THUMBNAIL_MIN_BYTES) return maxres;
-  return youtubeThumbnailUrl(videoId, "mq");
+  if (response?.ok && declared >= YOUTUBE_THUMBNAIL_MIN_BYTES) {
+    return { url: maxres, vertical: false };
+  }
+  return { url: youtubeThumbnailUrl(videoId, "mq"), vertical: false };
 }
 
 /** oEmbed'den başlık ve kanal adı; başarısızlık null döner (blok yine kurulur). */
@@ -273,9 +298,9 @@ export async function resolveYouTubeLink(url: string): Promise<ResolvedYouTube |
 
   if (ref.kind === "video") {
     // Küçük görsel doğrulaması ve oEmbed birbirinden bağımsız: paralel.
-    const [meta, thumbnailUrl] = await Promise.all([
+    const [meta, thumbnail] = await Promise.all([
       fetchVideoMeta(ref.videoId),
-      pickThumbnailUrl(ref.videoId),
+      pickThumbnailUrl(ref.videoId, ref.shorts),
     ]);
     return {
       kind: "video",
@@ -284,7 +309,8 @@ export async function resolveYouTubeLink(url: string): Promise<ResolvedYouTube |
       title: meta?.title ?? null,
       channelName: meta?.channelName ?? null,
       channelUrl: meta?.channelUrl ?? null,
-      thumbnailUrl,
+      thumbnailUrl: thumbnail.url,
+      verticalThumbnail: thumbnail.vertical,
     };
   }
 

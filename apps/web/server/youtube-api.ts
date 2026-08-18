@@ -76,6 +76,7 @@ youtubeApi.get("/", async (c) => {
     title: resolved.title ?? "",
     channelName: resolved.channelName ?? "",
     shorts: resolved.shorts,
+    verticalThumbnail: resolved.verticalThumbnail,
     thumbnail: resolved.thumbnailUrl,
     // Editörde blok daha kaydedilmeden önizleme görünsün diye imzalı yol da
     // dönülür; loader'ın `signedImages` eşlemesine buradan eklenir.

@@ -277,6 +277,12 @@ const youtubeVideoDataSchema = z.object({
   duration: z.string().trim().max(16).default(""),
   /** `/shorts/` yolundan geldi mi? Adres şeklinden gelir, render türetmez. */
   shorts: z.boolean().default(false),
+  /**
+   * Küçük görsel gerçekten dikey mi (`oardefault`, 1080×1920). `shorts` tek
+   * başına yetmez: bir Short'un `mqdefault`'u da 16:9 gelir ve 9:16 çerçeveye
+   * oturtulunca ağır kırpılır. Kayıt anında doğrulanır.
+   */
+  verticalThumbnail: z.boolean().default(false),
   // KTD35: `mqdefault` (320×180, gerçek 16:9 ve her videoda var). `hqdefault`
   // 4:3 ve siyah bantlı olduğu için hiçbir yolda kullanılmaz.
   thumbnail: optionalHttpUrlSchema.default(""),

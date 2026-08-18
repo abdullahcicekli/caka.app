@@ -123,7 +123,17 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
         id,
         type,
         size: "2x1",
-        data: { kind: "video", url: "", videoId: "", title: "", channelName: "", duration: "", shorts: false, thumbnail: "" },
+        data: {
+          kind: "video",
+          url: "",
+          videoId: "",
+          title: "",
+          channelName: "",
+          duration: "",
+          shorts: false,
+          verticalThumbnail: false,
+          thumbnail: "",
+        },
       };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };

@@ -16,6 +16,7 @@ import {
   youtubeChannelUrl,
   youtubeOEmbedUrl,
   youtubeThumbnailUrl,
+  youtubeVerticalThumbnailUrl,
   youtubeVideoUrl,
 } from "./youtube";
 
@@ -184,6 +185,17 @@ describe("kimlik doğrulayıcıları", () => {
 });
 
 describe("adres kurucular", () => {
+  it("Shorts'un dikey küçük görseli oardefault'tur", () => {
+    // Ölçüm (2026-08-18): bir Short'un mqdefault'u da maxresdefault'u da
+    // 16:9 gelir (320×180 / 1280×720); yalnız oardefault 1080×1920.
+    // 9:16 çerçeveye 16:9 görsel koymak genişliğin çoğunu kırpıyordu.
+    expect(youtubeVerticalThumbnailUrl("LiH-P4rSkLI")).toBe(
+      "https://i.ytimg.com/vi/LiH-P4rSkLI/oardefault.jpg",
+    );
+    expect(youtubeVerticalThumbnailUrl("LiH-P4rSkLI")).not.toContain("mqdefault");
+    expect(youtubeVerticalThumbnailUrl("LiH-P4rSkLI")).not.toContain("hqdefault");
+  });
+
   it("küçük görsel mqdefault'tur; hqdefault hiç üretilmez", () => {
     expect(youtubeThumbnailUrl("Af6i6ChAVTw", "mq")).toBe(
       "https://i.ytimg.com/vi/Af6i6ChAVTw/mqdefault.jpg",

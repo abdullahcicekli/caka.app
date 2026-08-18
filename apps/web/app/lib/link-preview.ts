@@ -126,6 +126,16 @@ export function prettyLinkTarget(value: string, maxLength = 38): string {
   return room <= 1 ? host : `${host}${path.slice(0, room)}…`;
 }
 
+/**
+ * Yalnız alan adı ("trendyol.com"). Başlığı boş kalan taslak kartta başlık
+ * yerine geçer; alt satırdaki yollu hâlle aynı metni iki kez yazmamak için.
+ */
+export function linkHostLabel(value: string): string {
+  const url = toUrl(value);
+  if (!url) return value.trim();
+  return url.hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+}
+
 /** Kartın görsel çapası: marka tonu + baş harf. */
 export function linkBrand(value: string): LinkBrand {
   const url = toUrl(value);

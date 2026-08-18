@@ -23,7 +23,7 @@ import {
   youtubeVideoYedekBasligi,
 } from "~/content/widget";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
-import { linkBrand, prettyLinkTarget } from "~/lib/link-preview";
+import { linkBrand, linkHostLabel, prettyLinkTarget } from "~/lib/link-preview";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
 import { ProfileAvatar } from "./profile-avatar";
 
@@ -202,9 +202,9 @@ export function ProfileBlockCard({
               {brand.initial}
             </span>
             <span className="link-lines">
-              {/* Başlık boşsa (taslak) hedef adres başlığın yerine geçer;
-                  kart hiçbir hâlde boş bir satırla durmaz. */}
-              <strong>{block.data.title || target}</strong>
+              {/* Başlık boşsa (taslak) alan adı başlığın yerine geçer; alt
+                  satır zaten yollu hâli yazıyor, aynı metin iki kez çıkmasın. */}
+              <strong>{block.data.title || linkHostLabel(block.data.url)}</strong>
               <small>{target}</small>
             </span>
           </span>
@@ -331,7 +331,12 @@ export function ProfileBlockCard({
             </span>
           </>
         );
-        const className = `profile-block profile-block-youtube is-video${data.shorts ? " is-shorts" : ""}`;
+        // 9:16 çerçeve yalnız küçük görsel GERÇEKTEN dikeyse doğru. Bir
+        // Short'un `mqdefault`'u da 16:9 gelir; `shorts` bayrağına bakarak
+        // çerçeve seçmek o görselin genişliğinin çoğunu kırpıyordu.
+        const className = `profile-block profile-block-youtube is-video${
+          data.verticalThumbnail ? " is-shorts" : ""
+        }`;
         return data.url ? (
           <a className={className} href={data.url} target="_blank" rel="noreferrer">
             {content}

@@ -46,6 +46,20 @@ export const YOUTUBE_THUMBNAIL_MIN_BYTES = 4096;
 
 export type YouTubeThumbnailQuality = "mq" | "maxres";
 
+/**
+ * Shorts'un GERÇEK dikey küçük görseli. Ölçüm (2026-08-18): `mqdefault` ve
+ * `maxresdefault` bir Short için de 16:9 döner (320×180 / 1280×720), yani
+ * dikey bir çerçeveye `cover` ile oturtulunca genişliğin çoğu kırpılır.
+ * `oardefault` ise 1080×1920 — Short'un kendi oranı.
+ *
+ * Ayrıca güvenilir bir Shorts göstergesidir: normal videolarda 404 döner
+ * (beş örnekte doğrulandı). Adres şekli `/shorts/` yolunu gerektirirken bu
+ * dosyanın varlığı içeriğin gerçekten dikey olduğunu söyler.
+ */
+export function youtubeVerticalThumbnailUrl(videoId: string): string {
+  return `https://i.ytimg.com/vi/${videoId}/oardefault.jpg`;
+}
+
 export type YouTubeRef =
   /** Kimliği doğrudan URL'den okunan video. */
   | { kind: "video"; videoId: string; shorts: boolean }
