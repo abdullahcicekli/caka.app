@@ -105,7 +105,9 @@ describe("çerez envanteri", () => {
     const cookies = entries.filter(
       (entry) => (entry.storage ?? "cookie") === "cookie",
     );
-    expect(cookies).toHaveLength(3);
+    // session_token, state, caka_claim, caka_dil. Sayı bilinçli sabittir:
+    // envantere sessizce çerez eklenmesin.
+    expect(cookies).toHaveLength(4);
   });
 });
 

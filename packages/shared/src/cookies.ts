@@ -130,6 +130,20 @@ export const COOKIE_INVENTORY = [
     party: "birinci",
     provider: "Caka",
   },
+  {
+    name: "caka_dil",
+    category: "zorunlu",
+    purpose:
+      "Seçtiğin dili hatırlar; sonraki ziyaretlerinde site tarayıcı diline " +
+      "bakmadan doğrudan o dilde açılır. İçinde yalnızca dil kodu bulunur " +
+      "(örneğin `de`) — kimlik veya başka bir kişisel veri taşımaz. Ayarlardan " +
+      "veya sayfa altındaki dil seçicisinden yazılır, bu yüzden tarayıcıda " +
+      "JavaScript ile erişilebilir olması gerekir ve HttpOnly olamaz. " +
+      "Secure, SameSite=Lax, Path=/.",
+    lifetime: "1 yıl",
+    party: "birinci",
+    provider: "Caka",
+  },
   // Çerez değil: React Router'ın `<ScrollRestoration />` bileşeni
   // (`apps/web/app/root.tsx`) sekmeye özel `sessionStorage` alanına yazar.
   // Girdi tarayıcıda gözle görülür, bu yüzden envanterde durur.

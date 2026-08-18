@@ -36,10 +36,11 @@ altyapısı taklit edilmiyor.
 | `__Secure-better-auth.session_token` | Çerez | Zorunlu | 7 gün | Birinci (Caka) | Giriş yapan kullanıcının oturumu. HttpOnly, Secure, SameSite=Lax, imzalı |
 | `__Secure-better-auth.state` | Çerez | Zorunlu | 5 dakika | Birinci (Caka) | Google/Apple girişinde CSRF koruması (OAuth `state`). HttpOnly, Secure, SameSite=Lax; giriş bitince silinir |
 | `caka_claim` | Çerez | Zorunlu | 15 dakika | Birinci (Caka) | Kayıtta seçilen adresi sağlayıcıya gidip dönene kadar taşır; dönüşte silinir. İçinde yalnız seçilen kullanıcı adı var |
+| `caka_dil` | Çerez | Zorunlu | 1 yıl | Birinci (Caka) | Seçilen arayüz dilini hatırlar; içinde yalnız dil kodu var (`en`, `tr`, `es`, `pt-BR`, `de`). Tarayıcıdan yazıldığı için HttpOnly değil; Secure, SameSite=Lax, Path=/ |
 | `react-router-scroll-positions` | `sessionStorage` | Zorunlu | Sekme kapanınca | Birinci (Caka) | Geri tuşunda sayfanın kaldığı yere dönmesi; yalnız piksel değerleri |
 | `react-router-manifest-version` | `sessionStorage` | Zorunlu | Yenileme bitince, en geç sekme kapanınca | Birinci (Caka) | Yeni sürüm yayınlandığında açık sekmenin bir kez yenilenmesi; yenilemenin döngüye girmemesi için sürüm etiketi tutar |
 
-Üçüncü taraf çerez **yok**. Envanterdeki beş girdinin beşi de birinci taraf.
+Üçüncü taraf çerez **yok**. Envanterdeki altı girdinin altısı da birinci taraf.
 
 ## 3. Adlar nasıl doğrulandı
 
