@@ -7,6 +7,8 @@ interface CakaSecretEnv {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   APPLE_PRIVATE_KEY: string;
+  /** `/api/gorsel` imzası (HMAC-SHA256). Yoksa proxy tamamen kapalıdır. */
+  IMAGE_PROXY_SECRET: string;
 }
 
 interface Env extends CakaSecretEnv {}

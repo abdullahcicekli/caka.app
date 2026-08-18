@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PROXY_SIGNATURE_HEX_LENGTH,
+  PROXY_SIGNATURE_PARAM,
   checkProxyImageUrl,
   isBlockedProxyHostname,
   normalizeImageContentType,
   remoteImageProxyPath,
+  signedRemoteImageProxyPath,
+  verifyRemoteImageSignature,
 } from "./remote-image";
 
 describe("checkProxyImageUrl — kabul edilen adresler", () => {
@@ -128,5 +132,77 @@ describe("remoteImageProxyPath", () => {
     expect(remoteImageProxyPath("https://example.com/a.png?x=1&y=2")).toBe(
       "/api/gorsel?u=https%3A%2F%2Fexample.com%2Fa.png%3Fx%3D1%26y%3D2",
     );
+  });
+
+  it("imza verilirse `s` parametresi eklenir", () => {
+    expect(remoteImageProxyPath("https://example.com/a.png", "deadbeef")).toBe(
+      "/api/gorsel?u=https%3A%2F%2Fexample.com%2Fa.png&s=deadbeef",
+    );
+  });
+});
+
+describe("proxy imzası", () => {
+  const secret = "test-sirri-en-az-32-karakter-uzunlugunda";
+  const target = "https://example.com/a.png?x=1";
+
+  async function signatureOf(url: string, key = secret): Promise<string> {
+    const path = await signedRemoteImageProxyPath(url, key);
+    return new URL(path!, "https://caka.app").searchParams.get(PROXY_SIGNATURE_PARAM)!;
+  }
+
+  it("geçerli imza doğrulanır", async () => {
+    const path = await signedRemoteImageProxyPath(target, secret);
+    const params = new URL(path!, "https://caka.app").searchParams;
+    const canonical = params.get("u")!;
+    const signature = params.get(PROXY_SIGNATURE_PARAM)!;
+    expect(signature).toHaveLength(PROXY_SIGNATURE_HEX_LENGTH);
+    expect(signature).toMatch(/^[0-9a-f]+$/);
+    await expect(verifyRemoteImageSignature(canonical, signature, secret)).resolves.toBe(true);
+  });
+
+  it("imza kanonik adres üzerinde hesaplanır (varsayılan port normalize edilir)", async () => {
+    expect(await signatureOf("https://example.com:443/a.png?x=1")).toBe(await signatureOf(target));
+  });
+
+  it("aynı girdi hep aynı imzayı verir (önbellek anahtarı kararlı)", async () => {
+    expect(await signatureOf(target)).toBe(await signatureOf(target));
+  });
+
+  it("bozuk imza reddedilir", async () => {
+    const signature = await signatureOf(target);
+    const bozuk = `${signature.slice(0, -1)}${signature.endsWith("0") ? "1" : "0"}`;
+    await expect(verifyRemoteImageSignature(target, bozuk, secret)).resolves.toBe(false);
+  });
+
+  it("eksik imza reddedilir", async () => {
+    await expect(verifyRemoteImageSignature(target, "", secret)).resolves.toBe(false);
+  });
+
+  it("kısaltılmış imza reddedilir (uzunluk kontrolü)", async () => {
+    const signature = await signatureOf(target);
+    await expect(verifyRemoteImageSignature(target, signature.slice(0, 8), secret)).resolves.toBe(
+      false,
+    );
+  });
+
+  it("BAŞKA bir URL için üretilmiş imza reddedilir", async () => {
+    const signature = await signatureOf("https://example.com/baska.png");
+    await expect(verifyRemoteImageSignature(target, signature, secret)).resolves.toBe(false);
+  });
+
+  it("başka bir sırla üretilmiş imza reddedilir", async () => {
+    const signature = await signatureOf(target, "farkli-sir-farkli-sir-farkli-sir");
+    await expect(verifyRemoteImageSignature(target, signature, secret)).resolves.toBe(false);
+  });
+
+  it("sır yoksa ne imza üretilir ne de doğrulama geçer (fail-closed)", async () => {
+    await expect(signedRemoteImageProxyPath(target, "")).resolves.toBeNull();
+    await expect(verifyRemoteImageSignature(target, "a".repeat(32), "")).resolves.toBe(false);
+  });
+
+  it("proxy'lenemeyen adres imzalanmaz", async () => {
+    await expect(signedRemoteImageProxyPath("http://169.254.169.254/latest", secret)).resolves.toBeNull();
+    await expect(signedRemoteImageProxyPath("javascript:alert(1)", secret)).resolves.toBeNull();
+    await expect(signedRemoteImageProxyPath("", secret)).resolves.toBeNull();
   });
 });

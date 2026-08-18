@@ -180,6 +180,47 @@ export function ProfileBlockCard({
   );
     }
 
+    // Taban düzen: fotoğraflar tek sırada, kırpılarak (letterbox yok, R64).
+    // Tile boyutuna göre mozaik/hero varyantları U32'nin işi.
+    case "gallery":
+      return (
+        <article className="profile-block profile-block-gallery">
+          {block.data.photos.map((photo) => (
+            <img key={photo.assetId} src={`/i/${photo.assetId}`} alt={photo.alt} draggable={false} />
+          ))}
+        </article>
+      );
+
+    case "youtube": {
+      const data = block.data;
+      // Küçük görsel uzak host'tan gelir; ziyaretçi tarayıcısı YouTube'a
+      // doğrudan istek atmasın diye birinci taraf proxy'sinden geçer (R58).
+      const thumbnail = data.thumbnail ? remoteImageProxyPath(data.thumbnail) : "";
+      const title =
+        data.kind === "video"
+          ? data.title
+          : data.channelName || (data.handle ? `@${data.handle}` : "");
+      const meta = data.kind === "video" ? data.channelName : data.subscribers;
+      const content = (
+        <>
+          {thumbnail ? (
+            <img className="youtube-thumb" src={thumbnail} alt="" loading="lazy" draggable={false} />
+          ) : null}
+          <span className="youtube-meta">
+            <strong>{title}</strong>
+            <small>{meta}</small>
+          </span>
+        </>
+      );
+      return data.url ? (
+        <a className="profile-block profile-block-youtube" href={data.url} target="_blank" rel="noreferrer">
+          {content}
+        </a>
+      ) : (
+        <article className="profile-block profile-block-youtube">{content}</article>
+      );
+    }
+
     default: {
       // Tanınmayan tip: derleyici burada hata verir. Çalışma anında (eski
       // deploy + yeni blok) sessizce boş kalır, sayfayı düşürmez.

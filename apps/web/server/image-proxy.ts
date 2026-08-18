@@ -12,14 +12,22 @@
 // asıl risk SSRF'tir; adres kuralları `@caka/shared`'daki
 // `checkProxyImageUrl` içinde yaşar ve testlidir. Her yönlendirme hop'u
 // yeniden doğrulanır.
+//
+// UÇ İMZALIDIR: yalnız Caka'nın ürettiği adresler proxy'lenir
+// (`IMAGE_PROXY_SECRET` ile HMAC-SHA256). Ziyaretçi oturum açmadığı için
+// kimlik doğrulaması yapılamaz; imza olmadan uç herkesin kullanabileceği
+// bedava bir görsel CDN'i olurdu.
 import { Hono } from "hono";
 
 import {
   PROXY_FETCH_TIMEOUT_MS,
   PROXY_MAX_IMAGE_BYTES,
   PROXY_MAX_REDIRECTS,
+  PROXY_SIGNATURE_PARAM,
   checkProxyImageUrl,
   normalizeImageContentType,
+  signedRemoteImageProxyPath,
+  verifyRemoteImageSignature,
 } from "@caka/shared";
 
 /** Başarılı görselin önbellek ömrü. */
@@ -114,6 +122,29 @@ export async function fetchFollowingCheckedRedirects(
   return null;
 }
 
+let secretWarned = false;
+
+/**
+ * İmzalı proxy adresi üretir — uzak bir görseli sayfaya koyan HER yol bunu
+ * çağırır (SSR loader'ı, editör API'si, og zenginleştirme).
+ *
+ * Sır tanımsızsa null döner (fail-closed): imzasız adres zaten proxy'den
+ * geçmeyeceği için `<img>`'e yazmak kırık görsel demek olurdu; çağıran taraf
+ * null görünce önizlemesiz kartı gösterir.
+ */
+export async function signImageProxyPath(env: Env, url: string): Promise<string | null> {
+  const secret = env.IMAGE_PROXY_SECRET ?? "";
+  if (!secret) {
+    // Yapılandırma hatası bir kez loglanır; her görselde tekrarlamaz.
+    if (!secretWarned) {
+      secretWarned = true;
+      console.warn("image-proxy: IMAGE_PROXY_SECRET tanımsız — uzak görseller kapalı");
+    }
+    return null;
+  }
+  return signedRemoteImageProxyPath(url, secret);
+}
+
 export const imageProxyApi = new Hono<{ Bindings: Env }>();
 
 imageProxyApi.get("/", async (c) => {
@@ -124,6 +155,20 @@ imageProxyApi.get("/", async (c) => {
   // iç içe geçmiş Worker çağrıları doğurur (her katman ayrı bir alt istek).
   const selfHost = new URL(c.req.url).host;
   if (new URL(checked.url).host === selfHost) return failure();
+
+  // İMZA KAPISI — dış isteğe çıkmadan önce. Sır tanımsızsa uç tamamen
+  // kapalıdır: "sır yoksa imzasız çalış" demek, sırrı unutulmuş bir deploy'da
+  // açık proxy'yi sessizce geri getirmek olurdu.
+  const secret = c.env.IMAGE_PROXY_SECRET ?? "";
+  if (!secret) {
+    if (!secretWarned) {
+      secretWarned = true;
+      console.warn("image-proxy: IMAGE_PROXY_SECRET tanımsız — uç kapalı");
+    }
+    return failure();
+  }
+  const signature = c.req.query(PROXY_SIGNATURE_PARAM) ?? "";
+  if (!(await verifyRemoteImageSignature(checked.url, signature, secret))) return failure();
 
   // Kanonik önbellek anahtarı: aynı görsel farklı sorgu sıralamalarıyla
   // ayrı girdi açmasın.

@@ -105,16 +105,46 @@ function bento(
     size: sizeFromDims(lg.w, lg.h),
     smManual,
     pos: { lg, sm: sm ?? { x: 0, y: 0, w: Math.min(lg.w, 2), h: lg.h } },
-    data: { title: id, url: "" },
+    data: { title: id, url: "", ogImage: "" },
   };
 }
+
+describe("boyut sözlüğü", () => {
+  const ALL_SIZES = ["1x1", "1x2", "2x1", "2x2", "4x1", "4x2"] as const;
+
+  it("sözlükteki her etiket sizeToDims → sizeFromDims turundan kendisi olarak çıkar", () => {
+    for (const size of ALL_SIZES) {
+      const { w, h } = sizeToDims(size);
+      expect(sizeFromDims(w, h)).toBe(size);
+    }
+  });
+
+  it("sizeToDims etiketi ölçüye çevirir", () => {
+    expect(sizeToDims("1x2")).toEqual({ w: 1, h: 2 });
+    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 1 });
+    expect(sizeToDims("4x2")).toEqual({ w: 4, h: 2 });
+  });
+
+  // KTD33: eski sözlükte yalnız 1x1/2x1/2x2 vardı; dikey tile ve tam
+  // genişlik etiketleri kayboluyordu.
+  it("dikey tile ve tam genişlik artık kaybolmuyor", () => {
+    expect(sizeFromDims(1, 2)).toBe("1x2");
+    expect(sizeFromDims(4, 1)).toBe("4x1");
+    expect(sizeFromDims(4, 2)).toBe("4x2");
+  });
+
+  it("sözlükte karşılığı olmayan ara ölçüler bir alt basamağa yuvarlanır", () => {
+    expect(sizeFromDims(3, 1)).toBe("2x1");
+    expect(sizeFromDims(3, 3)).toBe("2x2");
+    expect(sizeFromDims(1, 4)).toBe("1x2");
+    expect(sizeFromDims(0, 0)).toBe("1x1");
+  });
+});
 
 describe("grid position helpers", () => {
   it("converts sizes to dims and back", () => {
     expect(sizeToDims("2x1")).toEqual({ w: 2, h: 1 });
     expect(sizeFromDims(2, 2)).toBe("2x2");
-    expect(sizeFromDims(3, 1)).toBe("2x1");
-    expect(sizeFromDims(1, 2)).toBe("1x1");
   });
 
   it("derives mobile positions in desktop reading order with width clamped to 2", () => {

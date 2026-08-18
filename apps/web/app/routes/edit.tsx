@@ -88,7 +88,7 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
   switch (type) {
     case "link":
-      return { id, type, size: "1x1", data: { title: "", url: "" } };
+      return { id, type, size: "1x1", data: { title: "", url: "", ogImage: "" } };
     case "social":
       return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "" } };
     case "text":
@@ -97,6 +97,19 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
       return { id, type, size: "2x1", data: { title: "", url: "" } };
     case "status":
       return { id, type, size: "2x1", data: { text: "", url: "" } };
+    // KTD39: beş fotoğrafın 145,6×140'lık neredeyse kare hücrelere düştüğü
+    // tek konfigürasyon 4×1.
+    case "gallery":
+      return { id, type, size: "4x1", data: { title: "", photos: [] } };
+    // Varsayılan video: kanal bloğu aynı tipin `kind: "channel"` hâli ve
+    // ayrım yapıştırılan adresten kayıt anında çözülür (KTD34).
+    case "youtube":
+      return {
+        id,
+        type,
+        size: "2x1",
+        data: { kind: "video", url: "", videoId: "", title: "", channelName: "", duration: "", shorts: false, thumbnail: "" },
+      };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
     default: {
@@ -116,6 +129,9 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   text: true,
   image: true,
   status: true,
+  // Panelde kısayolu yok; blok galerisinden eklenir (U32/U33 açar).
+  gallery: false,
+  youtube: false,
 };
 
 function isDeepLinkAddable(value: string): value is ProfileBlock["type"] {
@@ -275,6 +291,23 @@ function Inspector({
             <label>Duyuru<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
+        );
+      case "gallery":
+        return (
+          <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+        );
+      case "youtube":
+        // Tek alan: adres. Video mu kanal mı olduğu ve başlık/küçük görsel
+        // gibi alanlar kayıt anında sunucuda çözülür (KTD34), kullanıcı
+        // ikisini ayrı ayrı seçmez — yapıştırdığı bağlantı zaten söylüyor.
+        return (
+          <label>YouTube bağlantısı
+            <input
+              value={block.data.url}
+              placeholder="youtube.com/watch?v=… ya da youtube.com/@kanal"
+              onChange={(event) => update({ url: event.target.value })}
+            />
+          </label>
         );
       // Metin bloğu tuval üzerinde Tiptap ile düzenlenir; panelde alanı yok.
       case "text":

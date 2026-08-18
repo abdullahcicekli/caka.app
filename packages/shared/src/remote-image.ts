@@ -212,7 +212,97 @@ export function checkProxyImageUrl(raw: string): ProxyUrlCheck {
   return { ok: true, url: url.toString() };
 }
 
-/** Uzak görselin ziyaretçiye sunulacağı birinci taraf adresi. */
-export function remoteImageProxyPath(url: string): string {
-  return `/api/gorsel?u=${encodeURIComponent(url)}`;
+// ————————————————————————————————————————————————————————————————
+// İmza (backlog U29 kalıntısı)
+//
+// NEDEN: `/api/gorsel?u=` kimlik doğrulamasızdır ve doğrulamasız kalmalıdır —
+// ziyaretçi oturum açmaz. İmzasız bırakılırsa uç, herkesin kullanabileceği
+// bedava bir görsel CDN'idir (Caka'nın hesabından çıkan bant genişliği,
+// Caka'nın IP'sinden çıkan istekler). HMAC, "bu adresi Caka üretti"
+// iddiasını taşır; gizlilik değil, kullanım yetkisi sağlar.
+// ————————————————————————————————————————————————————————————————
+
+/** İmzanın taşındığı sorgu parametresi. */
+export const PROXY_SIGNATURE_PARAM = "s";
+/** İmzanın hex uzunluğu — 32 hex = 128 bit; kaba kuvvete fazlasıyla yeter. */
+export const PROXY_SIGNATURE_HEX_LENGTH = 32;
+
+// Anahtar her imzada yeniden import edilir: WebCrypto'da bu mikrosaniyelik
+// bir iş ve modül düzeyinde sır tutan bir önbellekten daha temiz.
+function hmacKey(secret: string) {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+}
+
+/**
+ * Kanonik adresin HMAC-SHA256 imzası (hex, kısaltılmış).
+ *
+ * İmza HAM kullanıcı girdisi üzerinde değil, `checkProxyImageUrl`'ün
+ * ürettiği KANONİK adres üzerinde hesaplanır: proxy de doğrulamadan önce
+ * aynı kanonikleştirmeyi yapar, yoksa "https://a.com/x" ile
+ * "https://a.com:443/x" farklı imzalar üretirdi.
+ */
+async function signCanonical(canonicalUrl: string, secret: string): Promise<string> {
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    await hmacKey(secret),
+    new TextEncoder().encode(canonicalUrl),
+  );
+  let hex = "";
+  for (const byte of new Uint8Array(signature)) hex += byte.toString(16).padStart(2, "0");
+  return hex.slice(0, PROXY_SIGNATURE_HEX_LENGTH);
+}
+
+/**
+ * Sabit zamanlı hex karşılaştırma. Uzunluk farkı erken dönüşle sızar; bu
+ * kasıtlı, çünkü imza uzunluğu zaten sabit ve herkesçe bilinen bir sayı.
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    diff |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  }
+  return diff === 0;
+}
+
+/**
+ * Uzak görselin ziyaretçiye sunulacağı birinci taraf adresi.
+ *
+ * `signature` verilmediğinde imzasız adres üretir; proxy bunu REDDEDER.
+ * Çağrı yollarının doğrusu `signedRemoteImageProxyPath`'tir — bu imza yalnız
+ * önbellek anahtarı gibi iç kullanımlar ve testler içindir.
+ */
+export function remoteImageProxyPath(url: string, signature?: string): string {
+  const base = `/api/gorsel?u=${encodeURIComponent(url)}`;
+  return signature ? `${base}&${PROXY_SIGNATURE_PARAM}=${signature}` : base;
+}
+
+/**
+ * İmzalı proxy adresi. Adres proxy'lenemiyorsa ya da sır tanımsızsa null
+ * döner — çağıran taraf o zaman önizlemesiz (tasarlanmış) kartı gösterir.
+ */
+export async function signedRemoteImageProxyPath(
+  url: string,
+  secret: string,
+): Promise<string | null> {
+  if (!secret) return null;
+  const checked = checkProxyImageUrl(url);
+  if (!checked.ok) return null;
+  return remoteImageProxyPath(checked.url, await signCanonical(checked.url, secret));
+}
+
+/** Proxy'nin kapıda yaptığı doğrulama; `canonicalUrl` = `checkProxyImageUrl().url`. */
+export async function verifyRemoteImageSignature(
+  canonicalUrl: string,
+  signature: string,
+  secret: string,
+): Promise<boolean> {
+  if (!secret || !signature) return false;
+  return timingSafeEqual(signature, await signCanonical(canonicalUrl, secret));
 }

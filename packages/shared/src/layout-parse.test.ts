@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  GALLERY_MAX_PHOTOS,
+  MAX_GALLERY_BLOCKS,
   MAX_LAYOUT_BLOCKS,
   ensureLayoutPositions,
   blockGridLimitIssue,
+  blockIssue,
   layoutGridLimitIssues,
   parseProfileLayout,
   parseProfileLayoutDetailed,
@@ -229,6 +232,213 @@ describe("R6 sunucu tarafı boyut sınırları", () => {
         message: "Duyuru bloğu en az 1×1, en fazla 4×1 olabilir",
       },
     ]);
+  });
+});
+
+const photo = (index: number) => ({
+  assetId: `0000000${index}-0000-4000-8000-000000000000`,
+  alt: `Fotoğraf ${index}`,
+});
+
+const gallery = (id: string, photoCount: number) => ({
+  id,
+  type: "gallery",
+  size: "4x1",
+  data: { title: "Kareler", photos: Array.from({ length: photoCount }, (_, i) => photo(i)) },
+});
+
+describe("galeri şeması (R62)", () => {
+  it(`${GALLERY_MAX_PHOTOS} fotoğraf kabul edilir`, () => {
+    const parsed = parseProfileLayoutDetailed(doc([profileBlock, gallery("blk_g", GALLERY_MAX_PHOTOS)]))!;
+    const block = parsed.layout.blocks.find((item) => item.id === "blk_g")!;
+    expect(block.type).toBe("gallery");
+    expect(block.type === "gallery" && block.data.photos).toHaveLength(GALLERY_MAX_PHOTOS);
+    expect(parsed.unknownBlocks).toEqual([]);
+  });
+
+  it(`${GALLERY_MAX_PHOTOS + 1}. fotoğraf şemadan geçmez`, () => {
+    const tooMany = gallery("blk_g", GALLERY_MAX_PHOTOS + 1);
+    const parsed = parseProfileLayoutDetailed(doc([profileBlock, tooMany]))!;
+    // Şemaya uymayan blok düşer ama ham hâliyle korunur (KTD32).
+    expect(parsed.layout.blocks.map((item) => item.id)).toEqual(["blk_profile"]);
+    expect(parsed.unknownBlocks).toEqual([tooMany]);
+    expect(profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, tooMany]))).success).toBe(
+      false,
+    );
+  });
+
+  it("assetId uuid değilse fotoğraf reddedilir", () => {
+    const bad = { ...gallery("blk_g", 0), data: { title: "", photos: [{ assetId: "abc", alt: "" }] } };
+    expect(parseProfileLayoutDetailed(doc([profileBlock, bad]))!.unknownBlocks).toEqual([bad]);
+  });
+
+  it("alt metni isteğe bağlı, boş galeri yayına engel", () => {
+    const noAlt = { ...gallery("blk_g", 0), data: { photos: [{ assetId: photo(1).assetId }] } };
+    const parsed = parseProfileLayoutDetailed(doc([profileBlock, noAlt]))!;
+    const block = parsed.layout.blocks.find((item) => item.id === "blk_g")!;
+    expect(block.type === "gallery" && block.data.photos[0]!.alt).toBe("");
+    expect(blockIssue(block)).toBeNull();
+    const empty = parseProfileLayout(doc([profileBlock, gallery("blk_e", 0)]))!;
+    expect(blockIssue(empty.blocks.find((item) => item.id === "blk_e")!)).toBe(
+      "Galeriye fotoğraf ekle",
+    );
+  });
+
+  it(`hesap başına ${MAX_GALLERY_BLOCKS} galeri: ${MAX_GALLERY_BLOCKS + 1}. blok yazmada reddedilir`, () => {
+    const ok = doc([profileBlock, gallery("blk_g1", 1), gallery("blk_g2", 1)]);
+    expect(profileLayoutWriteSchema.safeParse(JSON.parse(ok)).success).toBe(true);
+
+    const tooMany = doc([
+      profileBlock,
+      gallery("blk_g1", 1),
+      gallery("blk_g2", 1),
+      gallery("blk_g3", 1),
+    ]);
+    const result = profileLayoutWriteSchema.safeParse(JSON.parse(tooMany));
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((issue) => issue.message.includes("2 galeri bloğu"))).toBe(true);
+  });
+
+  it("okuma şeması galeri sayısını sınırlamaz — eski kayıt sayfayı düşürmez", () => {
+    const layout = parseProfileLayout(
+      doc([profileBlock, gallery("blk_g1", 1), gallery("blk_g2", 1), gallery("blk_g3", 1)]),
+    );
+    expect(layout?.blocks).toHaveLength(4);
+  });
+});
+
+describe("youtube şeması (KTD34)", () => {
+  const video = {
+    id: "blk_yt_v",
+    type: "youtube",
+    size: "2x1",
+    data: {
+      kind: "video",
+      url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      videoId: "dQw4w9WgXcQ",
+      title: "Asla vazgeçme",
+      channelName: "Rick Astley",
+      duration: "3:33",
+      shorts: false,
+      thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+    },
+  };
+
+  const channel = {
+    id: "blk_yt_c",
+    type: "youtube",
+    size: "2x1",
+    data: {
+      kind: "channel",
+      url: "https://www.youtube.com/@MrBeast",
+      channelId: "UCX6OQ3DkcsbYNE6H8uQQuVA",
+      channelName: "MrBeast",
+      handle: "MrBeast",
+      subscribers: "440 Mn abone",
+      views: "95 Mr görüntülenme",
+      thumbnail: "https://yt3.googleusercontent.com/abc=s176",
+    },
+  };
+
+  it("video ve kanal bloğu ayrı ayrı çözülür", () => {
+    const layout = parseProfileLayout(doc([profileBlock, video, channel]))!;
+    const byId = new Map(layout.blocks.map((block) => [block.id, block]));
+    const parsedVideo = byId.get("blk_yt_v")!;
+    const parsedChannel = byId.get("blk_yt_c")!;
+    expect(parsedVideo.type === "youtube" && parsedVideo.data.kind).toBe("video");
+    expect(parsedChannel.type === "youtube" && parsedChannel.data.kind).toBe("channel");
+    expect(blockIssue(parsedVideo)).toBeNull();
+    expect(blockIssue(parsedChannel)).toBeNull();
+  });
+
+  it("kimliği çözülmemiş blok yayına engel", () => {
+    const draft = { ...video, data: { ...video.data, videoId: "", title: "" } };
+    const layout = parseProfileLayout(doc([profileBlock, draft]))!;
+    expect(blockIssue(layout.blocks.find((block) => block.id === "blk_yt_v")!)).toBe(
+      "YouTube video bağlantısı gir",
+    );
+  });
+
+  it("tanınmayan kind düşer, ham hâliyle korunur", () => {
+    const bad = { ...video, data: { ...video.data, kind: "playlist" } };
+    expect(parseProfileLayoutDetailed(doc([profileBlock, bad]))!.unknownBlocks).toEqual([bad]);
+  });
+
+  it("kimlik alanları URL kurmaya uygun karakter kümesine sınırlı", () => {
+    const injected = { ...video, data: { ...video.data, videoId: "abc/../../evil" } };
+    expect(parseProfileLayoutDetailed(doc([profileBlock, injected]))!.unknownBlocks).toEqual([
+      injected,
+    ]);
+  });
+
+  // KTD35: küçük görsel mqdefault; hqdefault hiçbir yolda geçmez.
+  it("küçük görsel adresi olduğu gibi saklanır (mqdefault)", () => {
+    const layout = parseProfileLayout(doc([profileBlock, video]))!;
+    const block = layout.blocks.find((item) => item.id === "blk_yt_v")!;
+    expect(block.type === "youtube" && block.data.thumbnail).toContain("mqdefault");
+  });
+
+  it("yeni tipler bilinmeyen-blok mekanizmasını bozmaz", () => {
+    const stored = doc([profileBlock, gallery("blk_g", 2), video, futureBlock]);
+    const parsed = parseProfileLayoutDetailed(stored)!;
+    expect(parsed.layout.blocks.map((block) => block.id)).toEqual([
+      "blk_profile",
+      "blk_g",
+      "blk_yt_v",
+    ]);
+    expect(parsed.unknownBlocks).toEqual([futureBlock]);
+
+    const written = serializeProfileLayout(parsed.layout, parsed.unknownBlocks);
+    const reread = parseProfileLayoutDetailed(written)!;
+    expect(reread.layout.blocks.map((block) => block.id)).toEqual([
+      "blk_profile",
+      "blk_g",
+      "blk_yt_v",
+    ]);
+    expect(reread.unknownBlocks).toEqual([futureBlock]);
+  });
+});
+
+describe("yeni tiplerin ızgara sınırları", () => {
+  const withPos = (block: Record<string, unknown>, w: number, h: number) => ({
+    ...block,
+    pos: { lg: { x: 0, y: 0, w, h }, sm: { x: 0, y: 0, w: Math.min(w, 2), h } },
+  });
+
+  it("galeri 4x1 varsayılanını ve 4x2'yi kabul eder, 4x3'ü reddeder", () => {
+    const base = gallery("blk_g", 1);
+    expect(
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 1)]))).success,
+    ).toBe(true);
+    expect(
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 2)]))).success,
+    ).toBe(true);
+    expect(
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 3)]))).success,
+    ).toBe(false);
+  });
+
+  it("youtube tek track'e daralmaz (minW 2)", () => {
+    const base = {
+      id: "blk_yt",
+      type: "youtube",
+      size: "2x1",
+      data: { kind: "video", url: "", videoId: "abc", title: "", channelName: "", duration: "", shorts: false, thumbnail: "" },
+    };
+    expect(
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 1, 1)]))).success,
+    ).toBe(false);
+    expect(
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 2, 1)]))).success,
+    ).toBe(true);
+  });
+
+  it("ensureLayoutPositions galeri varsayılanını 4 track olarak yerleştirir", () => {
+    const layout = ensureLayoutPositions(parseProfileLayout(doc([profileBlock, gallery("blk_g", 1)]))!);
+    const block = layout.blocks.find((item) => item.id === "blk_g")!;
+    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 4, h: 1 });
+    // Mobilde 2 sütun: genişlik kırpılır (GRID_COLUMNS.sm = 2).
+    expect(block.pos?.sm.w).toBe(2);
   });
 });
 

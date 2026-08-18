@@ -12,3 +12,7 @@ APPLE_TEAM_ID=82ALKT75W8
 APPLE_KEY_ID=7JP7G5WHM4
 APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 # GitHub katkı grafiği sır istemez: GitHub'ın genel katkı HTML parçası okunur.
+# Uzak görsel proxy'sinin (/api/gorsel) HMAC imza anahtarı; `openssl rand -hex 32`
+# ile üretilir. Tanımsızsa proxy TAMAMEN kapalıdır (fail-closed) ve uzak
+# önizleme görselleri görünmez.
+IMAGE_PROXY_SECRET=dev-imza-anahtari-en-az-32-karakter-olsun

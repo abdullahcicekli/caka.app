@@ -13,7 +13,11 @@ export function normalizeTheme(value: string): ProfileTheme {
   return parsed.success ? parsed.data : "light";
 }
 
-export const blockSizeSchema = z.enum(["1x1", "2x1", "2x2"]);
+// Boyut sözlüğü ızgaranın kendi basamaklarıdır: genişlik 1/2/4 (4 sütun),
+// yükseklik 1/2. Dikey tile (`1x2`) ve tam genişlik (`4x1`, `4x2`) bento
+// yerleşimlerinin dayandığı biçimlerdi ve sözlükte yoktu — `sizeFromDims`
+// onları en yakın dar etikete yuvarlayıp kaybediyordu (KTD33).
+export const blockSizeSchema = z.enum(["1x1", "1x2", "2x1", "2x2", "4x1", "4x2"]);
 export type BlockSize = z.infer<typeof blockSizeSchema>;
 
 const gridPositionSchema = z.object({
@@ -181,6 +185,9 @@ const linkBlockSchema = z.object({
   data: z.object({
     title: z.string().trim().max(60).default(""),
     url: optionalHttpUrlSchema,
+    // R60: bağlantının og:image önizlemesi — `social` bloğundakiyle aynı
+    // sözleşme (kayıt anında çekilir, saklanır, render yeniden çekmez).
+    ogImage: optionalHttpUrlSchema.default(""),
   }),
 });
 
@@ -222,6 +229,83 @@ const statusBlockSchema = z.object({
   }),
 });
 
+/** R62: bir galeri bloğu en fazla bu kadar fotoğraf taşır. */
+export const GALLERY_MAX_PHOTOS = 5;
+/** R62: bir hesapta en fazla bu kadar galeri bloğu olabilir. */
+export const MAX_GALLERY_BLOCKS = 2;
+
+// Fotoğraf, `image` bloğuyla aynı deseni izler: R2 anahtarı düz UUID olan
+// asset kimliği (Değişmez #9). `alt` erişilebilirlik içindir ve isteğe
+// bağlıdır — boş bırakılan fotoğraf dekoratif sayılır (alt="").
+const galleryPhotoSchema = z.object({
+  assetId: z.string().uuid(),
+  alt: z.string().trim().max(120).default(""),
+});
+export type GalleryPhoto = z.infer<typeof galleryPhotoSchema>;
+
+// Her galeri kendi fotoğraflarını taşır: ortak bir havuz yok, blok silinince
+// referansı da gider. Beş fotoğraf sınırı şemada; iki galeri sınırı belge
+// düzeyinde (tek blok kendi başına kaç galeri olduğunu bilemez).
+const galleryBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("gallery"),
+  data: z.object({
+    title: z.string().trim().max(60).default(""),
+    photos: z.array(galleryPhotoSchema).max(GALLERY_MAX_PHOTOS).default([]),
+  }),
+});
+
+// KTD34: video/kanal ayrımı URL şeklinden KAYIT ANINDA çözülür ve sonucu
+// blokta durur; render yeniden ayrıştırma yapmaz. `kind` bu yüzden bir
+// ayrımlı birleşimin etiketidir, render'da hesaplanan bir bayrak değil.
+//
+// Kimlik alanları URL kurmakta kullanılıyor (embed adresi, RSS akışı); charset
+// güvencesi bu yüzden şemada. Uzunluk/biçim beklentisi: `videoId` 11 karakter,
+// `channelId` `UC` + 22 karakter. Çözümleyici (`server/youtube.ts`) doldurur;
+// taslak blokta boş kalabilir.
+const youtubeIdSchema = (max: number) =>
+  z.string().trim().max(max).regex(/^[A-Za-z0-9_-]*$/, "Geçersiz YouTube kimliği").default("");
+
+const youtubeVideoDataSchema = z.object({
+  kind: z.literal("video"),
+  /** Kullanıcının yapıştırdığı, normalize edilmiş adres. */
+  url: optionalHttpUrlSchema.default(""),
+  videoId: youtubeIdSchema(24),
+  title: z.string().trim().max(140).default(""),
+  channelName: z.string().trim().max(80).default(""),
+  /** Gösterime hazır süre dizesi ("12:34"); çözülemezse boş. */
+  duration: z.string().trim().max(16).default(""),
+  /** `/shorts/` yolundan geldi mi? Adres şeklinden gelir, render türetmez. */
+  shorts: z.boolean().default(false),
+  // KTD35: `mqdefault` (320×180, gerçek 16:9 ve her videoda var). `hqdefault`
+  // 4:3 ve siyah bantlı olduğu için hiçbir yolda kullanılmaz.
+  thumbnail: optionalHttpUrlSchema.default(""),
+});
+
+const youtubeChannelDataSchema = z.object({
+  kind: z.literal("channel"),
+  url: optionalHttpUrlSchema.default(""),
+  /** `UC…` biçimindeki kanonik kanal kimliği; RSS akışının anahtarı. */
+  channelId: youtubeIdSchema(32),
+  channelName: z.string().trim().max(80).default(""),
+  /** `@` olmadan saklanır. */
+  handle: z.string().trim().max(80).default(""),
+  /** Gösterime hazır, yerelleştirilmiş dizeler; çözülemezse boş kalır. */
+  subscribers: z.string().trim().max(32).default(""),
+  views: z.string().trim().max(32).default(""),
+  /** Kanal avatarı (uzak adres; render proxy'den geçirir). */
+  thumbnail: optionalHttpUrlSchema.default(""),
+});
+
+const youtubeBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("youtube"),
+  data: z.discriminatedUnion("kind", [youtubeVideoDataSchema, youtubeChannelDataSchema]),
+});
+
+export type YoutubeBlockData = z.infer<typeof youtubeBlockSchema>["data"];
+export type YoutubeKind = YoutubeBlockData["kind"];
+
 export const profileBlockSchema = z.discriminatedUnion("type", [
   profileCardSchema,
   socialBlockSchema,
@@ -229,6 +313,8 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   textBlockSchema,
   imageBlockSchema,
   statusBlockSchema,
+  galleryBlockSchema,
+  youtubeBlockSchema,
 ]);
 
 export const MAX_LAYOUT_BLOCKS = 50;
@@ -338,6 +424,8 @@ export const BLOCK_TYPE_LABELS: Record<ProfileBlock["type"], string> = {
   text: "Metin",
   image: "Görsel",
   status: "Duyuru",
+  gallery: "Galeri",
+  youtube: "YouTube",
 };
 
 export type BlockIssue = { blockId: string; label: string; message: string };
@@ -362,6 +450,19 @@ export function blockIssue(block: ProfileBlock): string | null {
       return block.data.text ? null : "Duyuru metni yaz";
     case "image":
       return block.data.assetId ? null : "Görsel yükle";
+    case "gallery":
+      return block.data.photos.length ? null : "Galeriye fotoğraf ekle";
+    case "youtube":
+      // KTD34: çözüm kayıt anında yapılır; kimliği boş bir blok, adres
+      // yapıştırılmamış ya da çözülememiş demektir — ikisinde de render
+      // edilecek bir şey yok.
+      return block.data.kind === "video"
+        ? block.data.videoId
+          ? null
+          : "YouTube video bağlantısı gir"
+        : block.data.channelId
+          ? null
+          : "YouTube kanal bağlantısı gir";
   }
 }
 
@@ -380,6 +481,12 @@ export type BentoBlockType = Exclude<ProfileBlock["type"], "profile">;
 // R6: blok tipi başına grid min/maks boyutları — editörde gridstack
 // constraint'i (`editor/grid.tsx`), sunucuda `profileLayoutWriteSchema`
 // üzerinden doğrulama; ikisi de bu tek kaynaktan okur.
+//
+// NEDEN mevcut tiplerin tavanı DARALTILMIYOR: `ensureLayoutPositions` bu
+// tabloyu küçültücü bir kırpma olarak uyguluyor. Bir tipin `maxW`'sini
+// düşürmek, o boyutta yazılmış canlı sayfaları ilk açılışta sessizce
+// daraltırdı — düzeltilen değil, üretilen bir kusur olurdu. Yeni tipler ise
+// sıfırdan karar veriliyor.
 export const BLOCK_GRID_LIMITS: Record<
   BentoBlockType,
   { minW: number; minH: number; maxW: number; maxH: number }
@@ -389,6 +496,14 @@ export const BLOCK_GRID_LIMITS: Record<
   text: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
   image: { minW: 1, minH: 1, maxW: 4, maxH: 3 },
   status: { minW: 1, minH: 1, maxW: 4, maxH: 1 },
+  // Galeri her tile boyutunda bir düzene sahip (KTD37/KTD38), 1×1 dahil;
+  // tavan sözlüğün en büyük biçimi olan 4×2.
+  gallery: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
+  // YouTube kartının görsel odağı 16:9 bir küçük görsel. 1 track'te (masaüstü
+  // 181px, mobil 169px) başlık + kanal adıyla birlikte okunaklı durmuyor;
+  // taban 2 track. Video ve kanal aynı sınırları paylaşır ki tip değiştirmek
+  // bloğu yeniden boyutlandırmasın.
+  youtube: { minW: 2, minH: 1, maxW: 4, maxH: 2 },
 };
 
 /** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa Türkçe mesaj. */
@@ -421,9 +536,23 @@ export function layoutGridLimitIssues(layout: ProfileLayout): BlockIssue[] {
 }
 
 /**
- * Yazma şeması (R6): okuma şemasının üstüne tip başına min/maks boyut
- * kontrolünü ekler. Okuma tarafına bilinçli olarak eklenmez — eskiden
- * yazılmış, sınırı aşan bir blok yüzünden yayındaki sayfa kararmasın.
+ * R62: hesap başına galeri sayısı sınırı. Tek blok kendi başına belgede kaç
+ * galeri olduğunu bilemez, bu yüzden kural belge düzeyindedir.
+ */
+export function galleryCountIssue(layout: ProfileLayout): string | null {
+  const count = layout.blocks.filter((block) => block.type === "gallery").length;
+  return count > MAX_GALLERY_BLOCKS
+    ? `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} galeri bloğu olabilir`
+    : null;
+}
+
+/**
+ * Yazma şeması (R6, R62): okuma şemasının üstüne tip başına min/maks boyut
+ * kontrolünü ve galeri sayısı sınırını ekler. Okuma tarafına bilinçli olarak
+ * eklenmez — eskiden yazılmış, sınırı aşan bir blok yüzünden yayındaki sayfa
+ * kararmasın. Hem taslağa kaydetme (`PUT /api/profile/layout`) hem yayınlama
+ * (`POST /api/profile/publish`) bu şemadan geçtiği için sınır iki yolda da
+ * tutar; blok başına 5 fotoğraf kuralı zaten şemanın kendisinde.
  */
 export const profileLayoutWriteSchema = profileLayoutSchema.superRefine(
   (layout, context) => {
@@ -433,6 +562,10 @@ export const profileLayoutWriteSchema = profileLayoutSchema.superRefine(
         context.addIssue({ code: "custom", path: ["blocks", index, "pos"], message });
       }
     });
+    const galleryMessage = galleryCountIssue(layout);
+    if (galleryMessage) {
+      context.addIssue({ code: "custom", path: ["blocks"], message: galleryMessage });
+    }
   },
 );
 
@@ -441,10 +574,21 @@ export function sizeToDims(size: BlockSize): { w: number; h: number } {
   return { w: Number(w), h: Number(h) };
 }
 
+/**
+ * Izgara ölçüsünü sözlük etiketine indirger. Sözlüğün basamakları (genişlik
+ * 1/2/4, yükseklik 1/2) ile birebir örtüştüğü için her etiket gidiş-dönüşten
+ * kendisi olarak çıkar: `sizeFromDims(sizeToDims(s)) === s`. Dönüş tipi
+ * şablon literalinden türer — sözlüğe yeni bir basamak eklendiğinde burası
+ * derleme hatası verir, sessizce yanlış etiket üretmez.
+ *
+ * Ara ölçüler (w=3, h=3…) sözlükte karşılığı olmadığı için bir alt basamağa
+ * yuvarlanır; gerçek yerleşim zaten `pos`tan okunur, `size` yalnız `pos`suz
+ * eski kayıtların akış sınıfı içindir.
+ */
 export function sizeFromDims(w: number, h: number): BlockSize {
-  if (w >= 2 && h >= 2) return "2x2";
-  if (w >= 2) return "2x1";
-  return "1x1";
+  const width: 1 | 2 | 4 = w >= 4 ? 4 : w >= 2 ? 2 : 1;
+  const height: 1 | 2 = h >= 2 ? 2 : 1;
+  return `${width}x${height}`;
 }
 
 // İlk sığan hücreyi satır-öncelikli tarar (okuma sırası).

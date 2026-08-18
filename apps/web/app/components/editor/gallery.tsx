@@ -3,7 +3,7 @@
 // blokları nötr kartlardır. Araç çubuğunun üstünde popover olarak açılır;
 // dışarı tıklama/Escape ile kapanma editördeki ortak panel handler'ındadır.
 import { useMemo, useState } from "react";
-import { ImageIcon, Link2, Megaphone, Search, Type, X } from "lucide-react";
+import { ImageIcon, Images, Link2, Megaphone, MonitorPlay, Search, Type, X } from "lucide-react";
 
 import { SocialIcon } from "~/components/icons/social";
 import { onboardingPlatforms } from "~/content/onboarding";
@@ -17,19 +17,26 @@ type Category = "social" | "content";
 
 type ContentBlockType = Exclude<ProfileBlock["type"], "profile" | "social">;
 
+type CatalogItem = { label: string; icon: typeof Link2; enabled: boolean };
+
 // Record: yeni bir içerik bloğu tipi eklendiğinde katalog derleme hatası
 // verir (dizi olarak yazılsaydı tip sessizce galeride görünmezdi).
-const CONTENT_CATALOG: Record<ContentBlockType, { label: string; icon: typeof Link2 }> = {
-  link: { label: "Bağlantı", icon: Link2 },
-  text: { label: "Metin", icon: Type },
-  image: { label: "Görsel", icon: ImageIcon },
-  status: { label: "Duyuru", icon: Megaphone },
+// `enabled`: şeması hazır ama editör/render tarafı henüz gelmemiş tip
+// katalogda görünmez. Kayıt tipi böylece eksiksiz kalır (yeni tip eklemeyi
+// unutmak hâlâ derleme hatası) ama kullanıcıya yarım bir blok sunulmaz.
+const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
+  link: { label: "Bağlantı", icon: Link2, enabled: true },
+  text: { label: "Metin", icon: Type, enabled: true },
+  image: { label: "Görsel", icon: ImageIcon, enabled: true },
+  status: { label: "Duyuru", icon: Megaphone, enabled: true },
+  // U32 galeri düzenleyicisini, U33/U34 YouTube çözümleyicisini getirince açılır.
+  gallery: { label: "Galeri", icon: Images, enabled: false },
+  youtube: { label: "YouTube", icon: MonitorPlay, enabled: false },
 };
 
-const CONTENT_ITEMS = (Object.entries(CONTENT_CATALOG) as [
-  ContentBlockType,
-  { label: string; icon: typeof Link2 },
-][]).map(([type, item]) => ({ type, ...item }));
+const CONTENT_ITEMS = (Object.entries(CONTENT_CATALOG) as [ContentBlockType, CatalogItem][])
+  .filter(([, item]) => item.enabled)
+  .map(([type, item]) => ({ type, ...item }));
 
 export function BlockGallery({ onPick }: { onPick: (pick: GalleryPick) => void }) {
   const [query, setQuery] = useState("");

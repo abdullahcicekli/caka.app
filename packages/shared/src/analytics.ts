@@ -178,8 +178,13 @@ function blockUrl(block: ProfileBlock): string {
     case "image":
     case "status":
       return block.data.url;
+    case "youtube":
+      return block.data.url;
     case "profile":
     case "text":
+    // Galeri tek bir dış adrese gitmez (fotoğraflar birinci taraf asset);
+    // ölçülecek bir tıklama hedefi yok.
+    case "gallery":
       return "";
     default: {
       const exhaustive: never = block;
@@ -198,8 +203,13 @@ function blockLabel(block: ProfileBlock): string {
       return block.data.title;
     case "status":
       return block.data.text;
+    case "youtube":
+      return block.data.kind === "video"
+        ? block.data.title
+        : block.data.channelName || block.data.handle;
     case "profile":
     case "text":
+    case "gallery":
       return "";
     default: {
       const exhaustive: never = block;

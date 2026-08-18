@@ -9,3 +9,4 @@ export * from "./og-image";
 export * from "./og-template";
 export * from "./remote-image";
 export * from "./username";
+export * from "./youtube";
