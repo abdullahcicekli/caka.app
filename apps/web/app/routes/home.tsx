@@ -19,7 +19,7 @@ import {
   SITE_URL,
   absoluteSiteUrl,
   buildSeoMeta,
-  pickRandomOgImage,
+  STATIC_OG_IMAGE,
 } from "~/lib/seo";
 import { getSession } from "../../server/auth";
 import { localeFromRequest } from "../../server/locale";
@@ -83,7 +83,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const ogImage = pickRandomOgImage();
+  const ogImage = STATIC_OG_IMAGE;
   const locale = localeFromRequest(request);
   // Footer ve SSS yalnız yayındaki hukuki belgeleri reklam eder (R33).
   const publishedLegal = publishedLegalDocumentIds(locale);

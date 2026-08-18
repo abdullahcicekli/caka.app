@@ -14,9 +14,12 @@ export const SITE_URL = "https://caka.app";
 export const DEFAULT_DESCRIPTION =
   "Ürettiklerini, bağlantılarını ve projelerini tek bir kişisel sayfada bir araya getir.";
 
-// Varsayılan paylaşım görselleri (landing ve profil dışı sayfalar). Profil
+// Varsayılan paylaşım görseli (landing ve profil dışı sayfalar). Profil
 // sayfaları kendi üretilen görselini kullanır (server/og-image.ts).
-const OG_IMAGES = ["/og/caka-og-bento-A.png", "/og/caka-og-bento-B.png"] as const;
+//
+// TEK GÖRSEL: eskiden iki varyant (A/B) vardı ve her SSR isteğinde rastgele
+// biri seçiliyordu. A kaldırıldı; marka tek bir kapakla temsil ediliyor.
+const OG_IMAGE = "/og/caka-og-bento-B.png";
 
 export type JsonLd = Record<string, unknown>;
 
@@ -25,26 +28,12 @@ export function absoluteSiteUrl(path = "/"): string {
 }
 
 /**
- * Sabit marka paylaşım görseli. `pickRandomOgImage()` her çağrıda başka bir
- * görsel seçtiği için `meta()` içinden çağrılamaz: sunucu ve istemci bağımsız
- * seçer, `og:image` hidrasyonda değişir. Pazarlama dışı sayfalar (hukuki
- * metinler) çeşitlemeden fayda görmez; sabit görsel hem deterministik hem de
- * loader'dan veri taşımayı gerektirmez.
+ * Marka paylaşım görseli. Tek ve SABİT: adres her istekte aynı olduğu için
+ * `meta()` içinden de güvenle çağrılabilir (rastgele seçim, sunucu ile
+ * istemcinin farklı görsel seçmesine ve `og:image`'in hidrasyonda
+ * değişmesine yol açıyordu).
  */
-export const STATIC_OG_IMAGE = absoluteSiteUrl(OG_IMAGES[0]);
-
-/**
- * Her SSR meta isteğinde başka bir varsayılan paylaşım görseli seçer. Sosyal
- * ağların aynı sayfa URL'si için tuttuğu cache'i ayırmak üzere kısa bir sürüm
- * anahtarı da eklenir.
- */
-export function pickRandomOgImage(): string {
-  const values = new Uint32Array(1);
-  crypto.getRandomValues(values);
-  const value = values[0] ?? 0;
-  const image = OG_IMAGES[value % OG_IMAGES.length];
-  return `${absoluteSiteUrl(image)}?v=${value.toString(36)}`;
-}
+export const STATIC_OG_IMAGE = absoluteSiteUrl(OG_IMAGE);
 
 /**
  * Dil alternatifleri (L14). `routeKey` verildiğinde beş dilin adresi ve
@@ -97,7 +86,7 @@ export function buildSeoMeta({
   routeKey,
   routeParams,
   path,
-  image = pickRandomOgImage(),
+  image = STATIC_OG_IMAGE,
   imageAlt = `${SITE_NAME} kişisel sayfa oluşturucu`,
   type = "website",
   schema,
