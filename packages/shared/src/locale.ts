@@ -27,6 +27,18 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 };
 
 /**
+ * Open Graph'ın beklediği `dil_BÖLGE` biçimi. `og:locale` bölge etiketi ister;
+ * ürünün dil kimlikleri (`tr`, `en`) tek başına geçerli değildir.
+ */
+export const OG_LOCALES: Record<Locale, string> = {
+  en: "en_US",
+  tr: "tr_TR",
+  es: "es_ES",
+  "pt-BR": "pt_BR",
+  de: "de_DE",
+};
+
+/**
  * Dilin URL öneki. Türkçe boş string alır — öneksizdir.
  *
  * Önekler küçük harftir (`pt-br`); `pt-BR` yalnızca kod içi dil kimliğidir.

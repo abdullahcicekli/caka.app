@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import type { LegalDocumentId } from "@caka/shared";
 import type { LandingContent } from "~/content/landing";
+import { useHref } from "~/lib/locale";
 
 /**
  * SSS: erik renk bloğu, ortalanmış başlık + açılır-kapanır soru kartları.
@@ -18,6 +19,7 @@ export function FaqSection({
   faq: LandingContent["faq"];
   publishedLegal: readonly LegalDocumentId[];
 }) {
+  const localize = useHref();
   return (
     <section className="bg-erik">
       <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-8 lg:py-28">
@@ -50,7 +52,7 @@ export function FaqSection({
                     <>
                       {" "}
                       <Link
-                        to={link.href}
+                        to={localize(link.href)}
                         className="font-semibold text-erik-acik underline underline-offset-4 hover:opacity-80"
                       >
                         {link.label}

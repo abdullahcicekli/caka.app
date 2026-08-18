@@ -1,5 +1,6 @@
 import { PillLink } from "./pill-button";
 import type { LandingContent } from "~/content/landing";
+import { useHref } from "~/lib/locale";
 
 const BAR_HEIGHTS = [
   "30%",
@@ -58,6 +59,7 @@ export function AudienceSection({
 }: {
   audience: LandingContent["audience"];
 }) {
+  const localize = useHref();
   return (
     <section className="bg-kum">
       <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 py-20 sm:px-8 lg:grid-cols-2 lg:gap-10 lg:py-28">
@@ -69,7 +71,7 @@ export function AudienceSection({
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-murekkep/70 sm:text-xl">
             {audience.body}
           </p>
-          <PillLink to={audience.cta.href} variant="ink" className="mt-9">
+          <PillLink to={localize(audience.cta.href)} variant="ink" className="mt-9">
             {audience.cta.label}
           </PillLink>
         </div>

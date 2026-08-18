@@ -11,25 +11,31 @@ import { ShareSection } from "~/components/landing/share-section";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { PUBLISHED_LEGAL_DOCUMENT_IDS } from "~/content/legal";
-import { landing } from "~/content/landing";
+import { landingCatalog } from "~/content/landing";
+import { useCatalog } from "~/lib/locale";
 import { parseSeedProfile } from "~/lib/profile-view";
+import { DEFAULT_LOCALE, pathFor } from "@caka/shared";
 import {
-  DEFAULT_DESCRIPTION,
   SITE_URL,
   absoluteSiteUrl,
   buildSeoMeta,
   pickRandomOgImage,
 } from "~/lib/seo";
 import { getSession } from "../../server/auth";
+import { localeFromRequest } from "../../server/locale";
 import { ensureProfileAvatar, getProfileByUserId } from "../../server/profile";
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  const title = "Caka — sana göre bir kişisel sayfa";
+  const locale = loaderData?.locale ?? DEFAULT_LOCALE;
+  const landing = landingCatalog[locale];
+  const title = landing.seo.title;
   return buildSeoMeta({
     title,
-    description: DEFAULT_DESCRIPTION,
+    description: landing.seo.description,
+    locale,
+    routeKey: "home",
     image: loaderData?.ogImage,
-    imageAlt: "Caka ile kişisel sayfanı oluştur",
+    imageAlt: landing.seo.imageAlt,
     schema: {
       "@context": "https://schema.org",
       "@graph": [
@@ -51,7 +57,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
           "@id": `${SITE_URL}/#faq`,
           url: `${SITE_URL}/`,
           name: landing.faq.title,
-          inLanguage: "tr-TR",
+          inLanguage: locale,
           isPartOf: { "@id": `${SITE_URL}/#website` },
           mainEntity: landing.faq.items.map((item) => ({
             "@type": "Question",
@@ -65,10 +71,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
         {
           "@type": "WebSite",
           "@id": `${SITE_URL}/#website`,
-          url: `${SITE_URL}/`,
+          url: absoluteSiteUrl(pathFor("home", locale)),
           name: "Caka",
-          description: DEFAULT_DESCRIPTION,
-          inLanguage: "tr-TR",
+          description: landing.seo.description,
+          inLanguage: locale,
           publisher: { "@id": `${SITE_URL}/#organization` },
         },
       ],
@@ -78,10 +84,11 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const ogImage = pickRandomOgImage();
+  const locale = localeFromRequest(request);
   // Footer ve SSS yalnız yayındaki hukuki belgeleri reklam eder (R33).
   const publishedLegal = PUBLISHED_LEGAL_DOCUMENT_IDS;
   const session = await getSession(env, request);
-  if (!session) return { user: null, ogImage, publishedLegal };
+  if (!session) return { user: null, ogImage, publishedLegal, locale };
 
   const profile = await getProfileByUserId(env, session.user.id);
   // Avatarsız kalmış eski kayıtları girişte kendiliğinden onarır.
@@ -97,10 +104,11 @@ export async function loader({ request }: Route.LoaderArgs) {
       session.user.image ??
       null,
   };
-  return { user, ogImage, publishedLegal };
+  return { user, ogImage, publishedLegal, locale };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
+  const landing = useCatalog(landingCatalog);
   return (
     <div className="bg-kirec">
       <Navbar

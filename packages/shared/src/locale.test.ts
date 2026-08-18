@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_LOCALE,
+  OG_LOCALES,
   LOCALE_LABELS,
   SUPPORTED_LOCALES,
   isSupportedLocale,
@@ -28,6 +29,13 @@ describe("dil listesi", () => {
     // listede "Almanca" değil "Deutsch" arar.
     expect(LOCALE_LABELS.de).toBe("Deutsch");
     expect(LOCALE_LABELS["pt-BR"]).toBe("Português (Brasil)");
+  });
+
+  it("her dilin og:locale karşılığı bölge etiketi taşır", () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      expect(OG_LOCALES[locale], locale).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
+    }
+    expect(OG_LOCALES["pt-BR"]).toBe("pt_BR");
   });
 
   it("desteklenen dili tanır, tanımadığını reddeder", () => {

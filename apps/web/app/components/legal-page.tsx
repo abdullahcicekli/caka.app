@@ -10,7 +10,8 @@ import { Link } from "react-router";
 import { Navbar } from "~/components/landing/navbar";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
-import { landing } from "~/content/landing";
+import { landingCatalog } from "~/content/landing";
+import { useCatalog } from "~/lib/locale";
 import {
   LEGAL_DOCUMENTS,
   formatLegalDate,
@@ -308,6 +309,7 @@ export function LegalPage({
   publishedLegal,
   user,
 }: LegalPageProps) {
+  const landing = useCatalog(landingCatalog);
   return (
     <div className="bg-zemin">
       <Navbar

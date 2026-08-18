@@ -6,7 +6,14 @@
 
 import { useRouteLoaderData } from "react-router";
 
-import { DEFAULT_LOCALE, type Locale, localizePath, pathFor, type RouteKey } from "@caka/shared";
+import {
+  DEFAULT_LOCALE,
+  type Locale,
+  localizeHref,
+  localizePath,
+  pathFor,
+  type RouteKey,
+} from "@caka/shared";
 
 import type { loader as rootLoader } from "~/root";
 
@@ -27,6 +34,17 @@ export function useLocale(): Locale {
  */
 export function useCatalog<T>(catalog: Record<Locale, T>): T {
   return catalog[useLocale()];
+}
+
+/**
+ * Katalogdaki bir bağlantıyı aktif dile çevirir.
+ *
+ * Kataloglar adresleri Türkçe hâliyle tutar; her bağlantı render'da buradan
+ * geçer. Dış bağlantılara ve salt çapaya dokunulmaz.
+ */
+export function useHref(): (href: string) => string {
+  const locale = useLocale();
+  return (href) => localizeHref(href, locale);
 }
 
 /** Bir route'un aktif dildeki yolu — `<Link to={...}>` için. */

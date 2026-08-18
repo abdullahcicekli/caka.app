@@ -2,6 +2,7 @@ import { Form } from "react-router";
 
 import { PillButton } from "./pill-button";
 import type { LandingContent } from "~/content/landing";
+import { useHref } from "~/lib/locale";
 
 type ClaimContent = LandingContent["hero"]["claim"];
 
@@ -13,10 +14,11 @@ interface ClaimFormProps {
 
 /** Adres kapma formu: beyaz hap input + blok rengine uygun CTA. */
 export function ClaimForm({ claim, buttonVariant = "heroDark" }: ClaimFormProps) {
+  const localize = useHref();
   return (
     <Form
       method="get"
-      action={claim.action}
+      action={localize(claim.action)}
       className="flex w-full max-w-xl flex-col gap-3 sm:flex-row"
     >
       <label className="flex min-w-0 flex-1 items-center rounded-full bg-white px-6 py-3 text-base">

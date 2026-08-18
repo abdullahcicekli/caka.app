@@ -4,6 +4,7 @@ import type { LegalDocumentId } from "@caka/shared";
 import { logoBlackText } from "~/assets/brand";
 import { SocialIcon } from "~/components/icons/social";
 import type { LandingContent, LegalAwareLink } from "~/content/landing";
+import { useHref } from "~/lib/locale";
 
 const LINK_CLASS = "text-[15px] text-murekkep hover:opacity-70";
 
@@ -20,9 +21,10 @@ function FooterLink({
   label: string;
   className?: string;
 }) {
+  const localize = useHref();
   if (href.startsWith("/")) {
     return (
-      <Link to={href} className={className}>
+      <Link to={localize(href)} className={className}>
         {label}
       </Link>
     );
@@ -54,6 +56,7 @@ export function SiteFooter({
   footer: LandingContent["footer"];
   publishedLegal: readonly LegalDocumentId[];
 }) {
+  const localizeHome = useHref();
   const isVisible = (link: LegalAwareLink) =>
     !link.legalDocument || publishedLegal.includes(link.legalDocument);
 
@@ -104,7 +107,7 @@ export function SiteFooter({
 
         <div className="mt-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" aria-label="Caka ana sayfa">
+            <Link to={localizeHome("/")} aria-label="Caka ana sayfa">
               <img src={logoBlackText} alt="Caka" className="h-6 w-auto" />
             </Link>
             <span className="text-sm text-murekkep/50">{footer.copyright}</span>

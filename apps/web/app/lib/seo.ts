@@ -1,5 +1,14 @@
 import type { MetaDescriptor } from "react-router";
 
+import {
+  DEFAULT_LOCALE,
+  type Locale,
+  OG_LOCALES,
+  SUPPORTED_LOCALES,
+  type RouteKey,
+  pathFor,
+} from "@caka/shared";
+
 export const SITE_NAME = "Caka";
 export const SITE_URL = "https://caka.app";
 export const DEFAULT_DESCRIPTION =
@@ -37,9 +46,43 @@ export function pickRandomOgImage(): string {
   return `${absoluteSiteUrl(image)}?v=${value.toString(36)}`;
 }
 
+/**
+ * Dil alternatifleri (L14). `routeKey` verildiğinde beş dilin adresi ve
+ * `x-default` (Türkçe kanonik) yayılır.
+ *
+ * Adresler `pathFor` ile üretilir — slug tablosuyla aynı kaynak. Elle yazılsa
+ * bir slug değiştiğinde hreflang sessizce 404'e bağlanırdı.
+ */
+function alternateLinks(routeKey: RouteKey, params?: Record<string, string>): MetaDescriptor[] {
+  const links: MetaDescriptor[] = SUPPORTED_LOCALES.map((alternate) => ({
+    tagName: "link",
+    rel: "alternate",
+    hrefLang: alternate,
+    href: absoluteSiteUrl(pathFor(routeKey, alternate, params)),
+  }));
+
+  links.push({
+    tagName: "link",
+    rel: "alternate",
+    hrefLang: "x-default",
+    href: absoluteSiteUrl(pathFor(routeKey, DEFAULT_LOCALE, params)),
+  });
+
+  return links;
+}
+
 interface SeoMetaOptions {
   title: string;
   description?: string;
+  /** Sayfanın dili; `og:locale` ve alternatifler buradan türer. */
+  locale?: Locale;
+  /**
+   * Uygulama route'u. Verilirse canonical ve beş dilin hreflang'i bundan
+   * üretilir. Verilmezse (profil sayfaları — L9) yalnız `path` kullanılır ve
+   * hreflang yayılmaz: o sayfanın dil sürümü yoktur.
+   */
+  routeKey?: RouteKey;
+  routeParams?: Record<string, string>;
   path?: string;
   image?: string;
   imageAlt?: string;
@@ -50,13 +93,18 @@ interface SeoMetaOptions {
 export function buildSeoMeta({
   title,
   description = DEFAULT_DESCRIPTION,
-  path = "/",
+  locale = DEFAULT_LOCALE,
+  routeKey,
+  routeParams,
+  path,
   image = pickRandomOgImage(),
   imageAlt = `${SITE_NAME} kişisel sayfa oluşturucu`,
   type = "website",
   schema,
 }: SeoMetaOptions): MetaDescriptor[] {
-  const canonical = absoluteSiteUrl(path);
+  const canonical = absoluteSiteUrl(
+    routeKey ? pathFor(routeKey, locale, routeParams) : (path ?? "/"),
+  );
   const meta: MetaDescriptor[] = [
     { title },
     { name: "description", content: description },
@@ -66,7 +114,11 @@ export function buildSeoMeta({
       content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
     },
     { property: "og:site_name", content: SITE_NAME },
-    { property: "og:locale", content: "tr_TR" },
+    { property: "og:locale", content: OG_LOCALES[locale] },
+    ...SUPPORTED_LOCALES.filter((alternate) => alternate !== locale).map((alternate) => ({
+      property: "og:locale:alternate",
+      content: OG_LOCALES[alternate],
+    })),
     { property: "og:type", content: type },
     { property: "og:title", content: title },
     { property: "og:description", content: description },
@@ -84,6 +136,7 @@ export function buildSeoMeta({
     { name: "twitter:image:alt", content: imageAlt },
   ];
 
+  if (routeKey) meta.push(...alternateLinks(routeKey, routeParams));
   if (schema) meta.push({ "script:ld+json": schema });
   return meta;
 }
