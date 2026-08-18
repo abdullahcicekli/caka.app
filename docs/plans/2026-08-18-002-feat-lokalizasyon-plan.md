@@ -21,8 +21,8 @@ execution: code
   (içerik katalogları) modül başına bağımsız, paralel yürür. Aşama D (hukuki
   İngilizce) hacmen en ağır ve diğerlerinden bağımsız.
 - **Durma koşulları:** Türkçe adreslerden hiçbirini kırma — `/gizlilik`,
-  `/ayarlar`, `/login` bugünkü hâliyle kalır. Hukuki metinde makine çevirisi
-  üretip "resmî" diye sunma. Ziyaretçinin cihazına envantere girmemiş bir şey
+  `/ayarlar`, `/login` bugünkü hâliyle kalır. Hukuki İngilizce metinde Türkçe
+  kaynaktan sapma. Ziyaretçinin cihazına envantere girmemiş bir şey
   yazma (KTD21).
 - **Kuyruk sahipliği:** Commit'leri ana oturum atar. Deploy yalnızca
   `pnpm --filter @caka/web run deploy` (Değişmez #11).
@@ -55,8 +55,9 @@ modüllerinde toplu — yani katalog altyapısının yarısı kurulu, ama dil bo
    rezerve isim listesiyle çakışma riski taşıyor (Değişmez #1).
 
 Hukuki metinler ayrı bir problem sınıfı: ~13 800 kelimelik üç belge KVKK'ya göre
-yazıldı ve `docs/legal/` denetim kaydına dayanıyor. Makine çevirisi bu metinlerde
-yükümlülük ifadelerini sessizce kaydırır.
+yazıldı ve `docs/legal/` kayıtlarına dayanıyor. İngilizce sürüm serbest yeniden
+yazım değil, bölüm bölüm birebir karşılık olmalı — yoksa iki dil farklı şeyler
+vaat eder (bkz. LKD8).
 
 ### Requirements
 
@@ -95,8 +96,9 @@ Kimlikler bu plana özeldir (`L` öneki); MVP planındaki `R`/`KTD`/`U` uzayıyl
 | LKD3 | Yönlendirme 302 ve bot'suz. | Google ABD'den `en-US` ile tarar; bot yönlendirilirse Türkçe sayfalar indeksten düşer. 301 tarayıcıda süresiz cache'lenir (Değişmez #10 gerekçesi). |
 | LKD4 | Dil tercihi yalnız çerezde; veritabanı sütunu yok. | Migration ve senkronizasyon noktası eklemeden oturumsuz ziyaretçiyi de kapsar. Cihazlar arası taşınma gerekirse sonradan `profile.locale` eklenebilir. |
 | LKD5 | Arayüz katalogları beş dille birlikte istemciye iner; hukuki metinler inmez. | Arayüz katalogları küçük (~1 000 kelime × 5 ≈ 12 KB gzip) ve Vite zaten route başına böler; dinamik import şelalesi kurmak bu boyutta karmaşıklığı hak etmiyor. Hukuki belgeler belge başına 30–45 KB olduğu için sunucuda kalır. Bir katalog büyürse hukuki desene (loader üzerinden taşıma) geçirilir. |
-| LKD6 | Hukuki metinler TR + EN; diğer diller EN'e düşer. | 3 000 satır × 4 dil hem hacmen hem hukuken taşınabilir değil. İngilizce ikinci resmî sürüm, bağlayıcılık Türkçede kalır (L11). |
+| LKD6 | Hukuki metinler TR + EN; diğer diller EN'e düşer. | 3 000 satır × 4 dil hacmen taşınabilir değil ve karşılığı yok. İngilizce ikinci sürüm, bağlayıcılık Türkçede kalır (L11). |
 | LKD7 | `/:username` öneksiz. | Kullanıcının içeriği çevrilmediği için dil önekli kopyalar kopya içerik üretir ve SEO kazancı getirmez. |
+| LKD8 | Hukuki İngilizce metni proje içinde yazılır; dış hukuki inceleme süreci kurulmaz. | Caka ücretsiz, açık kaynak, tek kişilik bir yan proje. Metinler avukatla üretilmedi; var olma sebepleri profesyonel duruş ve Google/Apple sağlayıcı kaydında istenen bağlantılar. Bu ölçekte avukat incelemesi kurmak gerçekçi değil ve ürünün geri kalanıyla orantısız. Risk, bağlayıcılığın Türkçede kalmasıyla (L11) ve metnin Türkçe kaynağa sadık kalmasıyla sınırlanır. |
 
 ### Acceptance Examples
 
@@ -290,10 +292,12 @@ bot'ları bilerek yönlendirmez (L8). User-Agent verilmezse test her zaman
 - **Bot yönlendirmesi SEO'yu kırabilir.** `isbot` kapısı yanlış kurulursa Google
   Türkçe sayfaları `/en`'e yönlendirilmiş görür ve kanonik sürüm indeksten düşer.
   L-U4 deploy edilmeden önce `Googlebot` User-Agent'ıyla curl doğrulaması şart.
-- **Hukuki İngilizce çeviri hukuki risktir.** L-U13 makine çevirisi kalitesinde
-  bırakılmamalı; bağlayıcılık şeridi (L11) bu riski sınırlar ama ortadan
-  kaldırmaz. Hukukçu gözden geçirmesi öneriliyor ve `docs/legal/` denetim
-  kaydına not düşülmeli.
+- **Hukuki İngilizce, Türkçe kaynaktan sapmamalı.** Tek gerçek risk çeviride
+  anlam kayması: Türkçe metin bir şey vaat ederken İngilizce başka bir şey
+  vaat ederse bağlayıcılık şeridi (L11) bunu kurtarmaz. Bu yüzden İngilizce
+  sürüm serbest yeniden yazım değil, bölüm bölüm birebir karşılık olarak
+  yazılır ve `docs/legal/` kayıtlarıyla (data-map, cookie-inventory,
+  vendor-register, trust-claims) çelişmediği kontrol edilir.
 - **`edit.tsx` 1533 satır.** L-U10 hem en büyük metin çıkarma işi hem de en
   kırılgan dosya; bu birim tek başına ve dikkatli yürütülmeli.
 - **60 route kaydı build süresini ve manifest boyutunu artırır.** Ölçülmedi;
