@@ -7,9 +7,14 @@
 // HATA SAYFAYI DÜŞÜRMEZ: akış çekilemez, ayrıştırılamaz veya küçük görsel
 // imzalanamazsa ilgili blok sözlükte hiç görünmez ve kart kayıt anında
 // saklanan bilgiye (kanal adı, handle) düşer.
-import { youtubeThumbnailUrl, youtubeVideoUrl, type ProfileLayout } from "@caka/shared";
+import {
+  type Locale,
+  youtubeThumbnailUrl,
+  youtubeVideoUrl,
+  type ProfileLayout,
+} from "@caka/shared";
 
-import { youtubeGoruntulenme, youtubeYayinZamani } from "../app/content/widget";
+import { widgetCatalog } from "../app/content/widget";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "../app/lib/youtube-feed";
 import { signImageProxyPath } from "./image-proxy";
 import { getYouTubeChannelFeed } from "./youtube";
@@ -33,10 +38,15 @@ function channelTargets(layout: ProfileLayout): { id: string; channelId: string 
 export async function getYoutubeChannelCards(
   env: Env,
   layout: ProfileLayout,
+  // Görüntülenme sayısı ve "3 gün önce" metni burada, sunucuda üretiliyor;
+  // bu yüzden dil de buraya kadar taşınmalı.
+  locale: Locale,
   now: number = Date.now(),
 ): Promise<YoutubeFeedMap> {
   const targets = channelTargets(layout);
   if (targets.length === 0) return {};
+
+  const copy = widgetCatalog[locale].youtube;
 
   const channelIds = [...new Set(targets.map((target) => target.channelId))];
   const cards = new Map<string, YoutubeFeedCard>();
@@ -58,8 +68,8 @@ export async function getYoutubeChannelCards(
           url: youtubeVideoUrl(video.videoId),
           thumbnail,
           short: video.short,
-          published: youtubeYayinZamani(video.publishedAt, now),
-          views: video.views === null ? "" : youtubeGoruntulenme(video.views),
+          published: copy.published(video.publishedAt, now),
+          views: video.views === null ? "" : copy.views(video.views),
         });
       } catch {
         // Ağ/imza hatası: bu kanal bu görüntülemede canlı veri almaz.

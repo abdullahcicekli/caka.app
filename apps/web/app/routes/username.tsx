@@ -28,6 +28,7 @@ import { ogImagePathForProfile } from "../../server/og-image";
 import { resolveUsername } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/username";
+import { localeFromRequest } from "../../server/locale";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return noIndexMeta("Sayfa bulunamadı — Caka");
@@ -139,7 +140,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const [githubCalendars, signedImages, youtubeFeeds] = await Promise.all([
     getGithubCalendars(env, collectGithubLogins(layout)),
     signLayoutImages(env, layout),
-    getYoutubeChannelCards(env, layout),
+    getYoutubeChannelCards(env, layout, localeFromRequest(request)),
   ]);
 
   return {

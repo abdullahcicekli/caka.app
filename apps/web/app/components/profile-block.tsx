@@ -8,31 +8,24 @@ import { RichTextView } from "~/components/rich-text";
 import {
   githubDayTitle,
   githubFootHint,
-  githubHeatmapAriaLabel,
   githubTotalLine,
 } from "~/content/github";
 import { platformById } from "~/content/onboarding";
-import {
-  galeriBosMetni,
-  galeriDahaFazla,
-  galeriDahaFazlaEtiketi,
-  galeriEtiketi,
-  youtubeKanalRozeti,
-  youtubeKanalYedekBasligi,
-  youtubeSonVideoBasligi,
-} from "~/content/widget";
+import { widgetCatalog } from "~/content/widget";
+import { useCatalog } from "~/lib/locale";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
 import { linkBrand, linkHostLabel, prettyLinkTarget } from "~/lib/link-preview";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
 import { ProfileAvatar } from "./profile-avatar";
 
 function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
+  const w = useCatalog(widgetCatalog);
   return (
     <>
       {/* role="img": grid SR'a tek etiketle okunur, tek tek kareler gürültü
           yapmaz. 52+ haftanın tamamı DOM'a basılır; kart genişliğine göre
           fazlası container query ile gizlenir (JS ölçümü/hydration derdi yok). */}
-      <span className="gh-heatmap" role="img" aria-label={githubHeatmapAriaLabel(calendar.total)}>
+      <span className="gh-heatmap" role="img" aria-label={w.github.heatmapLabel(calendar.total)}>
         {calendar.weeks.map((week, index) => (
           <span className="gh-week" key={index}>
             {week.days.map((day, dayIndex) => (
@@ -91,6 +84,7 @@ export function ProfileBlockCard({
    */
   allowEmbeds?: boolean;
 }) {
+  const w = useCatalog(widgetCatalog);
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
   // tanımsız veya blokta görsel yok) kart görselsiz tasarımına düşer.
   const signedImage = signedImages?.[block.id] ?? "";
@@ -294,7 +288,7 @@ export function ProfileBlockCard({
         <article
           className="profile-block profile-block-gallery"
           data-count={count}
-          aria-label={galeriEtiketi(block.data.title)}
+          aria-label={w.gallery.label(block.data.title)}
         >
           {photos.map((photo) => (
             // Yerel görseller R2'den gelir (Değişmez #9); proxy gerekmez.
@@ -307,7 +301,7 @@ export function ProfileBlockCard({
             />
           ))}
           {count === 0 ? (
-            <span className="profile-image-placeholder">{galeriBosMetni}</span>
+            <span className="profile-image-placeholder">{w.gallery.empty}</span>
           ) : null}
           {/* Başlık her zaman basılır, GÖRÜNÜRLÜĞÜNE CSS karar verir: kısa
               tile'larda (138-156px) hücrelerin üstüne bindirmeden sığmıyor.
@@ -321,9 +315,9 @@ export function ProfileBlockCard({
               key={capacity}
               className="gallery-more"
               data-slot={capacity}
-              aria-label={galeriDahaFazlaEtiketi(count - capacity)}
+              aria-label={w.gallery.moreLabel(count - capacity)}
             >
-              {galeriDahaFazla(count - capacity)}
+              {w.gallery.more(count - capacity)}
             </span>
           ))}
         </article>
@@ -353,7 +347,7 @@ export function ProfileBlockCard({
 
       const latest: YoutubeFeedCard | undefined = youtubeFeeds?.[block.id];
       const handle = data.handle ? `@${data.handle}` : "";
-      const channelName = data.channelName || latest?.channelName || youtubeKanalYedekBasligi;
+      const channelName = data.channelName || latest?.channelName || w.youtube.channelFallbackTitle;
       const channelMeta = handle;
       const content = (
         <>
@@ -370,7 +364,7 @@ export function ProfileBlockCard({
               <strong>{channelName}</strong>
               <small>{channelMeta}</small>
             </span>
-            <span className="yt-kind-pill">{youtubeKanalRozeti}</span>
+            <span className="yt-kind-pill">{w.youtube.channelBadge}</span>
           </span>
           {latest ? (
             // Kartın tamamı zaten bir <a>; iç içe bağlantı geçersiz HTML
@@ -385,7 +379,7 @@ export function ProfileBlockCard({
                 <YoutubePlayMark small />
               </span>
               <span className="yt-latest-lines">
-                <small className="yt-latest-kicker">{youtubeSonVideoBasligi}</small>
+                <small className="yt-latest-kicker">{w.youtube.latestVideoTitle}</small>
                 <strong>{latest.title}</strong>
                 <small>{[latest.published, latest.views].filter(Boolean).join(" · ")}</small>
               </span>

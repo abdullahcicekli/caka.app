@@ -29,18 +29,8 @@ import { useState } from "react";
 
 import type { ProfileBlock } from "@caka/shared";
 
-import {
-  spotifyGommeUyarisi,
-  spotifyOynatEtiketi,
-  spotifyOynaticiBasligi,
-  spotifyTurRozeti,
-  spotifyYedekBasligi,
-  youtubeGommeUyarisi,
-  youtubeOynatEtiketi,
-  youtubeOynaticiBasligi,
-  youtubeShortsRozeti,
-  youtubeVideoYedekBasligi,
-} from "~/content/widget";
+import { widgetCatalog } from "~/content/widget";
+import { useCatalog } from "~/lib/locale";
 
 type YoutubeVideoData = Extract<
   Extract<ProfileBlock, { type: "youtube" }>["data"],
@@ -115,6 +105,7 @@ export function YoutubeVideoCard({
   thumbnail: string;
   allowEmbeds: boolean;
 }) {
+  const w = useCatalog(widgetCatalog);
   const [playing, setPlaying] = useState(false);
   // Kimlik çözülmemişse (taslak blok) gömecek bir şey yok; kart eski
   // davranışına — adrese giden bağlantıya — düşer.
@@ -130,7 +121,7 @@ export function YoutubeVideoCard({
   // yedek başlığı basılıyordu — hiçbir şey söylemeyen bir satırdı. Yedek
   // metin yalnız erişilebilir adda yaşıyor: oynat tuşunun bir adı olmalı.
   const title = data.title.trim();
-  const playLabel = youtubeOynatEtiketi(title || youtubeVideoYedekBasligi);
+  const playLabel = w.youtube.playLabel(title || w.youtube.videoFallbackTitle);
 
   // 9:16 çerçeve yalnız küçük görsel GERÇEKTEN dikeyse doğru. Bir Short'un
   // `mqdefault`'u da 16:9 gelir; `shorts` bayrağına bakarak çerçeve seçmek o
@@ -152,7 +143,7 @@ export function YoutubeVideoCard({
           <iframe
             className="media-frame"
             src={youtubeEmbedSrc(data.videoId)}
-            title={youtubeOynaticiBasligi(title)}
+            title={w.youtube.playerTitle(title)}
             allow={EMBED_ALLOW}
             allowFullScreen
             loading="lazy"
@@ -171,7 +162,7 @@ export function YoutubeVideoCard({
         <span className="youtube-thumb yt-thumb-empty" aria-hidden />
       )}
       <YoutubePlayMark />
-      {data.shorts ? <span className="yt-pill">{youtubeShortsRozeti}</span> : null}
+      {data.shorts ? <span className="yt-pill">{w.youtube.shortsBadge}</span> : null}
     </span>
   );
   // Yazacak bir şey yoksa metin bloğu hiç basılmaz: boş bir `<strong>` kartta
@@ -185,7 +176,7 @@ export function YoutubeVideoCard({
         {data.channelName ? <small>{data.channelName}</small> : null}
         {/* Uyarı satırı basılır; kısa/dar bantlarda CSS gizler ve bilgi
             tuşun `aria-label`/`title`'ında yaşamaya devam eder. */}
-        {canPlay ? <small className="media-note">{youtubeGommeUyarisi}</small> : null}
+        {canPlay ? <small className="media-note">{w.youtube.embedNotice}</small> : null}
       </span>
     ) : null;
 
@@ -227,10 +218,11 @@ export function SpotifyCard({
   thumbnail: string;
   allowEmbeds: boolean;
 }) {
+  const w = useCatalog(widgetCatalog);
   const [playing, setPlaying] = useState(false);
   const canPlay = allowEmbeds && data.entityId !== "";
-  const title = data.title || spotifyYedekBasligi;
-  const kindLabel = spotifyTurRozeti(data.kind);
+  const title = data.title || w.spotify.fallbackTitle;
+  const kindLabel = w.spotify.kind(data.kind);
 
   const className = `profile-block profile-block-spotify${canPlay ? " is-embed" : ""}${
     playing ? " is-playing" : ""
@@ -245,7 +237,7 @@ export function SpotifyCard({
         <iframe
           className="media-frame"
           src={spotifyEmbedSrc(data.kind, data.entityId)}
-          title={spotifyOynaticiBasligi(title)}
+          title={w.spotify.playerTitle(title)}
           allow={EMBED_ALLOW}
           allowFullScreen
           loading="lazy"
@@ -273,7 +265,7 @@ export function SpotifyCard({
         <span className="spotify-meta">
           <span className="sp-kind-pill">{kindLabel}</span>
           <strong>{title}</strong>
-          {canPlay ? <small className="media-note">{spotifyGommeUyarisi}</small> : null}
+          {canPlay ? <small className="media-note">{w.spotify.embedNotice}</small> : null}
         </span>
         <span className="sp-play" aria-hidden />
       </span>
@@ -284,7 +276,7 @@ export function SpotifyCard({
     return (
       <article className={className}>
         {content}
-        <MediaHit label={spotifyOynatEtiketi(title)} onPlay={() => setPlaying(true)} />
+        <MediaHit label={w.spotify.playLabel(title)} onPlay={() => setPlaying(true)} />
       </article>
     );
   }

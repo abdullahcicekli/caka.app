@@ -29,7 +29,7 @@ import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/dashboard";
-import { localizedRedirect } from "../../server/locale";
+import { localeFromRequest, localizedRedirect } from "../../server/locale";
 
 export function meta({}: Route.MetaArgs) {
   return noIndexMeta("Panel — Caka");
@@ -74,7 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [githubCalendars, signedImages, youtubeFeeds] = await Promise.all([
     getGithubCalendars(env, collectGithubLogins(layout)),
     signLayoutImages(env, layout),
-    getYoutubeChannelCards(env, layout),
+    getYoutubeChannelCards(env, layout, localeFromRequest(request)),
   ]);
 
   return {

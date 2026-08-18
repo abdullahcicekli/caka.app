@@ -2,10 +2,10 @@
  * GitHub katkı kartının kullanıcıya görünen metinleri. İçerik/görünüm ayrımı
  * (Değişmez #5) gereği bileşende değil burada yaşar.
  *
- * BİLİNÇLİ İSTİSNA — ürün dili Türkçe olmasına rağmen bu metinler İNGİLİZCE:
- * kullanıcı, katkı grafiğinin GitHub'ın kendi biçimini birebir izlemesini
- * açıkça istedi ("12 contributions on Aug 16, 2026" vb.). aria-label'lar
- * Türkçe kalır (sayfa lang="tr", ekran okuyucu dili Türkçe).
+ * BİLİNÇLİ İSTİSNA — bu metinler her dilde İNGİLİZCE kalır: kullanıcı, katkı
+ * grafiğinin GitHub'ın kendi biçimini birebir izlemesini açıkça istedi
+ * ("12 contributions on Aug 16, 2026" vb.). Grafiğin ekran okuyucu etiketi
+ * çevrilir ve widget kataloğunda durur (`widgetCatalog[locale].github`).
  */
 
 // GitHub'ın kısa ay adları. Tarih "YYYY-MM-DD" string'inden parçalanır —
@@ -33,8 +33,3 @@ export function githubTotalLine(total: number): string {
 
 /** Kart altındaki soluk ipucu metni (bağlantı değil; kartın tamamı <a>). */
 export const githubFootHint = "GitHub ↗";
-
-/** Heatmap grid'inin ekran okuyucu etiketi — Türkçe (sayfa lang="tr"). */
-export function githubHeatmapAriaLabel(total: number): string {
-  return `${total} katkı, son bir yıl`;
-}
