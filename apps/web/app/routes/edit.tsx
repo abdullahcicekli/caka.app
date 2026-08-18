@@ -2,13 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { env } from "cloudflare:workers";
 import {
   AlertTriangle,
+  ChevronDown,
   ChevronLeft,
+  ChevronUp,
   ExternalLink,
   ImageIcon,
+  Images,
   LayoutGrid,
   Link2,
   Megaphone,
   Monitor,
+  MonitorPlay,
   Palette,
   Plus,
   Send,
@@ -19,7 +23,11 @@ import {
 } from "lucide-react";
 import { Link, redirect, useNavigate, useSearchParams } from "react-router";
 
-import { BlockGallery, type GalleryPick } from "~/components/editor/gallery";
+import {
+  BlockGallery,
+  type BlockAddBlockers,
+  type GalleryPick,
+} from "~/components/editor/gallery";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
@@ -27,7 +35,9 @@ import { onboardingPlatforms, onboardingTemplates, platformById } from "~/conten
 import { noIndexMeta } from "~/lib/seo";
 import {
   BLOCK_TYPE_LABELS,
+  GALLERY_MAX_PHOTOS,
   GRID_COLUMNS,
+  MAX_GALLERY_BLOCKS,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
@@ -134,30 +144,82 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   text: true,
   image: true,
   status: true,
-  // Panelde kısayolu yok; blok galerisinden eklenir (U32/U33 açar).
+  // Panelde kısayolu yok; araç çubuğundan ya da blok galerisinden eklenir.
+  // Galeri ayrıca hesap başına 2 ile sınırlı (R62) — derin bağlantı bu
+  // sınırı atlatabilecek ikinci bir yol açmasın.
   gallery: false,
   youtube: false,
 };
+
+/**
+ * Editörde gösterilecek blok adı. `BLOCK_TYPE_LABELS` şemanın adlandırması;
+ * editörde "Galeri" adı ZATEN blok seçicinin ("Blok galerisi") adı, ikisi aynı
+ * arayüzde çarpışıyor. Fotoğraf bloğu bu yüzden burada "Fotoğraf galerisi"
+ * olarak görünür.
+ */
+function editorBlockLabel(type: ProfileBlock["type"]): string {
+  return type === "gallery" ? "Fotoğraf galerisi" : BLOCK_TYPE_LABELS[type];
+}
 
 function isDeepLinkAddable(value: string): value is ProfileBlock["type"] {
   return Object.hasOwn(DEEP_LINK_ADDABLE, value) && DEEP_LINK_ADDABLE[value as ProfileBlock["type"]];
 }
 
+/** `/api/youtube` başarılı yanıtı; hata dalında yalnız `error` döner. */
+type YoutubeResolveResponse =
+  | {
+      kind: "video";
+      url: string;
+      videoId: string;
+      title: string;
+      channelName: string;
+      shorts: boolean;
+      thumbnail: string;
+      proxied: string | null;
+    }
+  | {
+      kind: "channel";
+      url: string;
+      channelId: string;
+      channelName: string;
+      handle: string;
+      thumbnail: string;
+      proxied: string | null;
+    }
+  | { error: string };
+
 function Inspector({
   block,
   update,
+  setData,
   remove,
   close,
+  onSignedImage,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
+  /** Veriyi bütünüyle değiştirir. YouTube'da şart: video ↔ kanal geçişi
+      ayrımlı birleşimin DALINI değiştirir, alan yamalamakla olmaz. */
+  setData: (data: ProfileBlock["data"]) => void;
   remove: () => void;
   close: () => void;
+  /** Bloğun uzak görselinin imzalı yolu; editörün `signedImages` eşlemesine
+      eklenir ki kullanıcı kaydetmeyi beklemeden önizlemeyi görsün. */
+  onSignedImage: (path: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   // Yükleme hatası (kota, tür, boyut) sessizce yutulmaz: sunucunun Türkçe
   // mesajı panelde gösterilir.
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // YouTube: kullanıcının yazdığı ham adres ayrı tutulur; blok yalnız
+  // çözümleme başarılı olunca güncellenir (KTD34).
+  const [youtubeInput, setYoutubeInput] = useState(() =>
+    block.type === "youtube" ? block.data.url : "",
+  );
+  const [youtubeBusy, setYoutubeBusy] = useState(false);
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+  // Aynı adres için tekrar tekrar istek atma; çözülen adres de buraya yazılır.
+  const youtubeAttemptedRef = useRef("");
   // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
   // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
   const [socialLink, setSocialLink] = useState(() =>
@@ -165,6 +227,10 @@ function Inspector({
   );
   useEffect(() => {
     setSocialLink(block.type === "social" ? block.data.url || block.data.handle : "");
+    setYoutubeInput(block.type === "youtube" ? block.data.url : "");
+    youtubeAttemptedRef.current = block.type === "youtube" ? block.data.url : "";
+    setYoutubeError(null);
+    setUploadError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız blok değişince
   }, [block.id]);
 
@@ -192,7 +258,13 @@ function Inspector({
     update({ handle, url: socialUrl(block.data.platform, value), ogImage: "" });
   }
 
-  async function uploadImage(file: File) {
+  /**
+   * Dosyayı R2'ye yükler ve asset kimliğini döner. Sunucunun reddetme
+   * gerekçesi (R16 kotası → 403, tür, boyut) olduğu gibi panele yazılır;
+   * "yükleyemedik" gibi bir örtü metin kullanıcıya kotasının dolduğunu
+   * söylemezdi.
+   */
+  async function uploadAsset(file: File): Promise<string | null> {
     setUploading(true);
     setUploadError(null);
     try {
@@ -202,14 +274,96 @@ function Inspector({
         body: file,
       });
       const result = (await response.json()) as { id?: string; error?: string };
-      if (response.ok && result.id) update({ assetId: result.id });
-      else setUploadError(result.error ?? "Görsel yüklenemedi");
+      if (response.ok && result.id) return result.id;
+      setUploadError(result.error ?? "Görsel yüklenemedi");
+      return null;
     } catch {
       setUploadError("Görsel yüklenemedi");
+      return null;
     } finally {
       setUploading(false);
     }
   }
+
+  async function uploadImage(file: File) {
+    const id = await uploadAsset(file);
+    if (id) update({ assetId: id });
+  }
+
+  async function addGalleryPhoto(file: File) {
+    if (block.type !== "gallery") return;
+    // İkinci savunma hattı: arayüz zaten kapanıyor ama yarışan bir tıklama
+    // sınırı aşmasın (şema 5'te reddediyor, kullanıcı hatayı kayıtta görürdü).
+    if (block.data.photos.length >= GALLERY_MAX_PHOTOS) return;
+    const id = await uploadAsset(file);
+    if (!id) return;
+    update({ photos: [...block.data.photos, { assetId: id, alt: "" }] });
+  }
+
+  /**
+   * Adresi `/api/youtube`'a sorar; video mu kanal mı olduğu ORADA çözülür.
+   * Başarıda bloğun verisi bütünüyle değişir (dal değişebilir), hatada blok
+   * olduğu gibi kalır ve sunucunun Türkçe gerekçesi gösterilir.
+   */
+  async function resolveYoutube(value: string) {
+    youtubeAttemptedRef.current = value;
+    setYoutubeBusy(true);
+    setYoutubeError(null);
+    try {
+      const response = await fetch(`/api/youtube?url=${encodeURIComponent(value)}`);
+      const result = (await response.json()) as YoutubeResolveResponse;
+      if (!response.ok || !("kind" in result)) {
+        setYoutubeError(
+          ("error" in result && result.error) || "YouTube bağlantısı çözümlenemedi.",
+        );
+        return;
+      }
+      if (result.kind === "channel") {
+        setData({
+          kind: "channel",
+          url: result.url,
+          channelId: result.channelId,
+          channelName: result.channelName,
+          handle: result.handle,
+          subscribers: "",
+          views: "",
+          thumbnail: result.thumbnail,
+        });
+      } else {
+        setData({
+          kind: "video",
+          url: result.url,
+          videoId: result.videoId,
+          title: result.title,
+          channelName: result.channelName,
+          // Süre planda ertelendi (1,3 MB'lık kazıma); şema alanı boş kalır.
+          duration: "",
+          shorts: result.shorts,
+          thumbnail: result.thumbnail,
+        });
+      }
+      if (result.proxied) onSignedImage(result.proxied);
+      // Kanonik adresi alana yaz: kullanıcı neyin eklendiğini görsün. Ref de
+      // güncellenir, yoksa değişen değer yeni bir çözümleme tetiklerdi.
+      youtubeAttemptedRef.current = result.url;
+      setYoutubeInput(result.url);
+    } catch {
+      setYoutubeError("YouTube bağlantısı çözümlenemedi — bağlantını kontrol et.");
+    } finally {
+      setYoutubeBusy(false);
+    }
+  }
+
+  // Yapıştırdıktan kısa süre sonra kendiliğinden çözümle: kullanıcıya ayrıca
+  // "çözümle" düğmesi tıklatmak, ayrımın otomatik olduğu vaadiyle çelişirdi.
+  useEffect(() => {
+    if (block.type !== "youtube") return;
+    const value = youtubeInput.trim();
+    if (!value || value === youtubeAttemptedRef.current) return;
+    const timer = window.setTimeout(() => void resolveYoutube(value), 700);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız adres değişince
+  }, [youtubeInput, block.id]);
 
   // Alanlar tip başına tek bir switch'te toplanır: `never` default'u sayesinde
   // yeni bir blok tipi eklendiğinde derleyici burada durur (eskiden art arda
@@ -297,23 +451,150 @@ function Inspector({
             <label>Bağlantı<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
           </>
         );
-      case "gallery":
+      case "gallery": {
+        const photos = block.data.photos;
+        const full = photos.length >= GALLERY_MAX_PHOTOS;
+        // Sıra değiştirme: fotoğrafı bir yukarı/aşağı taşır. Sürükle-bırak
+        // yerine düğme — dokunmatikte ızgara sürüklemesiyle çakışmıyor.
+        const move = (index: number, delta: number) => {
+          const target = index + delta;
+          if (target < 0 || target >= photos.length) return;
+          const next = [...photos];
+          const [moved] = next.splice(index, 1);
+          next.splice(target, 0, moved!);
+          update({ photos: next });
+        };
         return (
-          <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+          <>
+            <label>Başlık<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
+            <fieldset>
+              <legend>Fotoğraflar ({photos.length}/{GALLERY_MAX_PHOTOS})</legend>
+              {photos.length === 0 ? (
+                <p className="inspector-hint">Henüz fotoğraf yok.</p>
+              ) : (
+                <ul className="flex list-none flex-col gap-2 p-0">
+                  {photos.map((photo, index) => (
+                    <li
+                      key={photo.assetId}
+                      className="flex items-center gap-2 rounded-lg border border-sinir p-2"
+                    >
+                      <img
+                        src={`/i/${photo.assetId}`}
+                        alt=""
+                        className="size-11 flex-none rounded-md object-cover"
+                        draggable={false}
+                      />
+                      <input
+                        className="min-w-0 flex-1"
+                        value={photo.alt}
+                        placeholder="Alt metin (isteğe bağlı)"
+                        aria-label={`${index + 1}. fotoğrafın alt metni`}
+                        onChange={(event) =>
+                          update({
+                            photos: photos.map((item, other) =>
+                              other === index ? { ...item, alt: event.target.value } : item,
+                            ),
+                          })
+                        }
+                      />
+                      <span className="flex flex-none flex-col">
+                        <button
+                          type="button"
+                          aria-label={`${index + 1}. fotoğrafı yukarı taşı`}
+                          disabled={index === 0}
+                          className="disabled:opacity-30"
+                          onClick={() => move(index, -1)}
+                        >
+                          <ChevronUp size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`${index + 1}. fotoğrafı aşağı taşı`}
+                          disabled={index === photos.length - 1}
+                          className="disabled:opacity-30"
+                          onClick={() => move(index, 1)}
+                        >
+                          <ChevronDown size={15} />
+                        </button>
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`${index + 1}. fotoğrafı kaldır`}
+                        className="flex-none text-destructive"
+                        onClick={() =>
+                          update({ photos: photos.filter((_, other) => other !== index) })
+                        }
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {/* Sınıra ulaşınca ekleme kapanır ve NEDENİ yazar; sessizce
+                  reddedilen bir buton kullanıcıya sınırı öğretmez. */}
+              {full ? (
+                <p className="inspector-hint">
+                  Bir galeride en fazla {GALLERY_MAX_PHOTOS} fotoğraf olabilir. Yeni fotoğraf
+                  eklemek için önce birini kaldır.
+                </p>
+              ) : (
+                <span className="inspector-upload">
+                  <ImageIcon size={18} />
+                  {uploading ? "Yükleniyor…" : "Fotoğraf ekle (JPEG veya PNG)"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    disabled={uploading}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      // Aynı dosya art arda seçilebilsin diye alan sıfırlanır.
+                      event.target.value = "";
+                      if (file) void addGalleryPhoto(file);
+                    }}
+                  />
+                </span>
+              )}
+            </fieldset>
+            {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
+          </>
         );
-      case "youtube":
+      }
+      case "youtube": {
         // Tek alan: adres. Video mu kanal mı olduğu ve başlık/küçük görsel
         // gibi alanlar kayıt anında sunucuda çözülür (KTD34), kullanıcı
         // ikisini ayrı ayrı seçmez — yapıştırdığı bağlantı zaten söylüyor.
+        // Ama SONUÇ gösterilir: yanlış şeyi eklediyse anlaması gerek.
+        const resolved =
+          block.data.kind === "video"
+            ? block.data.videoId
+              ? `Video olarak eklendi${block.data.title ? ` — ${block.data.title}` : ""}`
+              : null
+            : block.data.channelId
+              ? `Kanal olarak eklendi${block.data.channelName ? ` — ${block.data.channelName}` : ""}`
+              : null;
         return (
-          <label>YouTube bağlantısı
-            <input
-              value={block.data.url}
-              placeholder="youtube.com/watch?v=… ya da youtube.com/@kanal"
-              onChange={(event) => update({ url: event.target.value })}
-            />
-          </label>
+          <>
+            <label>YouTube bağlantısı
+              <input
+                value={youtubeInput}
+                placeholder="youtube.com/watch?v=… ya da youtube.com/@kanal"
+                onChange={(event) => setYoutubeInput(event.target.value)}
+              />
+              <small className="inspector-hint">
+                Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.
+              </small>
+            </label>
+            {youtubeBusy ? <p className="inspector-hint">Çözümleniyor…</p> : null}
+            {youtubeError ? (
+              <p className="inspector-error" role="alert">{youtubeError}</p>
+            ) : null}
+            {!youtubeBusy && !youtubeError && resolved ? (
+              <p className="inspector-hint">{resolved}</p>
+            ) : null}
+          </>
         );
+      }
       // Metin bloğu tuval üzerinde Tiptap ile düzenlenir; panelde alanı yok.
       case "text":
         return null;
@@ -328,7 +609,7 @@ function Inspector({
   return (
     <aside className="editor-inspector">
       <header>
-        <strong>{BLOCK_TYPE_LABELS[block.type]} bloğu</strong>
+        <strong>{editorBlockLabel(block.type)} bloğu</strong>
         <button type="button" aria-label="Paneli kapat" onClick={close}><X size={18} /></button>
       </header>
       <div className="inspector-fields">
@@ -421,6 +702,33 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
 
+  // Loader yalnız AÇILIŞTAKİ blokların uzak görsellerini imzalar. Editörde
+  // sonradan eklenen ya da adresi değişen blokların imzalı yolu uçlardan
+  // (`/api/og-image`, `/api/youtube`) döner ve burada birikir; iki kaynak
+  // birleştirilip karta verilir, böylece önizleme kaydetmeyi beklemez.
+  const [editorSignedImages, setEditorSignedImages] = useState<Record<string, string>>({});
+  const signedImages = useMemo(
+    () => ({ ...loaderData.signedImages, ...editorSignedImages }),
+    [loaderData.signedImages, editorSignedImages],
+  );
+  function rememberSignedImage(blockId: string, path: string) {
+    setEditorSignedImages((current) =>
+      current[blockId] === path ? current : { ...current, [blockId]: path },
+    );
+  }
+
+  // R62: hesap başına galeri sınırı sunucuda (`profileLayoutWriteSchema`)
+  // uygulanıyor. Arayüz sınıra ULAŞMADAN kapanmalı — kullanıcı bloğu ekleyip
+  // kaydederken hata almamalı.
+  const galleryBlocked =
+    layout.blocks.filter((block) => block.type === "gallery").length >= MAX_GALLERY_BLOCKS
+      ? `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} fotoğraf galerisi olabilir. Yenisini eklemek için önce birini kaldır.`
+      : null;
+  const addBlockers: BlockAddBlockers = useMemo(
+    () => (galleryBlocked ? { gallery: galleryBlocked } : {}),
+    [galleryBlocked],
+  );
+
   // Otomatik kaydetme TASLAĞA yazar; canlı sayfa yalnız "yayınla" ile değişir.
   const latestRef = useRef({ layout, theme });
   const saveTimerRef = useRef<number | null>(null);
@@ -480,7 +788,15 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   }, [layout, theme]);
 
   // Yayına engel olan eksik bloklar (boş sosyal kutu, metinsiz blok…).
-  const issues = useMemo(() => (publishTried ? layoutIssues(layout) : []), [publishTried, layout]);
+  const issues = useMemo(() => {
+    if (!publishTried) return [];
+    // Etiketler editör adlandırmasına çevrilir (bkz. editorBlockLabel).
+    const typeOf = new Map(layout.blocks.map((block) => [block.id, block.type]));
+    return layoutIssues(layout).map((issue) => {
+      const type = typeOf.get(issue.blockId);
+      return type ? { ...issue, label: editorBlockLabel(type) } : issue;
+    });
+  }, [publishTried, layout]);
 
   function focusBlock(id: string) {
     setSelectedId(id);
@@ -569,7 +885,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       for (const block of layout.blocks) {
-        if (block.type !== "social" || !block.data.url || block.data.ogImage) continue;
+        if (block.type !== "social" && block.type !== "link") continue;
+        if (!block.data.url || block.data.ogImage) continue;
         const key = `${block.id}|${block.data.url}`;
         if (ogAttemptedRef.current.has(key)) continue;
         ogAttemptedRef.current.add(key);
@@ -577,15 +894,22 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         const url = block.data.url;
         void fetch(`/api/og-image?url=${encodeURIComponent(url)}`)
           .then((response) =>
-            response.ok ? (response.json() as Promise<{ image?: string | null }>) : null,
+            response.ok
+              ? (response.json() as Promise<{ image?: string | null; proxied?: string | null }>)
+              : null,
           )
           .then((result) => {
             const image = result?.image;
             if (!image) return;
+            // İmzalı yol layout'a YAZILMAZ (kaynak adres kaybolurdu); ayrı
+            // eşlemede durur — bkz. server/layout-images.ts.
+            if (result?.proxied) rememberSignedImage(id, result.proxied);
             setLayout((current) => ({
               ...current,
               blocks: current.blocks.map((item) =>
-                item.id === id && item.type === "social" && item.data.url === url
+                item.id === id &&
+                (item.type === "social" || item.type === "link") &&
+                item.data.url === url
                   ? ({ ...item, data: { ...item.data, ogImage: image } } as ProfileBlock)
                   : item,
               ),
@@ -620,6 +944,9 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   }
 
   function add(type: ProfileBlock["type"]) {
+    // Sınır arayüzde zaten kapalı; buradaki kontrol derin bağlantı ve yarışan
+    // tıklamalar için son kapı.
+    if (type === "gallery" && galleryBlocked) return;
     insertBlock(defaultBlock(type));
   }
 
@@ -642,6 +969,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   function addFromGallery(pick: GalleryPick) {
     if (pick.kind === "content") return add(pick.type);
+
     const config = platformById(pick.platform);
     insertBlock({
       id: createBlockId(),
@@ -794,7 +1122,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                 if (event.key === "Enter" || event.key === " ") setSelectedId(profileBlock.id);
               }}
             >
-              <ProfileBlockCard block={profileBlock} signedImages={loaderData.signedImages} />
+              <ProfileBlockCard block={profileBlock} signedImages={signedImages} />
               {selectedId === profileBlock.id ? <span className="selected-label">Genel bilgi</span> : null}
             </div>
           ) : null}
@@ -846,7 +1174,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                   <ProfileBlockCard
                     block={block}
                     githubCalendars={loaderData.githubCalendars}
-                    signedImages={loaderData.signedImages}
+                    signedImages={signedImages}
                   />
                 )
               }
@@ -880,6 +1208,22 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         </button>
         <button type="button" data-tooltip="Görsel ekle" aria-label="Görsel ekle" onClick={() => add("image")}>
           <ImageIcon size={19} />
+        </button>
+        {/* "Fotoğraf galerisi": bu çubuktaki son düğme zaten "Blok galerisi"
+            adını taşıyor; ikisi aynı adı taşısaydı hangisinin ne yaptığı
+            arayüzde okunmazdı. */}
+        <button
+          type="button"
+          data-tooltip={galleryBlocked ?? "Fotoğraf galerisi ekle"}
+          aria-label={galleryBlocked ?? "Fotoğraf galerisi ekle"}
+          disabled={Boolean(galleryBlocked)}
+          className={galleryBlocked ? "cursor-not-allowed opacity-40" : ""}
+          onClick={() => add("gallery")}
+        >
+          <Images size={19} />
+        </button>
+        <button type="button" data-tooltip="YouTube ekle" aria-label="YouTube ekle" onClick={() => add("youtube")}>
+          <MonitorPlay size={19} />
         </button>
         <button
           type="button"
@@ -918,13 +1262,22 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         </div>
       ) : null}
 
-      {panel === "gallery" ? <BlockGallery onPick={addFromGallery} /> : null}
+      {panel === "gallery" ? <BlockGallery onPick={addFromGallery} blockers={addBlockers} /> : null}
 
       {/* Metin ve duyuru blokları dialog yerine tuvalde düzenlenir (InlineTextEditor). */}
       {selected && selected.type !== "text" && selected.type !== "status" ? (
         <Inspector
           block={selected}
           update={updateSelected}
+          setData={(data) =>
+            setLayout((current) => ({
+              ...current,
+              blocks: current.blocks.map((block) =>
+                block.id === selected.id ? ({ ...block, data } as ProfileBlock) : block,
+              ),
+            }))
+          }
+          onSignedImage={(path) => rememberSignedImage(selected.id, path)}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));

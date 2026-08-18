@@ -10,6 +10,7 @@ import { ogApi } from "./og";
 import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
 import { seoRoutes } from "./seo";
+import { youtubeApi } from "./youtube-api";
 
 // Hono; API, R2 görselleri ve makine-okur SEO endpointlerini taşır. SSR
 // sayfaları React Router handler'ında kalır.
@@ -30,6 +31,9 @@ honoApp.route("/api/profile", layoutApi);
 // Birinci taraf ölçüm (R48): POST /api/olcum/tiklama — çerezsiz, gövdesiz 204.
 honoApp.route("/api/olcum", analyticsApi);
 honoApp.route("/api/og-image", ogApi);
+// Editörün YouTube çözümleme ucu (KTD34): GET /api/youtube?url=… — video mu
+// kanal mı olduğu kayıt anında burada çözülür, render tekrarlamaz.
+honoApp.route("/api/youtube", youtubeApi);
 // Uzak önizleme görselleri birinci taraftan servis edilir (backlog #6):
 // ziyaretçinin IP/UA'sı uzak host'a gitmez, üçüncü taraf çerezi yazılamaz.
 honoApp.route("/api/gorsel", imageProxyApi);

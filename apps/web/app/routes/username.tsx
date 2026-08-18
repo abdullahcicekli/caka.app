@@ -26,6 +26,7 @@ import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
 import { ogImagePathForProfile } from "../../server/og-image";
 import { resolveUsername } from "../../server/profile";
+import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/username";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -132,6 +133,15 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       return [];
     }),
   ].filter((url, index, values) => /^https?:\/\//.test(url) && values.indexOf(url) === index);
+
+  // Üç zenginleştirme birbirinden bağımsız; sırayla beklenirse gecikmeleri
+  // toplanırdı. Üçü de kendi içinde hata yutar — hiçbiri sayfayı düşürmez.
+  const [githubCalendars, signedImages, youtubeFeeds] = await Promise.all([
+    getGithubCalendars(env, collectGithubLogins(layout)),
+    signLayoutImages(env, layout),
+    getYoutubeChannelCards(env, layout),
+  ]);
+
   return {
     username: p.username,
     name,
@@ -147,13 +157,17 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     layout: ensureLayoutPositions(layout),
     isOwner,
     // GitHub katkı grafikleri: D1 önbelleğinden okunur; token yoksa boş.
-    githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
-    signedImages: await signLayoutImages(env, layout),
+    githubCalendars,
+    signedImages,
+    // Kanal widget'larının son videosu (RSS, 15 dk önbellek). Akış
+    // okunamazsa sözlük boş kalır ve kart saklanan bilgiyle yetinir.
+    youtubeFeeds,
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
-  const { username, isOwner, layout, theme, githubCalendars, signedImages } = loaderData;
+  const { username, isOwner, layout, theme, githubCalendars, signedImages, youtubeFeeds } =
+    loaderData;
   return (
     <main className="relative min-h-svh">
       <ProfileCanvas
@@ -161,6 +175,7 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
         theme={theme}
         githubCalendars={githubCalendars}
         signedImages={signedImages}
+        youtubeFeeds={youtubeFeeds}
       />
       {/* Tıklama ölçümü yalnız ziyaretçide çalışır; sahibin kendi tıklaması
           sayaca girmez. Bağlantıların href'i değişmez — JS kapalıyken

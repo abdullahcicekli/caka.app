@@ -27,6 +27,7 @@ import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
 import { getProfileByUserId } from "../../server/profile";
+import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/dashboard";
 
 export function meta({}: Route.MetaArgs) {
@@ -68,6 +69,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     ),
   };
 
+  // Önizleme canlı sayfayla aynı veriyi görsün. Üçü bağımsız; paralel.
+  const [githubCalendars, signedImages, youtubeFeeds] = await Promise.all([
+    getGithubCalendars(env, collectGithubLogins(layout)),
+    signLayoutImages(env, layout),
+    getYoutubeChannelCards(env, layout),
+  ]);
+
   return {
     analytics,
     username: profile.username,
@@ -77,8 +85,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Ölçüt editörle (routes/edit.tsx) aynı olmalı: okunamayan taslak yok sayılır.
     hasDraft: profile.draftLayout ? parseProfileLayout(profile.draftLayout) !== null : false,
     // Önizlemedeki GitHub kartları da canlı sayfayla aynı grafiği göstersin.
-    githubCalendars: await getGithubCalendars(env, collectGithubLogins(layout)),
-    signedImages: await signLayoutImages(env, layout),
+    githubCalendars,
+    signedImages,
+    youtubeFeeds,
     account: {
       name: card?.data.name || profile.username,
       username: profile.username,
@@ -222,7 +231,17 @@ function DashAnalytics({ analytics }: { analytics: Analytics }) {
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { username, layout, theme, account, hasDraft, githubCalendars, analytics, signedImages } =
+  const {
+    username,
+    layout,
+    theme,
+    account,
+    hasDraft,
+    githubCalendars,
+    analytics,
+    signedImages,
+    youtubeFeeds,
+  } =
     loaderData;
 
   return (
@@ -251,6 +270,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               compact
               githubCalendars={githubCalendars}
               signedImages={signedImages}
+              youtubeFeeds={youtubeFeeds}
             />
           </div>
         </div>

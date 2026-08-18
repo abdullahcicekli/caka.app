@@ -11,7 +11,20 @@ import {
   githubTotalLine,
 } from "~/content/github";
 import { platformById } from "~/content/onboarding";
+import {
+  galeriBosMetni,
+  galeriDahaFazla,
+  galeriDahaFazlaEtiketi,
+  galeriEtiketi,
+  youtubeKanalRozeti,
+  youtubeKanalYedekBasligi,
+  youtubeShortsRozeti,
+  youtubeSonVideoBasligi,
+  youtubeVideoYedekBasligi,
+} from "~/content/widget";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
+import { linkBrand, prettyLinkTarget } from "~/lib/link-preview";
+import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
 import { ProfileAvatar } from "./profile-avatar";
 
 function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
@@ -47,10 +60,27 @@ function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
   );
 }
 
+/**
+ * Galeri `+N` pilinin olası kapasiteleri. Bir bandın kapasitesi (o ölçüde kaç
+ * fotoğraf görünür) yalnız CSS'te bilinir; bileşen her kapasite için bir pil
+ * basar, CSS bandına uyanı gösterir. Beş fotoğraf tavanında (R62) 5'lik slota
+ * hiç gerek olmaz — o bantta gizlenen fotoğraf kalmaz.
+ */
+const GALLERY_BADGE_SLOTS = [1, 2, 3, 4] as const;
+
+/**
+ * YouTube oynatma göstergesi. Kırmızı çip + beyaz üçgen; tamamı CSS, ek
+ * istek yok. Video kartını kanal kartından ayıran ilk işaret bu.
+ */
+function YoutubePlayMark({ small = false }: { small?: boolean }) {
+  return <span className={`yt-play${small ? " is-small" : ""}`} aria-hidden />;
+}
+
 export function ProfileBlockCard({
   block,
   githubCalendars,
   signedImages,
+  youtubeFeeds,
 }: {
   block: ProfileBlock;
   githubCalendars?: GithubCalendarMap;
@@ -58,6 +88,9 @@ export function ProfileBlockCard({
       `server/layout-images.ts`). Proxy imzalı olduğu için adres render
       sırasında saf fonksiyonla türetilemez. */
   signedImages?: Readonly<Record<string, string>>;
+  /** blok kimliği → kanalın en son videosu (loader doldurur; editörde boş
+      kalır ve kart kayıt anında saklanan bilgiye düşer). */
+  youtubeFeeds?: YoutubeFeedMap;
 }) {
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
   // tanımsız veya blokta görsel yok) kart görselsiz tasarımına düşer.
@@ -146,14 +179,43 @@ export function ProfileBlockCard({
     return <article className={className}>{content}</article>;
     }
 
-    case "link":
+    // R60/R61. Önizleme görseli varsa kart onun etrafında kurulur; YOKSA
+    // (ölçüm: hedeflerin çoğunluğu) kart "bozuk" değil "sade" görünmeli.
+    // Görsel çapa marka renginde bir çip + alan adının baş harfidir; favicon
+    // için uzak istek atılmaz (bkz. `lib/link-preview.ts`).
+    case "link": {
+      const target = prettyLinkTarget(block.data.url);
+      const brand = linkBrand(block.data.url);
+      const preview = signedImage;
       return (
-      <a className="profile-block profile-block-link" href={block.data.url || undefined} target="_blank" rel="noreferrer">
-        <span>↗</span>
-        <strong>{block.data.title}</strong>
-        <small>{block.data.url.replace(/^https?:\/\//, "")}</small>
-      </a>
-    );
+        <a
+          className={`profile-block profile-block-link${preview ? " has-og" : ""}`}
+          href={block.data.url || undefined}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {preview ? (
+            <img className="link-og" src={preview} alt="" loading="lazy" draggable={false} />
+          ) : null}
+          <span className="link-body">
+            <span className={`platform-mark link-mark ${brand.tone}`} aria-hidden>
+              {brand.initial}
+            </span>
+            <span className="link-lines">
+              {/* Başlık boşsa (taslak) hedef adres başlığın yerine geçer;
+                  kart hiçbir hâlde boş bir satırla durmaz. */}
+              <strong>{block.data.title || target}</strong>
+              <small>{target}</small>
+            </span>
+          </span>
+          {/* Ok yalnız görselsiz kartta: görselli kartta önizlemenin kendisi
+              zaten "burada bir şey var" diyor, ok gürültü olurdu. */}
+          <span className="link-go" aria-hidden>
+            ↗
+          </span>
+        </a>
+      );
+    }
 
     case "text":
       return (
@@ -186,44 +248,148 @@ export function ProfileBlockCard({
   );
     }
 
-    // Taban düzen: fotoğraflar tek sırada, kırpılarak (letterbox yok, R64).
-    // Tile boyutuna göre mozaik/hero varyantları U32'nin işi.
-    case "gallery":
+    // U32 / KTD37-KTD39. Düzeni İKİ bilgi belirler: fotoğraf sayısı (burada
+    // bilinir) ve tile'ın gerçek ölçüsü (yalnız CSS bilir). Bu yüzden sayı
+    // `data-count` ile DOM'a yazılır, ölçü kartın konteyner sorgularıyla
+    // okunur — JS ölçümü ve hidrasyon kayması yok.
+    //
+    // Sığmayan fotoğraflar DOM'da kalır ama CSS ile gizlenir; `+N` pili de
+    // olası her kapasite için ayrı bir slot olarak basılır ve bandın
+    // kapasitesine uyanı görünür. Sayıyı CSS hesaplayamadığı için tek yol bu.
+    case "gallery": {
+      const photos = block.data.photos;
+      const count = photos.length;
       return (
-        <article className="profile-block profile-block-gallery">
-          {block.data.photos.map((photo) => (
-            <img key={photo.assetId} src={`/i/${photo.assetId}`} alt={photo.alt} draggable={false} />
+        <article
+          className="profile-block profile-block-gallery"
+          data-count={count}
+          aria-label={galeriEtiketi(block.data.title)}
+        >
+          {photos.map((photo) => (
+            // Yerel görseller R2'den gelir (Değişmez #9); proxy gerekmez.
+            <img
+              key={photo.assetId}
+              src={`/i/${photo.assetId}`}
+              alt={photo.alt}
+              loading="lazy"
+              draggable={false}
+            />
+          ))}
+          {count === 0 ? (
+            <span className="profile-image-placeholder">{galeriBosMetni}</span>
+          ) : null}
+          {GALLERY_BADGE_SLOTS.filter((capacity) => count > capacity).map((capacity) => (
+            <span
+              key={capacity}
+              className="gallery-more"
+              data-slot={capacity}
+              aria-label={galeriDahaFazlaEtiketi(count - capacity)}
+            >
+              {galeriDahaFazla(count - capacity)}
+            </span>
           ))}
         </article>
       );
+    }
 
+    // U33/U34. Video ve kanal AYNI kartın iki varyantı gibi görünmemeli:
+    //  • Video → 16:9 (Short ise 9:16) kapak kartı domine eder, ortasında
+    //    kırmızı oynatma çipi; altında başlık + kanal adı.
+    //  • Kanal → yuvarlak avatar + "Kanal" rozetiyle bir kimlik satırı,
+    //    altında RSS'ten gelen SON VİDEO şeridi (KTD36 — ürünün en ucuz
+    //    canlılığı; statik logo-ve-handle kartı bilinçli olarak yapılmadı).
     case "youtube": {
       const data = block.data;
       // Küçük görsel uzak host'tan gelir; ziyaretçi tarayıcısı YouTube'a
       // doğrudan istek atmasın diye birinci taraf proxy'sinden geçer (R58).
       const thumbnail = signedImage;
-      const title =
-        data.kind === "video"
-          ? data.title
-          : data.channelName || (data.handle ? `@${data.handle}` : "");
-      const meta = data.kind === "video" ? data.channelName : data.subscribers;
+
+      if (data.kind === "video") {
+        const content = (
+          <>
+            <span className="yt-media">
+              {thumbnail ? (
+                <img
+                  className="youtube-thumb"
+                  src={thumbnail}
+                  alt=""
+                  loading="lazy"
+                  draggable={false}
+                />
+              ) : (
+                <span className="youtube-thumb yt-thumb-empty" aria-hidden />
+              )}
+              <YoutubePlayMark />
+              {data.shorts ? <span className="yt-pill">{youtubeShortsRozeti}</span> : null}
+              {data.duration ? (
+                <span className="yt-pill is-duration">{data.duration}</span>
+              ) : null}
+            </span>
+            <span className="youtube-meta">
+              <strong>{data.title || youtubeVideoYedekBasligi}</strong>
+              <small>{data.channelName}</small>
+            </span>
+          </>
+        );
+        const className = `profile-block profile-block-youtube is-video${data.shorts ? " is-shorts" : ""}`;
+        return data.url ? (
+          <a className={className} href={data.url} target="_blank" rel="noreferrer">
+            {content}
+          </a>
+        ) : (
+          <article className={className}>{content}</article>
+        );
+      }
+
+      const latest: YoutubeFeedCard | undefined = youtubeFeeds?.[block.id];
+      const handle = data.handle ? `@${data.handle}` : "";
+      const channelName = data.channelName || latest?.channelName || youtubeKanalYedekBasligi;
+      const channelMeta = [handle, data.subscribers].filter(Boolean).join(" · ");
       const content = (
         <>
-          {thumbnail ? (
-            <img className="youtube-thumb" src={thumbnail} alt="" loading="lazy" draggable={false} />
-          ) : null}
-          <span className="youtube-meta">
-            <strong>{title}</strong>
-            <small>{meta}</small>
+          <span className="yt-channel-head">
+            {thumbnail ? (
+              <img className="yt-avatar" src={thumbnail} alt="" loading="lazy" draggable={false} />
+            ) : (
+              // Avatar çözülemediyse baş harf çipi; kart yarım görünmez.
+              <span className="yt-avatar yt-avatar-empty" aria-hidden>
+                {(data.handle || channelName).slice(0, 1).toLocaleUpperCase("tr")}
+              </span>
+            )}
+            <span className="youtube-meta">
+              <strong>{channelName}</strong>
+              <small>{channelMeta}</small>
+            </span>
+            <span className="yt-kind-pill">{youtubeKanalRozeti}</span>
           </span>
+          {latest ? (
+            // Kartın tamamı zaten bir <a>; iç içe bağlantı geçersiz HTML
+            // olurdu. Son video bu yüzden bağlantı değil, bilgi şerididir.
+            <span className={`yt-latest${latest.short ? " is-shorts" : ""}`}>
+              <span className="yt-latest-media">
+                {latest.thumbnail ? (
+                  <img src={latest.thumbnail} alt="" loading="lazy" draggable={false} />
+                ) : (
+                  <span className="yt-thumb-empty" aria-hidden />
+                )}
+                <YoutubePlayMark small />
+              </span>
+              <span className="yt-latest-lines">
+                <small className="yt-latest-kicker">{youtubeSonVideoBasligi}</small>
+                <strong>{latest.title}</strong>
+                <small>{[latest.published, latest.views].filter(Boolean).join(" · ")}</small>
+              </span>
+            </span>
+          ) : null}
         </>
       );
+      const className = `profile-block profile-block-youtube is-channel${latest ? " has-latest" : ""}`;
       return data.url ? (
-        <a className="profile-block profile-block-youtube" href={data.url} target="_blank" rel="noreferrer">
+        <a className={className} href={data.url} target="_blank" rel="noreferrer">
           {content}
         </a>
       ) : (
-        <article className="profile-block profile-block-youtube">{content}</article>
+        <article className={className}>{content}</article>
       );
     }
 
@@ -243,6 +409,7 @@ export function ProfileCanvas({
   compact = false,
   githubCalendars,
   signedImages,
+  youtubeFeeds,
 }: {
   layout: ProfileLayout;
   theme: ProfileTheme;
@@ -251,6 +418,8 @@ export function ProfileCanvas({
   githubCalendars?: GithubCalendarMap;
   /** blok kimliği → imzalı proxy yolu (loader doldurur) */
   signedImages?: Readonly<Record<string, string>>;
+  /** blok kimliği → kanalın en son videosu (loader doldurur) */
+  youtubeFeeds?: YoutubeFeedMap;
 }) {
   const profileBlock = layout.blocks.find((block) => block.type === "profile");
   const bentoBlocks = layout.blocks.filter((block) => block.type !== "profile");
@@ -289,6 +458,7 @@ export function ProfileCanvas({
                   block={block}
                   githubCalendars={githubCalendars}
                   signedImages={signedImages}
+                  youtubeFeeds={youtubeFeeds}
                 />
               </div>
             );

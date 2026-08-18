@@ -25,23 +25,25 @@ dashboard → Security → WAF → Rate limiting rules.
 (her şablon için bir tane). Eşik bunu meşru trafik saymalı, yoksa kullanıcı
 kendi ayar sayfasında rate limit yer.
 
-**Aynı kural `/api/gorsel` için de gerekiyor.** Uzak görsel proxy'si
-(`server/image-proxy.ts`) oturumsuz ve hedef adresi çağıran seçiyor; SSRF
-kuralları özel/dahili hedefleri kapatıyor ama **public** bir hedefe istek
-üretmeyi engellemiyor. Önbellek anahtarı hedef adresten türediği için
-saldırgan her istekte farklı bir `?u=` vererek önbelleği atlayabilir; sonuç,
-Cloudflare IP'lerinden çıkan istek başına 2 MB'a kadar dış trafik (yansıtıcı +
-alt istek maliyeti). Bugünkü sınırlayıcılar: 2 MB gövde tavanı, 5 s zaman
-aşımı, en fazla 3 yönlendirme, `image/*` allowlist'i, kendi origin'ine
-proxy yasağı ve başarısızlıklarda 5 dk negatif önbellek.
+**`/api/gorsel` için (b) yapıldı, (a) duruyor.** Uzak görsel proxy'si
+(`server/image-proxy.ts`) oturumsuz; SSRF kuralları özel/dahili hedefleri
+kapatıyor ama **public** bir hedefe istek üretmeyi tek başına engellemiyordu.
 
-Gerçek çözüm iki adımlı: (a) zone seviyesinde rate limit, (b) adresi
-`remoteImageProxyPath` üretirken HMAC ile imzalayıp uçta doğrulamak — böylece
-yalnızca *bizim* layout'umuzdaki adresler proxy'lenebilir. (b) bugün
-yapılmadı çünkü imza sunucu tarafı bir sır (`BETTER_AUTH_SECRET`) ve async
-kripto istiyor; `ProfileBlockCard` ise editörde istemci state'inden de
-render ediliyor. Doğru yeri: loader'ın layout'u imzalı adreslerle
-zenginleştirmesi — kendi başına bir iş.
+**(b) HMAC imzası — yapıldı (2026-08-18).** Adres artık `IMAGE_PROXY_SECRET`
+ile imzalanıyor ve uçta sabit-zamanlı doğrulanıyor; yalnızca *bizim*
+ürettiğimiz adresler proxy'lenebiliyor. Sır tanımsızsa uç tamamen kapalı
+(fail-closed). İmza loader'da üretilip blok kimliğine anahtarlı ayrı bir
+eşlemeyle taşınıyor (`server/layout-images.ts`) — bloğun `ogImage` alanına
+yazılmıyor, çünkü editör aynı nesneyi kaydediyor ve kaynak adres kaybolurdu.
+Bu, keyfi hedefe istek üretme yüzeyini kapatıyor.
+
+**(a) zone seviyesinde rate limit — duruyor.** İmza, oturum açmış bir
+kullanıcının kendi profiline çok sayıda uzak görsel koyup trafiği
+büyütmesini engellemiyor; bir de imzalı bir adres bir kez üretildiğinde
+tekrar tekrar çağrılabilir. Bugünkü sınırlayıcılar: 2 MB gövde tavanı, 5 s
+zaman aşımı, en fazla 3 yönlendirme (her hop yeniden doğrulanır), `image/*`
+allowlist'i (SVG hariç), kendi origin'ine proxy yasağı, 24 s önbellek ve
+başarısızlıklarda 5 dk negatif önbellek.
 
 ## 2. `/ayarlar` önizlemeleri tam boy PNG çekiyor
 

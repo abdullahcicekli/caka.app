@@ -6,3 +6,6 @@ node_modules/
 # Node/wrangler'ın depo köküne bıraktığı önbellekler
 node-compile-cache/
 update-check/
+
+# Playwright MCP tarayıcı çıktıları (ekran görüntüsü, snapshot, konsol logu)
+.playwright-mcp/

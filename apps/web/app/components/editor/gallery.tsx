@@ -29,16 +29,29 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   text: { label: "Metin", icon: Type, enabled: true },
   image: { label: "Görsel", icon: ImageIcon, enabled: true },
   status: { label: "Duyuru", icon: Megaphone, enabled: true },
-  // U32 galeri düzenleyicisini, U33/U34 YouTube çözümleyicisini getirince açılır.
-  gallery: { label: "Galeri", icon: Images, enabled: false },
-  youtube: { label: "YouTube", icon: MonitorPlay, enabled: false },
+  // "Galeri" DEĞİL: bu panelin kendi adı zaten "Blok galerisi". Aynı arayüzde
+  // iki ayrı şeyin aynı adı taşıması kullanıcıyı yanıltırdı.
+  gallery: { label: "Fotoğraf galerisi", icon: Images, enabled: true },
+  youtube: { label: "YouTube", icon: MonitorPlay, enabled: true },
 };
+
+/** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */
+export type BlockAddBlockers = Partial<Record<ContentBlockType, string>>;
 
 const CONTENT_ITEMS = (Object.entries(CONTENT_CATALOG) as [ContentBlockType, CatalogItem][])
   .filter(([, item]) => item.enabled)
   .map(([type, item]) => ({ type, ...item }));
 
-export function BlockGallery({ onPick }: { onPick: (pick: GalleryPick) => void }) {
+export function BlockGallery({
+  onPick,
+  blockers,
+}: {
+  onPick: (pick: GalleryPick) => void;
+  /** Sınıra takılan tipler burada gerekçesiyle gelir; kart tıklanmaz olur ve
+      gerekçe kartın altında yazar. Sessizce reddedilen bir buton kabul
+      edilemez — kullanıcı neden olmadığını görmeli. */
+  blockers?: BlockAddBlockers;
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
 
@@ -92,19 +105,29 @@ export function BlockGallery({ onPick }: { onPick: (pick: GalleryPick) => void }
         <div className="gallery-scroll">
           {showContent ? (
             <div className="gallery-grid">
-              {contentItems.map((item) => (
-                <button
-                  key={item.type}
-                  type="button"
-                  className="gallery-item"
-                  onClick={() => onPick({ kind: "content", type: item.type })}
-                >
-                  <span className="tile tile-content" aria-hidden>
-                    <item.icon size={30} strokeWidth={1.8} />
-                  </span>
-                  {item.label}
-                </button>
-              ))}
+              {contentItems.map((item) => {
+                const blocked = blockers?.[item.type];
+                return (
+                  <button
+                    key={item.type}
+                    type="button"
+                    className={`gallery-item ${blocked ? "cursor-not-allowed opacity-45" : ""}`}
+                    disabled={Boolean(blocked)}
+                    title={blocked}
+                    onClick={() => onPick({ kind: "content", type: item.type })}
+                  >
+                    <span className="tile tile-content" aria-hidden>
+                      <item.icon size={30} strokeWidth={1.8} />
+                    </span>
+                    {item.label}
+                    {blocked ? (
+                      <small className="text-center text-[11px] leading-tight font-normal opacity-80">
+                        {blocked}
+                      </small>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
           ) : null}
           {showSocial ? (
