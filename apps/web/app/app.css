@@ -845,7 +845,19 @@
 .profile-block-social.has-og { align-items: stretch; flex-direction: column; gap: 12px; }
 .profile-block-social .social-head { display: flex; min-width: 0; align-items: center; gap: 13px; }
 .profile-block-social .social-head > span:last-child { display: flex; min-width: 0; flex-direction: column; }
-.profile-block-social .social-og { width: 100%; min-height: 0; flex: 1; border-radius: var(--radius-lg); object-fit: cover; }
+/* KUTU OG'UN ORANINDA (1,91:1). Eskiden `flex: 1` idi: kutu kartta kalan
+   bütün yüksekliği yutuyordu, yani oranı KART belirliyordu — 2×1'de 5:1 bir
+   şerit (görselin yalnız orta bandı), 2×2'de neredeyse kare (iki yanı, yani
+   og'ların yazı taşıdığı yer kesiliyor). Oran sabitlenince kırpma bitiyor;
+   sığmadığı yerde kutu küçülür, kırpma dikeyde ve simetrik kalır. */
+.profile-block-social .social-og {
+  width: 100%;
+  min-height: 0;
+  flex: 0 1 auto;
+  border-radius: var(--radius-lg);
+  aspect-ratio: 1.91 / 1;
+  object-fit: cover;
+}
 .profile-block-social strong { font-size: 15px; }
 .profile-block-social small { overflow: hidden; color: var(--profile-card-muted, var(--profile-muted)); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -1643,6 +1655,13 @@ a.profile-block:focus-visible {
   .profile-block-gallery img:nth-child(n + 4) { display: none; }
   .profile-block-gallery[data-count="4"] .gallery-more[data-slot="3"],
   .profile-block-gallery[data-count="5"] .gallery-more[data-slot="3"] { display: flex; }
+
+  /* Sosyal kartta ÖNİZLEME GÖSTERİLMEZ. Kimlik satırı (favicon + adres)
+     kartın üstünü alıyor, geriye ~70px kalıyor: 1,91:1 bir görsel oraya
+     ancak 5:1 bir şerit olarak girer. Yan yana koymak da olmuyor — 120px
+     yüksekliğinde oranlı bir kutu 229px eder, kimlik satırına 97px kalırdı.
+     Bağlantı kartındaki kuralın kardeşi: gösteremiyorsan gösterme. */
+  .profile-block-social.has-og:not(.has-gh) .social-og { display: none; }
 }
 
 /* --- ORTA/GENİŞ + KISA: bağlantı ve video yatay düzene geçer ---- */
@@ -1759,6 +1778,21 @@ a.profile-block:focus-visible {
 
 /* --- GENİŞ + KISA (4×1) ----------------------------------------- */
 @container (min-width: 500px) and (max-height: 199px) {
+  /* Burada ikisine birden yer var: 120px yüksekliğinde 1,91:1 kutu 229px
+     eder ve kimlik satırına hâlâ ~480px kalır. */
+  .profile-block-social.has-og:not(.has-gh) {
+    align-items: center;
+    flex-direction: row;
+    gap: 14px;
+  }
+  .profile-block-social.has-og:not(.has-gh) .social-head { min-width: 0; flex: 1; }
+  .profile-block-social.has-og:not(.has-gh) .social-og {
+    width: auto;
+    height: 100%;
+    max-width: 45%;
+    flex: none;
+  }
+
   /* clamp(floor(744/100),1,5) = 5; beş fotoğraf 145,6×140 hücrelere düşer.
      KTD39: bu ızgarada elde edilebilecek en iyi galeri konfigürasyonu. */
   .profile-block-gallery img:nth-child(n + 6) { display: none; }
@@ -1797,6 +1831,17 @@ a.profile-block:focus-visible {
 
 /* --- GENİŞ + YÜKSEK (4×2) --------------------------------------- */
 @container (min-width: 500px) and (min-height: 200px) {
+  /* Tam genişlikte 1,91:1 kutu 736/1,91 = 385px ister, kalan ~250px.
+     Kutu bu yüzden YÜKSEKLİĞE oturur, genişliği orandan gelir ve ortalanır —
+     kırpma yok, ölü alan yok (YouTube kartıyla aynı çözüm). */
+  .profile-block-social.has-og:not(.has-gh) .social-og {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    flex: 1 1 0;
+    align-self: center;
+  }
+
   /* 5: hero solda 370×308, sağda 2×2 → 183×152. İkisi de 1,20 en-boyda. */
   .profile-block-gallery[data-count="5"] {
     grid-auto-flow: row;
