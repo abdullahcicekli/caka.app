@@ -39,10 +39,10 @@ const futureBlock = {
 };
 
 const doc = (blocks: unknown[]) => JSON.stringify({ version: 1, blocks });
-/** Yarım satır işaretiyle yazılmış (yeni) belge. */
-const halfRowDoc = (blocks: unknown[]) => JSON.stringify({ version: 1, rows: 2, blocks });
+/** Yarım birim işaretiyle yazılmış (yeni) belge. */
+const halfUnitDoc = (blocks: unknown[]) => JSON.stringify({ version: 1, grid: 2, blocks });
 
-describe("yükseklik birimi göçü (tam satır → yarım satır)", () => {
+describe("ızgara birimi göçü (eski hücre → yarım birim)", () => {
   const sized = (h: number) => ({
     id: "blk_link_h",
     type: "link",
@@ -51,22 +51,26 @@ describe("yükseklik birimi göçü (tam satır → yarım satır)", () => {
     data: { title: "x", url: "https://caka.app/" },
   });
 
-  it("işaretsiz (eski) kayıtta y ve h ikiye katlanır", () => {
+  it("işaretsiz (eski) kayıtta dört ölçü de ikiye katlanır", () => {
     const layout = parseProfileLayout(doc([profileBlock, sized(2)]))!;
     const block = layout.blocks.find((item) => item.id === "blk_link_h")!;
-    expect(block.pos?.lg).toEqual({ x: 0, y: 2, w: 2, h: 4 });
-    expect(block.pos?.sm).toEqual({ x: 0, y: 2, w: 2, h: 4 });
+    expect(block.pos?.lg).toEqual({ x: 0, y: 2, w: 4, h: 4 });
+    expect(block.pos?.sm).toEqual({ x: 0, y: 2, w: 4, h: 4 });
   });
 
-  it("x ve w değişmez — göç yalnız dikey eksende", () => {
-    const layout = parseProfileLayout(doc([profileBlock, sized(1)]))!;
+  it("eski 4 kolonluk blok yeni 8 kolonda aynı genişlikte kalır", () => {
+    const full = {
+      ...sized(1),
+      pos: { lg: { x: 0, y: 0, w: 4, h: 1 }, sm: { x: 0, y: 0, w: 2, h: 1 } },
+    };
+    const layout = parseProfileLayout(doc([profileBlock, full]))!;
     const block = layout.blocks.find((item) => item.id === "blk_link_h")!;
-    expect(block.pos?.lg.x).toBe(0);
-    expect(block.pos?.lg.w).toBe(2);
+    expect(block.pos?.lg.w).toBe(8);
+    expect(block.pos?.sm.w).toBe(4);
   });
 
   it("işaretli kayıt olduğu gibi kalır (göç idempotent)", () => {
-    const layout = parseProfileLayout(halfRowDoc([profileBlock, sized(3)]))!;
+    const layout = parseProfileLayout(halfUnitDoc([profileBlock, sized(3)]))!;
     const block = layout.blocks.find((item) => item.id === "blk_link_h")!;
     expect(block.pos?.lg).toEqual({ x: 0, y: 1, w: 2, h: 3 });
   });
@@ -275,7 +279,7 @@ describe("R6 sunucu tarafı boyut sınırları", () => {
       {
         blockId: "blk_status",
         type: "status",
-        limits: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
+        limits: { minW: 2, minH: 1, maxW: 8, maxH: 2 },
       },
     ]);
   });
@@ -497,9 +501,9 @@ describe("yeni tiplerin ızgara sınırları", () => {
   it("ensureLayoutPositions galeri varsayılanını 4 track olarak yerleştirir", () => {
     const layout = ensureLayoutPositions(parseProfileLayout(doc([profileBlock, gallery("blk_g", 1)]))!);
     const block = layout.blocks.find((item) => item.id === "blk_g")!;
-    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 4, h: 2 });
-    // Mobilde 2 sütun: genişlik kırpılır (GRID_COLUMNS.sm = 2).
-    expect(block.pos?.sm.w).toBe(2);
+    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 8, h: 2 });
+    // Mobilde 4 yarım sütun (= eski 2 sütun): genişlik kırpılır.
+    expect(block.pos?.sm.w).toBe(4);
   });
 });
 

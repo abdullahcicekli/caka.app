@@ -770,13 +770,14 @@
   display: grid;
   width: 100%;
   margin: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* HÜCRE İKİYE BÖLÜNDÜ (bkz. GRID_UNIT, @caka/shared): 8 kolon × 72px satır.
+     Eski 178×156'lık hücrede basamaklar çok kabaydı; ölçüm, og önizlemeli
+     sosyal kartın 269px yükseklik istediğini gösterdi — 156 kırpıyor, 324
+     altında 85px ölü alan bırakıyordu. Eski basamakların hepsi duruyor
+     (2 birim = 178/156, 4 birim = 368/324, 8 birim = 748) ve aralarına
+     yenileri girdi: 273/463/653 genişlik, 240/408 yükseklik. */
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   grid-auto-flow: dense;
-  /* SATIR YÜKSEKLİĞİ YARIM (bkz. GRID_ROW_UNIT, @caka/shared). 156px'lik
-     satırda kullanıcı bir kartı ya 156 ya 324 yapabiliyordu; ölçüm, og
-     önizlemeli sosyal kartın 269px istediğini gösterdi — biri kırpıyor,
-     öteki 85px ölü alan bırakıyordu. 72+12: eski basamaklar birebir duruyor
-     (2 birim = 156, 4 birim = 324) ve aralarına 240px giriyor. */
   grid-auto-rows: 72px;
   gap: 12px;
 }
@@ -793,13 +794,13 @@
    2 track kaplıyordu ama ensureLayoutPositions aynı bloğa pos verdiğinde 1
    track'e düşüyordu — aynı blok, pos'a göre iki farklı genişlik (KTD33).
    4 sütunlu ızgara esas alındı, pos'lu davranış doğru olan. */
-/* Satır span'leri yarım satır biriminde: etiketin "1" satırı 2 birim eder. */
-.profile-grid-item.size-1x1 { grid-column: span 1; grid-row: span 2; }
-.profile-grid-item.size-1x2 { grid-column: span 1; grid-row: span 4; }
-.profile-grid-item.size-2x1 { grid-column: span 2; grid-row: span 2; }
-.profile-grid-item.size-2x2 { grid-column: span 2; grid-row: span 4; }
-.profile-grid-item.size-4x1 { grid-column: span 4; grid-row: span 2; }
-.profile-grid-item.size-4x2 { grid-column: span 4; grid-row: span 4; }
+/* Span'ler yarım birimde: etiketin "1" kolonu/satırı 2 birim eder. */
+.profile-grid-item.size-1x1 { grid-column: span 2; grid-row: span 2; }
+.profile-grid-item.size-1x2 { grid-column: span 2; grid-row: span 4; }
+.profile-grid-item.size-2x1 { grid-column: span 4; grid-row: span 2; }
+.profile-grid-item.size-2x2 { grid-column: span 4; grid-row: span 4; }
+.profile-grid-item.size-4x1 { grid-column: span 8; grid-row: span 2; }
+.profile-grid-item.size-4x2 { grid-column: span 8; grid-row: span 4; }
 /* pos'lu bloklar editörle birebir aynı hücrelere oturur (KTD13) */
 .profile-grid-item.has-pos { grid-column: var(--lg-col); grid-row: var(--lg-row); }
 
@@ -2584,16 +2585,16 @@ a.profile-block:focus-visible {
 .dashboard-preview .profile-standard-layout { width: 100%; grid-template-columns: 1fr; gap: 26px; }
 .dashboard-preview .profile-identity { position: static; }
 .dashboard-preview .profile-identity .profile-block-profile { align-items: center; text-align: center; }
-.dashboard-preview .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 54px; }
+.dashboard-preview .profile-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 54px; }
 /* 2 sütun: genişlik 2'ye kırpılır (withDerivedSmPositions ile aynı kural),
    satır yüksekliği masaüstü sınıfından devralınır. */
 .dashboard-preview .profile-grid-item.size-1x1,
-.dashboard-preview .profile-grid-item.size-1x2 { grid-column: span 1; }
+.dashboard-preview .profile-grid-item.size-1x2 { grid-column: span 2; }
 /* 54+12: eski 120px (1 satır) ve 252px (2 satır) birebir korunur. */
 .dashboard-preview .profile-grid-item.size-2x1,
 .dashboard-preview .profile-grid-item.size-2x2,
 .dashboard-preview .profile-grid-item.size-4x1,
-.dashboard-preview .profile-grid-item.size-4x2 { grid-column: span 2; }
+.dashboard-preview .profile-grid-item.size-4x2 { grid-column: span 4; }
 .dashboard-preview .profile-grid-item.has-pos { grid-column: var(--sm-col); grid-row: var(--sm-row); }
 
 /* Tuval: sayfanın kendisi. background-attachment: fixed bilerek yok
@@ -2837,15 +2838,15 @@ a.profile-block:focus-visible {
   .block-gallery { bottom: 84px; width: calc(100vw - 16px); }
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   /* 63+12: eski 138px (1 satır) ve 288px (2 satır) birebir korunur. */
-  .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 63px; }
+  .profile-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 63px; }
   /* GRID_COLUMNS.sm = 2: 4 genişliğindeki bloklar da 2 sütuna sıkışır —
      mobilde tam genişlik zaten 2 track. */
   .profile-grid-item.size-1x1,
-  .profile-grid-item.size-1x2 { grid-column: span 1; }
+  .profile-grid-item.size-1x2 { grid-column: span 2; }
   .profile-grid-item.size-2x1,
   .profile-grid-item.size-2x2,
   .profile-grid-item.size-4x1,
-  .profile-grid-item.size-4x2 { grid-column: span 2; }
+  .profile-grid-item.size-4x2 { grid-column: span 4; }
   .profile-grid-item.has-pos { grid-column: var(--sm-col); grid-row: var(--sm-row); }
 }
 

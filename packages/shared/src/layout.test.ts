@@ -87,7 +87,8 @@ describe("profileLayoutSchema", () => {
           id: "blk_1",
           type: "link",
           data: { title: "Taşan", url: "https://caka.app" },
-          pos: { lg: { x: 3, y: 0, w: 2, h: 1 }, sm: { x: 0, y: 0, w: 2, h: 1 } },
+          // 8 yarım kolonluk ızgarada x=7,w=2 taşar.
+          pos: { lg: { x: 7, y: 0, w: 2, h: 1 }, sm: { x: 0, y: 0, w: 2, h: 1 } },
         },
       ],
     };
@@ -121,26 +122,27 @@ describe("boyut sözlüğü", () => {
     }
   });
 
-  // Etiketin yüksekliği TAM satır, ızgaranınki YARIM satır (GRID_ROW_UNIT).
-  it("sizeToDims etiketi yarım satır ölçüsüne çevirir", () => {
-    expect(sizeToDims("1x2")).toEqual({ w: 1, h: 4 });
-    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 2 });
-    expect(sizeToDims("4x2")).toEqual({ w: 4, h: 4 });
+  // Etiket eski hücre biriminde, ızgara yarım birimde (GRID_UNIT).
+  it("sizeToDims etiketi yarım birim ölçüsüne çevirir", () => {
+    expect(sizeToDims("1x2")).toEqual({ w: 2, h: 4 });
+    expect(sizeToDims("2x1")).toEqual({ w: 4, h: 2 });
+    expect(sizeToDims("4x2")).toEqual({ w: 8, h: 4 });
   });
 
   // KTD33: eski sözlükte yalnız 1x1/2x1/2x2 vardı; dikey tile ve tam
   // genişlik etiketleri kayboluyordu.
   it("dikey tile ve tam genişlik artık kaybolmuyor", () => {
-    expect(sizeFromDims(1, 4)).toBe("1x2");
-    expect(sizeFromDims(4, 2)).toBe("4x1");
-    expect(sizeFromDims(4, 4)).toBe("4x2");
+    expect(sizeFromDims(2, 4)).toBe("1x2");
+    expect(sizeFromDims(8, 2)).toBe("4x1");
+    expect(sizeFromDims(8, 4)).toBe("4x2");
   });
 
   it("sözlükte karşılığı olmayan ara ölçüler bir alt basamağa yuvarlanır", () => {
-    expect(sizeFromDims(3, 2)).toBe("2x1");
-    // 3 yarım satır (240px) sözlükte yok: tek satırlık etikete yuvarlanır.
-    expect(sizeFromDims(3, 3)).toBe("2x1");
-    expect(sizeFromDims(1, 6)).toBe("1x2");
+    // 5 yarım kolon (463px) ve 3 yarım satır (240px) sözlükte yok: ikisi de
+    // bir alt basamağa yuvarlanır.
+    expect(sizeFromDims(5, 2)).toBe("2x1");
+    expect(sizeFromDims(5, 3)).toBe("2x1");
+    expect(sizeFromDims(3, 6)).toBe("1x2");
     expect(sizeFromDims(0, 0)).toBe("1x1");
   });
 
@@ -155,35 +157,36 @@ describe("boyut sözlüğü", () => {
 describe("grid position helpers", () => {
   it("converts sizes to dims and back", () => {
     // Yükseklik yarım satır: "2x1" = 1 tam satır = 2 birim.
-    expect(sizeToDims("2x1")).toEqual({ w: 2, h: 2 });
-    expect(sizeFromDims(2, 4)).toBe("2x2");
+    expect(sizeToDims("2x1")).toEqual({ w: 4, h: 2 });
+    expect(sizeFromDims(4, 4)).toBe("2x2");
   });
 
-  it("derives mobile positions in desktop reading order with width clamped to 2", () => {
+  it("derives mobile positions in desktop reading order with width clamped to 4", () => {
     const blocks = [
-      bento("a", { x: 0, y: 0, w: 4, h: 1 }),
-      bento("b", { x: 2, y: 1, w: 1, h: 1 }),
-      bento("c", { x: 0, y: 1, w: 1, h: 1 }),
+      bento("a", { x: 0, y: 0, w: 8, h: 2 }),
+      bento("b", { x: 4, y: 2, w: 2, h: 2 }),
+      bento("c", { x: 0, y: 2, w: 2, h: 2 }),
     ];
     const derived = withDerivedSmPositions(blocks);
-    expect(derived[0]!.pos!.sm).toEqual({ x: 0, y: 0, w: 2, h: 1 });
-    // Okuma sırası: c (y1,x0) b'den (y1,x2) önce gelir.
-    expect(derived[2]!.pos!.sm).toEqual({ x: 0, y: 1, w: 1, h: 1 });
-    expect(derived[1]!.pos!.sm).toEqual({ x: 1, y: 1, w: 1, h: 1 });
+    // Mobil 4 yarım kolon: tam genişlik blok 8'den 4'e kırpılır.
+    expect(derived[0]!.pos!.sm).toEqual({ x: 0, y: 0, w: 4, h: 2 });
+    // Okuma sırası: c (y2,x0) b'den (y2,x4) önce gelir.
+    expect(derived[2]!.pos!.sm).toEqual({ x: 0, y: 2, w: 2, h: 2 });
+    expect(derived[1]!.pos!.sm).toEqual({ x: 2, y: 2, w: 2, h: 2 });
   });
 
   it("keeps smManual blocks fixed and flows the rest around them", () => {
-    const manual = bento("manual", { x: 0, y: 0, w: 1, h: 1 }, true, { x: 0, y: 0, w: 2, h: 2 });
-    const auto = bento("auto", { x: 1, y: 0, w: 1, h: 1 });
+    const manual = bento("manual", { x: 0, y: 0, w: 2, h: 2 }, true, { x: 0, y: 0, w: 4, h: 4 });
+    const auto = bento("auto", { x: 2, y: 0, w: 2, h: 2 });
     const derived = withDerivedSmPositions([manual, auto]);
-    expect(derived[0]!.pos!.sm).toEqual({ x: 0, y: 0, w: 2, h: 2 });
-    expect(derived[1]!.pos!.sm).toEqual({ x: 0, y: 2, w: 1, h: 1 });
+    expect(derived[0]!.pos!.sm).toEqual({ x: 0, y: 0, w: 4, h: 4 });
+    expect(derived[1]!.pos!.sm).toEqual({ x: 0, y: 4, w: 2, h: 2 });
   });
 
   it("fills missing positions from legacy sizes without overlap", () => {
     const layout: ProfileLayout = {
       version: 1,
-      rows: 2,
+      grid: 2,
       blocks: [
         { ...profileBlock },
         { id: "blk_1", type: "link", size: "1x1", data: { title: "a", url: "" } },
@@ -194,17 +197,17 @@ describe("grid position helpers", () => {
     const ensured = ensureLayoutPositions(layout);
     const positions = ensured.blocks.filter((b) => b.type !== "profile").map((b) => b.pos!.lg);
     expect(positions).toEqual([
-      { x: 0, y: 0, w: 1, h: 2 },
-      { x: 1, y: 0, w: 2, h: 2 },
-      { x: 3, y: 0, w: 1, h: 2 },
+      { x: 0, y: 0, w: 2, h: 2 },
+      { x: 2, y: 0, w: 4, h: 2 },
+      { x: 6, y: 0, w: 2, h: 2 },
     ]);
     // Idempotent: ikinci çağrı değişiklik yapmaz.
     expect(ensureLayoutPositions(ensured)).toEqual(ensured);
   });
 
   it("places new blocks into the first free desktop slot", () => {
-    const blocks = [bento("a", { x: 0, y: 0, w: 4, h: 1 }), bento("b", { x: 0, y: 1, w: 2, h: 1 })];
-    expect(placeNewBlock(blocks, 2, 1)).toEqual({ x: 2, y: 1, w: 2, h: 1 });
+    const blocks = [bento("a", { x: 0, y: 0, w: 8, h: 2 }), bento("b", { x: 0, y: 2, w: 4, h: 2 })];
+    expect(placeNewBlock(blocks, 4, 2)).toEqual({ x: 4, y: 2, w: 4, h: 2 });
   });
 });
 
@@ -335,8 +338,10 @@ describe("socialUrl", () => {
 
 describe("ensureLayoutPositions — genişleten kırpma ızgarayı taşırmaz", () => {
   it("minW bloğu genişletirken x'i sola çeker", () => {
-    // youtube.minW = 2; mobilde (2 sütun) x=1,w=1 bir blok w=2'ye çıkınca
-    // x + w = 3 ederdi ve yazma şeması sonraki kaydı kalıcı olarak reddederdi.
+    // youtube.minW = 4 (yarım birim); mobilde (4 yarım sütun) x=1,w=1 bir
+    // blok w=4'e çıkınca x + w = 5 ederdi ve yazma şeması sonraki kaydı
+    // kalıcı olarak reddederdi. Kayıt eski birimde yazılmış (işaretsiz),
+    // yani okunurken x=3,w=1 → x=6,w=2 olur ve minW hâlâ genişletir.
     const layout = parseProfileLayout(
       JSON.stringify({
         version: 1,
@@ -361,7 +366,7 @@ describe("ensureLayoutPositions — genişleten kırpma ızgarayı taşırmaz", 
     expect(layout).not.toBeNull();
     const fixed = ensureLayoutPositions(layout!);
     const yt = fixed.blocks.find((b) => b.id === "blk_yt")!;
-    expect(yt.pos!.sm.w).toBe(2);
+    expect(yt.pos!.sm.w).toBe(4);
     expect(yt.pos!.sm.x + yt.pos!.sm.w).toBeLessThanOrEqual(GRID_COLUMNS.sm);
     expect(yt.pos!.lg.x + yt.pos!.lg.w).toBeLessThanOrEqual(GRID_COLUMNS.lg);
     // İdempotent olmalı: ikinci geçiş bir şey değiştirmemeli.

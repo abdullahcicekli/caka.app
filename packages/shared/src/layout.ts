@@ -23,8 +23,9 @@ export type BlockSize = z.infer<typeof blockSizeSchema>;
 const gridPositionSchema = z.object({
   x: z.number().int().min(0),
   y: z.number().int().min(0),
-  w: z.number().int().min(1).max(4),
-  // Yükseklik YARIM SATIR birimindedir (bkz. GRID_ROW_UNIT). Tip tavanı en
+  // Genişlik de YARIM BİRİM: tavan 8 = eski 4 kolon.
+  w: z.number().int().min(1).max(8),
+  // Yükseklik YARIM SATIR birimindedir (bkz. GRID_UNIT). Tip tavanı en
   // çok 6 (3 tam satır) ama şema 8'e kadar kabul eder: bayat bir sekmeden
   // gelen tam satırlık değer çevrildiğinde 8'e çıkabiliyor ve buradan
   // düşerse kullanıcı ham zod mesajını görürdü — asıl ret `grid_limits:*`
@@ -33,23 +34,34 @@ const gridPositionSchema = z.object({
 });
 export type GridPosition = z.infer<typeof gridPositionSchema>;
 
-// R7: desktop 4 kolon, mobil 2 kolon.
-export const GRID_COLUMNS = { lg: 4, sm: 2 } as const;
+// R7: desktop 4 kolon, mobil 2 kolon — ızgara YARIM BİRİME geçtiği için
+// sayılar iki katı (8 / 4). Genişlik basamakları birebir korunuyor:
+// 748px'lik tuvalde 8 kolon 83px eder, 2 birim = 178px (eski 1 kolon),
+// 4 birim = 368px (eski 2 kolon), 8 birim = 748px (eski 4 kolon).
+export const GRID_COLUMNS = { lg: 8, sm: 4 } as const;
 
 /**
- * YÜKSEKLİK BİRİMİ = YARIM SATIR.
+ * IZGARA BİRİMİ = ESKİ HÜCRENİN YARISI (her iki eksende).
  *
- * Izgara satırı 156px'ken kullanıcı bir kartı ya 156 ya 324 yapabiliyordu,
- * arası yoktu. Ölçüm: og önizlemeli bir sosyal kartın içeriği 269px istiyor —
- * 156'da görsel kırpılıyor, 324'te altında 85px ölü alan kalıyor. Satır 72px
- * (+12 boşluk) yapıldı: eski basamaklar birebir korunuyor (2 birim = 156,
- * 4 birim = 324) ve aralarına 240px giriyor.
+ * Hücre 178×156'yken kullanıcının elindeki basamaklar çok kabaydı: bir kartı
+ * ya 156 ya 324 yükseklikte, ya 178 ya 368 genişlikte yapabiliyordu. Ölçüm:
+ * og önizlemeli bir sosyal kartın içeriği 269px istiyor — 156'da görsel
+ * kırpılıyor, 324'te altında 85px ölü alan kalıyor ve kart arada duramıyordu.
  *
- * Bu yüzden depodaki `h`/`y` değerleri iki katına çıktı; eski kayıtlar
+ * Hücre ikiye bölündü (83×72 + 12 boşluk). ESKİ BASAMAKLARIN HEPSİ DURUYOR —
+ * 2 birim = eski 1 hücre, 4 birim = eski 2 hücre — aralarına yenileri girdi:
+ * genişlikte 273/463/653, yükseklikte 240/408.
+ *
+ * Kart TABANLARI küçülmedi: `BLOCK_GRID_LIMITS`'teki minimumlar da ikiye
+ * katlandı, yani hiçbir kart eskisinden dar/kısa olamıyor. Değişen tek şey
+ * basamak aralığı. (Gerçekten küçük bir kart — 83px'lik ikon karesi — ayrı
+ * bir kart tasarımı ister, ızgara meselesi değil.)
+ *
+ * Bu yüzden depodaki `x`/`y`/`w`/`h` iki katına çıktı; eski kayıtlar
  * `parseProfileLayoutDetailed` içinde okunurken bir kez çevriliyor
- * (`rows` işareti yoksa eski kayıt sayılır).
+ * (`grid` işareti yoksa eski kayıt sayılır).
  */
-export const GRID_ROW_UNIT = 2;
+export const GRID_UNIT = 2;
 
 const blockBase = {
   id: z.string().min(1).max(64),
@@ -417,12 +429,12 @@ function profileBlockCountIssue(blocks: readonly { type: string }[]): string | n
 
 export const profileLayoutSchema = z.object({
   /**
-   * Yükseklik birimi işareti; bkz. `layoutEnvelopeSchema.rows`. Varsayılanlı
-   * ve çıktıda ZORUNLU: düzen nesnesi kuran her yer bunu yazmak zorunda,
-   * yoksa kayıt eski sanılır ve okunurken yükseklikler bir kez daha ikiye
-   * katlanırdı. Derleyici eksik bırakan çağrı yerinde durur.
+   * Izgara birimi işareti; bkz. `layoutEnvelopeSchema.grid`. Varsayılanlı ve
+   * çıktıda ZORUNLU: düzen nesnesi kuran her yer bunu yazmak zorunda, yoksa
+   * kayıt eski sanılır ve okunurken ölçüler bir kez daha ikiye katlanırdı.
+   * Derleyici eksik bırakan çağrı yerinde durur.
    */
-  rows: z.literal(GRID_ROW_UNIT).default(GRID_ROW_UNIT),
+  grid: z.literal(GRID_UNIT).default(GRID_UNIT),
   // NEDEN hâlâ z.literal(1): sürümü yükseltmek eski deploy'lar için tek yönlü
   // kapı olurdu (eski kod version:2'yi hiç okuyamaz). İleri/geri uyum artık
   // belge sürümünde değil, blok birleşiminde çözülüyor — tanınmayan bloklar
@@ -445,22 +457,24 @@ export type ProfileLayout = z.infer<typeof profileLayoutSchema>;
 const layoutEnvelopeSchema = z.object({
   version: z.literal(1),
   /**
-   * Yükseklik biriminin sürümü. Yoksa kayıt TAM SATIR birimiyle yazılmıştır
-   * (ızgara 156px'ken) ve okunurken bir kez ikiye katlanır. Belge `version`ı
-   * bilinçli olarak 1'de sabit (bkz. yukarısı: sürüm yükseltmek eski deploy
-   * için tek yönlü kapı); bu alan onun yerine geçen, eski kodun görmezden
-   * geldiği bir işaret.
+   * Izgara biriminin sürümü. Yoksa kayıt ESKİ HÜCRE birimiyle yazılmıştır
+   * (178×156) ve okunurken her iki eksende bir kez ikiye katlanır. Belge
+   * `version`ı bilinçli olarak 1'de sabit (bkz. yukarısı: sürüm yükseltmek
+   * eski deploy için tek yönlü kapı); bu alan onun yerine geçen, eski kodun
+   * görmezden geldiği bir işaret.
    */
-  rows: z.literal(GRID_ROW_UNIT).optional(),
+  grid: z.literal(GRID_UNIT).optional(),
   blocks: z.array(z.unknown()).max(MAX_LAYOUT_BLOCKS),
 });
 
-/**
- * Tam satır biriminde yazılmış bir konumu yarım satıra çevirir. Yalnız dikey
- * eksen: `x`/`w` kolon sayısına bağlı ve değişmedi.
- */
-function toHalfRows(pos: GridPosition): GridPosition {
-  return { ...pos, y: pos.y * GRID_ROW_UNIT, h: pos.h * GRID_ROW_UNIT };
+/** Eski hücre biriminde yazılmış bir konumu yarım birime çevirir. */
+function toHalfUnits(pos: GridPosition): GridPosition {
+  return {
+    x: pos.x * GRID_UNIT,
+    y: pos.y * GRID_UNIT,
+    w: pos.w * GRID_UNIT,
+    h: pos.h * GRID_UNIT,
+  };
 }
 
 export interface ParsedProfileLayout {
@@ -491,9 +505,9 @@ export function parseProfileLayoutDetailed(value: string): ParsedProfileLayout |
   const envelope = layoutEnvelopeSchema.safeParse(raw);
   if (!envelope.success) return null;
 
-  // Eski kayıt: yükseklikler tam satır. Bir kez çevrilir; sonuç kaydedilince
-  // `rows` işaretiyle yazılır ve çevrim bir daha çalışmaz (idempotent).
-  const legacyRows = envelope.data.rows !== GRID_ROW_UNIT;
+  // Eski kayıt: ölçüler eski hücre biriminde. Bir kez çevrilir; sonuç
+  // kaydedilince `grid` işaretiyle yazılır ve çevrim bir daha çalışmaz.
+  const legacyGrid = envelope.data.grid !== GRID_UNIT;
 
   const blocks: ProfileBlock[] = [];
   const unknownBlocks: unknown[] = [];
@@ -505,13 +519,13 @@ export function parseProfileLayoutDetailed(value: string): ParsedProfileLayout |
     }
     const block = parsed.data;
     blocks.push(
-      legacyRows && block.pos
-        ? { ...block, pos: { lg: toHalfRows(block.pos.lg), sm: toHalfRows(block.pos.sm) } }
+      legacyGrid && block.pos
+        ? { ...block, pos: { lg: toHalfUnits(block.pos.lg), sm: toHalfUnits(block.pos.sm) } }
         : block,
     );
   }
   if (profileBlockCountIssue(blocks)) return null;
-  return { layout: { version: 1, rows: GRID_ROW_UNIT, blocks }, unknownBlocks };
+  return { layout: { version: 1, grid: GRID_UNIT, blocks }, unknownBlocks };
 }
 
 export function parseProfileLayout(value: string): ProfileLayout | null {
@@ -527,11 +541,11 @@ export function serializeProfileLayout(
   layout: ProfileLayout,
   unknownBlocks: readonly unknown[] = [],
 ): string {
-  // `rows` her yazımda damgalanır: işaretsiz kayıt okunurken eski sayılır ve
-  // yükseklikler ikinci kez katlanırdı.
+  // `grid` her yazımda damgalanır: işaretsiz kayıt okunurken eski sayılır ve
+  // ölçüler ikinci kez katlanırdı.
   return JSON.stringify({
     ...layout,
-    rows: GRID_ROW_UNIT,
+    grid: GRID_UNIT,
     blocks: unknownBlocks.length === 0 ? layout.blocks : [...layout.blocks, ...unknownBlocks],
   });
 }
@@ -629,26 +643,27 @@ export type BentoBlockType = Exclude<ProfileBlock["type"], "profile">;
 export type BlockGridLimits = { minW: number; minH: number; maxW: number; maxH: number };
 
 export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
-  // Yükseklikler YARIM SATIR birimindedir (GRID_ROW_UNIT): 2 = eski 1 satır.
-  link: { minW: 1, minH: 2, maxW: 4, maxH: 4 },
-  social: { minW: 1, minH: 2, maxW: 4, maxH: 6 },
-  text: { minW: 1, minH: 2, maxW: 4, maxH: 6 },
-  image: { minW: 1, minH: 2, maxW: 4, maxH: 6 },
-  status: { minW: 1, minH: 1, maxW: 4, maxH: 2 },
+  // Ölçüler YARIM BİRİMDE (GRID_UNIT): 2 = eski 1 hücre. Minimumlar da
+  // katlandı, yani hiçbir kartın tabanı küçülmedi — yalnız basamak sıklaştı.
+  link: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
+  social: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
+  text: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
+  image: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
+  status: { minW: 2, minH: 1, maxW: 8, maxH: 2 },
   // Galeri her tile boyutunda bir düzene sahip (KTD37/KTD38), 1×1 dahil;
   // tavan sözlüğün en büyük biçimi olan 4×2.
-  gallery: { minW: 1, minH: 2, maxW: 4, maxH: 4 },
+  gallery: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
   // YouTube kartı yerinde OYNATILIYOR, yani boyutu bir oynatıcı boyutudur.
   // Ölçüm: 2 track genişlikte (masaüstü 374px) 16:9 bir video 210px yükseklik
   // ister; 1 track yalnız 156px (mobilde 138px) veriyor, yani oynatıcı ya
   // kırpılır ya kıymık gibi kalırdı. Taban bu yüzden 2x2. Video ve kanal
   // aynı sınırları paylaşır ki tip değiştirmek bloğu yeniden boyutlandırmasın.
-  youtube: { minW: 2, minH: 4, maxW: 4, maxH: 4 },
+  youtube: { minW: 4, minH: 4, maxW: 8, maxH: 4 },
   // Spotify'ın kompakt parça oynatıcısı 152px (ölçüldü); masaüstünde 2x1
   // (374x156) buna tam oturuyor, o yüzden yükseklik tabanı 1. Genişlik tabanı
   // 2: 181px'lik bir oynatıcıda kontroller sığmıyor. Albüm/liste/sanatçı
   // gömmesi 352px istediği için onların varsayılanı 2x2 (kayıt anında seçilir).
-  spotify: { minW: 2, minH: 2, maxW: 4, maxH: 4 },
+  spotify: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
 };
 
 /** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa bloğun sınırları. */
@@ -702,21 +717,21 @@ export function galleryCountIssue(layout: ProfileLayout): boolean {
  * tutar; blok başına 5 fotoğraf kuralı zaten şemanın kendisinde.
  */
 /**
- * Tam satır biriminde gelen bir bloğu yarım satıra çevirir. Girdi HAM: bayat
+ * Eski hücre biriminde gelen bir bloğu yarım birime çevirir. Girdi HAM: bayat
  * bir sekmeden gelen belge henüz doğrulanmadı, bu yüzden şekil varsayılmaz.
  */
-function scaleRawBlockRows(block: unknown): unknown {
+function scaleRawBlockUnits(block: unknown): unknown {
   if (!block || typeof block !== "object") return block;
   const pos = (block as { pos?: unknown }).pos;
   if (!pos || typeof pos !== "object") return block;
   const scaleSide = (side: unknown): unknown => {
     if (!side || typeof side !== "object") return side;
-    const value = side as { y?: unknown; h?: unknown };
-    return {
-      ...value,
-      ...(typeof value.y === "number" ? { y: value.y * GRID_ROW_UNIT } : {}),
-      ...(typeof value.h === "number" ? { h: value.h * GRID_ROW_UNIT } : {}),
-    };
+    const value = side as { x?: unknown; y?: unknown; w?: unknown; h?: unknown };
+    const scaled: Record<string, unknown> = { ...value };
+    for (const key of ["x", "y", "w", "h"] as const) {
+      if (typeof value[key] === "number") scaled[key] = value[key] * GRID_UNIT;
+    }
+    return scaled;
   };
   const value = pos as { lg?: unknown; sm?: unknown };
   return { ...block, pos: { ...value, lg: scaleSide(value.lg), sm: scaleSide(value.sm) } };
@@ -731,9 +746,9 @@ function scaleRawBlockRows(block: unknown): unknown {
  */
 export const profileLayoutWriteSchema = z.preprocess((raw) => {
   if (!raw || typeof raw !== "object") return raw;
-  const value = raw as { rows?: unknown; blocks?: unknown };
-  if (value.rows === GRID_ROW_UNIT || !Array.isArray(value.blocks)) return raw;
-  return { ...value, rows: GRID_ROW_UNIT, blocks: value.blocks.map(scaleRawBlockRows) };
+  const value = raw as { grid?: unknown; blocks?: unknown };
+  if (value.grid === GRID_UNIT || !Array.isArray(value.blocks)) return raw;
+  return { ...value, grid: GRID_UNIT, blocks: value.blocks.map(scaleRawBlockUnits) };
 }, profileLayoutSchema.superRefine(
   (layout, context) => {
     layout.blocks.forEach((block, index) => {
@@ -756,9 +771,9 @@ export const profileLayoutWriteSchema = z.preprocess((raw) => {
 
 export function sizeToDims(size: BlockSize): { w: number; h: number } {
   const [w, h] = size.split("x");
-  // Etiketin yüksekliği TAM satırdır ("2x1" = 1 satır); ızgara ise yarım
-  // satır sayıyor, bu yüzden çevriliyor.
-  return { w: Number(w), h: Number(h) * GRID_ROW_UNIT };
+  // Etiket ESKİ HÜCRE birimindedir ("2x1" = 2 kolon × 1 satır); ızgara ise
+  // yarım birim sayıyor, bu yüzden iki eksende de çevriliyor.
+  return { w: Number(w) * GRID_UNIT, h: Number(h) * GRID_UNIT };
 }
 
 /**
@@ -773,11 +788,12 @@ export function sizeToDims(size: BlockSize): { w: number; h: number } {
  * eski kayıtların akış sınıfı içindir.
  */
 export function sizeFromDims(w: number, h: number): BlockSize {
-  const width: 1 | 2 | 4 = w >= 4 ? 4 : w >= 2 ? 2 : 1;
+  // `w` yarım birim: 8 birim = eski 4 kolon.
+  const width: 1 | 2 | 4 = w >= 4 * GRID_UNIT ? 4 : w >= 2 * GRID_UNIT ? 2 : 1;
   // `h` yarım satır: 4 birim = 2 tam satır. Ara basamaklar (3 birim = 240px)
   // bir alt etikete yuvarlanır — etiket yalnız `pos`suz eski kayıtların akış
   // sınıfı, gerçek yerleşim `pos`tan okunur.
-  const height: 1 | 2 = h >= 2 * GRID_ROW_UNIT ? 2 : 1;
+  const height: 1 | 2 = h >= 2 * GRID_UNIT ? 2 : 1;
   return `${width}x${height}`;
 }
 

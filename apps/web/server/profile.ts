@@ -4,7 +4,7 @@ import { account, createDb, profile, usernameRedirect } from "@caka/db";
 import {
   checkUsernameChange,
   createBlockId,
-  GRID_ROW_UNIT,
+  GRID_UNIT,
   parseProfileLayout,
   PROFILE_BIO_MAX,
   profileLayoutSchema,
@@ -85,17 +85,17 @@ export async function getProfileByUserId(env: Env, userId: string) {
 function buildSeedLayout(name: string, avatarAssetId: string | null) {
   return {
     version: 1,
-    // Yükseklik birimi işareti: bu nesne şemadan geçmeden doğrudan
-    // stringify ediliyor, işaretsiz yazılsa okunurken eski kayıt sanılır ve
-    // yükseklikler bir kez daha ikiye katlanırdı (bkz. GRID_ROW_UNIT).
-    rows: GRID_ROW_UNIT,
+    // Izgara birimi işareti: bu nesne şemadan geçmeden doğrudan stringify
+    // ediliyor, işaretsiz yazılsa okunurken eski kayıt sanılır ve ölçüler
+    // bir kez daha ikiye katlanırdı (bkz. GRID_UNIT).
+    grid: GRID_UNIT,
     blocks: [
       {
         id: `blk_${crypto.randomUUID().slice(0, 8)}`,
         type: "profile",
         pos: {
-          lg: { x: 0, y: 0, w: 2, h: 4 },
-          sm: { x: 0, y: 0, w: 2, h: 4 },
+          lg: { x: 0, y: 0, w: 4, h: 4 },
+          sm: { x: 0, y: 0, w: 4, h: 4 },
         },
         smManual: false,
         size: "1x1",
