@@ -408,10 +408,10 @@ html[data-landing]::-webkit-scrollbar {
   background: var(--color-kirec);
   /* Yükseklik SABİT ve satırların toplamına eşit: oranla tahmin etmek
      yerine içerikten türer, kartlar yüklenirken sayfa kaymaz (CLS = 0).
-     iki satır: 324 + 12 + 240 + 24 dolgu = 600; üç satır: + 240 + 12 = 852. */
+     iki satır: 324 + 12 + 240 + 24 dolgu = 600; üç satır: + 156 + 12 = 768. */
   height: 600px;
 }
-@media (min-width: 1280px) { .lp-hero-media { height: 852px; } }
+@media (min-width: 1280px) { .lp-hero-media { height: 768px; } }
 
 /* ---------------------------------------------------------------- *
  * Hero bento şeridi

@@ -44,21 +44,23 @@ export const en = {
         link: "Tour dates",
       },
       selin: {
-        bio: "Ceramics studio · Bodrum",
+        bio: "Ceramics · Bodrum",
         status: "Studio open on Saturday",
         link: "New collection: Toprak",
         location: "Bodrum, Muğla",
         country: "Türkiye",
       },
       elif: {
-        bio: "Podcast host · Ankara",
+        bio: "Podcast · Ankara",
         status: "New episode on Thursday",
         youtube: "Sade Hayat — behind episode 7",
+        link: "All episodes",
       },
       naz: {
         bio: "Voice artist · İzmir",
         status: "Booking dates are open",
         text: "Message me for voice work.",
+        link: "Audio stories",
       },
     },
     // Medyanın altına binen hap. Bir bio-link ürününde o hapın en

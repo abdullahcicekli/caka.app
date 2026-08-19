@@ -60,21 +60,23 @@ export const tr = {
         link: "Konser takvimi",
       },
       selin: {
-        bio: "Seramik atölyesi · Bodrum",
+        bio: "Seramik · Bodrum",
         status: "Atölye cumartesi açık",
         link: "Yeni koleksiyon: Toprak",
         location: "Bodrum, Muğla",
         country: "Türkiye",
       },
       elif: {
-        bio: "Podcast sunucusu · Ankara",
+        bio: "Podcast · Ankara",
         status: "Yeni bölüm perşembe",
         youtube: "Sade Hayat — 7. bölümün kamera arkası",
+        link: "Tüm bölümler",
       },
       naz: {
-        bio: "Seslendirme sanatçısı · İzmir",
+        bio: "Seslendirme · İzmir",
         status: "Kayıt için takvim açık",
         text: "Seslendirme işleri için mesaj atabilirsin.",
+        link: "Sesli hikâyeler",
       },
     },
     // Medyanın altına binen hap. Bir bio-link ürününde o hapın en

@@ -16,11 +16,19 @@
 //   Elif Kaya    @elifkaya    podcast      (creator-elif.webp  — mikrofon, masa)
 //   Naz Erdem    @nazerdem    seslendirme  (creator-naz.webp   — mikrofon, kayıt)
 //
-// GÖRSELLER: kart görselleri dört portrenin KIRPMALARIDIR (ImageMagick;
-// kırpma geometrisi ve üretilen görsellerin prompt'ları
-// `~/assets/landing/README.md`). Aynı personadan ikinci bir "foto" ÜRETMEK
-// başka bir yüz getirir ve tam da düzeltilen kusuru geri koyardı; kişi
-// TAŞIMAYAN görseller (albüm kapağı, podcast kapağı, menü görseli) üretildi.
+// GÖRSEL HAVUZU: her görsel şeritte YALNIZ BİR KEZ geçer. Dört portreyle
+// on beş yer doldurmak (avatar + kart kapağı + önizleme aynı fotoğraftan)
+// gözle hemen yakalanıyordu.
+//
+// İş bölümü şu kurala göre:
+//   * YÜZ yalnız AVATARDA. Avatarlar dört portrenin kırpmasıdır — aynı
+//     personadan ikinci bir portre ÜRETMEK başka bir yüz getirir ve tam da
+//     düzeltilen kimlik kusurunu geri koyardı.
+//   * KART görselleri kişi TAŞIMAZ: personanın dünyasından bir sahne ya da
+//     nesne (stüdyo, atölye rafı, mikrofon, çömlekçi takımları, albüm
+//     kapağı). Kimlik iddiası taşımadıkları için hangi yüzün çıktığı sorun
+//     değil ve her personaya kendi görsel seti düşüyor.
+// Kırpma geometrileri ve üretim prompt'ları `~/assets/landing/README.md`.
 //
 // ÇEVRİLMEYEN KISIM BURADA: adlar, kullanıcı adları, adresler, kimlikler,
 // görseller, sayılar, eser adları ("Gece Yolu", "Sade Hayat"). Çevrilen
@@ -34,33 +42,42 @@
 // SSR: hiçbir değer render anında hesaplanmaz — tarih sabit epoch, katkı
 // grafiği sabit bir üreticiden. Rastgelelik yok, `Date.now()` yok.
 
-import { faviconImageKey, type BlockSize, type ProfileBlock } from "@caka/shared";
+import {
+  faviconImageKey,
+  mapFrameImageKey,
+  type BlockSize,
+  type ProfileBlock,
+} from "@caka/shared";
 
 import avatarElif from "~/assets/landing/avatar-elif.webp";
 import avatarKerem from "~/assets/landing/avatar-kerem.webp";
 import avatarNaz from "~/assets/landing/avatar-naz.webp";
 import avatarSelin from "~/assets/landing/avatar-selin.webp";
-import cardElif from "~/assets/landing/card-elif.webp";
-import cardKerem from "~/assets/landing/card-kerem.webp";
-import cardNaz from "~/assets/landing/card-naz.webp";
-import cardSelin from "~/assets/landing/card-selin.webp";
 import coverGeceYolu from "~/assets/landing/cover-gece-yolu.webp";
 import coverSadeHayat from "~/assets/landing/cover-sade-hayat.webp";
+import detailElif from "~/assets/landing/detail-elif.webp";
+import detailNaz from "~/assets/landing/detail-naz.webp";
+import mapTown from "~/assets/landing/map-town.webp";
+import sceneElif from "~/assets/landing/scene-elif.webp";
+import sceneKerem from "~/assets/landing/scene-kerem.webp";
+import sceneNaz from "~/assets/landing/scene-naz.webp";
+import sceneSelin from "~/assets/landing/scene-selin.webp";
+import sceneSelinTools from "~/assets/landing/scene-selin-tools.webp";
 import { githubLoginKey, type GithubCalendar } from "~/lib/github-calendar";
 
 /** Personaların çevrilen kart metinleri; kimlikleri bu dosyada. */
 export interface HeroTowerCopy {
   kerem: { bio: string; status: string; document: string; link: string };
   selin: { bio: string; status: string; link: string; location: string; country: string };
-  elif: { bio: string; status: string; youtube: string };
-  naz: { bio: string; status: string; text: string };
+  elif: { bio: string; status: string; youtube: string; link: string };
+  naz: { bio: string; status: string; text: string; link: string };
 }
 
 /**
  * ÖLÇÜLER YARIM BİRİMDE — ürünün ızgarasının birebir aynısı (`GRID_UNIT`,
  * `@caka/shared`): 8 sütun, `grid-auto-rows: 72px`, 12px boşluk.
  *
- *   genişlik   2 → 178px   4 → 368px   8 → 748px
+ *   genişlik   2 → 178px   3 → 273px   4 → 368px   5 → 463px   6 → 558px
  *   yükseklik  1 →  72px   2 → 156px   3 → 240px   4 → 324px
  *
  * Bu yüzden şerit artık "eşit karo" değil: bir sütunda tek büyük kart, bir
@@ -69,7 +86,7 @@ export interface HeroTowerCopy {
  * (Spotify'ın kompakt/kapaklı hâli, bağlantı kartının kapaklı/sade hâli) —
  * ölçü çeşitliliği süs değil, ürünün yeteneği.
  */
-export type TowerSpanW = 2 | 4 | 8;
+export type TowerSpanW = 2 | 3 | 4 | 5 | 6 | 8;
 export type TowerSpanH = 1 | 2 | 3 | 4;
 
 export interface TowerCell {
@@ -139,11 +156,13 @@ export const heroTowerCalendars = {
  * çapası platform ikonudur, baş harf değil.
  */
 export const heroTowerImages: Readonly<Record<string, string>> = {
-  // Manzara kırpmalar (1,91:1 — `.link-og`, `.social-og`, video kapağı).
-  "demo-elif-youtube": cardElif,
-  "demo-naz-nsosyal": cardNaz,
-  "demo-selin-link": cardSelin,
-  "demo-kerem-link": cardKerem,
+  // Manzara görseller (1,91:1 — `.link-og`, `.social-og`, video kapağı).
+  // Her biri BİR kez geçiyor: aynı görselin iki kartta çıkması şeridi
+  // "dört fotoğrafla on beş yer doldurulmuş" gibi gösteriyordu.
+  "demo-elif-youtube": sceneElif,
+  "demo-naz-nsosyal": sceneNaz,
+  "demo-selin-link": sceneSelin,
+  "demo-kerem-link": sceneKerem,
   // Kare kapaklar (`.sp-cover`).
   "demo-kerem-spotify": coverGeceYolu,
   "demo-elif-spotify": coverSadeHayat,
@@ -156,8 +175,34 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   // gösteriyor ("S", "K") — şeritte yer tutucu harf bırakmamak için iki
   // kişisel sitenin favicon'u sahibinin portresi. (Kişisel sitelerde
   // gerçekten de sık rastlanan bir seçim.)
+  // Kişi TAŞIMAYAN detay kırpmaları: sosyal kartın og önizlemesi.
+  "demo-selin-threads": sceneSelinTools,
+  "demo-elif-linkedin": detailElif,
+  "demo-naz-link": detailNaz,
+  // Yalnız BAŞLIKLI iki bağlantı kartına: 368×156'lık kartlar tam kapak
+  // bandında ve marka çipini hiç basmıyor, oraya favicon vermek DOM'a
+  // görünmeyen bir görsel eklemek olurdu.
   [faviconImageKey("demo-selin-link")]: avatarSelin,
-  [faviconImageKey("demo-kerem-link")]: avatarKerem,
+  [faviconImageKey("demo-elif-link")]: avatarElif,
+  // Konum kartının harita karesi. ÜRETİLMİŞ, gerçek coğrafya DEĞİL — ve
+  // bu bilinçli bir karar, eksiklik değil:
+  //
+  //   1. Mapbox Product Terms §2.8.1 harita içeriğini önbelleğe almayı,
+  //      proxy'lemeyi ve statik görsel olarak saklayıp dağıtmayı açıkça
+  //      yasaklıyor. Yani Mapbox'tan bir kare indirip repoya koymak
+  //      yapılamaz; kalan tek yol karenin doğrudan Mapbox'tan çekilmesi.
+  //   2. O yol landing'i üçüncü tarafa açardı. Sayfanın DİBİNDE "reklam ve
+  //      analitik çerezi kullanmıyoruz" yazıyor; her ziyaretçinin IP/UA'sını
+  //      bir sağlayıcıya göndermek o iddianın yanına yakışmıyor ve çerez
+  //      envanteri/satıcı sicili işi de açardı.
+  //   3. Statik Görsel API'sinin ücretsiz kademesi aylık 50 bin istek ve
+  //      HARCAMA TAVANI YOK. Landing en çok görüntülenen sayfa; oraya
+  //      ölçülmemiş ve üst sınırsız bir fatura kalemi koymak yanlış.
+  //
+  // Ürünün GERÇEK konum kartı Mapbox'tan gelmeye devam ediyor; değişen
+  // yalnız landing'in dekoratif demosu. Yalnız "far" karesi verildi:
+  // yakınlaşma animasyonu ikinci bir kare ister, o da ikinci bir görsel.
+  [mapFrameImageKey("far", 37.03, 27.43)]: mapTown,
 };
 
 type DemoSocialPlatform = "x" | "tiktok" | "linkedin" | "instagram" | "threads" | "nsosyal";
@@ -198,26 +243,44 @@ function status(id: string, text: string, size: BlockSize): ProfileBlock {
 /**
  * Şeridin üç YATAY satırı; her satır kendi içinde bir BENTO MOZAİĞİ.
  *
- * Satırlar ters yönlerde akar; üçüncüsü yalnız geniş ekranda görünür
- * (dar ekranda yer yok, kartları da o yüzden `lazy` kalır).
+ * KUTU KARTA GÖRE SEÇİLİR, tersi değil. Kartlar konteyner sorgusuyla
+ * çalışıyor ve her tipin kendi doğal oranı var; kutu ona uymazsa kart
+ * içeriğini bir kenara toplar ve ortada ölü boşluk kalır. Ölçülen eşleşmeler
+ * (kart → kutunun kartı DOLDURDUĞU ölçü):
+ *
+ *   profil, çıplak sosyal, og'suz bağlantı  → 178×156
+ *   durum                                   → 178×72 / 273×72 / 368×72
+ *   metin                                   → 273×156
+ *   spotify (kapak = kutu yüksekliği kare)  → 368×156
+ *   og'lu bağlantı, dolu kapak              → 368×156 (metin gizlenir)
+ *   og'lu bağlantı, kapak + başlık          → 368×324 (og eni 370 ≈ kutu)
+ *   og'lu sosyal                            → 273×240 / 463×324
+ *   YouTube video (16:9)                    → 463×324
+ *   belge (3 sütun)                         → 463×240
+ *   github ısı grafiği                      → 368×240
+ *   konum (tam taşan harita)                → 463×324
+ *
+ * Aynı tipi iki ölçüde koymak bilinçli: Spotify'ın kompakt oynatıcısı ile
+ * kapaklı hâli, bağlantının dolu kapaklı hâli ile başlıklı hâli yan yana
+ * görünüyor — çeşitlilik süs değil, ürünün konteyner sorgusunun kendisi.
  *
  * İKİ KURAL — ekleme yaparken koru:
- *   1. Bir sütunun kartlarının yükseklikleri satırın yüksekliğini TAM
- *      doldurur (12px boşluklarla): h4 = 4 | 2+2 | 1+1+2, h3 = 3 | 2+1 | 1+2.
+ *   1. Bir sütunun kartlarının yükseklikleri satırı TAM doldurur (12px
+ *      boşluklarla): h4 = 4 | 2+2 | 1+2+1 | 3+1, h3 = 3 | 2+1 | 1+2,
+ *      h2 = 2 | 1+1.
  *   2. Yan yana (ve üst üste) gelen kartlar farklı personalara aittir;
  *      satırın SON sütunu ile İLK sütunu da komşudur — döngü orada sarar.
  *      Satır başlangıçları da kaydırılmıştır (Elif → Kerem → Naz).
  */
 export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
   return [
-    // ---- Satır 0 (h4 = 324px) — tabanı yüksek kartlar burada yaşar:
-    // YouTube ve konum 4 birimden kısa olamıyor (`BLOCK_GRID_LIMITS`).
-    // Sıra: Elif · Kerem · Selin · Naz · Kerem · Selin
+    // ---- Satır 0 (h4 = 324px): tabanı yüksek kartların satırı.
+    // Sıra: Elif · Kerem · Naz · Selin · Kerem · Selin
     {
       h: 4,
       columns: [
         {
-          w: 4,
+          w: 5,
           cells: [
             {
               h: 4,
@@ -247,7 +310,68 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           ],
         },
         {
+          w: 5,
+          cells: [
+            { h: 4, block: social("demo-naz-nsosyal", "nsosyal", "nazerdem", "2x2", true) },
+          ],
+        },
+        {
           w: 4,
+          cells: [
+            {
+              h: 4,
+              block: {
+                id: "demo-selin-link",
+                type: "link",
+                size: "2x2",
+                data: {
+                  title: copy.selin.link,
+                  url: "https://selindemir.com/koleksiyon",
+                  ogImage: "https://selindemir.com/og.jpg",
+                  favicon: "https://selindemir.com/favicon.ico",
+                },
+              },
+            },
+          ],
+        },
+        {
+          w: 4,
+          cells: [
+            {
+              h: 2,
+              block: {
+                id: "demo-kerem-spotify",
+                type: "spotify",
+                size: "2x1",
+                data: {
+                  kind: "album",
+                  url: "https://open.spotify.com/album/1A2B3C4D5E6F7G8H9I0J",
+                  entityId: "1A2B3C4D5E6F7G8H9I0J",
+                  title: "Gece Yolu",
+                  thumbnail: "https://i.scdn.co/image/demo-gece-yolu",
+                },
+              },
+            },
+            {
+              h: 2,
+              // 368×156: kart tam kapak bandına düşer, görsel kutuyu uçtan
+              // uca doldurur. Aynı bloğun başlıklı hâli Selin'de (368×324).
+              block: {
+                id: "demo-kerem-link",
+                type: "link",
+                size: "2x1",
+                data: {
+                  title: copy.kerem.link,
+                  url: "https://keremaydin.com/konserler",
+                  ogImage: "https://keremaydin.com/og.jpg",
+                  favicon: "",
+                },
+              },
+            },
+          ],
+        },
+        {
+          w: 5,
           cells: [
             {
               h: 4,
@@ -267,54 +391,21 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
             },
           ],
         },
-        {
-          w: 4,
-          cells: [
-            { h: 4, block: social("demo-naz-nsosyal", "nsosyal", "nazerdem", "2x2", true) },
-          ],
-        },
-        {
-          w: 4,
-          cells: [
-            {
-              h: 4,
-              block: {
-                id: "demo-kerem-spotify",
-                type: "spotify",
-                size: "2x2",
-                data: {
-                  kind: "album",
-                  url: "https://open.spotify.com/album/1A2B3C4D5E6F7G8H9I0J",
-                  entityId: "1A2B3C4D5E6F7G8H9I0J",
-                  title: "Gece Yolu",
-                  thumbnail: "https://i.scdn.co/image/demo-gece-yolu",
-                },
-              },
-            },
-          ],
-        },
-        {
-          w: 2,
-          cells: [
-            { h: 2, block: profile("demo-selin-profile", "Selin Demir", copy.selin.bio) },
-            { h: 2, block: social("demo-selin-instagram", "instagram", "selindemir") },
-          ],
-        },
       ],
     },
-    // ---- Satır 1 (h3 = 240px). Sıra: Kerem · Naz · Selin · Elif · Naz · Selin
+    // ---- Satır 1 (h3 = 240px). Sıra: Kerem · Selin · Elif · Naz · Kerem · Elif
     {
       h: 3,
       columns: [
         {
-          w: 4,
+          w: 5,
           cells: [
             {
-              h: 2,
+              h: 3,
               block: {
                 id: "demo-kerem-document",
                 type: "document",
-                size: "2x1",
+                size: "2x2",
                 data: {
                   // assetId ŞART: boş bırakılırsa kart editörün "belge ekle"
                   // boş durumuna düşer ve landing'de düzenleyici arayüzü
@@ -329,44 +420,23 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
                 },
               },
             },
-            { h: 1, block: status("demo-kerem-status", copy.kerem.status, "2x1") },
           ],
         },
         {
-          w: 2,
+          w: 3,
           cells: [
-            { h: 2, block: profile("demo-naz-profile", "Naz Erdem", copy.naz.bio) },
-            { h: 1, block: status("demo-naz-status", copy.naz.status, "1x1") },
-          ],
-        },
-        {
-          w: 4,
-          cells: [
-            {
-              h: 3,
-              block: {
-                id: "demo-selin-link",
-                type: "link",
-                size: "2x2",
-                data: {
-                  title: copy.selin.link,
-                  url: "https://selindemir.com/koleksiyon",
-                  ogImage: "https://selindemir.com/og.jpg",
-                  favicon: "",
-                },
-              },
-            },
+            { h: 3, block: social("demo-selin-threads", "threads", "selindemir", "2x2", true) },
           ],
         },
         {
           w: 4,
           cells: [
             {
-              h: 3,
+              h: 2,
               block: {
                 id: "demo-elif-spotify",
                 type: "spotify",
-                size: "2x2",
+                size: "2x1",
                 data: {
                   kind: "show",
                   url: "https://open.spotify.com/show/2K3L4M5N6O7P8Q9R0S1T",
@@ -376,28 +446,22 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
                 },
               },
             },
+            { h: 1, block: status("demo-elif-status", copy.elif.status, "2x1") },
           ],
         },
-        { w: 2, cells: [{ h: 3, block: social("demo-naz-tiktok", "tiktok", "nazerdem", "1x2") }] },
-        { w: 2, cells: [{ h: 3, block: social("demo-selin-x", "x", "selindemir", "1x2") }] },
-      ],
-    },
-    // ---- Satır 2 (h3 = 240px). Sıra: Naz · Kerem · Elif · Selin · Kerem · Elif
-    {
-      h: 3,
-      columns: [
         {
-          w: 4,
+          w: 3,
           cells: [
             {
-              h: 3,
+              h: 2,
               block: {
                 id: "demo-naz-text",
                 type: "text",
-                size: "2x2",
+                size: "1x1",
                 data: { text: copy.naz.text },
               },
             },
+            { h: 1, block: status("demo-naz-status", copy.naz.status, "2x1") },
           ],
         },
         {
@@ -422,32 +486,33 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           ],
         },
         {
-          w: 2,
+          w: 3,
           cells: [
-            { h: 2, block: profile("demo-elif-profile", "Elif Kaya", copy.elif.bio) },
-            { h: 1, block: status("demo-elif-status", copy.elif.status, "1x1") },
+            { h: 3, block: social("demo-elif-linkedin", "linkedin", "elifkaya", "2x2", true) },
           ],
         },
-        {
-          w: 2,
-          cells: [
-            { h: 2, block: social("demo-selin-threads", "threads", "selindemir") },
-            { h: 1, block: status("demo-selin-status", copy.selin.status, "1x1") },
-          ],
-        },
+      ],
+    },
+    // ---- Satır 2 (h2 = 156px): küçük kartların ritmi. Profil kartları
+    // burada yaşar — 178×156 onların TAM dolduğu tek ölçü ve h2 satırında
+    // dar bir sütun o kartı tek başına taşıyabiliyor.
+    // Sıra: Naz · Selin · Elif · (Kerem+Selin) · Naz · Elif · Selin
+    {
+      h: 2,
+      columns: [
         {
           w: 4,
           cells: [
             {
-              h: 3,
+              h: 2,
               block: {
-                id: "demo-kerem-link",
+                id: "demo-naz-link",
                 type: "link",
-                size: "2x2",
+                size: "2x1",
                 data: {
-                  title: copy.kerem.link,
-                  url: "https://keremaydin.com/konserler",
-                  ogImage: "https://keremaydin.com/og.jpg",
+                  title: copy.naz.link,
+                  url: "https://nazerdem.com/hikayeler",
+                  ogImage: "https://nazerdem.com/og.jpg",
                   favicon: "",
                 },
               },
@@ -456,7 +521,51 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
         },
         {
           w: 2,
-          cells: [{ h: 3, block: social("demo-elif-linkedin", "linkedin", "elifkaya", "1x2") }],
+          cells: [{ h: 2, block: profile("demo-selin-profile", "Selin Demir", copy.selin.bio) }],
+        },
+        {
+          w: 2,
+          cells: [{ h: 2, block: profile("demo-elif-profile", "Elif Kaya", copy.elif.bio) }],
+        },
+        {
+          // Durum kartı 72px'e sığar ama TEK SATIRDA: 178px'lik bir kutuda
+          // Almanca ve İspanyolca metinler ikinci satıra taşıyordu. Bu
+          // yüzden durum kartlarının en dar kutusu 273px.
+          w: 3,
+          cells: [
+            { h: 1, block: status("demo-kerem-status", copy.kerem.status, "2x1") },
+            { h: 1, block: status("demo-selin-status", copy.selin.status, "2x1") },
+          ],
+        },
+        {
+          w: 2,
+          cells: [{ h: 2, block: profile("demo-naz-profile", "Naz Erdem", copy.naz.bio) }],
+        },
+        {
+          w: 2,
+          cells: [
+            {
+              h: 2,
+              // og YOK: 178×156'da bağlantı kartı marka çipi + başlık + alan
+              // adı düzenine geçiyor ve kutuyu dolduruyor. Çipin baş harfini
+              // favicon örtüyor.
+              block: {
+                id: "demo-elif-link",
+                type: "link",
+                size: "1x1",
+                data: {
+                  title: copy.elif.link,
+                  url: "https://elifkaya.com/bolumler",
+                  ogImage: "",
+                  favicon: "https://elifkaya.com/favicon.ico",
+                },
+              },
+            },
+          ],
+        },
+        {
+          w: 2,
+          cells: [{ h: 2, block: social("demo-selin-instagram", "instagram", "selindemir") }],
         },
       ],
     },
