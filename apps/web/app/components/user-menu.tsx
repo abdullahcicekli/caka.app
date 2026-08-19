@@ -129,7 +129,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
       <DropdownMenuContent
         align="end"
         sideOffset={8}
-        className="lp-account-menu w-60 rounded-2xl p-2 ring-0"
+        className="lp-account-menu w-64 rounded-2xl p-2 ring-0"
       >
         <AccountMenuContent user={user} showDashboard />
       </DropdownMenuContent>

@@ -314,7 +314,7 @@ html[data-landing]::-webkit-scrollbar {
   gap: 4px;
 }
 @media (min-width: 560px) {
-  .lp-menu-card { min-height: 178px; }
+  .lp-menu-card { min-height: 208px; }
 }
 .lp-menu-card img {
   position: absolute;
@@ -341,8 +341,8 @@ html[data-landing]::-webkit-scrollbar {
 }
 .lp-menu-card strong,
 .lp-menu-card span { position: relative; z-index: 2; color: white; }
-.lp-menu-card strong { font-size: 15px; font-weight: 600; }
-.lp-menu-card span { font-size: 13px; opacity: 0.82; }
+.lp-menu-card strong { font-size: 14px; font-weight: 600; line-height: 1.25; text-wrap: balance; }
+.lp-menu-card span { font-size: 12.5px; line-height: 1.35; opacity: 0.86; }
 
 /* ---------------------------------------------------------------- *
  * Navbar hesap menüsü (oturum açıkken)

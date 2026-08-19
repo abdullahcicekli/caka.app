@@ -34,7 +34,7 @@
 // SSR: hiçbir değer render anında hesaplanmaz — tarih sabit epoch, katkı
 // grafiği sabit bir üreticiden. Rastgelelik yok, `Date.now()` yok.
 
-import type { BlockSize, ProfileBlock } from "@caka/shared";
+import { faviconImageKey, type BlockSize, type ProfileBlock } from "@caka/shared";
 
 import avatarElif from "~/assets/landing/avatar-elif.webp";
 import avatarKerem from "~/assets/landing/avatar-kerem.webp";
@@ -152,6 +152,12 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   "demo-selin-profile": avatarSelin,
   "demo-elif-profile": avatarElif,
   "demo-naz-profile": avatarNaz,
+  // Bağlantı kartının marka çipi. Favicon YOKSA kart alan adının BAŞ HARFİNİ
+  // gösteriyor ("S", "K") — şeritte yer tutucu harf bırakmamak için iki
+  // kişisel sitenin favicon'u sahibinin portresi. (Kişisel sitelerde
+  // gerçekten de sık rastlanan bir seçim.)
+  [faviconImageKey("demo-selin-link")]: avatarSelin,
+  [faviconImageKey("demo-kerem-link")]: avatarKerem,
 };
 
 type DemoSocialPlatform = "x" | "tiktok" | "linkedin" | "instagram" | "threads" | "nsosyal";
