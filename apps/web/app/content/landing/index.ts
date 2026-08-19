@@ -16,6 +16,8 @@ import { tr } from "./tr";
 export type LandingContent = typeof tr;
 
 export type Cta = LandingContent["nav"]["login"];
+export type NavContent = LandingContent["nav"];
+export type MenuContent = LandingContent["nav"]["menu"];
 
 /** Hukuki bir belgeye giden bağlantı. `legalDocument` doluysa bağlantı yalnız
  * o belge yayındayken gösterilir: kapı (R33) doldurulmamış `[...]` alanı olan
@@ -29,13 +31,17 @@ export type FaqItem = LandingContent["faq"]["items"][number];
 export type FaqSection = LandingContent["faq"];
 export type ShareSection = LandingContent["share"];
 export type AudienceSection = LandingContent["audience"];
+export type ShowcaseSection = LandingContent["showcase"];
+export type ShowcaseCard = ShowcaseSection["cards"][number];
+export type OutroSection = LandingContent["outro"];
 
-export type { MarqueeItem, SocialLink } from "./shared";
+export type { MarqueeItem, ShowcaseSlide, SocialLink } from "./shared";
+export { showcaseSlides } from "./shared";
 
 export const landingCatalog: Record<Locale, LandingContent> = {
   tr,
-  en,
   es,
   "pt-BR": ptBR,
   de,
+  en,
 };

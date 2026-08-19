@@ -11,20 +11,47 @@ export const es = {
   nav: {
     login: { label: "Iniciar sesión", href: "/login" },
     cta: { label: "Empieza gratis", href: "/onboarding" },
+    menu: {
+      label: "Menú del sitio",
+      open: "Menú",
+      close: "Cerrar menú",
+      links: [
+        { label: "Cómo funciona", href: "/#urun" },
+        { label: "Escaparate", href: "/#vitrin" },
+        { label: "Preguntas", href: "/#sss" },
+        { label: "Iniciar sesión", href: "/login" },
+      ],
+      card: {
+        title: "Una página hecha de bloques",
+        body: "Enlaces, fotos, música, mapas: todo en una sola cuadrícula.",
+      },
+      meta: [
+        "Una página personal a tu medida",
+        "Sin cookies de publicidad ni de analítica",
+      ],
+    },
   },
   hero: {
+    kicker: "Una dirección para tu página personal\nGratis, publicada en minutos",
     title: "Un enlace bio\nhecho a tu medida.",
-    body: "Un solo enlace para tu Instagram, TikTok, YouTube y el resto de tus perfiles: reúne todo lo que compartes, creas y vendes.",
+    media: {
+      alt: "Retratos que muestran páginas de Caka",
+      pause: "Detener la tira",
+      play: "Reproducir la tira",
+    },
+    marquee: landingAssets.marquee,
     claim: {
       domain: "caka.app/",
       placeholder: "tunombre",
       cta: "Empieza gratis",
       action: "/onboarding",
     },
-    marquee: landingAssets.marquee,
+  },
+  editorial: {
+    body: "Un solo enlace para tu Instagram, TikTok, YouTube y el resto de tus perfiles: reúne todo lo que compartes, creas y vendes.",
   },
   minutes: {
-    title: "Crea tu página de Caka\nen minutos",
+    title: "Crea tu página de Caka en minutos",
     body: "Reúne tus redes sociales, tus sitios, tus proyectos y tu tienda en un único enlace. Ajusta cada detalle o empieza con un tema listo para usar.",
     cta: { label: "Empieza gratis", href: "/onboarding" },
   },
@@ -32,15 +59,58 @@ export const es = {
     title: "Comparte tu Caka\ndonde quieras",
     body: "Pon tu dirección en tus perfiles, tus vídeos y tu tarjeta de visita. Lleva también el tráfico offline a tu página con tu código QR.",
     cta: { label: "Empieza gratis", href: "/onboarding" },
+    badges: ["Una dirección", "Código QR"],
+    pill: "Compartir",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Conoce a tu público,\nmantén su interés",
     body: "Descubre en qué enlace hacen clic, de dónde llegan tus visitantes y qué funciona de verdad. Actualiza tu página en consecuencia.",
     cta: { label: "Empieza gratis", href: "/onboarding" },
+    badges: ["Clics", "Fuentes"],
+    pill: "Analíticas",
+  },
+  showcase: {
+    title: "Diseñado para el uso real",
+    body: "Tres pasos: monta tu página, compártela y mídela.",
+    segments: [
+      { id: "kur", label: "Monta" },
+      { id: "paylas", label: "Comparte" },
+      { id: "olc", label: "Mide" },
+    ],
+    cards: [
+      {
+        title: "Cuadrícula de bloques",
+        body: "Arrastra tus bloques, cambia su tamaño y monta la página con tu propia composición.",
+      },
+      {
+        title: "Temas listos",
+        body: "Resuelve color y tipografía con una sola elección y cambia después lo que quieras.",
+      },
+      {
+        title: "Una dirección",
+        body: "caka.app/tunombre: el único enlace que pones en tus perfiles, vídeos y tarjeta de visita.",
+      },
+      {
+        title: "Código QR",
+        body: "Lleva a tu página también a quien conoces offline; el código llega con tu dirección.",
+      },
+      {
+        title: "Resumen de clics",
+        body: "Mira qué bloque despierta interés y reorganiza tu página alrededor de él.",
+      },
+      {
+        title: "Origen de las visitas",
+        body: "Sabe de qué perfil llega tu tráfico y dedica tu esfuerzo donde cuenta.",
+      },
+    ],
+    prev: "Tarjeta anterior",
+    next: "Tarjeta siguiente",
+    trackLabel: "Tarjetas del escaparate",
   },
   faq: {
     title: "¿Preguntas? Respondidas",
+    label: "Preguntas frecuentes",
     items: [
       {
         question: "¿Qué es Caka?",
@@ -76,6 +146,7 @@ export const es = {
   },
   closingCta: {
     title: "Abre hoy tu propio\nrincón en internet",
+    accent: "Gratis. Sin anuncios. Tuyo.",
     claim: {
       domain: "caka.app/",
       placeholder: "tunombre",
@@ -83,12 +154,26 @@ export const es = {
       action: "/onboarding",
     },
   },
+  outro: {
+    line: "La página que abres hoy mañana sigue siendo tuya.",
+    pills: ["Código abierto", "En cinco idiomas", "caka.app"],
+  },
   footer: {
+    tagline: "Caka — una página personal a tu medida",
     columns: [
+      {
+        title: "Producto",
+        links: [
+          { label: "Cómo funciona", href: "/#urun" },
+          { label: "Escaparate", href: "/#vitrin" },
+          { label: "Preguntas", href: "/#sss" },
+        ],
+      },
       {
         title: "Caka",
         links: [
-          { label: "Cómo funciona", href: "/#urun" },
+          { label: "Empieza gratis", href: "/onboarding" },
+          { label: "Iniciar sesión", href: "/login" },
           { label: "Contacto", href: "mailto:hello@caka.app" },
         ],
       },
