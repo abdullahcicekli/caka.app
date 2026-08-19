@@ -57,31 +57,22 @@ export const tr = {
     // Personaların kendisi (adlar, kullanıcı adları, adresler, görseller,
     // eser adları) çevrilmez ve `hero-demo.ts`te durur.
     tower: {
-      kerem: {
-        bio: "Müzisyen · İstanbul",
-        status: "Bu hafta stüdyodayım",
-        document: "Basın kiti",
-        link: "Konser takvimi",
-      },
-      selin: {
-        bio: "Seramik · Bodrum",
-        status: "Atölye cumartesi açık",
-        link: "Yeni koleksiyon: Toprak",
-        location: "Bodrum, Muğla",
-        country: "Türkiye",
-      },
-      elif: {
-        bio: "Podcast · Ankara",
-        status: "Yeni bölüm perşembe",
-        youtube: "Sade Hayat — 7. bölümün kamera arkası",
-        link: "Tüm bölümler",
-      },
-      naz: {
-        bio: "Seslendirme · İzmir",
-        status: "Kayıt için takvim açık",
-        text: "Seslendirme işleri için mesaj atabilirsin.",
-        link: "Sesli hikâyeler",
-      },
+      elif: { youtube: "40. bölümün kamera arkası" },
+      sena: { bio: "Fizyoterapi · Ankara" },
+      selin: { link: "Yeni koleksiyon: Toprak" },
+      ozan: { link: "Konser takvimi" },
+      onur: { location: "Bodrum, Muğla", country: "Türkiye" },
+      yusuf: { document: "Haftanın menüsü" },
+      serkan: { status: "Yeni dönem kayıtları açık" },
+      rabia: { text: "Çizim siparişleri için mesaj atabilirsin." },
+      can: { status: "Cumartesi gece seti" },
+      furkan: { link: "Yeni öykü: Uzun Yol" },
+      kaan: { bio: "Video · İstanbul" },
+      deniz: { bio: "Öğretmen · Eskişehir" },
+      tolga: { status: "Yeni baskılar yolda" },
+      volkan: { status: "Pazar koşusu 07.00" },
+      ahmet: { bio: "Bisiklet · İzmir" },
+      esra: { link: "Sipariş formu" },
     },
     // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
     // değerli hâli, adın orada talep edilmesidir.
