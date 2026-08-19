@@ -52,3 +52,26 @@ dağıtmak yasak — burada kart içeriği olarak kullanılıyorlar, dağıtılm
 | `kaan-video.jpg` | https://unsplash.com/photos/camera-on-tripod-with-zoom-lens-IcwAKUhNGXs | Sirisvisual | `photo-1612548403247-aa2873e9422d` | Unsplash License (ücretsiz) |
 | `kaan-son-video.jpg` | https://unsplash.com/photos/view-of-istanbul-skyline-with-mosques-and-bosphorus-strait-UM_YUJUGK6g | Spenser Sembrat | `photo-1763965367191-6455ef032c79` | Unsplash License (ücretsiz) |
 | `ozan-galeri-3.jpg` | https://unsplash.com/photos/amber-vinyl-record-on-turntable-KA1WM_yQGF8 | Jakob Rosen | `photo-1616714109948-c74fe5029a4d` | Unsplash License (ücretsiz) |
+
+## 3. Favicon'lar — `lab/favicon/`
+
+Bağlantı kartlarında favicon yoksa ürün marka renkli bir kareye alan adının
+**baş harfini** basar. Gerçek bir sayfada iyi bir yedek; vitrinde "görsel
+yüklenmemiş" gibi okunur. Bu yüzden her bağlantı bloğuna favicon verildi
+(denetim: `scripts/lab-denetim.mjs`).
+
+Kaynak seçimi ürünün gerçekte ne bulacağını taklit eder:
+
+| Dosya / kaynak | Kullanan kart | Nereden | Lisans / dayanak |
+| --- | --- | --- | --- |
+| `favicon/github.svg` | `emre-proje` (github.com) | GitHub'ın kendi ilan ettiği favicon (`github.githubassets.com/favicons/favicon.svg`) | Marka işaretinin **nominatif** kullanımı: kart o servise giden bir bağlantıyı işaretliyor. Aynı glif ürünün `icons/social.tsx` setinde de var. |
+| `favicon/whatsapp.svg` | `serkan-wa` (wa.me) | wa.me sayfasının `<link rel="icon">` ilanı (`static.whatsapp.net/rsrc.php/y1/r/FJbTMJqMap7.svg`) | Aynı gerekçe. Ürün de canlıda tam bu adresi bulur (`server/og.ts`). |
+| `favicon/ornekgazete.svg` | `zeynep-haber-1`, `zeynep-haber-2` | **Bu depoda çizildi** — katlanmış gazete gliff'i, tek renk zemin | Kendi varlığımız. Gazete FOTOĞRAFI kullanılmadı: bu fotoğraflar neredeyse her zaman gerçek bir yayının başlığını ve o günün manşetini taşıyor, kurgusal bir gazetenin amblemi olarak kullanmak hem başkasının markasını hem alakasız bir manşeti pazarlama varlığımıza gömerdi. 26 pikselde fotoğraf gri bir lekeye düşerken çizilmiş amblem okunur kalıyor. |
+| `avatar-emre.jpg` | `emre-blog` (emrekilic.dev) | Bölüm 1'deki portre | Kişisel sitelerin site ikonu çoğu kez sahibinin fotoğrafıdır; yeni varlık indirilmedi. |
+| `avatar-ozan.jpg` | `ozan-takvim` (ozansahin.com) | Bölüm 1'deki portre | Aynı gerekçe. |
+| `avatar-zeynep.jpg` | `zeynep-arsiv` (zeynepaydin.com) | Bölüm 1'deki portre | Aynı gerekçe. |
+| `avatar-busra.jpg` | `busra-randevu` (dytbusrakaya.com) | Bölüm 1'deki portre | Aynı gerekçe. |
+
+Bu varlıkların hiçbiri üretim paketine girmez: yalnız laboratuvar route'undan
+(`routes/lab.karakterler.tsx`, `import.meta.env.DEV` kapılı) okunuyorlar ve
+landing'e giden şey `vitrin/` altındaki webp'lerdir.

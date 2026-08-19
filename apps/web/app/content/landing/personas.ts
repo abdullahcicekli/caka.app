@@ -18,8 +18,11 @@
  * katalogla eşleşen bir KİMLİKTİR.
  */
 
-import type { ProfileLayout, ProfileTheme } from "@caka/shared";
+import { faviconImageKey, type ProfileLayout, type ProfileTheme } from "@caka/shared";
 
+import faviconGithub from "~/assets/landing/lab/favicon/github.svg";
+import faviconOrnekgazete from "~/assets/landing/lab/favicon/ornekgazete.svg";
+import faviconWhatsapp from "~/assets/landing/lab/favicon/whatsapp.svg";
 import avatarBusra from "~/assets/landing/lab/avatar-busra.jpg";
 import avatarEmre from "~/assets/landing/lab/avatar-emre.jpg";
 import avatarKaan from "~/assets/landing/lab/avatar-kaan.jpg";
@@ -116,6 +119,27 @@ function kart(file: string): string {
   return anahtar ? kartlar[anahtar] : "";
 }
 
+/**
+ * BAĞLANTI KARTLARINDA BAŞ HARF ÇİPİ KALMAZ. Ürün, favicon'u olmayan bir
+ * bağlantıyı marka renkli bir kareye alan adının baş harfini basarak çizer
+ * (`linkBrand().initial`, `profile-block.tsx`). Gerçek bir sayfada bu iyi
+ * bir yedek; VİTRİNDE ise "görsel yüklenmemiş" gibi okunur — vitrin ürünü
+ * satar, eksiğini sergilemez. Bu yüzden her bağlantı bloğuna favicon verilir
+ * ve `scripts/lab-denetim.mjs` sıfır bulgu verene kadar iş bitmiş sayılmaz.
+ *
+ * Favicon kaynağı, ürünün gerçekte ne bulacağıyla aynı olsun diye seçildi:
+ *   • Gerçek servisler (github.com, wa.me) → o sitenin ilan ettiği ikon.
+ *   • Kişinin kendi alan adı → kendi portresi. Kişisel sitelerin site
+ *     ikonu çoğu kez sahibinin fotoğrafıdır; aynı yüz profil kartında da
+ *     durduğu için kart "bu onun kendi sitesi" der.
+ *   • Kurgusal yayın (ornekgazete.com) → yayının amblemi.
+ */
+function faviconlar(esleme: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(esleme).map(([blok, adres]) => [faviconImageKey(blok), adres]),
+  );
+}
+
 export const LANDING_PERSONAS: Persona[] = [
   // ── 1. Yazılım mühendisi ────────────────────────────────────────────────
   // Öne çıkan widget'lar: GitHub katkı ısı haritası, belge (CV), og görselli
@@ -132,6 +156,10 @@ export const LANDING_PERSONAS: Persona[] = [
     images: {
       "emre-blog": kart("emre-og-1.jpg"),
       "emre-proje": kart("emre-og-2.jpg"),
+      ...faviconlar({
+        "emre-blog": avatarEmre,
+        "emre-proje": faviconGithub,
+      }),
     },
     layout: {
       grid: 2,
@@ -351,7 +379,7 @@ export const LANDING_PERSONAS: Persona[] = [
     side: "left",
     backdrop: "#4cb63a",
     photo: kisiSerkan,
-    images: {},
+    images: faviconlar({ "serkan-wa": faviconWhatsapp }),
     layout: {
       grid: 2,
       version: 1,
@@ -462,6 +490,7 @@ export const LANDING_PERSONAS: Persona[] = [
     photo: kisiOzan,
     images: {
       "ozan-album": kart("ozan-kapak.jpg"),
+      ...faviconlar({ "ozan-takvim": avatarOzan }),
     },
     layout: {
       grid: 2,
@@ -566,6 +595,11 @@ export const LANDING_PERSONAS: Persona[] = [
       "zeynep-haber-1": kart("zeynep-og-1.jpg"),
       "zeynep-haber-2": kart("zeynep-og-2.jpg"),
       "zeynep-arsiv": kart("zeynep-og-3.jpg"),
+      ...faviconlar({
+        "zeynep-haber-1": faviconOrnekgazete,
+        "zeynep-haber-2": faviconOrnekgazete,
+        "zeynep-arsiv": avatarZeynep,
+      }),
     },
     layout: {
       grid: 2,
@@ -674,6 +708,7 @@ export const LANDING_PERSONAS: Persona[] = [
     photo: kisiBusra,
     images: {
       "busra-randevu": kart("busra-og-1.jpg"),
+      ...faviconlar({ "busra-randevu": avatarBusra }),
     },
     layout: {
       grid: 2,

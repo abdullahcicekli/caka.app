@@ -25,6 +25,11 @@
  *
  *      Çıktı: `app/assets/landing/vitrin/<id>.webp`
  *
+ *   4) Çekimden ÖNCE denetim — kartlarda yer tutucu kalmadığını ölçer
+ *      (baş harf çipi, boş avatar); sıfır bulgu vermeden çekme:
+ *
+ *        node scripts/lab-denetim.mjs
+ *
  * ─── NEDEN BÖYLE ───────────────────────────────────────────────────────────
  *
  * Telefonun içi bir ekran görüntüsü DEĞİL, `ProfileCanvas`'ın kendisidir:
