@@ -6,6 +6,7 @@ import creatorElif from "~/assets/landing/creator-elif.webp";
 import creatorKerem from "~/assets/landing/creator-kerem.webp";
 import creatorNaz from "~/assets/landing/creator-naz.webp";
 import creatorSelin from "~/assets/landing/creator-selin.webp";
+import menuDesk from "~/assets/landing/menu-desk.webp";
 import phone3d from "~/assets/landing/phone-3d.webp";
 import shareCards from "~/assets/landing/share-cards.webp";
 
@@ -39,8 +40,12 @@ export type ShowcaseSlide = (typeof showcaseSlides)[number];
 
 export const landingAssets = {
   shareImage: shareCards,
-  // Menü katmanındaki medya kartı.
-  menuImage: creatorNaz,
+  // Menü katmanındaki medya kartı. Persona portresi DEĞİL: menü kartının
+  // cümlesi ("Bağlantı, fotoğraf, müzik, harita — hepsi tek ızgarada")
+  // ürünü anlatıyor, bir kişiyi değil. Görsel de onu gösteriyor: kare
+  // bloklardan bir ızgara, yanında plak, kulaklık ve harita. Portre orada
+  // dururken menü "bir yaratıcı" vaat ediyor, kart ise düzeni anlatıyordu.
+  menuImage: menuDesk,
   // Yalnızca Caka'ya ait, var olduğu doğrulanmış hesaplar. `github.com/caka-app`
   // ve `x.com/cakaapp` 404 dönüyordu; `instagram.com/caka.app` ise Caka'ya ait
   // değil, o yüzden kaldırıldı. Bu liste `home.tsx`'teki Organization şemasının
