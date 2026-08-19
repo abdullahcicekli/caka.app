@@ -53,6 +53,7 @@ const belge = (n) => `d0c00000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const BELGELER = [
   [belge(1), "belge.pdf"],
   [belge(2), "belge.pdf"],
+  [belge(3), "belge.pdf"],
 ];
 
 /** Belge kartı yalnız ad/boyut/tarih basar; içerik dolgu bir PDF olabilir. */

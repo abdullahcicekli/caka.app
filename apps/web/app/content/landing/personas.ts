@@ -339,8 +339,9 @@ export const LANDING_PERSONAS: Persona[] = [
   },
 
   // ── 3. Spor hocası ──────────────────────────────────────────────────────
-  // Öne çıkan widget'lar: konum kartı (salon), galeri, sosyal, WhatsApp
-  // bağlantısı, kısa metin.
+  // Öne çıkan widget'lar: galeri, WhatsApp bağlantısı, belge (antrenman
+  // programı), kısa metin, sosyal. KONUM KARTI YOK — bkz. dosya sonundaki
+  // "Konum kartı neden vitrinde yok" notu.
   {
     id: "serkan",
     name: "Serkan Yıldız",
@@ -366,17 +367,16 @@ export const LANDING_PERSONAS: Persona[] = [
           },
         },
         {
-          id: "serkan-konum",
-          type: "location",
-          size: "2x2",
-          ...at(0, 8, 4, 4),
+          id: "serkan-program",
+          type: "document",
+          size: "2x1",
+          ...at(0, 6, 4, 2),
           data: {
-            label: "Kadıköy, İstanbul",
-            country: "Türkiye",
-            countryCode: "TR",
-            lat: 40.99,
-            lon: 29.03,
-            timeZone: "Europe/Istanbul",
+            assetId: BELGE(3),
+            title: "Haftalık antrenman programı",
+            fileName: "serkan-yildiz-program.pdf",
+            bytes: 196_640,
+            uploadedAt: BELGE_ANI,
           },
         },
         {
@@ -411,7 +411,7 @@ export const LANDING_PERSONAS: Persona[] = [
           id: "serkan-not",
           type: "text",
           size: "2x1",
-          ...at(0, 6, 4, 2),
+          ...at(0, 8, 4, 2),
           data: {
             text: "Haftada üç gün, kırk beş dakika. Gerisi tutarlılık.",
             doc: undefined,
@@ -421,7 +421,7 @@ export const LANDING_PERSONAS: Persona[] = [
           id: "serkan-instagram",
           type: "social",
           size: "1x1",
-          ...at(0, 12, 2, 2),
+          ...at(0, 10, 2, 2),
           data: {
             platform: "instagram",
             handle: "serkanyildizpt",
@@ -435,7 +435,7 @@ export const LANDING_PERSONAS: Persona[] = [
           id: "serkan-youtube",
           type: "social",
           size: "1x1",
-          ...at(2, 12, 2, 2),
+          ...at(2, 10, 2, 2),
           data: {
             platform: "youtube",
             handle: "serkanyildizpt",
@@ -660,8 +660,9 @@ export const LANDING_PERSONAS: Persona[] = [
   },
 
   // ── 6. Diyetisyen ───────────────────────────────────────────────────────
-  // Öne çıkan widget'lar: konum, belge (beslenme programı), galeri, randevu
-  // bağlantısı.
+  // Öne çıkan widget'lar: randevu bağlantısı, belge (beslenme programı),
+  // galeri, kısa metin. KONUM KARTI YOK — bkz. dosya sonundaki "Konum kartı
+  // neden vitrinde yok" notu.
   {
     id: "busra",
     name: "Büşra Kaya",
@@ -714,17 +715,13 @@ export const LANDING_PERSONAS: Persona[] = [
           },
         },
         {
-          id: "busra-konum",
-          type: "location",
-          size: "2x2",
-          ...at(0, 12, 4, 4),
+          id: "busra-not",
+          type: "text",
+          size: "2x1",
+          ...at(0, 12, 4, 2),
           data: {
-            label: "Nişantaşı, İstanbul",
-            country: "Türkiye",
-            countryCode: "TR",
-            lat: 41.05,
-            lon: 28.99,
-            timeZone: "Europe/Istanbul",
+            text: "Diyet bir dönem değil, bir düzen. Önce alışkanlığı kuruyoruz.",
+            doc: undefined,
           },
         },
         {
@@ -775,3 +772,23 @@ export const LANDING_PERSONAS: Persona[] = [
     },
   },
 ];
+
+/**
+ * ─── KONUM KARTI NEDEN VİTRİNDE YOK ────────────────────────────────────────
+ *
+ * Konum bloğu ÜRÜNDE duruyor ve çalışıyor; kaldırılan yalnız vitrin
+ * personalarının düzenidir.
+ *
+ * Gerekçe: Mapbox Product Terms §2.8.1 harita içeriğinin ekran görüntüsüyle
+ * çoğaltılmasını yasaklıyor (bkz. `server/map-frame.ts`), yani mockup'ta
+ * kartın harita karesi çizilemez ve kart kendi haritasız fallback'ine düşer.
+ * Ürün içinde bu doğru davranış — vitrinde ise satılan şeyin YARIM hâli
+ * görünür. Vitrin ürünü satmak için var, eksiğini sergilemek için değil.
+ *
+ * Yerine mesleğe yakışan widget'lar kondu: Serkan'a belge kartı (haftalık
+ * antrenman programı — indir/önizle düğmeleriyle ürünün güçlü yanı),
+ * Büşra'ya kısa bir metin kartı.
+ *
+ * Alternatif, konum kartının fallback tasarımını iyileştirmekti; o ÜRÜN
+ * KODU'dur ve landing uğruna değiştirilmedi — ayrı ve bilinçli bir iş olurdu.
+ */

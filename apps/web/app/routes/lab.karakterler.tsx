@@ -37,11 +37,13 @@
  * zorlayan tek yer orası. Buradaki stil bloğu yalnız ölçüyü büyütür
  * (264×400 → 360×778); yerleşim kurallarını kopyalamaz.
  *
- * HARİTA KARESİ BİLEREK YOK. Mapbox Product Terms §2.8.1 harita içeriğinin
+ * KONUM KARTI VİTRİNDE YOK. Mapbox Product Terms §2.8.1 harita içeriğinin
  * ekran görüntüsüyle çoğaltılmasını açıkça yasaklıyor (bkz.
  * `server/map-frame.ts`), yani bir konum kartının haritası landing'de statik
- * bir varlığa gömülemez. Kart, ürünün kendi haritasız fallback tasarımına
- * düşer — kırık görsel değil, bilinçli hâl.
+ * bir varlığa gömülemez ve kart ürünün haritasız fallback'ine düşerdi.
+ * Doğru davranış ama vitrinde satılan şeyin yarım hâli görünür; bu yüzden
+ * personaların düzeninden çıkarıldı (gerekçe: `content/landing/personas.ts`
+ * sonundaki not). Ürün kodundaki konum bloğuna dokunulmadı.
  */
 
 import { useSearchParams } from "react-router";
