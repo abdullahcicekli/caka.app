@@ -189,6 +189,15 @@ function MenuLayer({
         className="lp-menu"
       >
         <div className="lp-menu-grid">
+          {/* Dekoratif kart SOLDA ve DOM'da da önce: bağlantı taşımadığı
+              için okuma sırasını görsel sıraya eşitlemek odak sırasını
+              bozmuyor — ilk odak yine listenin ilk bağlantısına gidiyor.
+              Görsel `alt=""`, anlamı yanındaki metin taşıyor. */}
+          <div className="lp-menu-card">
+            <img src={landingAssets.menuImage} alt="" loading="lazy" />
+            <strong>{menu.card.title}</strong>
+            <span>{menu.card.body}</span>
+          </div>
           <ul className="lp-menu-links">
             {menu.links.map((link) => (
               <li key={link.href}>
@@ -198,13 +207,6 @@ function MenuLayer({
               </li>
             ))}
           </ul>
-          {/* Dekoratif kart: bağlantı değil, ürünün ne olduğunu gösteren
-              tek görsel. Görsel `alt=""` — anlamı yanındaki metin taşıyor. */}
-          <div className="lp-menu-card">
-            <img src={landingAssets.menuImage} alt="" loading="lazy" />
-            <strong>{menu.card.title}</strong>
-            <span>{menu.card.body}</span>
-          </div>
         </div>
         <p className="lp-menu-meta">
           {menu.meta.map((item) => (

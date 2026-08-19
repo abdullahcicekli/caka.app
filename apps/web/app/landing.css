@@ -274,13 +274,15 @@ html[data-landing]::-webkit-scrollbar {
   from { opacity: 0; translate: 0 -6px; scale: 0.92; }
 }
 
+/* Görsel SOLDA, bağlantılar SAĞDA. Görsel sütunu sabit: bağlantı listesi
+   kalan yeri alsın, uzun bir etiket geldiğinde kart daralmasın. */
 .lp-menu-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: 1fr;
 }
 @media (min-width: 560px) {
-  .lp-menu-grid { grid-template-columns: 1fr 1fr; }
+  .lp-menu-grid { grid-template-columns: 196px 1fr; }
 }
 
 .lp-menu-links { display: flex; flex-direction: column; gap: 2px; }
