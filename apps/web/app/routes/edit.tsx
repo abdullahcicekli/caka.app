@@ -332,7 +332,7 @@ function uploadPhotoFile(
 }
 /** `/api/konum` başarılı yanıtı; hata dalında yalnız `error` döner. */
 type LocationHit = LocationSuggestion & {
-  /** İmzalı birinci taraf harita kareleri; anahtar/sır yoksa null. */
+  /** Sağlayıcının harita karesi adresleri; jeton yoksa null. */
   frames: Record<LocationZoomStep, string> | null;
 };
 type LocationSearchResponse = { results: LocationHit[] } | { error: string };

@@ -511,6 +511,30 @@ export const cerezPolitikasiSectionsEn: LegalSection[] = [
           [
             {
               kind: "strong",
+              text: "The map on a location card (Mapbox). ",
+            },
+            "If a profile has a location card, your browser fetches that " +
+              "card's dark map image directly from ",
+            { kind: "strong", text: "api.mapbox.com" },
+            ". In that request ",
+            {
+              kind: "strong",
+              text: "your IP address and User Agent reach Mapbox",
+            },
+            ", and the address also carries the approximate coordinate of the " +
+              "place the profile owner picked. Which profile you are looking " +
+              "at is not sent — the request announces only the caka.app " +
+              "domain, not the page address. We would rather have routed this " +
+              "image through our own server too, the way we do for link " +
+              "preview images, but Mapbox's terms explicitly forbid caching " +
+              "the map image and serving it from our own domain. We measured " +
+              "it: this request writes no cookie to your device, there is no " +
+              "cookie header in the response. Pages without a location card " +
+              "make no such request at all.",
+          ],
+          [
+            {
+              kind: "strong",
               text: "Embedded players (YouTube, Spotify) — only if you press play. ",
             },
             "A YouTube or Spotify card on a profile loads ",
@@ -547,7 +571,7 @@ export const cerezPolitikasiSectionsEn: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "The first three requests write nothing to your device; that is why " +
+          "The first four requests write nothing to your device; that is why " +
             "they do not appear in ",
           { kind: "link", text: "the table in section 4", href: "#cerez-tablosu" },
           ". The table lists only what ",

@@ -543,9 +543,10 @@ export function ProfileBlockCard({
         </article>
       );
     }
-    // Konum: koyu harita + yerel saat pili. Harita kareleri de imzalı birinci
-    // taraf yolları (bkz. `server/map-frame.ts`); ziyaretçi harita sunucusuna
-    // hiç bağlanmaz. Kart kendi saat/yakınlaşma durumunu tuttuğu için ayrı
+    // Konum: koyu harita + yerel saat pili. Harita kareleri sağlayıcının
+    // adresleri (bkz. `server/map-frame.ts` — proxy'lemek şartlarca yasak);
+    // eşlemeden gelmelerinin nedeni jetonun yalnız sunucuda bulunması.
+    // Kart kendi saat/yakınlaşma durumunu tuttuğu için ayrı
     // bileşen — hook'lar bir `switch` dalının içinde yaşayamaz.
     case "location":
       return (

@@ -587,6 +587,27 @@ export const gizlilikSectionsEn: LegalSection[] = [
             ],
           ],
           [
+            ["Mapbox, Inc."],
+            [
+              "Serving the map image of a location card, on profiles that have " +
+                "one.",
+            ],
+            [
+              "When you open such a page your browser fetches the map image " +
+                "directly from Mapbox; in that request ",
+              { kind: "strong", text: "your IP address and User Agent" },
+              " reach Mapbox. The address also carries the approximate " +
+                "coordinate of the place the profile owner picked; which " +
+                "profile you are looking at is not sent. Nothing is written to " +
+                "your device. Pages without a location card make no such " +
+                "request at all.",
+            ],
+            [
+              "Yes — today it cannot be tied to one of the safeguards the Law " +
+                "requires; see “Transfer abroad” below.",
+            ],
+          ],
+          [
             ["GitHub, Inc."],
             ["Fetching the contribution graph data shown on a profile."],
             [

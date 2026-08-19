@@ -2,10 +2,13 @@
  * Konum kartı: koyu, sade bir harita; üstünde konumun YEREL saatini taşıyan
  * küçük bir pil; ortasında konum noktası.
  *
- * ÜÇÜNCÜ TARAFA SIFIR İSTEK (R58): iki harita karesi de birinci taraf
- * `/api/harita` yolundan geliyor; kareyi Worker çekip önbelleğe alıyor
- * (`server/map-frame.ts`). Ziyaretçinin tarayıcısı hiçbir harita sunucusuna
- * bağlanmıyor, JS de yüklemiyor — kart iki `<img>` ve biraz CSS.
+ * HARİTA DOĞRUDAN SAĞLAYICIDAN GELİR: iki `<img>`, Mapbox Static Images
+ * API'sinden. Sağlayıcının şartları kareyi proxy'lemeyi ve sunucuda
+ * önbelleklemeyi açıkça yasakladığı için birinci taraf proxy'si (eski
+ * `/api/harita`) kaldırıldı — gerekçe ve alıntı `server/map-frame.ts`'te.
+ * Yani bu kartı taşıyan bir profil açıldığında ziyaretçinin IP'si ve User
+ * Agent'ı Mapbox'a ulaşır; `/gizlilik` §6 bunu ifşa eder. JS yine yok — kart
+ * iki `<img>` ve biraz CSS.
  *
  * YAKINLAŞMA EFEKTİ İKİ KARE ARASINDA: "uzak" (ülke ölçeği, z=4) altta,
  * "yakın" (şehir ölçeği, z=11) üstte durur. Bileşen bağlanınca `is-near`
@@ -26,7 +29,7 @@
 import { useEffect, useState } from "react";
 
 import {
-  MAP_ATTRIBUTION,
+  MAP_ATTRIBUTION_LINKS,
   type LocationBlockData,
   type LocalClock,
   formatUtcOffset,
@@ -45,7 +48,7 @@ export function LocationCard({
   frames,
 }: {
   data: LocationBlockData;
-  /** Blok kimliğine göre çözülmüş, imzalı birinci taraf kare yolları. */
+  /** Koordinata göre çözülmüş, jetonu taşıyan sağlayıcı adresleri. */
   frames: { far: string; near: string };
 }) {
   const w = useCatalog(widgetCatalog);
@@ -82,8 +85,20 @@ export function LocationCard({
         {/* Uzak kare ALTTA ve `eager`: kartın ilk gördüğü görüntü o.
             Yakın kare üstte, `lazy` — geçiş başlarken yükleniyor olabilir
             ve altındaki kare boşluk bırakmaz. */}
+        {/* `referrerPolicy` ZORUNLU, süs değil: jetonun URL kısıtlaması
+            Mapbox tarafında `Referer` başlığıyla uygulanıyor. Belgeye ileride
+            `Referrer-Policy: no-referrer` konursa bu öznitelik olmadan her
+            kare 403 dönerdi. `strict-origin-when-cross-origin` yalnız kökeni
+            gönderir — hangi profile bakıldığı sağlayıcıya gitmez. */}
         {frames.far ? (
-          <img className="loc-frame is-far" src={frames.far} alt="" draggable={false} />
+          <img
+            className="loc-frame is-far"
+            src={frames.far}
+            alt=""
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            draggable={false}
+          />
         ) : null}
         {frames.near ? (
           <img
@@ -91,6 +106,7 @@ export function LocationCard({
             src={frames.near}
             alt=""
             loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
             draggable={false}
           />
         ) : null}
@@ -114,10 +130,21 @@ export function LocationCard({
         {data.country && data.country !== label ? <small>{data.country}</small> : null}
       </span>
 
-      {/* Atıf GÖRÜNÜR olmak zorunda: harita karesi `manual_attribution=true`
-          ile filigransız isteniyor ve yükümlülük bize geçiyor. Çevrilmez —
-          marka ve proje adları. */}
-      {hasMap ? <small className="loc-attrib">{MAP_ATTRIBUTION}</small> : null}
+      {/* Atıf GÖRÜNÜR olmak zorunda: kare `attribution=false&logo=false` ile
+          isteniyor (gömülü filigran `object-fit: cover` kırpmasında kadraj
+          dışında kalırdı) ve yükümlülük bize geçiyor. Sağlayıcının şartları
+          WORDMARK'ı da istiyor, o yüzden ilk bağlantının içinde duruyor.
+          Metinler çevrilmez — şartlarda birebir yazılı. */}
+      {hasMap ? (
+        <small className="loc-attrib">
+          {MAP_ATTRIBUTION_LINKS.map((link, index) => (
+            <a key={link.href} href={link.href} target="_blank" rel="noreferrer">
+              {index === 0 ? <span className="loc-logo" aria-hidden /> : null}
+              {link.label}
+            </a>
+          ))}
+        </small>
+      ) : null}
     </article>
   );
 }

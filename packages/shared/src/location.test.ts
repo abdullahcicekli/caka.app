@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  LOCATION_FRAME,
   LOCATION_ZOOM,
-  MAP_SIGNATURE_PARAM,
+  MAPBOX_MAP_STYLE,
+  MAP_ATTRIBUTION_LINKS,
   buildLocationLabel,
   clockFromParts,
   formatUtcOffset,
@@ -11,12 +13,10 @@ import {
   isValidLongitude,
   isValidTimeZone,
   mapFrameImageKey,
-  mapFramePath,
-  mapFrameSignaturePayload,
+  mapboxStaticMapUrl,
   parseGeocodeResponse,
   readLocalClock,
   roundCoordinate,
-  stadiaStaticMapUrl,
   timeZoneOffsetMinutes,
 } from "./location";
 import { profileBlockSchema } from "./layout";
@@ -282,20 +282,6 @@ describe("parseGeocodeResponse (Photon)", () => {
 });
 
 describe("harita karesi adresleri", () => {
-  it("birinci taraf yol imzayı taşır ve sağlayıcıyı hiç anmaz", () => {
-    const path = mapFramePath(41.01, 28.98, "near", "abc123");
-    expect(path.startsWith("/api/harita?")).toBe(true);
-    expect(path).toContain(`${MAP_SIGNATURE_PARAM}=abc123`);
-    expect(path).not.toContain("stadiamaps");
-  });
-
-  it("imza gövdesi koordinat + kademeyi kapsar ve alan ayırıcı taşır", () => {
-    expect(mapFrameSignaturePayload(41.01, 28.98, "far")).toBe("map:41.01|28.98|far");
-    expect(mapFrameSignaturePayload(41.01, 28.98, "near")).not.toBe(
-      mapFrameSignaturePayload(41.01, 28.98, "far"),
-    );
-  });
-
   // Anahtar BLOK KİMLİĞİ DEĞİL koordinat taşır: blok kimliğine bağlansaydı,
   // mevcut bir bloğun yeri değiştirildiğinde editör eski şehrin haritasını
   // göstermeye devam ederdi.
@@ -310,21 +296,48 @@ describe("harita karesi adresleri", () => {
     );
   });
 
-  it("sağlayıcı adresi anahtarı ve filigran kapatmayı taşır", () => {
-    const url = stadiaStaticMapUrl({
+  it("sağlayıcı adresi jetonu ve filigran kapatmayı taşır", () => {
+    const url = mapboxStaticMapUrl({
       lat: 41.01,
       lon: 28.98,
       zoom: LOCATION_ZOOM.near,
       width: 512,
       height: 384,
-      apiKey: "SECRET",
+      token: "pk.test",
     });
-    expect(url.startsWith("https://tiles.stadiamaps.com/static_cacheable/")).toBe(true);
-    expect(url).toContain("center=41.01%2C28.98");
-    expect(url).toContain("zoom=11");
-    expect(url).toContain("size=512x384%402x");
-    expect(url).toContain("manual_attribution=true");
-    expect(url).toContain("api_key=SECRET");
+    expect(url.startsWith(`https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_MAP_STYLE}/static/`)).toBe(
+      true,
+    );
+    expect(url).toContain("attribution=false");
+    expect(url).toContain("logo=false");
+    expect(url).toContain("access_token=pk.test");
+  });
+
+  // Mapbox merkezi BOYLAMLA başlatır; ters yazılsaydı adres yine geçerli
+  // olurdu ve kart sessizce başka bir yerin haritasını çizerdi.
+  it("merkez boylam,enlem sırasında ve yön/eğim sıfırlanmış", () => {
+    const url = mapboxStaticMapUrl({
+      lat: 41.01,
+      lon: 28.98,
+      zoom: LOCATION_ZOOM.far,
+      width: LOCATION_FRAME.width,
+      height: LOCATION_FRAME.height,
+      token: "pk.test",
+    });
+    expect(url).toContain("/static/28.98,41.01,4,0,0/512x384@2x?");
+  });
+
+  // Şartlar atıf metinlerini BİREBİR yazıyor; çevrilirse yükümlülük
+  // karşılanmaz. Bağlantı hedefleri de sağlayıcının verdiği adresler.
+  it("atıf üç bağlantıyı ve şartlardaki metinleri taşır", () => {
+    expect(MAP_ATTRIBUTION_LINKS.map((link) => link.label)).toEqual([
+      "© Mapbox",
+      "© OpenStreetMap",
+      "Improve this map",
+    ]);
+    for (const link of MAP_ATTRIBUTION_LINKS) {
+      expect(link.href.startsWith("https://")).toBe(true);
+    }
   });
 });
 

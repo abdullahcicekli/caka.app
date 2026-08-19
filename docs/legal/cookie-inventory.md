@@ -9,7 +9,7 @@
 > depolama girdisi eklendiğinde **önce `cookies.ts` güncellenir** — yoksa
 > yayındaki politika sessizce yanlışa düşer.
 
-**Tarih:** 2026-08-17 · **Doğrulama tabanı:** kurulu `better-auth@1.6.28`
+**Tarih:** 2026-08-19 · **Doğrulama tabanı:** kurulu `better-auth@1.6.28`
 (Değişmez #2 ile pinli), `apps/web/app/routes/onboarding.tsx`,
 `apps/web/app/root.tsx` ve **derlenmiş istemci paketi**
 (`apps/web/build/client/assets`, bkz. §5).
@@ -75,6 +75,17 @@ Bunlar "unuttuk" değil, "bu yapılandırmada yazılmıyor" satırlarıdır:
   üründe yalnız sosyal giriş var.
 - **Ölçüm çerezi yok.** Cloudflare Web Analytics beacon'ı cihaza yazmıyor;
   gerçek tarayıcıda doğrulandı (`trust-claims.md`).
+- **Harita çerezi yok — ama harita artık üçüncü taraf isteği doğuruyor.**
+  2026-08-19'dan beri konum kartının iki karesi doğrudan `api.mapbox.com`'dan
+  yükleniyor (eski birinci taraf `/api/harita` proxy'si Mapbox Product Terms
+  §2.8.1 ve §1.9 sunucu önbelleğini ve proxy'lemeyi yasakladığı için
+  kaldırıldı). Envantere satır **girmedi**, çünkü: statik görsel yanıtında
+  `Set-Cookie` **gözlenmedi** (curl ile başlık kontrolü — dönen başlıklar
+  `content-type`, `server: awselb/2.0`, CloudFront `x-cache`/`via`/`x-amz-cf-*`,
+  `alt-svc`, `date`) ve bir `<img>` isteği kimlik bilgisi taşımadığı için bizim
+  taşıyabileceğimiz bir çerez zaten doğmaz. İddia bundan fazlası değildir.
+  Cihaza yazma olmasa da ziyaretçinin **IP'si ve User Agent'ı Mapbox'a
+  ulaşıyor**; bu envanterin değil, `vendor-register.md` §A'nın konusudur.
 
 ## 4. `caka_claim` — eksik `Secure` bayrağı
 
