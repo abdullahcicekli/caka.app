@@ -84,11 +84,15 @@ Hepsi laboratuvardan üretildi; elle çizilmiş varlık yok. Yeniden üretmek i�
 | Dosya | Nerede görünür |
 | --- | --- |
 | `emre / kaan / serkan / ozan / zeynep / busra.webp` | Landing karakter şeridi |
-| `emre-dongu.webp` | Aynı şerit; hareket tercihi açıksa |
 | `telefon-busra.webp` | `/login` sağ paneli ve `/onboarding` |
+| `../scene-kaan.webp`, `../scene-ozan.webp` | Hero şeridi; `kaan.webp` ve `ozan.webp` karelerinden **kişisiz** kırpma (bkz. `README.md` §4) |
+
+Karakter şeridi HAREKETSİZDİR: bir kartta denenen animasyonlu webp döngüsü
+(`emre-dongu.webp`) kaldırıldı, dosyası silindi.
 
 `telefon-busra.webp` SAYDAM (alfa) ve kişisizdir: arkasındaki zemin sayfanın
 kendi rengidir (girişte kireç, kayıtta beyaz), o yüzden tek varlık iki sayfaya
 yetiyor. Giriş sayfasında eskiden elle yazılmış sahte bir profil kartı ve
 `creator-selin.webp` (123 KB) duruyordu; yerine geçen bu mockup 34 KB ve
-telefonun içi ürünün kendi `ProfileCanvas`'ı.
+telefonun içi ürünün kendi `ProfileCanvas`'ı. (`creator-*.webp` karelerinin
+tamamı bu arada depodan silindi — bkz. `README.md` §1.)

@@ -11,10 +11,10 @@
 // persona var ve her personanın ADI, KULLANICI ADI, ALAN ADI, MESLEĞİ ve
 // FOTOĞRAFI aynı kişiye ait:
 //
-//   Kerem Aydın  @keremaydin  müzisyen     (creator-kerem.webp — gitar, stüdyo)
-//   Selin Demir  @selindemir  seramik      (creator-selin.webp — çark, atölye)
-//   Elif Kaya    @elifkaya    podcast      (creator-elif.webp  — mikrofon, masa)
-//   Naz Erdem    @nazerdem    seslendirme  (creator-naz.webp   — kayıt kabini)
+//   Kerem Aydın  @keremaydin  müzisyen     (avatar-kerem.webp)
+//   Selin Demir  @selindemir  seramik      (avatar-selin.webp)
+//   Elif Kaya    @elifkaya    podcast      (avatar-elif.webp)
+//   Naz Erdem    @nazerdem    seslendirme  (avatar-naz.webp)
 //
 // GÖRSEL HAVUZU: her görsel şeritte YALNIZ BİR KEZ geçer. Dört portreyle
 // on beş yer doldurmak (avatar + kart kapağı + önizleme aynı fotoğraftan)
@@ -28,6 +28,9 @@
 //     nesne (stüdyo, atölye rafı, mikrofon, çömlekçi takımları, albüm
 //     kapağı). Kimlik iddiası taşımadıkları için hangi yüzün çıktığı sorun
 //     değil ve her personaya kendi görsel seti düşüyor.
+//     İki sahne artık KARAKTER ŞERİDİNİN stüdyo karelerinden kırpılıyor
+//     (`scene-kaan`, `scene-ozan`): kişisiz kadrajlar oldukları için yukarıdaki
+//     kural bozulmuyor ve landing'in görselleri tek bir çekime dayanıyor.
 // Kırpma geometrileri ve üretim prompt'ları `~/assets/landing/README.md`.
 //
 // ÇEVRİLMEYEN KISIM BURADA: adlar, kullanıcı adları, adresler, kimlikler,
@@ -58,9 +61,9 @@ import coverSadeHayat from "~/assets/landing/cover-sade-hayat.webp";
 import detailElif from "~/assets/landing/detail-elif.webp";
 import detailNaz from "~/assets/landing/detail-naz.webp";
 import mapTown from "~/assets/landing/map-town.webp";
-import sceneElif from "~/assets/landing/scene-elif.webp";
-import sceneKerem from "~/assets/landing/scene-kerem.webp";
+import sceneKaan from "~/assets/landing/scene-kaan.webp";
 import sceneNaz from "~/assets/landing/scene-naz.webp";
+import sceneOzan from "~/assets/landing/scene-ozan.webp";
 import sceneSelin from "~/assets/landing/scene-selin.webp";
 import sceneSelinTools from "~/assets/landing/scene-selin-tools.webp";
 import { githubLoginKey, type GithubCalendar } from "~/lib/github-calendar";
@@ -167,10 +170,14 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   // Manzara görseller (1,91:1 — `.link-og`, `.social-og`, video kapağı).
   // Her biri BİR kez geçiyor: aynı görselin iki kartta çıkması şeridi
   // "dört fotoğrafla on beş yer doldurulmuş" gibi gösteriyordu.
-  "demo-elif-youtube": sceneElif,
+  // İki kadraj KARAKTER ŞERİDİNDEN geliyor (`assets/landing/vitrin/`): Kaan'ın
+  // set ekipmanı Elif'in "kamera arkası" videosunun kapağına, Ozan'ın plak +
+  // amfi köşesi Kerem'in konser bağlantısına düşüyor. İkisi de KİŞİSİZ kırpma
+  // — kart görselinin kimlik iddiası taşımaması kuralı korunuyor (yukarı bkz.).
+  "demo-elif-youtube": sceneKaan,
   "demo-naz-nsosyal": sceneNaz,
   "demo-selin-link": sceneSelin,
-  "demo-kerem-link": sceneKerem,
+  "demo-kerem-link": sceneOzan,
   // Kare kapaklar (`.sp-cover`).
   "demo-kerem-spotify": coverGeceYolu,
   "demo-elif-spotify": coverSadeHayat,
