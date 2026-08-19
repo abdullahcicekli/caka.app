@@ -474,13 +474,24 @@ html[data-landing]::-webkit-scrollbar {
   position: relative;
   z-index: 1;
   overflow: hidden;
-  border-radius: var(--lp-radius);
+  /* TAM GENİŞLİK: şerit `.lp-shell`in 1440px'lik ölçüsünden çıkar ve ekranı
+     kenardan kenara kaplar. Sayfanın geri kalanı ölçüsünde kalır — yalnız bu
+     bant taşar. `.lp` üzerindeki `overflow-x: clip` dikey kaydırma çubuğunun
+     `100vw`den düştüğü payı yutar, yani yatay çubuk doğmaz.
+     Negatif kenar boşluğu yüzdesi `.lp-hero`nun İÇ kutusuna göre çözülür ve
+     kabuk ortalı olduğu için sol kenar tam 0'a oturur. */
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  /* Köşe yuvarlaması YOK: ekran kenarına dayanan bir yay kesik görünürdü.
+     Kenarı artık yalnız üst/alt saç teli çiziyor. */
   /* KIRIK BEYAZ, fıstık yeşili değil. Şerit ürünün vitrini; zemin kartların
      önüne geçmemeli. Panelin kenarını `--color-tebesir`in sayfa zeminine olan
-     1,10'luk farkı ile 1px'lik iç halka birlikte çiziyor — halka `box-shadow`
-     çünkü `border` yüksekliği 600/768'den kaydırırdı (CLS). */
+     1,10'luk farkı ile saç teli birlikte çiziyor — çizgi `box-shadow` çünkü
+     `border` yüksekliği 600/768'den kaydırırdı (CLS). */
   background: var(--color-tebesir);
-  box-shadow: inset 0 0 0 1px var(--color-sinir);
+  box-shadow:
+    inset 0 1px 0 var(--color-sinir),
+    inset 0 -1px 0 var(--color-sinir);
   /* Yükseklik SABİT ve satırların toplamına eşit: oranla tahmin etmek
      yerine içerikten türer, kartlar yüklenirken sayfa kaymaz (CLS = 0).
      iki satır: 324 + 12 + 240 + 24 dolgu = 600; üç satır: + 156 + 12 = 768. */
@@ -537,14 +548,9 @@ html[data-landing]::-webkit-scrollbar {
   height: calc(
     var(--lp-tower-h) * var(--lp-cell-h) + (var(--lp-tower-h) - 1) * var(--lp-cell-gap)
   );
-  /* Kenarlarda yumuşak solma: kartlar birden kesilmiş gibi durmasın. */
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black 5%,
-    black 95%,
-    transparent 100%
-  );
+  /* Kenar solması YOK: şerit ekranı kenardan kenara kapladığından maske,
+     kartları ekranın iki yanında beyaza gömen bir perde hâline geliyordu.
+     Kesik kart bandın akmaya devam ettiğini zaten anlatıyor. */
 }
 
 /* Üçüncü satır yalnız geniş ekranda: dar ekranda blok iki satır boyunda. */
@@ -706,7 +712,9 @@ html[data-landing]::-webkit-scrollbar {
   position: absolute;
   z-index: 2;
   display: inline-flex;
-  right: 10px;
+  /* Şerit tam genişlik olduğu için düğme de ekran kenarına dayanırdı; oluğu
+     kadar içeri çekiliyor ki sayfanın geri kalanıyla aynı hizada dursun. */
+  right: var(--lp-gutter);
   bottom: 10px;
   height: 28px;
   align-items: center;
