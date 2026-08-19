@@ -3,6 +3,28 @@
 Bu klasördeki her görselin nereden geldiği burada yazılıdır: biri yenilenmek
 istendiğinde aynı estetik yeniden üretilebilsin diye.
 
+## Çözünürlük kapısı: kutunun İKİ KATI
+
+Şeritteki bir görselin doğal eni/boyu, basıldığı kutunun **iki katından** az
+olamaz — DPR 2 ekranda (her modern telefon, her Retina masaüstü) tarayıcı
+görseli büyütmek zorunda kalmasın. Kapı ölçülür, göz kararı verilmez:
+
+```sh
+pnpm dev            # başka bir kabukta
+node scripts/serit-olcum.mjs <port>
+```
+
+Betik landing'deki her `<img>` için `naturalWidth/Height` ile gerçek render
+kutusunu karşılaştırır, `object-fit`e göre ölçeği hesaplar ve ölçek 0,5'i aşan
+her görseli ihlal sayıp 1 ile çıkar. Yeni bir görsel eklerken **önce kutuyu
+ölçtür**, sonra kırp.
+
+**BÜYÜTEREK kapıyı geçme.** Bir kırpmayı hedef ene ImageMagick ile şişirmek
+`naturalWidth`i büyütür ama detay katmaz; şerit tam bu yüzden bulanıktı
+(`scene-kaan`/`scene-ozan` 385×202'lik kadrajlardan 735×385'e çekilmişti,
+yani 1,9× büyütme). Kaynak yetmiyorsa kadraj genişletilir ya da görsel
+yeniden üretilir.
+
 ## Kural: yüz avatarda, kart görselinde sahne
 
 Hero şeridinde **her görsel yalnız bir kez** geçer. Dört portreyle on beş yeri
@@ -70,7 +92,8 @@ Portrelerin ortamından iki **yüzsüz** detay (1,91:1 — `.social-og` oranı):
 magick creator-elif.webp -crop 470x246+0+60  +repage -resize 560x -quality 78 detail-elif.webp   # duvar rafı, cam vazo
 ```
 
-`detail-naz.webp` kırpma DEĞİL, üretim (560×293) — Naz'ın yeni karesinde
+`detail-naz.webp` kırpma DEĞİL, üretim (760×398; üretim karesi 560×293 idi,
+bkz. §3'teki yeniden örnekleme notu) — Naz'ın yeni karesinde
 kişisiz bir detay yoktu:
 
 > Close up still life on a dark walnut desk in a dim studio: a closed dark
@@ -86,6 +109,29 @@ kişisiz bir detay yoktu:
 
 Hepsi 16:9 üretildi, 1,91:1'e kırpıldı (`-crop 2752x1441+0+48`) ve 736×385
 webp'e indirildi; kare kapaklar 400×400.
+
+> **ÜRETİM KARELERİ DEPODA YOK.** Yalnız küçültülmüş webp'ler commit edildi;
+> fal çıktıları (ve `map-raw.jpg`, `menu-raw.jpg`) silinmiş durumda. Bu yüzden
+> çözünürlük kapısını (yukarı bkz.) kaçıran ÜÇ kare — `scene-naz`,
+> `detail-naz`, `map-town` — yeniden üretilemedi; kapıyı geçmeleri için
+> mevcut piksellerden **yeniden örneklendiler** (1,20× / 1,36× / 1,34×,
+> Lanczos + hafif `-unsharp`). Yani doğal enleri kapıyı karşılıyor ama gerçek
+> detayları hâlâ kaynak dosyanın detayı kadar:
+>
+> | Dosya | Şimdiki | Gerçek detay | Kutunun 2 katı |
+> |---|---|---|---|
+> | `scene-naz.webp`  | 880×461  | 735×385 | 850×445 |
+> | `detail-naz.webp` | 760×398  | 560×293 | 732×308 |
+> | `map-town.webp`   | 1020×765 | 760×570 | 996×696 |
+>
+> Üçü de alan derinliği sığ / düz grafik kareler, yani yüksek frekanslı
+> detayları zaten az; büyütme gözle `scene-kaan`/`scene-ozan`'daki gibi
+> okunmuyor. Yine de **kalıcı çözüm bu üçünü aşağıdaki prompt'lardan yeniden
+> üretmek** — o zaman büyütme kaldırılır ve üretim karesi bu kez repoya
+> (veya en azından bir yedeğe) alınır.
+>
+> `-resize`'ı ŞİŞİRME AMACIYLA kullanan tek yer burasıdır; yeni görselde bunu
+> tekrarlama.
 
 ### `scene-selin.webp` — Selin'in bağlantı kartı ("Yeni koleksiyon: Toprak")
 
@@ -128,7 +174,7 @@ webp'e indirildi; kare kapaklar 400×400.
 > empty space, photorealistic editorial photography, 50mm, no text, no
 > lettering, no writing, no people
 
-### `map-town.webp` — konum kartının harita karesi (760×570)
+### `map-town.webp` — konum kartının harita karesi (1020×765)
 
 **Gerçek coğrafya DEĞİL, bilinçli olarak.** Mapbox Product Terms §2.8.1 harita
 içeriğini önbelleğe almayı, proxy'lemeyi ve statik görsel olarak saklayıp
@@ -147,7 +193,11 @@ karesi.
 > no border
 
 ```sh
+# Özgün üretim (map-raw.jpg artık depoda yok):
 magick map-raw.jpg -crop 1400x1050+700+390 +repage -resize 760x -quality 82 map-town.webp
+# Bugünkü dosya, o çıktının yeniden örneklenmişi (çözünürlük kapısı):
+magick map-town.webp -resize 1020x765! -unsharp 0x0.7+0.7+0.01 \
+  -quality 82 -define webp:method=6 map-town.webp
 ```
 
 ### `menu-desk.webp` — menü katmanındaki görsel (760×594)
@@ -170,7 +220,7 @@ Menü kartının cümlesini ("Bağlantı, fotoğraf, müzik, harita — hepsi te
 magick menu-raw.jpg -crop 1600x1250+550+300 +repage -resize 760x -quality 80 menu-desk.webp
 ```
 
-## 4. Karakter şeridinden kırpılan iki sahne (üretim yok)
+## 4. Stüdyo karelerinden kırpılan iki sahne (üretim yok)
 
 `scene-kerem.webp` ve `scene-elif.webp` yerlerini karakter şeridinin kendi
 stüdyo karelerinden alınan **kişisiz** kırpmalara bıraktı. Böylece landing'in
@@ -178,17 +228,27 @@ görselleri tek bir çekime dayanıyor ve şerit ile karakter bölümü aynı ı
 konuşuyor. Kadrajlar kişiyi DIŞARIDA bırakır — kart görseli kimlik iddiası
 taşımaz kuralı (yukarı bkz.) korunur.
 
+**Kaynak `vitrin/*.webp` DEĞİL, `lab/kisi-*.webp`.** İlk sürüm kırpmayı
+laboratuvarın 1400×1050'lik RENDER'ından alıyordu; oradaki taban ekipmanı
+yalnız ~540×285 piksel tutuyor ve 735×385'e şişirilince şerit gözle görülür
+bulanıklaşıyordu. Kişi fotoğrafının kendisi 2000×1480; kırpma doğrudan ondan
+alınınca aynı kadraj büyütmesiz çıkıyor.
+
 ```sh
-magick vitrin/kaan.webp -crop 385x202+550+845 +repage -resize 735x385! \
-  -unsharp 0x0.7+0.6+0.02 -quality 80 scene-kaan.webp   # set ekipmanı, turuncu zemin
-magick vitrin/ozan.webp -crop 350x183+585+850 +repage -resize 735x385! \
-  -unsharp 0x0.7+0.6+0.02 -quality 80 scene-ozan.webp   # plak + amfi köşesi, mor zemin
+magick lab/kisi-kaan.webp -crop 970x507+345+957 +repage -resize 960x502! \
+  -quality 82 -define webp:method=6 scene-kaan.webp   # set ekipmanı, turuncu zemin
+magick lab/kisi-ozan.webp -crop 950x497+400+930 +repage -resize 820x429! \
+  -quality 82 -define webp:method=6 scene-ozan.webp   # plak + amfi köşesi, mor zemin
 ```
 
-| Dosya | Kart |
-|---|---|
-| `scene-kaan.webp` | Elif'in YouTube kapağı ("kamera arkası") |
-| `scene-ozan.webp` | Kerem'in bağlantı kartı ("Konser takvimi") |
+Kadrajların sağ kenarı bilerek kişinin ayaklarından ÖNCE biter
+(`kisi-kaan`'da x < 1315, `kisi-ozan`'da x < 1350); genişletirken bu sınır
+korunmalı.
+
+| Dosya | Kart | Kutu (1440px) | Kaynak |
+|---|---|---|---|
+| `scene-kaan.webp` | Elif'in YouTube kapağı ("kamera arkası") | 437×246 | 960×502 |
+| `scene-ozan.webp` | Kerem'in bağlantı kartı ("Konser takvimi") | 366×154 | 820×429 |
 
 ## 5. Diğerleri
 
