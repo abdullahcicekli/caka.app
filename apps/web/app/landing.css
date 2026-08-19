@@ -61,7 +61,7 @@
  * ---------------------------------------------------------------- */
 
 .lp-display {
-  font-size: clamp(44px, 10.4vw, 132px);
+  font-size: clamp(48px, 10.4vw, 132px);
   font-weight: 700;
   line-height: 0.94;
   letter-spacing: -0.035em;
@@ -132,6 +132,10 @@
 }
 
 .lp-nav-pill {
+  /* Hap perdenin USTUNDE kalir: menu acikken de okunur ve tiklanabilir.
+     Perde header'in yigin baglaminda oldugu icin sira burada belirlenir. */
+  position: relative;
+  z-index: 2;
   display: flex;
   min-height: var(--lp-nav-h);
   max-width: 1440px;
@@ -186,7 +190,7 @@
 
 .lp-menu-scrim {
   position: fixed;
-  z-index: 55;
+  z-index: 1;
   inset: 0;
   background: color-mix(in srgb, var(--color-murekkep) 45%, transparent);
   animation: lp-fade 200ms var(--lp-ease) both;
@@ -196,7 +200,7 @@
 
 .lp-menu {
   position: absolute;
-  z-index: 61;
+  z-index: 3;
   top: calc(var(--lp-nav-h) + 8px);
   right: var(--lp-gutter);
   left: var(--lp-gutter);
@@ -377,7 +381,6 @@
   right: 12px;
   bottom: 12px;
   z-index: 2;
-  display: inline-flex;
   height: 34px;
   align-items: center;
   gap: 6px;
@@ -392,6 +395,12 @@
 .lp-strip-toggle:hover { background: var(--color-murekkep); }
 .lp-strip-toggle:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 @media (min-width: 768px) { .lp-strip-toggle { display: inline-flex; } }
+/* Hareket azaltmada serit zaten akmiyor; durdurma dugmesi de gorunmez.
+   Karar CSS'te, JS'te DEGIL: React ile gizlense dugme once basilip sonra
+   kaldirilirdi (hidrasyondan sonra kucuk bir sicrama). */
+@media (prefers-reduced-motion: reduce) {
+  .lp-strip-toggle { display: none; }
+}
 
 /* ---------------------------------------------------------------- *
  * Bölüm ritmi
@@ -418,6 +427,17 @@
   min-height: 240svh;
 }
 @media (max-width: 767px) { .lp-pinned { min-height: 200svh; } }
+
+/* Hareket azaltmada koreografi yok; 240svh'lik bos kaydirma yolu da olmasin.
+   Bolum siradan bir bolume doner. */
+@media (prefers-reduced-motion: reduce) {
+  .lp-pinned { min-height: 0; }
+  .lp-pinned-sticky {
+    position: static;
+    min-height: 0;
+    padding-block: clamp(72px, 9vw, 160px);
+  }
+}
 .lp-pinned-sticky {
   position: sticky;
   top: 0;
@@ -473,36 +493,43 @@
 }
 .lp-card-text { background: white; justify-content: space-between; gap: 32px; }
 
+/* Medya karti: ustte rozetler, ortada gorsel, altta baslik pili. Gorsel
+   AKISTA durur (mutlak degil) — mutlakken rozetlerin altina giriyordu. */
 .lp-card-media {
-  position: relative;
   display: flex;
   overflow: hidden;
-  min-height: 320px;
+  min-height: 340px;
   flex-direction: column;
   justify-content: space-between;
   border-radius: var(--lp-radius);
-  background: var(--color-zemin);
+  /* Zemin cagirandan gelir: varsayilan kirec, koyu varyant `data-tint`. */
+  background: var(--color-kirec);
   padding: 16px;
   gap: 16px;
 }
-.lp-card-media img {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: min(78%, 460px);
+.lp-card-media[data-tint="murekkep"] { background: var(--color-murekkep); }
+
+.lp-card-figure {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  place-items: center;
+}
+.lp-card-figure img {
+  max-width: min(86%, 460px);
+  max-height: 100%;
+  width: auto;
   height: auto;
 }
-.lp-card-media > * { position: relative; z-index: 1; }
 
 .lp-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .lp-badge {
   border-radius: 999px;
-  background: color-mix(in srgb, white 78%, transparent);
+  background: color-mix(in srgb, white 82%, transparent);
   padding: 5px 12px;
   color: var(--color-murekkep);
   font-size: 12px;
   font-weight: 500;
-  backdrop-filter: blur(6px);
 }
 
 .lp-title-pill {
@@ -513,6 +540,10 @@
   color: white;
   font-size: 13px;
   font-weight: 500;
+}
+.lp-card-media[data-tint="murekkep"] .lp-title-pill {
+  background: white;
+  color: var(--color-murekkep);
 }
 
 /* ---------------------------------------------------------------- *
@@ -539,6 +570,8 @@
 .lp-slide {
   display: flex;
   overflow: hidden;
+  /* Sabit yukseklik: kartlar en uzuna gore uzayip serit devlesmesin. */
+  height: clamp(380px, 44vw, 520px);
   width: min(84vw, 460px);
   flex: none;
   flex-direction: column;

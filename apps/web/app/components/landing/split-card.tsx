@@ -13,6 +13,8 @@ interface SplitCardProps {
   /** Medya kartının altındaki başlık pili. */
   pill: string;
   media: ReactNode;
+  /** Medya kartinin zemini. Bolumler arasinda ritim degissin diye. */
+  tint?: "kirec" | "murekkep";
   /**
    * Medya kartı GENİŞ EKRANDA solda dursun mu? Bölümler arasında ritim
    * değişsin diye. Yalnız görsel sıra değişir: DOM her zaman metin → medya,
@@ -36,6 +38,7 @@ export function SplitCard({
   badges,
   pill,
   media,
+  tint = "kirec",
   mediaFirst = false,
 }: SplitCardProps) {
   const localize = useHref();
@@ -53,8 +56,7 @@ export function SplitCard({
   );
 
   const mediaCard = (
-    <div className="lp-card-media">
-      {media}
+    <div className="lp-card-media" data-tint={tint}>
       <div className="lp-badges">
         {badges.map((badge) => (
           <span key={badge} className="lp-badge">
@@ -62,6 +64,7 @@ export function SplitCard({
           </span>
         ))}
       </div>
+      <div className="lp-card-figure">{media}</div>
       <span className="lp-title-pill">{pill}</span>
     </div>
   );

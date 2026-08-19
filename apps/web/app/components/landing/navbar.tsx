@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { Link, useLocation } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
@@ -80,6 +80,7 @@ export function Navbar({ nav, user }: NavbarProps) {
         <MenuLayer
           id={menuId}
           menu={nav.menu}
+          closeRef={burgerRef}
           onClose={() => {
             setOpen(false);
             burgerRef.current?.focus();
@@ -103,10 +104,14 @@ const FOCUSABLE = 'a[href], button:not([disabled])';
 function MenuLayer({
   id,
   menu,
+  closeRef,
   onClose,
 }: {
   id: string;
   menu: NavContent["menu"];
+  /** Hamburger (acikken carpi): odak dongusune DAHIL — katmanin gorunur
+      kapatma denetimi o ve klavyeyle de erisilebilir olmali. */
+  closeRef: RefObject<HTMLButtonElement | null>;
   onClose: () => void;
 }) {
   const localize = useHref();
@@ -127,7 +132,12 @@ function MenuLayer({
       }
       if (event.key !== "Tab") return;
 
-      const items = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)];
+      // Donguye kapatma dugmesi de girer, en sona: son baglantidan Tab ile
+      // "kapat"a, oradan basa donulur.
+      const items = [
+        ...panel.querySelectorAll<HTMLElement>(FOCUSABLE),
+        closeRef.current,
+      ].filter((item): item is HTMLElement => item !== null);
       if (items.length === 0) return;
       const edge = event.shiftKey ? items[0] : items[items.length - 1];
       if (document.activeElement !== edge) return;
@@ -137,7 +147,7 @@ function MenuLayer({
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [closeRef, onClose]);
 
   return (
     <>

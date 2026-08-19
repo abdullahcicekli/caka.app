@@ -2,7 +2,6 @@ import { useState, type CSSProperties } from "react";
 
 import { PillLink } from "./pill-button";
 import type { Cta, LandingContent } from "~/content/landing";
-import { usePrefersReducedMotion } from "~/lib/landing-motion";
 import { useHref } from "~/lib/locale";
 
 interface HeroProps {
@@ -22,7 +21,7 @@ export function Hero({ hero, cta }: HeroProps) {
   const [kickerTop, ...kickerRest] = hero.kicker.split("\n");
 
   return (
-    <section className="lp-hero lp-shell">
+    <section id="hero" className="lp-hero lp-shell">
       <div className="lp-hero-head">
         <p className="lp-kicker">
           <span>{kickerTop}</span>
@@ -63,7 +62,6 @@ function HeroStrip({
   media: LandingContent["hero"]["media"];
   marquee: LandingContent["hero"]["marquee"];
 }) {
-  const reduced = usePrefersReducedMotion();
   const [paused, setPaused] = useState(false);
   const loop = [...marquee.items, ...marquee.items];
 
@@ -89,22 +87,24 @@ function HeroStrip({
             // Kalanlar mobilde `display: none` + `lazy`: tarayıcı gizli
             // tembel görseli indirmez.
             loading={index < 2 ? "eager" : "lazy"}
+            // Ilk kare olculen LCP ogesi; tarayici onu diger istekelerin
+            // onune alsin (istekler).
+            fetchPriority={index === 0 ? "high" : undefined}
             decoding="async"
             className={index < 2 ? undefined : "is-extra"}
           />
         ))}
       </div>
-      {/* Şeridi durdurma düğmesi. `reduced` true iken CSS animasyonu zaten
-          yok; düğme de anlamsızlaşır ve gizlenir. */}
-      {reduced ? null : (
-        <button
-          type="button"
-          className="lp-strip-toggle"
-          onClick={() => setPaused((value) => !value)}
-        >
-          {paused ? media.play : media.pause}
-        </button>
-      )}
+      {/* Şeridi durdurma düğmesi. Hareket azaltmada ve mobilde CSS ile
+          gizlenir (şerit orada zaten akmıyor) — React ile gizlemek düğmeyi
+          önce basıp sonra kaldırırdı. */}
+      <button
+        type="button"
+        className="lp-strip-toggle"
+        onClick={() => setPaused((value) => !value)}
+      >
+        {paused ? media.play : media.pause}
+      </button>
       <span className="sr-only">{media.alt}</span>
     </div>
   );

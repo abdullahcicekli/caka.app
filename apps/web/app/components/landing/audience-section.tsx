@@ -23,7 +23,7 @@ function AnalyticsIllustration() {
   return (
     <div
       aria-hidden
-      className="absolute inset-x-4 top-1/2 flex h-[42%] -translate-y-1/2 items-end gap-[6px] rounded-xl bg-white p-5"
+      className="flex h-full max-h-[220px] w-full items-end gap-[6px] rounded-xl bg-white p-5"
     >
       {BAR_HEIGHTS.map((height, index) => (
         <span
@@ -51,6 +51,7 @@ export function AudienceSection({
         cta={audience.cta}
         badges={audience.badges}
         pill={audience.pill}
+        tint="murekkep"
         media={<AnalyticsIllustration />}
       />
     </section>

@@ -88,22 +88,37 @@ function clamp01(value: number): number {
 }
 
 /**
- * Sabitlenen ifade bölümünde kelimelerin başlangıç dağılımı.
+ * Sabitlenen ifade bolumunde kelimelerin baslangic dagilimi.
  *
- * SABİT TABLO, rastgelelik YOK: `Math.random()` sunucu ve istemcide farklı
- * değer üretir ve hidrasyonu kırardı. Tablo kelime sayısından bağımsız
- * çalışsın diye indeks modülo alınır.
+ * SABIT, rastgelelik YOK: `Math.random()` sunucu ve istemcide farkli deger
+ * uretir ve hidrasyonu kirardi.
+ *
+ * Yatay kayma kelimenin satirdaki YERINDEN turer — merkeze gore disari acilir.
+ * Sabit bir tablo kullanilsaydi komsu kelimeler birbirine dogru kayip ust uste
+ * biner, dagilim "dagitilmis" degil "cakismis" gorunurdu. Dikey kayma ve donme
+ * ise tablodan gelir: ritim tekdüze olmasin.
  */
-const WORD_OFFSETS = [
-  { dx: "-0.42em", dy: "-0.72em", rot: "-6deg" },
-  { dx: "0.55em", dy: "0.58em", rot: "5deg" },
-  { dx: "-0.28em", dy: "0.85em", rot: "3deg" },
-  { dx: "0.68em", dy: "-0.5em", rot: "-4deg" },
-  { dx: "-0.6em", dy: "0.32em", rot: "7deg" },
-  { dx: "0.34em", dy: "-0.88em", rot: "-3deg" },
-  { dx: "0.18em", dy: "0.66em", rot: "4deg" },
+const WORD_DRIFT = [
+  { dy: "-1.45em", rot: "-9deg" },
+  { dy: "1.2em", rot: "7deg" },
+  { dy: "-0.75em", rot: "5deg" },
+  { dy: "1.6em", rot: "-6deg" },
+  { dy: "-1.15em", rot: "10deg" },
+  { dy: "0.85em", rot: "-4deg" },
+  { dy: "-1.6em", rot: "6deg" },
 ] as const;
 
-export function wordOffset(index: number) {
-  return WORD_OFFSETS[index % WORD_OFFSETS.length];
+/** Kelimeler merkezden disari bu adimla acilir. */
+// 0,45em: daha genisi uzun cumlelerde kenar kelimeyi kaptan tasiriyor
+// (`overflow-x: clip` onu keserdi).
+const WORD_SPREAD_EM = 0.45;
+
+export function wordOffset(index: number, total: number) {
+  const fromCenter = index - (total - 1) / 2;
+  const drift = WORD_DRIFT[index % WORD_DRIFT.length];
+  return {
+    dx: `${(fromCenter * WORD_SPREAD_EM).toFixed(3)}em`,
+    dy: drift.dy,
+    rot: drift.rot,
+  };
 }

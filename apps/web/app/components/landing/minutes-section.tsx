@@ -43,7 +43,7 @@ export function MinutesSection({
           <span className="sr-only">{minutes.title}</span>
           <span className="lp-words" aria-hidden>
             {words.map((word, index) => {
-              const offset = wordOffset(index);
+              const offset = wordOffset(index, words.length);
               return (
                 <span
                   key={`${word}-${index}`}
