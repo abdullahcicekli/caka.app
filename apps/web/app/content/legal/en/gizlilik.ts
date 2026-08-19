@@ -194,8 +194,11 @@ export const gizlilikSectionsEn: LegalSection[] = [
           [
             ["Uploaded files (asset and R2 storage)"],
             [
-              "The images you upload, along with their type, size and upload " +
-                "time.",
+              "The images and documents you upload (PDF only for now; a CV " +
+                "you put on your page is one of them), along with their " +
+                "name, type, size and upload time. If you add a document " +
+                "block, the file's name and contents are visible to everyone " +
+                "who sees your page; what goes into it is your choice.",
             ],
             [
               "Uploaded directly by you. In addition, the first time you sign " +

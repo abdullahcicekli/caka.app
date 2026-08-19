@@ -1,6 +1,7 @@
-import type { SpotifyKind } from "@caka/shared";
+import { formatFileSize, formatUploadDate, type SpotifyKind } from "@caka/shared";
 
 import type { WidgetContent } from "./index";
+
 import { type NumberFormat, relativeTime, shortNumber } from "./shared";
 
 const numbers: NumberFormat = { decimal: ".", thousand: "K", million: "M", billion: "B" };
@@ -70,6 +71,24 @@ export const en = {
           return "Show";
       }
     },
+  },
+
+  document: {
+    badge: "PDF",
+    download: "Download",
+    preview: "Preview",
+    downloadLabel: (name: string) => `Download: ${name}`,
+    previewLabel: (name: string) => `Preview: ${name} (opens in a new tab)`,
+    empty: "Add a document",
+    fallbackName: "Document",
+    size: (bytes: number) => formatFileSize(bytes, numbers.decimal),
+    date: (epochMs: number) =>
+      formatUploadDate(
+        epochMs,
+        ["January", "February", "March", "April", "May", "June",
+         "July", "August", "September", "October", "November", "December"],
+        (day, month, year) => `${month} ${day}, ${year}`,
+      ),
   },
 
   github: {

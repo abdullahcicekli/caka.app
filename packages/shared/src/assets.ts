@@ -1,9 +1,12 @@
 // R16 kullanıcı başına yükleme kotası. Sayaçlar `asset` tablosundan gelir,
 // karar burada verilir (saf ve test edilebilir).
+//
+// Kota GÖRSELE ÖZEL DEĞİL: `asset` tablosu yüklenen her dosyayı (görsel ve
+// belge) aynı havuzda sayar, kural da öyle.
 
-/** Bir kullanıcı en fazla bu kadar görsel tutabilir. */
+/** Bir kullanıcı en fazla bu kadar dosya tutabilir. */
 export const ASSET_MAX_COUNT = 50;
-/** Bir kullanıcının toplam görsel alanı. */
+/** Bir kullanıcının toplam yükleme alanı. */
 export const ASSET_MAX_TOTAL_BYTES = 100 * 1024 * 1024;
 
 export interface AssetUsage {
@@ -14,16 +17,18 @@ export interface AssetUsage {
 }
 
 /**
- * Yeni bir yükleme kotaya sığıyor mu? Sığmıyorsa kullanıcıya gösterilecek
- * Türkçe mesaj, sığıyorsa null.
+ * Kota reddinin kimliği. Metin DEĞİL kimlik döndürülür (Değişmez #5): mesaj
+ * kullanıcıya görünür ve beş dile çevrilir (`content/app`), bu katman ise saf
+ * kural katmanıdır ve dil bilmez.
  */
-export function assetQuotaError(usage: AssetUsage, incomingBytes: number): string | null {
-  if (usage.count >= ASSET_MAX_COUNT) {
-    return `En fazla ${ASSET_MAX_COUNT} görsel yükleyebilirsin. Yeni görsel için önce kullanmadığın görselleri kaldırman gerekiyor.`;
-  }
-  if (usage.bytes + incomingBytes > ASSET_MAX_TOTAL_BYTES) {
-    const limitMb = Math.round(ASSET_MAX_TOTAL_BYTES / (1024 * 1024));
-    return `Toplam görsel alanın ${limitMb} MB; bu görsel sığmıyor. Yeni görsel için önce kullanmadığın görselleri kaldırman gerekiyor.`;
-  }
+export type AssetQuotaIssue = "count" | "bytes";
+
+/** Yeni bir yükleme kotaya sığıyor mu? Sığmıyorsa reddin kimliği. */
+export function assetQuotaIssue(
+  usage: AssetUsage,
+  incomingBytes: number,
+): AssetQuotaIssue | null {
+  if (usage.count >= ASSET_MAX_COUNT) return "count";
+  if (usage.bytes + incomingBytes > ASSET_MAX_TOTAL_BYTES) return "bytes";
   return null;
 }

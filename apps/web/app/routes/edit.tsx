@@ -10,6 +10,7 @@ import {
   NavArrowLeft,
   NavArrowUp,
   OpenNewWindow,
+  Page,
   Palette,
   Plus,
   SendDiagonal,
@@ -33,6 +34,8 @@ import { ProfileBlockCard } from "~/components/profile-block";
 import { linkHostLabel } from "~/lib/link-preview";
 import { noIndexMeta } from "~/lib/seo";
 import {
+  DOCUMENT_CONTENT_TYPE,
+  DOCUMENT_MAX_BYTES,
   GALLERY_MAX_PHOTOS,
   GRID_COLUMNS,
   MAX_GALLERY_BLOCKS,
@@ -158,6 +161,15 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
         size: "2x1",
         data: { kind: "track", url: "", entityId: "", title: "", thumbnail: "" },
       };
+    // Belge kartı 2x1 doğar: `BLOCK_GRID_LIMITS.document` tabanı olan
+    // 4×2 birim (368×156) tam olarak bu etiketin karşılığı.
+    case "document":
+      return {
+        id,
+        type,
+        size: "2x1",
+        data: { title: "", fileName: "", bytes: 0, uploadedAt: 0 },
+      };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
     default: {
@@ -182,6 +194,8 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   gallery: false,
   youtube: false,
   spotify: false,
+  // Panelde kısayolu yok; araç çubuğundan ya da blok galerisinden eklenir.
+  document: false,
 };
 
 /**
@@ -428,6 +442,60 @@ function Inspector({
     const h = Math.max(current.h, target.h);
     if (w === current.w && h === current.h) return;
     setDims(w, h);
+  }
+
+  /**
+   * Belgeyi `/api/belge`'ye yükler. Dosya adı `X-Caka-File-Name` başlığında
+   * yüzde-kodlu gider (başlıklar yalnız ASCII taşır; "Özgeçmiş.pdf" ham hâlde
+   * geçersiz bir başlık olurdu). Sunucu adı ayrıca temizler.
+   *
+   * Kartın yazdığı üç bilgi (ad, boyut, tarih) YANITTAN alınır, dosyadan
+   * değil: boyutu ve zamanı ölçen sunucudur, `File.size` yalnız tarayıcının
+   * dediğidir. Sunucunun reddetme gerekçesi (tür, boyut, kota) panelde olduğu
+   * gibi gösterilir.
+   */
+  async function uploadDocument(file: File) {
+    // Tavanı AŞAN dosya hiç yola çıkmasın: sunucu zaten 413 dönüyor ama
+    // 200 MB'lık bir dosyayı yükleyip reddedilmesini beklemek, mobil veride
+    // bedava olmayan bir bekleyiş. Karar yine sunucunun (bu kontrol yalnız
+    // istemci kolaylığı; `readLimitedBody` akış sırasında da kesiyor).
+    if (file.size > DOCUMENT_MAX_BYTES) {
+      setUploadError(app.api.documentTooLarge);
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const response = await fetch("/api/belge", {
+        method: "POST",
+        headers: {
+          "Content-Type": DOCUMENT_CONTENT_TYPE,
+          "X-Caka-File-Name": encodeURIComponent(file.name),
+        },
+        body: file,
+      });
+      const result = (await response.json()) as {
+        id?: string;
+        fileName?: string;
+        bytes?: number;
+        uploadedAt?: number;
+        error?: string;
+      };
+      if (!response.ok || !result.id) {
+        setUploadError(result.error ?? app.editor.documentUploadFailed);
+        return;
+      }
+      update({
+        assetId: result.id,
+        fileName: result.fileName ?? file.name,
+        bytes: result.bytes ?? 0,
+        uploadedAt: result.uploadedAt ?? 0,
+      });
+    } catch {
+      setUploadError(app.editor.documentUploadFailed);
+    } finally {
+      setUploading(false);
+    }
   }
 
   /**
@@ -705,6 +773,56 @@ function Inspector({
           <>
             <label>{app.editor.fieldAnnouncement}<textarea value={block.data.text} onChange={(event) => update({ text: event.target.value })} /></label>
             <label>{app.editor.fieldLink}<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
+          </>
+        );
+      case "document":
+        return (
+          <>
+            <label>
+              {app.editor.documentField}
+              <span className="inspector-upload">
+                <Page width={18} height={18} />
+                {uploading
+                  ? app.editor.documentUploading
+                  : block.data.assetId
+                    ? app.editor.documentReplace
+                    : app.editor.documentDrop}
+                {/* `accept` yalnızca dosya seçicinin filtresidir; sunucu
+                    türü ayrıca sihirli baytla doğruluyor (KTD: istemcinin
+                    söylediği türe güvenilmez). */}
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    // Aynı dosya art arda seçilebilsin diye alan sıfırlanır.
+                    event.target.value = "";
+                    if (file) void uploadDocument(file);
+                  }}
+                />
+              </span>
+            </label>
+            {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
+            <p className="inspector-hint">
+              {app.editor.documentHint(Math.round(DOCUMENT_MAX_BYTES / (1024 * 1024)))}
+            </p>
+            {block.data.fileName ? (
+              <p className="inspector-hint">
+                {`${block.data.fileName} · ${widget.document.size(block.data.bytes)}`}
+              </p>
+            ) : null}
+            <label>
+              {app.editor.optionalTitle}
+              <input
+                value={block.data.title}
+                placeholder={app.editor.documentTitlePlaceholder}
+                onChange={(event) => update({ title: event.target.value })}
+              />
+            </label>
+            {/* Ziyaretçinin ne yaşayacağı editörde de yazmalı: kart tıklanınca
+                dosya iner, "Önizle" yeni sekmede açar. */}
+            <p className="inspector-hint">{app.editor.documentServeHint}</p>
           </>
         );
       case "gallery": {

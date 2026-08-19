@@ -211,8 +211,11 @@ export const gizlilikSections: LegalSection[] = [
           [
             ["Yüklenen dosyalar (asset ve R2 deposu)"],
             [
-              "Yüklediğin görseller ile bu dosyaların türü, boyutu ve " +
-                "yüklenme zamanı.",
+              "Yüklediğin görseller ve belgeler (bugün yalnız PDF; " +
+                "sayfana koyduğun bir CV bunlardan biri olabilir) ile bu " +
+                "dosyaların adı, türü, boyutu ve yüklenme zamanı. Belge " +
+                "bloğu koyduysan dosyanın adı ve içeriği sayfanı gören " +
+                "herkese açıktır; içine ne koyduğuna sen karar verirsin.",
             ],
             [
               "Doğrudan senin yüklemen. Ayrıca Google ile ilk kez giriş " +

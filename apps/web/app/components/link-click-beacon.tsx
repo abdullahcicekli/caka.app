@@ -47,6 +47,12 @@ export function LinkClickBeacon({ username }: { username: string }) {
       // aksi hâlde YouTube/Spotify blokları panelde hep sıfır görünürdü.
       const trigger = target.closest('a[href], [data-measure="play"]');
       if (!trigger) return;
+      // Aynı blokta İKİNCİL bir bağlantı olabilir ve onu saymak sayacı
+      // yalancı yapar: belge kartında "Önizle" de bir <a>'dır, sayılsaydı
+      // paneldeki "Belge" satırı indirme değil "indirme + önizleme" olurdu
+      // ama indirme diye okunurdu. Blok başına TEK bir birincil eylem
+      // sayılır; ikincil olan kendini işaretler.
+      if (trigger.getAttribute("data-measure") === "skip") return;
       const holder = trigger.closest("[data-block-id]");
       const blockId = holder?.getAttribute("data-block-id");
       if (!blockId) return;

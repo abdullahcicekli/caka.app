@@ -15,6 +15,10 @@ export default {
       pathname === "/api" ||
       pathname.startsWith("/api/") ||
       pathname.startsWith("/i/") ||
+      // Belge servisi (`/b/<assetId>`) — görsel yoluyla aynı sınıf. Burada
+      // sayılmazsa istek React Router'a düşer ve `:username` catch-all'una
+      // takılıp 404 olur.
+      pathname.startsWith("/b/") ||
       pathname === "/sitemap.xml" ||
       pathname.startsWith("/sitemaps/") ||
       pathname === "/robots.txt" ||

@@ -1,8 +1,11 @@
 import type { CSSProperties } from "react";
 
+import { Download, Eye } from "iconoir-react";
+
 import {
   classifyYouTubeUrl,
   faviconImageKey,
+  shortenFileName,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
@@ -380,6 +383,104 @@ export function ProfileBlockCard({
       return (
         <SpotifyCard data={block.data} thumbnail={signedImage} allowEmbeds={allowEmbeds} />
       );
+
+    /**
+     * Belge (CV) kartı. Kart bir NESNE gösterir: solda A4 oranlı bir sayfa
+     * kapağı (kıvrık köşe + PDF etiketi + satır izleri), sağda dosya adı,
+     * "PDF · 1,2 MB · 12 Ağustos 2026" satırı ve iki eylem.
+     *
+     * KAPAK PDF'İN İLK SAYFASI DEĞİL, TİPOGRAFİK BİR SAYFADIR. Gerçek ilk
+     * sayfayı basmak Worker'da PDF ayrıştırıp raster'lamayı gerektiriyor;
+     * depodaki tek raster katmanı `server/og-render.ts` ve o satori + resvg,
+     * yani SVG çizer — PDF motoru değil. PDFium/pdf.js sınıfı bir WASM motoru
+     * ne bundle boyutuna ne de yükleme isteğinin CPU bütçesine sığar. Uydurma
+     * bir küçük görsel basmaktansa kapak dürüstçe tipografik.
+     *
+     * Kartın tamamı tek bir <a> DEĞİL: iki farklı eylem var (indir / yeni
+     * sekmede önizle) ve iç içe bağlantı geçersiz HTML olurdu. İndirme ayrıca
+     * kazara dokunuşla tetiklenmemeli — bilinçli bir eylem.
+     */
+    case "document": {
+      const data = block.data;
+      const displayName = data.fileName || w.document.fallbackName;
+      const title = data.title || displayName;
+      // Meta satırı: olmayan parça hiç basılmaz. Taslak blokta boyut ve tarih
+      // sıfırdır ve "PDF · 0 B" yazmak, henüz dosya yokken dosya varmış gibi
+      // görünürdü — rozet tek başına kalır.
+      const meta = [
+        w.document.badge,
+        data.bytes > 0 ? w.document.size(data.bytes) : "",
+        w.document.date(data.uploadedAt),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return (
+        <article className={`profile-block profile-block-document${data.assetId ? "" : " is-empty"}`}>
+          <span className="doc-cover" aria-hidden>
+            <span className="doc-sheet">
+              <span className="doc-fold" />
+              {/* Satır izleri: sayfada yazı olduğunu söyleyen çubuklar. Yedi
+                  tane basılır, KAÇININ görüneceğine CSS karar verir — 124px'lik
+                  kapakta yedi satır lapa olur, 292px'lik kapakta dört satır
+                  sayfayı boş bırakır (bkz. app.css `.doc-rules`). */}
+              <span className="doc-rules">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className="doc-badge">{w.document.badge}</span>
+            </span>
+          </span>
+          <span className="doc-lines">
+            <strong>{title}</strong>
+            {/* Dosya adı başlığın kendisi değilse ayrıca yazılır: kullanıcı
+                "Özgeçmiş" başlığı verdiyse ziyaretçi neyin ineceğini de
+                görmeli. Ad ortadan kısaltılır, uzantı korunur. */}
+            {data.fileName && data.title ? (
+              <small className="doc-file">{shortenFileName(data.fileName, 32)}</small>
+            ) : null}
+            <small className="doc-meta">{meta}</small>
+          </span>
+          {data.assetId ? (
+            <span className="doc-actions">
+              <a
+                className="doc-action is-primary"
+                href={`/b/${data.assetId}`}
+                aria-label={w.document.downloadLabel(displayName)}
+              >
+                <Download width={16} height={16} aria-hidden />
+                {w.document.download}
+              </a>
+              {/* Önizleme YENİ SEKMEDE açılır ve sunucu orada satır içi servis
+                  eder (`?onizleme=1`). Karta gömülü bir PDF sayfanın üstünü
+                  kaplayıp sayfaya bürünebilirdi. */}
+              <a
+                className="doc-action"
+                href={`/b/${data.assetId}?onizleme=1`}
+                target="_blank"
+                rel="noreferrer"
+                // Ölçümden MUAF: paneldeki sayaç "kaç kişi indirdi" demek
+                // zorunda; önizleme de sayılsaydı sayı iki farklı olayın
+                // toplamı olur ama indirme diye okunurdu.
+                data-measure="skip"
+                aria-label={w.document.previewLabel(displayName)}
+              >
+                <Eye width={16} height={16} aria-hidden />
+                {w.document.preview}
+              </a>
+            </span>
+          ) : (
+            <span className="doc-actions">
+              <span className="doc-action is-empty">{w.document.empty}</span>
+            </span>
+          )}
+        </article>
+      );
+    }
 
     default: {
       // Tanınmayan tip: derleyici burada hata verir. Çalışma anında (eski

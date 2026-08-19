@@ -1,4 +1,7 @@
 import {
+  ASSET_MAX_COUNT,
+  ASSET_MAX_TOTAL_BYTES,
+  DOCUMENT_MAX_BYTES,
   type BlockIssueId,
   type BlockGridLimits,
   MAX_GALLERY_BLOCKS,
@@ -28,6 +31,7 @@ export const ptBR = {
     gallery: "Foto",
     youtube: "YouTube",
     spotify: "Spotify",
+    document: "Documento",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -41,6 +45,7 @@ export const ptBR = {
     youtube_video_url: "Escreva um link de vídeo do YouTube",
     youtube_channel_url: "Escreva um link de canal do YouTube",
     spotify_url: "Escreva um link do Spotify",
+    document_missing: "Envie um documento",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -49,6 +54,17 @@ export const ptBR = {
   galleryCountLimit: `Sua página pode ter no máximo ${MAX_GALLERY_BLOCKS} blocos com várias fotos`,
 
   editor: {
+    documentField: "Documento (PDF)",
+    documentDrop: "Arraste ou escolha um PDF",
+    documentReplace: "Trocar o documento",
+    documentUploading: "Enviando…",
+    documentUploadFailed: "Não foi possível enviar o documento",
+    documentHint: (maxMb: number) =>
+      `Por enquanto só PDF, até ${maxMb} MB. O cartão escreve sozinho o nome, o tamanho e a data.`,
+    documentTitlePlaceholder: "Se deixar vazio, o cartão mostra o nome do arquivo",
+    documentServeHint:
+      "O documento é servido pelo caka.app e baixa ao clicar; “Prévia” abre em uma nova aba.",
+
     layoutUnreadable: "Não foi possível ler o layout da página",
     backToDashboard: "Voltar ao painel",
     toolbarLabel: "Ferramentas do editor",
@@ -264,6 +280,15 @@ export const ptBR = {
   },
 
   api: {
+    documentOnlyPdf: "Por enquanto você só pode enviar PDF",
+    documentTooLarge: `O documento pode ter no máximo ${DOCUMENT_MAX_BYTES / (1024 * 1024)} MB`,
+    documentTypeUnverified: "Não foi possível verificar se o arquivo é um PDF",
+    documentSaveFailed: "Não foi possível salvar o documento",
+    quota: {
+      count: `Você pode enviar no máximo ${ASSET_MAX_COUNT} arquivos. Para adicionar outro, remova antes os que não usa mais.`,
+      bytes: `Seu espaço total é de ${Math.round(ASSET_MAX_TOTAL_BYTES / (1024 * 1024))} MB e este arquivo não cabe. Para adicionar outro, remova antes os que não usa mais.`,
+    },
+
     origin: "Origem da requisição inválida",
     layoutReadFailed: "Não foi possível ler os dados da página; atualize a página",
     layoutTooManyBlocks: (max: number) => `Sua página pode ter no máximo ${max} blocos`,

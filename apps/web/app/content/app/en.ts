@@ -1,4 +1,7 @@
 import {
+  ASSET_MAX_COUNT,
+  ASSET_MAX_TOTAL_BYTES,
+  DOCUMENT_MAX_BYTES,
   type BlockIssueId,
   type BlockGridLimits,
   MAX_GALLERY_BLOCKS,
@@ -28,6 +31,7 @@ export const en = {
     gallery: "Photo",
     youtube: "YouTube",
     spotify: "Spotify",
+    document: "Document",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -41,6 +45,7 @@ export const en = {
     youtube_video_url: "Enter a YouTube video link",
     youtube_channel_url: "Enter a YouTube channel link",
     spotify_url: "Enter a Spotify link",
+    document_missing: "Upload a document",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -49,6 +54,17 @@ export const en = {
   galleryCountLimit: `Your page can have at most ${MAX_GALLERY_BLOCKS} multi-photo blocks`,
 
   editor: {
+    documentField: "Document (PDF)",
+    documentDrop: "Drag or choose a PDF",
+    documentReplace: "Replace document",
+    documentUploading: "Uploading…",
+    documentUploadFailed: "The document couldn't be uploaded",
+    documentHint: (maxMb: number) =>
+      `PDF only for now, up to ${maxMb} MB. The card writes the file name, size and upload date itself.`,
+    documentTitlePlaceholder: "Leave it empty and the card shows the file name",
+    documentServeHint:
+      "The document is served from caka.app and downloads on click; “Preview” opens it in a new tab.",
+
     layoutUnreadable: "The page layout could not be read",
     backToDashboard: "Back to dashboard",
     toolbarLabel: "Editor tools",
@@ -262,6 +278,15 @@ export const en = {
   },
 
   api: {
+    documentOnlyPdf: "You can only upload PDF for now",
+    documentTooLarge: `The document can be at most ${DOCUMENT_MAX_BYTES / (1024 * 1024)} MB`,
+    documentTypeUnverified: "The file couldn't be verified as a PDF",
+    documentSaveFailed: "The document couldn't be saved",
+    quota: {
+      count: `You can upload at most ${ASSET_MAX_COUNT} files. To add a new one, remove the files you no longer use.`,
+      bytes: `Your total upload space is ${Math.round(ASSET_MAX_TOTAL_BYTES / (1024 * 1024))} MB and this file doesn't fit. To add a new one, remove the files you no longer use.`,
+    },
+
     origin: "Invalid request origin",
     layoutReadFailed: "The page data couldn't be read; refresh the page",
     layoutTooManyBlocks: (max: number) => `Your page can have at most ${max} blocks`,

@@ -50,6 +50,15 @@
      her profil temasında okunur hâle getirilir (bkz. `.sp-kind-pill`). */
   --color-spotify: #1db954;
 
+  /* Belge kartının "PDF" etiketi. NEDEN `--color-tehlike` DEĞİL: o token
+     yıkıcı eylemin (sil, çıkış) rengi; aynı kırmızıyı bir dosya türü
+     rozetinde kullanmak rozeti "sil" düğmesi gibi okuturdu. Bu ton sıcak
+     palete oturan yanık turuncuya çekildi ve yalnız biçim adını söyler.
+     Değer KONTRASTLA seçildi: rozet metni `--color-zemin` ve 10-11px bold,
+     yani büyük metin sayılmıyor — AA eşiği 4,5. Ölçüm 5,03. (İlk denenen
+     #d64530 yalnız 4,2 veriyordu.) */
+  --color-belge: #b8431f;
+
   /* Türetilmiş: lime blok üzerindeki kontrast rengi (landing mockup'ından örneklendi).
      Favicon asset'lerinin zemini #3554ec'dir; token mavisi kılavuzu izler. */
   --color-kirec-koyu: #233917;
@@ -2223,6 +2232,245 @@ button.photo-cell:focus-visible {
      30px'i kırpmak, yarısı beyaz bir karttan iyi: kesilen şey listenin
      alt satırı, hiçbir kontrol değil. */
   .profile-block-spotify.is-playing .media-frame { min-height: 352px; }
+}
+
+/* ---------------------------------------------------------------- *
+ * Belge (CV) kartı.
+ *
+ * Kart bir NESNE gösterir: solda A4 oranlı bir sayfa (kıvrık köşe, satır
+ * izleri, "PDF" damgası), sağda ad + "PDF · 1,2 MB · 12 Ağustos 2026"
+ * satırı, altında indir/önizle. Kapak PDF'in gerçek ilk sayfası DEĞİLDİR —
+ * gerekçesi `components/profile-block.tsx` içinde.
+ *
+ * Ölçüler (tip tabanı 4×2 birim = masaüstü 368×156, mobil 350×138):
+ *   368×156 → kapak 88×124, metin sütunu 250; ad 2 satır + meta + eylemler
+ *   463×240 → kapak 147×208, ad 3 satıra çıkar, dosya adı ayrı satırda
+ *   558×324 → eylemler sağa geçer, kapak 200'de sabitlenir (daha büyüğü
+ *             tipografik kapağı boş bir levhaya çevirirdi)
+ * ---------------------------------------------------------------- */
+.profile-block-document {
+  display: grid;
+  align-items: center;
+  padding: 16px;
+  /* Satır 1 metin, satır 2 eylemler; kapak ikisini de kaplar. */
+  gap: 6px 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.doc-cover {
+  display: block;
+  height: 100%;
+  /* KAPAK METİN SÜTUNUNU YİYEMEZ. Yükseklik serbest bırakılsaydı dar+yüksek
+     kartta (368×324, tip sınırları içinde) kapak 204px'e çıkıp metne 112px
+     bırakıyordu; meta satırı ("PDF · 1,2 MB · 12 Ağustos 2026", 12px'te
+     ~174px) orada "PDF · 1,2 M…" diye kesiliyordu. Tavan kartın KENDİ
+     genişliğine bağlı: kapak en fazla %30 kadar geniş olur, yükseklik de
+     A4 oranıyla ondan türer (bu yüzden max-width değil max-height —
+     `aspect-ratio` yalnız otomatik ekseni sürer, genişliği kırpmak sayfayı
+     inceltirdi). Geniş kartlarda kural etkisiz: 748px'te tavan 317px,
+     kapak zaten 292'de duruyor. */
+  max-height: calc(30cqw * 1.414);
+  flex: none;
+  align-self: center;
+  aspect-ratio: 1 / 1.414;
+  grid-area: 1 / 1 / 3 / 2;
+}
+.doc-sheet {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 12%, transparent);
+  border-radius: var(--radius-lg);
+  /* Sayfa kart zemininden bir tık ayrışır; her altı temada da çalışsın diye
+     renk kartın kendi mürekkebiyle karıştırılır, ham beyaz kullanılmaz. */
+  background: color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 6%, var(--profile-card));
+}
+/* Kıvrık köşe: köşegenin üstü kart zeminiyle boyanır (kesik görünür), tam
+   köşegende 1px'lik kat çizgisi durur. Tek gradient — ek eleman yok. */
+.doc-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+  aspect-ratio: 1;
+  background: linear-gradient(
+    to bottom left,
+    var(--profile-card) 0 calc(50% - 0.5px),
+    color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 22%, transparent) calc(50% - 0.5px) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+  border-top-right-radius: var(--radius-lg);
+}
+/* Satır izleri: "burada yazı var" diyen çubuklar. Yükseklikleri sabit,
+   aralıkları sayfa boyuyla ölçekleniyor (inset yüzde). DOM'da yedi çubuk var,
+   kaçının göründüğüne bant karar verir: en kısa kapakta (124px) dört çubuk
+   arası 15px, yedi çubuk arası 5px'e düşüp lapa oluyor; en büyük kapakta
+   (292px) tersi — dört çubuk 44px arayla dağılıp sayfayı boş bırakıyor. */
+.doc-rules {
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  inset: 24% 15% 30% 15%;
+}
+.doc-rules i {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 20%, transparent);
+}
+.doc-rules i:nth-child(n + 5) { display: none; }
+/* Paragraf hissi: eşit uzunlukta çubuklar cetvel gibi duruyordu. */
+.doc-rules i:nth-child(2) { width: 84%; }
+.doc-rules i:nth-child(3) { width: 94%; }
+.doc-rules i:nth-child(4) { width: 52%; }
+.doc-rules i:nth-child(6) { width: 88%; }
+.doc-rules i:nth-child(7) { width: 64%; }
+.doc-badge {
+  position: absolute;
+  bottom: 7%;
+  left: 50%;
+  border-radius: 999px;
+  background: var(--color-belge);
+  padding: 2px 8px;
+  color: var(--color-zemin);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  transform: translateX(-50%);
+}
+.doc-lines {
+  display: flex;
+  min-width: 0;
+  align-self: end;
+  flex-direction: column;
+  gap: 3px;
+  grid-area: 1 / 2 / 2 / 3;
+}
+.profile-block-document strong {
+  /* Dosya adları boşluksuz ve uzun olabiliyor; `anywhere` olmadan tek kelime
+     kartı taşırıyor. */
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 15px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.profile-block-document small {
+  overflow: hidden;
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Dosya adı ayrı satırı yalnız yer olan bantta hak ediyor; dar kartta
+   başlıkla üst üste iki kesik satır olurdu. */
+.doc-file { display: none; }
+.doc-actions {
+  display: flex;
+  align-self: start;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  grid-area: 2 / 2 / 3 / 3;
+}
+.doc-action {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 16%, transparent);
+  border-radius: 999px;
+  padding: 6px 13px;
+  gap: 6px;
+  color: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.doc-action.is-primary {
+  border-color: transparent;
+  background: var(--profile-gradient, var(--profile-accent));
+  color: var(--profile-accent-text);
+}
+/* Taslak blok: dosya yok, eylem de yok — kutu "eksik" değil "bekliyor".
+   Kesikli çerçeve bunu kapağın kendisinde de söyler. */
+.doc-action.is-empty { opacity: 0.62; }
+.profile-block-document.is-empty .doc-sheet {
+  border-style: dashed;
+  background: transparent;
+}
+.profile-block-document.is-empty .doc-fold { display: none; }
+
+/* MOBİL TABAN (350×138) ve masaüstü tabanı arasındaki tek fark nefes payı. */
+@container (max-height: 150px) {
+  .profile-block-document { padding: 12px; gap: 4px 12px; }
+  .profile-block-document strong { -webkit-line-clamp: 1; }
+  .doc-action { padding: 5px 11px; font-size: 12px; }
+}
+
+/* YÜKSEK (2+ satır): kapak kartın tüm boyunu alır, sayfa dolar, ad üç satıra
+   çıkar. Kapağın büyümesine izin verilmesinin sebebi: 324px'lik kartta kapak
+   200'de durduğunda altında 90px'lik ölü bir bant kalıyordu (ölçüldü). */
+@container (min-height: 200px) {
+  .profile-block-document { padding: 18px; gap: 8px 16px; }
+  .profile-block-document strong { -webkit-line-clamp: 3; font-size: 16px; }
+  .doc-rules { inset: 20% 15% 26% 15%; }
+  .doc-rules i:nth-child(n + 5) { display: block; }
+  .doc-badge { font-size: 11px; padding: 3px 10px; }
+}
+
+/* DAR + YÜKSEK (368×240 … 368×324, mobilde 350×288): yan yana düzen burada
+   çalışmıyor. Kapak metin sütununu yemesin diye daraltılınca kart tuhaf bir
+   dengeye düşüyor — solda küçük bir sayfa, sağda alta yığılmış metin, üstte
+   ölü alan. Düzen bu bantta DİKEY kurulur: kapak üstte, kalan yüksekliğin
+   tamamını alır (368×324'te 196px, yani genişliği 139px), metin ve eylemler
+   altında ortalanır. Kartın hem boyu hem kapağı böylece işe yarıyor. */
+@container (min-height: 200px) and (max-width: 439px) {
+  .profile-block-document {
+    justify-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+  .doc-cover {
+    /* Yükseklik artık satırdan geliyor; genişlik tavanına gerek yok. */
+    max-width: 100%;
+    max-height: none;
+    grid-area: 1 / 1 / 2 / 2;
+  }
+  .doc-lines {
+    align-self: start;
+    align-items: center;
+    text-align: center;
+    grid-area: 2 / 1 / 3 / 2;
+  }
+  .doc-actions {
+    justify-content: center;
+    grid-area: 3 / 1 / 4 / 2;
+  }
+}
+
+/* GENİŞ: dosya adı başlığın altında ayrı satır olarak görünür. */
+@container (min-width: 440px) {
+  .doc-file { display: block; }
+}
+
+/* TAM GENİŞLİK (8 birim = 748px): eylemler sağa geçer ve kart bir "dosya
+   satırı" gibi okunur. Eşik 680'de, 520'de DEĞİL: yüksek kartta kapak 206px
+   ediyor ve 558px'lik tile'da üç sütun denendiğinde metne 84px kalıp meta
+   satırı "12 Ağ…" diye kesiliyordu (ölçüldü). 680'in altında eylemler
+   metnin altında kalır. */
+@container (min-width: 680px) {
+  .profile-block-document {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .doc-cover { grid-area: 1 / 1 / 2 / 2; }
+  .doc-lines { align-self: center; grid-area: 1 / 2 / 2 / 3; }
+  .doc-actions { align-self: center; flex-wrap: nowrap; grid-area: 1 / 3 / 2 / 4; }
 }
 
 .profile-block-status {

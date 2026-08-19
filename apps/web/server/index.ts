@@ -1,8 +1,13 @@
 import { Hono } from "hono";
 
-import { validateUsername } from "@caka/shared";
+import {
+  DOCUMENT_CONTENT_TYPE,
+  contentDispositionHeader,
+  validateUsername,
+} from "@caka/shared";
 import { analyticsApi } from "./analytics-api";
 import { getAuth } from "./auth";
+import { documentApi } from "./document-api";
 import { imageProxyApi } from "./image-proxy";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
@@ -27,6 +32,9 @@ honoApp.on(["GET", "POST"], "/api/auth/*", (c) =>
 );
 
 honoApp.route("/api/onboarding", onboardingApi);
+// Belge (CV) yükleme ucu: POST /api/belge — yalnız PDF, 10 MB tavanı ve
+// sihirli bayt doğrulaması (bkz. server/document-api.ts).
+honoApp.route("/api/belge", documentApi);
 // layoutApi: PUT /api/profile/layout (taslak kaydı) + POST /api/profile/publish
 honoApp.route("/api/profile", layoutApi);
 // Birinci taraf ölçüm (R48): POST /api/olcum/tiklama — çerezsiz, gövdesiz 204.
@@ -52,11 +60,20 @@ honoApp.route("/og", ogImageApi);
 /** R2 görsel servisi (KTD10): anahtar = asset id, path-traversal yüzeyi yok. */
 const ASSET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+/** `/i/` YALNIZ görsel servis eder. Tür kontrolü, aynı kovadaki belgelerin bu
+ *  yoldan (dosya adı taşımayan, satır içi bir yanıtla) çıkmasını kapatır: her
+ *  tür kendi başlık setini hak ediyor ve iki yolun karışması, birinde yapılan
+ *  sıkılaştırmayı diğerinde delik bırakırdı. */
+const IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 honoApp.get("/i/:id", async (c) => {
   const id = c.req.param("id");
   if (!ASSET_ID_PATTERN.test(id)) return c.notFound();
   const object = await c.env.BUCKET.get(id);
   if (!object) return c.notFound();
+  if (!IMAGE_CONTENT_TYPES.has(object.httpMetadata?.contentType ?? "")) {
+    return c.notFound();
+  }
   return new Response(object.body, {
     headers: {
       "Content-Type": object.httpMetadata?.contentType ?? "application/octet-stream",
@@ -64,6 +81,52 @@ honoApp.get("/i/:id", async (c) => {
       "X-Content-Type-Options": "nosniff",
       "Content-Disposition": "inline",
       "Content-Security-Policy": "default-src 'none'; sandbox",
+    },
+  });
+});
+
+/**
+ * Belge servisi — /b/:id (Değişmez #1: `b` ve `belge` rezerve adlarda).
+ *
+ * VARSAYILAN İNDİRMEDİR, satır içi görüntüleme değil. Gerekçe: dosya
+ * kullanıcının yüklediği rastgele bir PDF'tir ve tarayıcının PDF
+ * görüntüleyicisi (PDFium / pdf.js) küçük bir yüzey değildir. Satır içi
+ * açılan belge, profil sayfalarıyla AYNI kökende bir belge olarak ayrışırdı;
+ * `attachment` ile tarayıcı dosyayı bizim kökenimizde hiç ayrıştırmaz,
+ * açma kararını ziyaretçi kendi cihazında verir.
+ *
+ * `?onizleme=1` satır içi sunar (kartın "Önizle" eylemi, YENİ SEKMEDE — kartın
+ * içine gömülü bir PDF sayfanın üstünü kaplayıp sayfaya bürünebilirdi). O
+ * dalda üç kilit birlikte çalışır:
+ *  • `Content-Security-Policy: default-src 'none'; sandbox` — belge donuk
+ *    (opaque) bir kökende açılır, caka.app kökeninde script/istek yok;
+ *  • `X-Content-Type-Options: nosniff` — tarayıcı türü kendi tahmin edemez;
+ *  • yüklemedeki `%PDF-` kontrolü — PDF olmayan gövde buraya zaten giremez.
+ */
+honoApp.get("/b/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!ASSET_ID_PATTERN.test(id)) return c.notFound();
+  const object = await c.env.BUCKET.get(id);
+  if (!object) return c.notFound();
+  if (object.httpMetadata?.contentType !== DOCUMENT_CONTENT_TYPE) return c.notFound();
+  const inline = c.req.query("onizleme") === "1";
+  return new Response(object.body, {
+    headers: {
+      "Content-Type": DOCUMENT_CONTENT_TYPE,
+      // Ad R2 metadata'sından okunur: yüklemede SUNUCUNUN temizlediği addır,
+      // düzeni yazan istemciden gelmez.
+      "Content-Disposition": contentDispositionHeader(
+        inline ? "inline" : "attachment",
+        object.customMetadata?.fileName ?? "",
+      ),
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      // Belge, profil sayfasından erişilebilir ama KENDİ BAŞINA bir arama
+      // sonucu olmamalı: tipik içerik bir CV, yani telefon/adres taşıyan bir
+      // dosya. Kullanıcı onu sayfasına koydu; aramada ayrı bir sonuç olarak
+      // çıkmasını istediğini varsayamayız.
+      "X-Robots-Tag": "noindex, noarchive",
     },
   });
 });

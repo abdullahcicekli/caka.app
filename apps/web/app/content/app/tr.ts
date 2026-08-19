@@ -1,4 +1,7 @@
 import {
+  ASSET_MAX_COUNT,
+  ASSET_MAX_TOTAL_BYTES,
+  DOCUMENT_MAX_BYTES,
   type BlockIssueId,
   type BlockGridLimits,
   MAX_GALLERY_BLOCKS,
@@ -30,6 +33,7 @@ export const tr = {
     gallery: "Fotoğraf",
     youtube: "YouTube",
     spotify: "Spotify",
+    document: "Belge",
   } satisfies Record<ProfileBlock["type"], string>,
 
   /** Yayını engelleyen blok sorunlarının kullanıcıya görünen karşılığı. */
@@ -44,6 +48,7 @@ export const tr = {
     youtube_video_url: "YouTube video bağlantısı gir",
     youtube_channel_url: "YouTube kanal bağlantısı gir",
     spotify_url: "Spotify bağlantısı gir",
+    document_missing: "Belge yükle",
   } satisfies Record<BlockIssueId, string>,
 
   /** Izgara sınırı aşıldığında gösterilen mesaj. */
@@ -53,6 +58,17 @@ export const tr = {
   galleryCountLimit: `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} çok fotoğraflı blok olabilir`,
 
   editor: {
+    documentField: "Belge (PDF)",
+    documentDrop: "PDF sürükle veya seç",
+    documentReplace: "Belgeyi değiştir",
+    documentUploading: "Yükleniyor…",
+    documentUploadFailed: "Belge yüklenemedi",
+    documentHint: (maxMb: number) =>
+      `Şimdilik yalnız PDF, en fazla ${maxMb} MB. Dosya adını, boyutunu ve yükleme tarihini kart kendisi yazar.`,
+    documentTitlePlaceholder: "Boş bırakırsan kartta dosya adı görünür",
+    documentServeHint:
+      "Belge caka.app üzerinden servis edilir ve tıklayınca indirilir; “Önizle” yeni sekmede açar.",
+
     layoutUnreadable: "Sayfa düzeni okunamadı",
     backToDashboard: "Panele dön",
     toolbarLabel: "Editör araçları",
@@ -273,6 +289,15 @@ export const tr = {
 
   /** API uçlarının döndürdüğü, editörde kullanıcıya gösterilen hatalar. */
   api: {
+    documentOnlyPdf: "Şimdilik yalnızca PDF yükleyebilirsin",
+    documentTooLarge: `Belge en fazla ${DOCUMENT_MAX_BYTES / (1024 * 1024)} MB olabilir`,
+    documentTypeUnverified: "Dosya PDF olarak doğrulanamadı",
+    documentSaveFailed: "Belge kaydedilemedi",
+    quota: {
+      count: `En fazla ${ASSET_MAX_COUNT} dosya yükleyebilirsin. Yeni dosya için önce kullanmadıklarını kaldırman gerekiyor.`,
+      bytes: `Toplam yükleme alanın ${Math.round(ASSET_MAX_TOTAL_BYTES / (1024 * 1024))} MB; bu dosya sığmıyor. Yeni dosya için önce kullanmadıklarını kaldırman gerekiyor.`,
+    },
+
     origin: "Geçersiz istek kaynağı",
     layoutReadFailed: "Sayfa verisi okunamadı; sayfayı yenile",
     layoutTooManyBlocks: (max: number) => `Sayfanda en fazla ${max} blok olabilir`,
