@@ -363,6 +363,45 @@ dayanan bir edisyona geçmek ya da izin almaktır.
 - **Kodda:** kaynak, lisans ve gerekçe `apps/web/server/quran.ts` başlığında.
 - **Burada:** yukarıdaki tablo.
 
+### Arapça hat — Amiri Quran (kendi sunucumuzdan)
+
+| Yazı tipi | Sürüm | Lisans | Nereden servis ediliyor |
+|---|---|---|---|
+| **Amiri Quran** | 1.003 (aliftype/amiri, 2025-06-13) | **SIL OFL 1.1** — metin `apps/web/app/fonts/amiri-quran-OFL.txt` | Kendi kaynağımızdan (`app/fonts/amiri-quran.woff2`, 62.264 bayt). **Üçüncü taraf yok** |
+
+**Neden bir web fontu gerekti.** Edisyonun tamamı tarandı (6236 ayet, 69 farklı
+kod noktası). Üçü Arabic Extended-A bloğunda — `U+08F0` açık fethateyn (2901
+geçiş), `U+08F1` açık ötreyn (1807), `U+08F2` açık esreyn (1935), toplam 6.643
+geçiş. Sistem nesih yüzlerinin çoğu bu bloğu taşımıyor ve kartta **boş kare
+(tofu)** çıkıyordu. Kutsal bir metnin eksik render edilmesi kabul edilebilir bir
+bedel değil; önceki "web fontu yok" kararı bu ölçümle geçersizleşti.
+
+**Neden dış CDN değil.** Google Fonts / jsDelivr, ziyaretçinin IP + User
+Agent'ını bir üçüncü tarafa daha taşırdı (R58) ve bu tabloya Fontshare'in
+yanına ikinci bir satır açardı. Dosya depoda; ziyaretçi yalnız `caka.app`'e
+bağlanır. Cihaza yazma yok → `cookie-inventory.md`'ye girdi eklenmedi.
+
+**Neden KFGQPC değil.** Kral Fahd Kur'an Basım Kompleksi'nin *KFGQPC Uthmanic
+Script HAFS* yüzü teknik olarak en kanonik hat, ama yeniden dağıtım şartları
+OFL kadar açık değil (yayımlanmış bir açık lisans metni yok; dağıtım
+kompleksin izin rejimine bağlı). Alınmadı. Amiri Quran, **doğrudan Kur'an
+dizgisi için tasarlanmış** ve OFL ile dağıtılan yüzdür; Scheherazade New (SIL,
+OFL) de 69 kod noktasını kapsıyor ama Kur'an'a özel bir yüz değil, nesih
+gövdesi daha jenerik.
+
+**OFL uyumu.** Dosya `.ttf`'ten `.woff2`'ye yalnızca **kap değiştirilerek**
+üretildi (`fontTools.ttLib`, `flavor="woff2"`); tablolar ve `name` kaydı aynı.
+Ayrılmış Font Adı ("Amiri") bu yüzden korunuyor, OFL m.3'ün yasakladığı
+"değiştirilmiş sürümü aynı adla dağıtmak" durumu doğmuyor. Lisans metni fontla
+aynı klasörde duruyor.
+
+**Subset alınmadı.** `pyftsubset --unicodes=<69> --layout-features='*'` dosyayı
+62,3 KB → 39,3 KB'a indiriyor ama şekillendirmeyi bozuyor: 6236 ayet HarfBuzz
+ile şekillendirilip karşılaştırıldığında 5285 ayet **farklı sayıda glif**
+üretti (ligatür kaybı). Ölçüm `app.css`'teki `@font-face` başlığında ve
+`apps/web/tests/quran-font.test.ts`'te kayıtlı; test glif sayısını da sınıyor,
+yani ileride biri subset uygularsa CI düşer.
+
 ### Ziyaretçi tarafı
 
 Ayet metni bloğun verisinde saklanır. **Profil sayfası hiçbir dış kaynağa
