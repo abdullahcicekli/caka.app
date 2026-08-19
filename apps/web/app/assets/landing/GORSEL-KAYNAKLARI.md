@@ -85,7 +85,8 @@ Hepsi laboratuvardan üretildi; elle çizilmiş varlık yok. Yeniden üretmek i�
 | --- | --- |
 | `emre / kaan / serkan / ozan / zeynep / busra.webp` | Landing karakter şeridi |
 | `telefon-busra.webp` | `/login` sağ paneli ve `/onboarding` |
-| `../scene-kaan.webp`, `../scene-ozan.webp` | Hero şeridi; `kaan.webp` ve `ozan.webp` karelerinden **kişisiz** kırpma (bkz. `README.md` §4) |
+| `../thumb-podcast.webp` | Hero şeridi, Elif'in "kamera arkası" video kapağı. fal `flux-pro/v1.1-ultra`, 16:9, kişisiz podcast stüdyosu. 1000×562 |
+| `../og-konser.webp` | Hero şeridi, Kerem'in konser bağlantısı og'u. fal `flux-pro/v1.1-ultra`, 21:9, kişisiz sahne. 900×378 |
 
 Karakter şeridi HAREKETSİZDİR: bir kartta denenen animasyonlu webp döngüsü
 (`emre-dongu.webp`) kaldırıldı, dosyası silindi.
@@ -96,3 +97,9 @@ yetiyor. Giriş sayfasında eskiden elle yazılmış sahte bir profil kartı ve
 `creator-selin.webp` (123 KB) duruyordu; yerine geçen bu mockup 34 KB ve
 telefonun içi ürünün kendi `ProfileCanvas`'ı. (`creator-*.webp` karelerinin
 tamamı bu arada depodan silindi — bkz. `README.md` §1.)
+
+Bu iki kart görseli bir dönem karakter çekimlerinden (`scene-kaan`,
+`scene-ozan`) kırpılıyordu. Kırpmalar kişiyi dışarıda bırakmak için
+fotoğrafın BOŞ yarısını alıyordu: kartta ne olduğu anlaşılmayan düz bir
+stüdyo fonu duruyordu. Kural düzeltildi — kart görseli kişi taşımasın AMA
+kartın konusunu anlatsın. İki dosya silindi.

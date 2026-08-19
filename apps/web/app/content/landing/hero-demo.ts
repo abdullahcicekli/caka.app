@@ -28,9 +28,10 @@
 //     nesne (stüdyo, atölye rafı, mikrofon, çömlekçi takımları, albüm
 //     kapağı). Kimlik iddiası taşımadıkları için hangi yüzün çıktığı sorun
 //     değil ve her personaya kendi görsel seti düşüyor.
-//     İki sahne artık KARAKTER ŞERİDİNİN stüdyo karelerinden kırpılıyor
-//     (`scene-kaan`, `scene-ozan`): kişisiz kadrajlar oldukları için yukarıdaki
-//     kural bozulmuyor ve landing'in görselleri tek bir çekime dayanıyor.
+//     Görsel kartın KONUSUNU göstermeli. Bir dönem iki slot karakter
+//     çekimlerinden kırpılmıştı; kişiyi dışarıda bırakmak için fotoğrafın
+//     boş yarısı alınıyordu ve kartta düz bir fon duruyordu. Kural şu:
+//     kişi taşımasın AMA bir şey anlatsın.
 // Kırpma geometrileri ve üretim prompt'ları `~/assets/landing/README.md`.
 //
 // ÇEVRİLMEYEN KISIM BURADA: adlar, kullanıcı adları, adresler, kimlikler,
@@ -61,9 +62,9 @@ import coverSadeHayat from "~/assets/landing/cover-sade-hayat.webp";
 import detailElif from "~/assets/landing/detail-elif.webp";
 import detailNaz from "~/assets/landing/detail-naz.webp";
 import mapTown from "~/assets/landing/map-town.webp";
-import sceneKaan from "~/assets/landing/scene-kaan.webp";
+import thumbPodcast from "~/assets/landing/thumb-podcast.webp";
 import sceneNaz from "~/assets/landing/scene-naz.webp";
-import sceneOzan from "~/assets/landing/scene-ozan.webp";
+import ogKonser from "~/assets/landing/og-konser.webp";
 import sceneSelin from "~/assets/landing/scene-selin.webp";
 import sceneSelinTools from "~/assets/landing/scene-selin-tools.webp";
 import { githubLoginKey, type GithubCalendar } from "~/lib/github-calendar";
@@ -170,16 +171,17 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   // Manzara görseller (1,91:1 — `.link-og`, `.social-og`, video kapağı).
   // Her biri BİR kez geçiyor: aynı görselin iki kartta çıkması şeridi
   // "dört fotoğrafla on beş yer doldurulmuş" gibi gösteriyordu.
-  // İki kadraj KARAKTER ŞERİDİNİN kişi fotoğraflarından geliyor
-  // (`assets/landing/lab/kisi-*.webp`, 2000×1480 — render'dan değil, çünkü
-  // oradan kırpınca büyütme gerekiyordu): Kaan'ın
-  // set ekipmanı Elif'in "kamera arkası" videosunun kapağına, Ozan'ın plak +
-  // amfi köşesi Kerem'in konser bağlantısına düşüyor. İkisi de KİŞİSİZ kırpma
-  // — kart görselinin kimlik iddiası taşımaması kuralı korunuyor (yukarı bkz.).
-  "demo-elif-youtube": sceneKaan,
+  // KART GÖRSELİ KARTIN İÇERİĞİNİ ANLATIR, stüdyo fonunu değil. Bu iki slot
+  // bir süre persona çekimlerinden kırpılmıştı; kırpmalar kişiyi dışarıda
+  // bırakmak için fotoğrafın boş yarısını alıyordu ve kartta koca bir düz
+  // fon duruyordu — ne olduğu anlaşılmayan bir görüntü. Yerlerine kartın
+  // kendi konusu üretildi: Elif'in "kamera arkası" videosuna bir podcast
+  // stüdyosu, Kerem'in konser bağlantısına bir sahne. İkisinde de kişi yok,
+  // yani kart görselinin kimlik iddiası taşımaması kuralı korunuyor.
+  "demo-elif-youtube": thumbPodcast,
   "demo-naz-nsosyal": sceneNaz,
   "demo-selin-link": sceneSelin,
-  "demo-kerem-link": sceneOzan,
+  "demo-kerem-link": ogKonser,
   // Kare kapaklar (`.sp-cover`).
   "demo-kerem-spotify": coverGeceYolu,
   "demo-elif-spotify": coverSadeHayat,
