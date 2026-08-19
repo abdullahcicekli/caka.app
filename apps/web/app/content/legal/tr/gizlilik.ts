@@ -617,6 +617,26 @@ export const gizlilikSections: LegalSection[] = [
             ],
           ],
           [
+            ["Mapbox, Inc."],
+            [
+              "Konum kartı bulunan profillerde kartın harita görüntüsünün " +
+                "sunulması.",
+            ],
+            [
+              "Böyle bir sayfayı açtığında tarayıcın harita görüntüsünü " +
+                "doğrudan Mapbox'tan çeker; bu istekte ",
+              { kind: "strong", text: "IP adresin ve User Agent'ın" },
+              " Mapbox'a ulaşır. Adres ayrıca profil sahibinin seçtiği yerin " +
+                "yaklaşık koordinatını taşır; hangi profile baktığın " +
+                "gönderilmez. Cihazına hiçbir şey yazılmaz. Konum kartı " +
+                "olmayan sayfalarda bu istek hiç yapılmaz.",
+            ],
+            [
+              "Evet — bugün Kanun'un aradığı güvencelerden birine " +
+                "bağlanamıyor; bkz. aşağıdaki “Yurt dışına aktarım”.",
+            ],
+          ],
+          [
             ["GitHub, Inc."],
             ["Profilde gösterilen katkı grafiği verisinin alınması."],
             [

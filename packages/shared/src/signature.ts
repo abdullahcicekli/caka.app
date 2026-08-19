@@ -1,10 +1,11 @@
 // İmzalı birinci taraf uçların ortak HMAC ilkelleri.
 //
-// NEDEN AYRI DOSYA: aynı desen artık İKİ uçta var — uzak görsel proxy'si
-// (`/api/gorsel`) ve statik harita karesi (`/api/harita`). İkisi de dışarıya
-// açık, ikisi de "yalnız Caka'nın ürettiği adresler geçer" kuralına dayanıyor.
-// Kopyalanmış bir imza fonksiyonu, birinde düzeltilen bir kusurun ötekinde
-// kalması demekti.
+// NEDEN AYRI DOSYA: desen uzak görsel proxy'sinde (`/api/gorsel`) yaşıyor ve
+// bir zamanlar statik harita karesinde de vardı — harita ucu, sağlayıcının
+// proxy'lemeyi yasaklaması üzerine kaldırıldı (`server/map-frame.ts`).
+// Dosya yine ayrı duruyor: uç dışarıya açık ve "yalnız Caka'nın ürettiği
+// adresler geçer" kuralına dayanıyor; ilkelin kendi yerinde olması, imza
+// mantığının route dosyasına sızmasını engelliyor.
 
 // Anahtar her imzada yeniden import edilir: WebCrypto'da bu mikrosaniyelik
 // bir iş ve modül düzeyinde sır tutan bir önbellekten daha temiz.

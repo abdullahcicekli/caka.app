@@ -6,7 +6,15 @@ iddia genellikle yanlış yazıldığı için değil, **doğru yazılıp sonra s
 bayatladığı için** güvenilmez hâle gelir.
 
 **İfadelerin tanımlandığı yer:** `apps/web/app/content/landing.ts` → `trust`
-(Değişmez #5: metin bileşene gömülmez). **Tarih:** 2026-08-17.
+(Değişmez #5: metin bileşene gömülmez). **Tarih:** 2026-08-19.
+
+> **2026-08-19 kontrolü — footer'da "sıfır üçüncü taraf isteği" vaadi YOK.**
+> Konum kartı Mapbox'a doğrudan bağlanmaya başlayınca footer metni yeniden
+> okundu (`content/landing/tr.ts` → `trust`): yalnız iki ifade var — "Reklam ve
+> analitik çerezi kullanmıyoruz" ve "Kaynak kodu açık". İkisi de üçüncü taraf
+> **isteği** hakkında bir söz vermiyor, dolayısıyla değişiklik footer'ı
+> yanlışa düşürmedi. Bu dosyanın kendisi ise "hiç istek atmıyor" cümlesini
+> taşıyordu ve **düzeltildi** (İfade 1 → sınırlar).
 
 ---
 
@@ -85,12 +93,22 @@ Fark önemli, çünkü:
   **çevirmek yanlış olur** — oynatıcı yüklendikten sonra sayfada üçüncü
   taraf çerezi bulunabilir. Kapıyı ayakta tutan şey, bunun ancak
   ziyaretçinin bilinçli tıklamasıyla ve önceden söylenerek olması.
-- **Konum kartı ifadeyi değiştirmiyor** (2026-08-19'da eklendi, kontrol
-  edildi). Harita görüntüsü birinci taraf `/api/harita` yolundan geliyor;
-  ziyaretçinin tarayıcısı harita sağlayıcısına **hiç** istek atmıyor, yanıt
-  bizde sıfırdan kuruluyor ve cihaza hiçbir şey yazılmıyor. Yer arama yalnız
-  editörde, oturumlu kullanıcı için çalışıyor. `cookies.ts` envanterine yeni
-  girdi eklenmedi. Ayrıntı: `vendor-register.md` §B'nin üstündeki konum notu.
+- **Konum kartı ifadeyi bozmuyor ama eski gerekçesi ÇÜRÜDÜ** (yazılış
+  2026-08-19, aynı gün düzeltildi). Bu madde önce şunu diyordu: *"Harita
+  görüntüsü birinci taraf `/api/harita` yolundan geliyor; ziyaretçinin
+  tarayıcısı harita sağlayıcısına hiç istek atmıyor."* **Bu cümle artık
+  yanlıştır.** Mapbox Product Terms §2.8.1 ve §1.9 kareyi sunucuda önbelleğe
+  alıp proxy'lemeyi yasakladığı için o uç kaldırıldı; kart bugün iki `<img>`
+  ile doğrudan `api.mapbox.com`'dan yükleniyor ve konum kartı taşıyan bir
+  profil açıldığında ziyaretçinin **IP'si ve User Agent'ı Mapbox'a ulaşıyor**.
+  İfade yine de ayakta, çünkü ifade **çerez** hakkındadır ve harita çerez
+  yazmıyor: `api.mapbox.com` statik görsel yanıtında `Set-Cookie`
+  **gözlenmedi** (curl ile başlık kontrolü) ve bir `<img>` isteği zaten kimlik
+  bilgisi taşımadığı için bizim taşıyabileceğimiz bir çerez de doğmaz.
+  `cookies.ts` envanterine yeni girdi eklenmedi. **Ama bu, "hiçbir üçüncü
+  taraf isteği yok" demeyi bir kat daha yanlış kılar** — Fontshare'e artık
+  Mapbox da eklendi. Yer arama hâlâ yalnız editörde, oturumlu kullanıcı için
+  çalışıyor. Ayrıntı ve gerekçe: `vendor-register.md` §A'daki konum notu.
 - Ölçüm beacon'ı cihaza yazmasa da isteğin kendisinde IP ve User Agent
   Cloudflare'e ulaşır. "Hiçbir veri toplamıyoruz" demek de bu yüzden yanlış
   olurdu ve denmedi.
@@ -117,9 +135,17 @@ güncellenene kadar yanlıştır:
 4. Reklam veya remarketing pikseli eklenmesi.
 5. Ertelenmiş panel analitiği hattının (R48) cihaza yazacak biçimde kurulması —
    tasarım gereği yazmayacak, ama kurulduğunda bu dosya yeniden doğrulanır.
-6. Konum kartının **etkileşimli haritaya** çevrilmesi (MapLibre + kutucuk
-   sunucusu). O gün ziyaretçi doğrudan bir harita sunucusuna bağlanır;
-   `vendor-register.md` §A'ya satır girer ve bu dosya yeniden doğrulanır.
+6. ~~Konum kartının **etkileşimli haritaya** çevrilmesi (MapLibre + kutucuk
+   sunucusu). O gün ziyaretçi doğrudan bir harita sunucusuna bağlanır~~ —
+   **kısmen gerçekleşti (2026-08-19).** Kart etkileşimli olmadı (hâlâ JS yok,
+   kutucuk sunucusu yok, iki statik `<img>`), ama riskin asıl kısmı —
+   **ziyaretçinin doğrudan bir harita sunucusuna bağlanması** — gerçekleşti:
+   Mapbox proxy'lemeyi ve sunucu önbelleğini sözleşmeyle yasakladığı için
+   kareler `api.mapbox.com`'dan doğrudan yükleniyor. `vendor-register.md` §A'ya
+   satır girdi ve bu dosya yeniden doğrulandı: çerez yazılmıyor, ifade ayakta.
+   **Kalan tetikleyici:** kartın gerçekten etkileşimli haritaya çevrilmesi
+   (JS + kutucuk akışı), ya da Mapbox'ın statik görsel yanıtına `Set-Cookie`
+   eklemesi — ikincisi için kontrol yeniden yapılır.
 
 ---
 

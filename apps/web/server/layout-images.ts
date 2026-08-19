@@ -21,7 +21,7 @@ import {
 } from "@caka/shared";
 
 import { signImageProxyPath } from "./image-proxy";
-import { signMapFramePaths } from "./map-frame";
+import { mapFrameUrls } from "./map-frame";
 
 /**
  * Kayıtlı `ogImage` yoksa adresten TÜRETİLEBİLİR bir önizleme var mı?
@@ -112,36 +112,27 @@ export async function signLayoutImages(
   for (const [id, path] of signed) {
     if (path) map[id] = path;
   }
-  await addMapFrames(env, layout, map);
+  addMapFrames(env, layout, map);
   return map;
 }
 
 /**
- * Konum kartlarının iki harita karesi. AYRI bir imza yolu, çünkü hedef bir
- * uzak görsel adresi değil: `/api/harita` sağlayıcı adresini kendisi kurar
- * (API anahtarı ziyaretçiye ulaşmasın diye — bkz. `server/map-frame.ts`).
- * İmza bu yüzden adresi değil, koordinat + kademe çiftini kapsar.
+ * Konum kartlarının iki harita karesi. AYRI bir yol, çünkü hedef bir uzak
+ * görsel adresi değil ve imzalanmaz: adresi ziyaretçinin tarayıcısı doğrudan
+ * sağlayıcıdan çeker (proxy'lemek sağlayıcının şartlarınca yasak — bkz.
+ * `server/map-frame.ts`). Eşlemeye girmesinin tek nedeni jetonun yalnız
+ * sunucu ortamında bulunması.
  *
- * Anahtar ya da sır tanımsızsa `signMapFramePaths` null döner ve blok
- * eşlemeye hiç girmez — kart haritasız tasarımına düşer.
+ * Jeton tanımsızsa `mapFrameUrls` null döner ve blok eşlemeye hiç girmez —
+ * kart haritasız tasarımına düşer.
  */
-async function addMapFrames(
-  env: Env,
-  layout: ProfileLayout,
-  map: SignedImageMap,
-): Promise<void> {
-  const blocks = layout.blocks.filter(
-    (block) => block.type === "location" && block.data.lat !== null && block.data.lon !== null,
-  );
-  if (blocks.length === 0) return;
-  await Promise.all(
-    blocks.map(async (block) => {
-      if (block.type !== "location" || block.data.lat === null || block.data.lon === null) return;
-      const frames = await signMapFramePaths(env, block.data.lat, block.data.lon);
-      if (!frames) return;
-      for (const step of LOCATION_ZOOM_STEPS) {
-        map[mapFrameImageKey(step, block.data.lat, block.data.lon)] = frames[step];
-      }
-    }),
-  );
+function addMapFrames(env: Env, layout: ProfileLayout, map: SignedImageMap): void {
+  for (const block of layout.blocks) {
+    if (block.type !== "location" || block.data.lat === null || block.data.lon === null) continue;
+    const frames = mapFrameUrls(env, block.data.lat, block.data.lon);
+    if (!frames) continue;
+    for (const step of LOCATION_ZOOM_STEPS) {
+      map[mapFrameImageKey(step, block.data.lat, block.data.lon)] = frames[step];
+    }
+  }
 }

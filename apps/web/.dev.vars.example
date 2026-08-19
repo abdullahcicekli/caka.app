@@ -16,10 +16,29 @@ APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 # ile üretilir. Tanımsızsa proxy TAMAMEN kapalıdır (fail-closed) ve uzak
 # önizleme görselleri görünmez.
 IMAGE_PROXY_SECRET=dev-imza-anahtari-en-az-32-karakter-olsun
-# Stadia Maps API anahtarı — konum kartının statik harita karesi (/api/harita).
-# `static_cacheable` ucu kullanılıyor; kareyi sunucuda önbelleğe alıp kendi
-# alan adımızdan servis etme hakkı ÜCRETLİ aboneliğe bağlı (Starter, 20 USD/ay).
-# Anahtar yalnız Worker'da kullanılır, ziyaretçiye hiç ulaşmaz. Tanımsızsa
-# harita kareleri kapalıdır ve kart haritasız hâline düşer (fail-closed).
-# Konum ARAMASI anahtar İSTEMEZ: Photon (Komoot) anahtarsız çalışır.
-STADIA_API_KEY=stadia-anahtarini-buraya-yaz
+# Mapbox HERKESE AÇIK jetonu (`pk.` ile başlar) — konum kartının statik
+# harita karesi. Diğerlerinden farklı olarak bu değer SIR DEĞİLDİR: adresi
+# ziyaretçinin tarayıcısı doğrudan api.mapbox.com'dan çeker, jeton HTML'e
+# basılır. (Proxy'lemek yasak: Mapbox Product Terms §2.8.1 kareyi
+# önbellekleyip kendi alan adımızdan servis etmeyi açıkça yasaklıyor.)
+#
+# KURULUM — jeton tek başına yeterli değil, URL kısıtlaması ŞART:
+#   1. account.mapbox.com/access-tokens → "Create a token"
+#   2. Yalnız `styles:tiles` ve `styles:read` kapsamları yeter.
+#   3. "URL restrictions" alanına SADECE kendi adreslerini yaz:
+#        https://caka.app/*
+#        http://localhost:5173/*   (yalnız lokal geliştirme jetonunda)
+#      Kısıtlamasız bırakılırsa yabancı siteler bizim kotamızdan harita
+#      çeker; kısıtlı jeton başka bir kökenden 403 döner.
+#   4. Varsayılan public token (`pk.…default`) KULLANILMAZ — ona URL
+#      kısıtlaması takılamıyor.
+# Kısıtlama `Referer` başlığıyla uygulanıyor; bu yüzden jeton SUNUCUDAN
+# çağrılamaz (Referer yok → 403). Zaten çağrılmıyor.
+#
+# ÜCRETSİZ KADEME: ayda 50.000 statik görsel isteği bedava, sonrası 1000
+# istekte 1 USD. Harcama tavanı YOK; kart başına 2 istek düşüyor (uzak +
+# yakın kare) ve tarayıcı 12 saat önbelleğe alıyor.
+#
+# Tanımsızsa harita kareleri kapalıdır ve kart haritasız hâline düşer
+# (fail-closed). Konum ARAMASI jeton İSTEMEZ: Photon (Komoot) anahtarsız.
+MAPBOX_PUBLIC_TOKEN=pk.mapbox-public-jetonunu-buraya-yaz

@@ -7,10 +7,11 @@ metin düzeltilir.
 **Kaynaklar (uydurulmadı, okundu):** `packages/db/src/schema.ts`,
 `packages/db/src/auth-schema.ts`, `apps/web/wrangler.jsonc`,
 `apps/web/server/github.ts`, `apps/web/server/og.ts`,
-`apps/web/server/avatar.ts`, `packages/shared/src/cookies.ts`.
+`apps/web/server/avatar.ts`, `apps/web/server/map-frame.ts`,
+`packages/shared/src/cookies.ts`.
 Bilinen uyum açıkları: `docs/legal/bilinen-aciklar.md`.
 
-**Tarih:** 2026-08-17 · **Kapsam:** prod Worker `caka` (`caka.app`), D1 `caka-db`,
+**Tarih:** 2026-08-19 · **Kapsam:** prod Worker `caka` (`caka.app`), D1 `caka-db`,
 R2 `caka-assets`.
 
 **Saklama süreleri hakkında genel not.** Aşağıda "Süre" sütununda yalnızca
@@ -137,10 +138,17 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
   Yuvarlama şemada zorunludur (`packages/shared/src/layout.ts`) — sokak
   çözünürlüğünde bir koordinat kaydedilemez. Arama yalnız oturumlu kullanıcı
   için, yalnız editörde çalışır (`server/location-api.ts`); saat dilimi
-  koordinattan **çevrimdışı** hesaplanır, hiçbir servise sorulmaz. Kartın
-  harita görseli de birinci taraftan servis edilir (`server/map-frame.ts`),
-  yani ziyaretçinin tarayıcısı harita sağlayıcısına istek atmaz
-  (`vendor-register.md` §B).
+  koordinattan **çevrimdışı** hesaplanır, hiçbir servise sorulmaz.
+  **Kartın harita görseli birinci taraftan servis EDİLMİYOR (2026-08-19'da
+  değişti).** Kart iki `<img>` taşır ve ikisi de doğrudan
+  `api.mapbox.com`'dan yüklenir (`server/map-frame.ts` yalnız adresi kurar;
+  eski `/api/harita` proxy ucu Mapbox Product Terms §2.8.1 ve §1.9 önbelleği
+  ve proxy'lemeyi yasakladığı için kaldırıldı). Dolayısıyla konum kartı taşıyan
+  bir profil açıldığında **ziyaretçinin IP adresi ve User Agent'ı Mapbox, Inc.'e
+  (ABD) ulaşır**; adresle birlikte yuvarlanmış koordinat, yakınlaşma kademesi ve
+  herkese açık `pk.*` jeton da gider. `Referer` yalnız origin'dir
+  (`https://caka.app/`), profil yolu değil. Cihaza yazma yok. Ayrıntı ve gerekçe:
+  `vendor-register.md` §A.
 - `onboarding_data` ilk kurulumda verilen yanıtları tutar.
 - **Amaç:** public profilin yayınlanması. **Sebep:** m.5/2-c.
 - **Süre:** hesap yaşadığı sürece. `draft_layout` yayınlanana kadar; ayrı bir

@@ -13,7 +13,7 @@ import { Hono } from "hono";
 import { appCatalog } from "../app/content/app";
 import { getSession } from "./auth";
 import { LOCATION_QUERY_MAX, searchLocations } from "./location";
-import { signMapFramePaths } from "./map-frame";
+import { mapFrameUrls } from "./map-frame";
 import { localeFromRequest } from "./locale";
 import { isCrossOriginRequest } from "./request";
 
@@ -36,16 +36,14 @@ locationApi.get("/", async (c) => {
   if (result.status === "unavailable") {
     return c.json({ error: app.locationUnavailable }, 502);
   }
-  // Her sonuca imzalı harita karelerini de ekle. NEDEN BURADA: editör, blok
-  // kaydedilmeden önce haritayı göstermek zorunda (WYSIWYG) ve imza sırra
-  // bağlı olduğu için istemcide üretilemez. `/api/youtube`'un `proxied`
-  // alanıyla aynı gerekçe.
-  const results = await Promise.all(
-    result.results.map(async (item) => ({
-      ...item,
-      frames: await signMapFramePaths(c.env, item.lat, item.lon),
-    })),
-  );
+  // Her sonuca harita karesi adreslerini de ekle. NEDEN BURADA: editör, blok
+  // kaydedilmeden önce haritayı göstermek zorunda (WYSIWYG) ve adres jetona
+  // bağlı olduğu için istemcide üretilemez — jeton yalnız sunucu ortamında
+  // var. `/api/youtube`'un `proxied` alanıyla aynı gerekçe.
+  const results = result.results.map((item) => ({
+    ...item,
+    frames: mapFrameUrls(c.env, item.lat, item.lon),
+  }));
   // Boş liste bir HATA DEĞİL: "bulunamadı" cümlesini istemci kurar, çünkü
   // aranan metni o biliyor.
   return c.json({ results });

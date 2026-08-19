@@ -10,8 +10,8 @@
 // politikası yazdıkça-arama (autocomplete) uygulamayı AÇIKÇA yasakladığı
 // için orası baştan elendi; Photon aynı OSM verisini tam da bu iş için
 // sunuyor ve sonucun saklanmasına dair bir yasağı yok. Anahtarsız oluşu
-// plan KD5 ile uyumlu (ürün vendor API anahtarı almıyor) — tek anahtarlı
-// tedarikçi harita KARESİ (Stadia), o da yalnız sunucudan çağrılıyor.
+// plan KD5 ile uyumlu (ürün vendor API anahtarı almıyor) — tek jetonlu
+// tedarikçi harita KARESİ (Mapbox) ve o jeton da herkese açık bir `pk.*`.
 //
 // SAAT DİLİMİ TEDARİKÇİDEN GELMEZ: koordinattan ÇEVRİMDIŞI hesaplanır
 // (`@photostructure/tz-lookup`, CC0, ~28 KB gzip, sıfır bağımlılık). Alternatif

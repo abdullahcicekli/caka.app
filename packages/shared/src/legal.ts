@@ -102,10 +102,14 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/gizlilik",
     title: "Gizlilik ve Aydınlatma Metni",
     navLabel: "Gizlilik ve Aydınlatma",
+    // 0.5: konum kartının haritası artık ziyaretçinin tarayıcısından
+    // DOĞRUDAN Mapbox'a gidiyor (sağlayıcının şartları proxy'lemeyi
+    // yasaklıyor) — §6 tablosuna Mapbox satırı eklendi. Yeni bir üçüncü
+    // taraf teması, damga sabit kalamazdı.
     // 0.4: belge (PDF) yükleme eklendi — "yüklenen dosyalar" satırı artık
     // görselin yanında belgeyi de sayıyor. Metin değişip damga sabit
     // kalsaydı yayındaki "son güncelleme" tarihi yalan söylerdi.
-    version: "0.4",
+    version: "0.5",
     updatedAt: "2026-08-19",
   },
   "kullanim-kosullari": {
@@ -121,8 +125,11 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/cerez-politikasi",
     title: "Çerez Politikası",
     navLabel: "Çerez Politikası",
-    version: "0.3",
-    updatedAt: "2026-08-18",
+    // 0.4: §6'ya harita isteği (Mapbox) eklendi. Çerez YAZMIYOR — ölçüldü,
+    // yanıtta çerez başlığı yok — ama IP ve User Agent gidiyor, yani
+    // "cihaza yazmayan üçüncü taraf istekleri" listesine girmesi şart.
+    version: "0.4",
+    updatedAt: "2026-08-19",
   },
 };
 

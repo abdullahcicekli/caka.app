@@ -73,7 +73,6 @@ export type LocationZoomStep = keyof typeof LOCATION_ZOOM;
 
 export const LOCATION_ZOOM_STEPS = ["far", "near"] as const;
 
-/** Statik harita karesinin piksel ölçüsü (retina için 2× sunucuda istenir). */
 /**
  * Statik harita karesinin İSTENEN ölçüsü (nokta cinsinden; sağlayıcıdan
  * `@2x` istendiği için gerçek piksel iki katı → 1024×768).
@@ -90,36 +89,10 @@ export const LOCATION_FRAME = { width: 512, height: 384 } as const;
 // ---------------------------------------------------------------------------
 
 /**
- * Kartın haritayı okuduğu BİRİNCİ TARAF yolu. Ziyaretçinin tarayıcısı harita
- * sağlayıcısına hiç bağlanmaz: kareyi Worker çeker, önbelleğe alır ve kendi
- * alan adından servis eder (`server/map-frame.ts`).
- *
- * Uç İMZALIDIR (`/api/gorsel` ile aynı gerekçe): imzasız olsaydı herkesin
- * kullanabileceği bedava bir harita CDN'i olurdu ve sağlayıcı kotası
- * yabancıların isteğiyle tükenirdi. İmza koordinatı + kademeyi kapsar.
- */
-export function mapFramePath(
-  lat: number,
-  lon: number,
-  step: LocationZoomStep,
-  signature: string,
-): string {
-  const query = new URLSearchParams({
-    lat: String(lat),
-    lon: String(lon),
-    z: step,
-    [MAP_SIGNATURE_PARAM]: signature,
-  });
-  return `/api/harita?${query.toString()}`;
-}
-
-export const MAP_SIGNATURE_PARAM = "s";
-
-/**
- * Harita karesinin `signedImages` eşlemesindeki anahtarı. İmza asenkron
- * olduğu için adres render sırasında saf bir fonksiyonla türetilemez;
- * loader'da bir kez hesaplanıp eşlemeyle bileşene taşınır (`faviconImageKey`
- * ile aynı desen, ayrı bir eşleme tesisatı üçe katlardı).
+ * Harita karesinin `signedImages` eşlemesindeki anahtarı. Adres sağlayıcı
+ * jetonunu taşıdığı için render sırasında saf bir fonksiyonla türetilemez
+ * (jeton yalnız sunucu ortamında var); loader'da bir kez kurulup eşlemeyle
+ * bileşene taşınır — `faviconImageKey` ile aynı desen.
  *
  * ANAHTAR BLOK KİMLİĞİ DEĞİL KOORDİNATTIR. Blok kimliğine bağlansaydı
  * editörde bayat bir kare gösterilebilirdi: kullanıcı mevcut bir konum
@@ -137,84 +110,92 @@ export function mapFrameImageKey(
 }
 
 /**
- * İmzanın kapsadığı kanonik metin. Sunucu da istemci de aynı dizeyi kurmalı,
- * yoksa imza tutmaz — bu yüzden burada, iki tarafın da gördüğü yerde.
- */
-export function mapFrameSignaturePayload(
-  lat: number,
-  lon: number,
-  step: LocationZoomStep,
-): string {
-  // `map:` öneki ALAN AYIRICIDIR. İmza sırrı `/api/gorsel` ile ortak; bugün
-  // iki gövde karışamıyor (proxy yükü daima `http(s)://…` ile başlar) ama
-  // ileride bir gövde biçimi değişirse bu önek çakışmayı baştan keser.
-  return `map:${lat}|${lon}|${step}`;
-}
-
-/**
- * Sağlayıcının statik harita adresi.
+ * Sağlayıcının statik harita adresi — **ziyaretçinin tarayıcısı doğrudan bu
+ * adrese bağlanır**.
  *
- * SAĞLAYICI: **Stadia Maps**, `static_cacheable` ucu, `alidade_smooth_dark`
- * stili. Seçim gerekçesi `docs/legal/vendor-register.md`'de; özeti:
- * karşılaştırılan sağlayıcılar arasında **kareyi sunucuda önbelleğe alıp
- * kendi alan adımızdan servis etmeye SÖZLEŞMEYLE İZİN VEREN tek sağlayıcı**
- * bu. MapTiler ve Thunderforest bunu açıkça yasaklıyor, CARTO'nun basemap'i
- * ücretsiz kullanıma kapalı, OSM'in kendi kutucuk sunucusu proxy'lemeyi
- * yasaklıyor ve koyu stili yok; Mapbox ile Geoapify'ın şartları ise sessiz
- * (sessizlik izin değildir). Stadia'nın Hizmet Şartları `static_cacheable`
- * için "images may be saved, cached, modified, embedded… and redistributed
- * by your systems or your infrastructure" diyor.
+ * SAĞLAYICI: **Mapbox**, Static Images API, `dark-v11` stili.
  *
- * BEDELİ: bu hak **ücretli abonelik** ister (Starter, 20 USD/ay); ücretsiz
- * kademe ayrıca ticari kullanıma kapalı. Anahtar tanımsızsa özellik
- * KAPALIDIR ve kart haritasız tasarımına düşer (bkz. `server/map-frame.ts`).
+ * NEDEN PROXY YOK (mimari kararın dayanağı): Mapbox Product Terms (21 Temmuz
+ * 2026) §2.8.1 kareyi sunucuda önbelleğe alıp kendi alan adımızdan servis
+ * etmeyi AÇIKÇA yasaklıyor — "Customer shall not distribute Licensed Map
+ * Content, including from a cache, by proxying, or by using a screenshot or
+ * other static image instead of accessing Licensed Map Content directly from
+ * the Mapping APIs." §1.9(iv)-(v) aynı şeyi tekrar eder: içerik "directly
+ * from Mapbox APIs" alınır, "export, download, cache or store" edilemez.
+ * İzin verilen tek önbellek SON KULLANICININ CİHAZINDA ve 30 günlüktür,
+ * üstelik "directly from the Mapping APIs" doldurulmak zorundadır — yani
+ * tarayıcının kendi HTTP önbelleği. Bu yüzden `/api/harita` ucu kaldırıldı;
+ * yerine tarayıcının doğrudan çektiği bir `<img src>` var.
  *
- * ANAHTAR BU FONKSİYONA PARAMETRE OLARAK GİRER ve ÜRETİLEN ADRES ASLA
- * İSTEMCİYE ULAŞMAZ (Değişmez #6): adresi yalnız Worker kurar, yalnız Worker
- * ister. Ziyaretçinin gördüğü tek şey `mapFramePath` çıktısıdır.
+ * GİZLİLİK BEDELİ, açıkça yazılıdır: konum kartı taşıyan bir profil
+ * görüntülendiğinde ziyaretçinin IP adresi ve User Agent'ı Mapbox'a ulaşır.
+ * `docs/legal/vendor-register.md` A bölümü, `/gizlilik` §6 ve
+ * `/cerez-politikasi` bunu ifşa eder.
  *
- * `manual_attribution=true`: gömülü filigran kapatılır, atıf kartın kendi
- * satırında GÖRÜNÜR olarak verilir (`MAP_ATTRIBUTION`). Hak kaybı değil;
- * şartların açıkça izin verdiği yol ve küçük kartta filigran okunmuyor.
+ * JETON HERKESE AÇIKTIR (`pk.*`) ve HTML'e basılır — Değişmez #6 anlamında
+ * sır değildir, ama korumasız da bırakılmaz: jetona Mapbox panelinden URL
+ * kısıtlaması takılır (yalnız `caka.app` ve `localhost`), aksi hâlde yabancı
+ * siteler bizim kotamızdan harita çeker. Kısıtlama `Referer` başlığıyla
+ * uygulanır; bu yüzden `<img>` referrer göndermek zorundadır (bileşende
+ * `referrerPolicy="strict-origin-when-cross-origin"`). Jeton tanımsızsa
+ * özellik KAPALIDIR ve kart haritasız tasarımına düşer (fail-closed).
+ *
+ * `attribution=false&logo=false`: gömülü atıf kapatılır ve yükümlülük bize
+ * geçer (`MAP_ATTRIBUTION_LINKS`). Zorunluydu, tercih değil: kare kartta
+ * `object-fit: cover` ile kırpılıyor ve yakınlaşma efektinde ölçekleniyor —
+ * görüntüye gömülü atıf kadraj dışında kalır, yani hiç görünmez.
  *
  * İŞARETÇİ SAĞLAYICIDAN İSTENMEZ: nokta CSS ile çizilir. Böylece hem marka
- * token'larıyla aynı renkte olur hem de sağlayıcının işaretçi kredisi
- * harcanmaz.
+ * token'larıyla aynı renkte olur hem de adres kısalır.
  */
-export function stadiaStaticMapUrl(options: {
+export function mapboxStaticMapUrl(options: {
   lat: number;
   lon: number;
   zoom: number;
   width: number;
   height: number;
-  apiKey: string;
-  /** Retina kareler için `@2x`; sağlayıcı bunu kredi olarak fazladan sayar. */
+  /** Herkese açık `pk.*` jetonu; tarayıcıya çıkar. */
+  token: string;
+  /** Retina kareler için `@2x`. */
   retina?: boolean;
 }): string {
   const size = `${options.width}x${options.height}${options.retina === false ? "" : "@2x"}`;
+  // Mapbox merkezi ENLEM DEĞİL BOYLAMLA başlatır (`{lon},{lat},{zoom}`);
+  // ters yazılırsa adres geçerli kalır ama başka bir yerin haritası gelir.
+  // Yön (bearing) ve eğim (pitch) açıkça sıfırlanır ki sağlayıcı varsayılanı
+  // değişse bile kare aynı kalsın.
+  const center = `${options.lon},${options.lat},${options.zoom},0,0`;
   const query = new URLSearchParams({
-    center: `${options.lat},${options.lon}`,
-    zoom: String(options.zoom),
-    size,
-    manual_attribution: "true",
-    api_key: options.apiKey,
+    attribution: "false",
+    logo: "false",
+    access_token: options.token,
   });
-  return `https://tiles.stadiamaps.com/static_cacheable/${STADIA_MAP_STYLE}.jpg?${query.toString()}`;
+  return `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_MAP_STYLE}/static/${center}/${size}?${query.toString()}`;
 }
 
 /**
  * Koyu, sakin, etiketleri okunur bir OSM stili — referans tasarımın istediği
- * görünüm. `stamen_toner` fazla sert (saf siyah-beyaz), `alidade_satellite`
- * uydu görüntüsü.
+ * görünüm. Mapbox'ın `navigation-night-v1` stili sürüş için renklendirilmiş
+ * (turuncu yollar), `satellite-streets-v12` uydu görüntüsü.
  */
-export const STADIA_MAP_STYLE = "alidade_smooth_dark";
+export const MAPBOX_MAP_STYLE = "dark-v11";
 
 /**
- * Kartta GÖRÜNÜR olmak zorunda olan atıf — `manual_attribution=true`
- * kullanıldığı için filigran yok, yükümlülük duruyor. Marka ve proje adları
- * çeviriye tabi olmadığı için katalogda değil burada.
+ * Kartta GÖRÜNÜR olmak zorunda olan atıf — kare `attribution=false&logo=false`
+ * ile isteniyor, yükümlülük bize geçiyor. Mapbox Product Terms §1.4.1 atfın
+ * "© Mapbox" ve "© OpenStreetMap" bağlantılarını, §1.4.2 de "Improve this
+ * map" bağlantısını istiyor; sağlayıcının atıf kılavuzu statik görseller için
+ * aynı üçlüyü "in a textual description near the image" diye tarif ediyor.
+ *
+ * ÇEVRİLMEZ ve bu yüzden katalogda değil: metinler sağlayıcının şartlarında
+ * BİREBİR yazılı (marka adları + tanımlı bağlantı etiketi). Çevirseydik
+ * yükümlülüğü karşılamış olmazdık.
  */
-export const MAP_ATTRIBUTION = "© Stadia Maps © OpenMapTiles © OpenStreetMap";
+export const MAP_ATTRIBUTION_LINKS = [
+  { label: "© Mapbox", href: "https://www.mapbox.com/about/maps/" },
+  { label: "© OpenStreetMap", href: "https://www.openstreetmap.org/copyright" },
+  { label: "Improve this map", href: "https://apps.mapbox.com/feedback/" },
+] as const;
 
 /**
  * Coğrafi kodlamanın (Photon/OSM) atfı. Ayrı, çünkü haritayı çizen veriyle

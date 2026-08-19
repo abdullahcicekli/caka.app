@@ -5,7 +5,9 @@ kayıttan türetildi.
 
 **Tarih:** 2026-08-19 · **Kaynaklar:** `apps/web/wrangler.jsonc`,
 `apps/web/app/root.tsx`, `apps/web/server/auth.ts`, `server/github.ts`,
-`server/og.ts`, `server/avatar.ts`, `server/map-frame.ts`, `server/location.ts`,
+`server/og.ts`, `server/avatar.ts`, `server/map-frame.ts` (artık proxy değil —
+yalnız `api.mapbox.com` adresini kurar; `/api/harita` ucu kaldırıldı),
+`app/components/location-card.tsx`, `server/location.ts`,
 Cloudflare paneli (binding ve ayar teyidi).
 
 > ### Mekanizma sütunu bilerek boş
@@ -57,6 +59,7 @@ tedarikçiye ulaşır. Aydınlatma yükümlülüğü buradan doğar.
 | **Apple Inc.** — Sign in with Apple | Kimlik doğrulama yönlendirmesi | Aynı akış | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Google LLC — YouTube gömülü oynatıcı** ⚠️ *(yalnız tıklamayla)* | Profildeki YouTube kartında videonun yerinde oynatılması; `youtube-nocookie.com/embed` | **Ziyaretçi oynata basarsa**: IP, User Agent, gömme adresi. Oynatma başlayınca **çerez yazabilir** | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(uygulanamaz — sözleşme tarafı yok; aktarım ziyaretçinin kendi eylemiyle)* |
 | **Spotify AB — gömülü oynatıcı** ⚠️ *(yalnız tıklamayla)* | Profildeki Spotify kartında parçanın yerinde çalınması; `open.spotify.com/embed` | Aynı akış | Ayrı veri sorumlusu | İsveç / AB | **Evet** | ⬚ *(uygulanamaz)* |
+| **Mapbox, Inc.** — statik harita karesi (`server/map-frame.ts`) ⚠️ *(2026-08-19'da B'den A'ya taşındı)* | Konum kartının koyu harita görüntüsü. İki `<img>` doğrudan `api.mapbox.com/styles/v1/mapbox/dark-v11/static/…` adresini yükler; araya biz girmiyoruz | Konum kartı taşıyan bir profil açıldığında **2 doğrudan istek**: ziyaretçinin **IP adresi** ve **User Agent**'ı; adres yolundaki **yuvarlanmış** koordinat (≈1,1 km) ve yakınlaşma kademesi; herkese açık `pk.*` jeton; `Referer` — `strict-origin-when-cross-origin` politikası gereği yalnız **origin** (`https://caka.app/`), profil yolu değil. **Cihaza yazma yok** (yanıtta `Set-Cookie` yok, `<img>` isteği kimlik bilgisi taşımaz) | Fiilen ayrı veri sorumlusu (kendi altyapısı, bizim talimatımız yok) | ABD merkezli; sunum ağı küresel (CloudFront) | **Evet** | ⬚ *(boş — OQ2a)* |
 
 ### ⚠️ Gömülü oynatıcılar — tıklama kapısının arkasında
 
@@ -105,65 +108,131 @@ Tedarikçi satırı bu nedenle **A bölümünden B bölümüne taşındı**.
 
 ---
 
-### 🗺️ Konum kartı — harita ziyaretçiye birinci taraftan gelir
+### 🗺️ Konum kartı — ziyaretçi **doğrudan** Mapbox'a bağlanır (2026-08-19'da değişti)
 
-Konum bloğu, bu kaydın en dikkat isteyen yeni yüzeyi: bir harita kartı normalde
-ziyaretçinin tarayıcısını doğrudan bir kutucuk sunucusuna bağlar. Burada
-bağlamıyor.
+Bu bölüm daha önce şunu yazıyordu: *"Ziyaretçi hiçbir harita sunucusuna istek
+atmaz."* **Bu artık doğru değil ve iddia burada bırakılmıyor.** Konum kartı
+taşıyan bir profil açıldığında ziyaretçinin tarayıcısı `api.mapbox.com`'a
+**iki doğrudan istek** atar; IP adresi ve User Agent Mapbox, Inc.'e (ABD)
+ulaşır. Tedarikçi satırı bu yüzden **B bölümünden A bölümüne taşındı** —
+`ogImage`'ın 2026-08-18'de yaptığının tam tersi yönde.
 
-- **Ziyaretçi hiçbir harita sunucusuna istek atmaz.** Kart iki `<img>`'den
-  ibaret ve ikisi de `/api/harita` yolundan geliyor; kareyi Worker çekiyor,
-  Cache API'de 30 gün tutuyor ve yanıtı **sıfırdan** kuruyor (sağlayıcının
-  `Set-Cookie` dâhil hiçbir başlığı geçmiyor). Etkileşimli harita (MapLibre +
-  kutucuk sunucusu) bilinçli olarak SEÇİLMEDİ: her ziyaretçiyi üçüncü tarafa
-  tanıtır ve ~200 KB JS ekler.
-- **API anahtarı ziyaretçiye ulaşmaz.** Sağlayıcı adresini yalnız Worker
-  kuruyor; ziyaretçinin gördüğü adres yalnız koordinat + kademe + HMAC imzası
-  taşıyor. (Bu yüzden `/api/gorsel` yeniden kullanılmadı: o uç hedef adresi
-  sorgu dizesinde gösterir.)
-- **Uç imzalı.** İmzasız bırakılsaydı herkesin kullanabileceği bedava bir
-  harita CDN'i olurdu. Anahtar ya da imza sırrı tanımsızsa uç **tamamen
-  kapalıdır** ve kart haritasız tasarımına düşer (fail-closed).
-- **Koordinat yuvarlanmış.** Kayda iki ondalık (≈1,1 km) giriyor ve uç, gelen
-  koordinatı yeniden yuvarlıyor — elle yazılmış tam çözünürlüklü bir istek
-  bile sokak düzeyinde harita çekemez.
+**Neden değişti — tercih değil, sözleşme.** Eski mimari (Worker kareyi çeker →
+Cache API'de tutar → `caka.app`'ten servis eder) Mapbox Product Terms
+(21 Temmuz 2026) tarafından **açıkça yasaklanmış** durumda. §2.8.1 "Mapping
+APIs":
+
+> "Customer shall not distribute Licensed Map Content, including from a cache,
+> by proxying, or by using a screenshot or other static image instead of
+> accessing Licensed Map Content directly from the Mapping APIs."
+
+§1.9 "Default Restrictions" (iv)-(v) aynı şeyi olumlu ve olumsuz biçimde
+tekrarlar: müşteri içeriğe "only … directly from Mapbox APIs" erişebilir ve
+"not export, download, cache or store Licensed Map Content". Mapbox'ın izin
+verdiği **tek** önbellek son kullanıcının cihazındadır (en çok 30 gün) ve o
+önbelleğin de "directly from the Mapping APIs" doldurulması şarttır — yani
+tarayıcının kendi HTTP önbelleği. Bu yüzden `/api/harita` proxy ucu
+**silindi**.
+
+**Ziyaretçiden Mapbox'a bugün ne gidiyor:**
+
+- **IP adresi ve User Agent** — iki istekte de. Kaçınılmaz; doğrudan bağlantının
+  tanımı bu.
+- **Yolun içindeki koordinat** — iki ondalığa **yuvarlanmış** (≈1,1 km) ve
+  yakınlaşma kademesi. Şema yuvarlamayı zorunlu tutuyor
+  (`packages/shared/src/layout.ts`), yani sokak çözünürlüğünde bir koordinat
+  hiç kaydedilmiyor ve dolayısıyla hiç gönderilemiyor.
+- **Herkese açık `pk.*` jeton** — aşağıya bakınız; sır değil.
+- **`Referer`** — `<img>` üzerinde açıkça `strict-origin-when-cross-origin`
+  verildiği için yalnızca **origin**: `https://caka.app/`. Profil yolu
+  gitmiyor. Sonuç: Mapbox "birinin Caka'da konum kartı taşıyan *bir* sayfaya
+  baktığını" ve **hangi yerin** kartta olduğunu öğrenir; **kimin profili**
+  olduğunu öğrenmez.
+
+**Ayakta kalan hafifletmeler:**
+
+- **Çerez yok.** `api.mapbox.com` statik görsel yanıtında `Set-Cookie`
+  **gözlenmedi** (curl ile doğrulandı; dönen başlıklar `content-type`,
+  `server: awselb/2.0`, CloudFront `x-cache`/`via`/`x-amz-cf-*`, `alt-svc`,
+  `date`). Ayrıca `<img>` isteği kimlik bilgisi taşımaz — bir çerez yazılsa
+  bile bizim taşıyabileceğimiz bir yol yok. İddia bundan fazlasını söylemiyor.
+- **JS yok, kutucuk sunucusu yok, etkileşim yok.** Kart hâlâ iki `<img>`'den
+  ibaret; MapLibre + kutucuk sunucusu (~200 KB JS ve ziyaretçi başına onlarca
+  istek) bilinçli olarak seçilmedi. Değişen şey isteğin **sayısı ve türü**
+  değil, **kime gittiği**.
+- **Tembel yükleme.** İki `<img>` de `loading="lazy"`; ekran dışında kalan bir
+  kart hiç istek doğurmaz.
+- **Jeton yoksa özellik kapalı.** `MAPBOX_PUBLIC_TOKEN` tanımsızsa kareler hiç
+  kurulmaz ve kart haritasız gradyan tasarımına düşer (fail-closed).
 - **Konum arama ziyaretçinin eylemi değil.** `/api/konum` oturum ister; profil
-  sayfası açıldığında hiç çağrılmaz.
+  sayfası açıldığında hiç çağrılmaz (Photon, aşağıda §B).
 - **Saat dilimi hiçbir tedarikçiye sorulmaz:** koordinattan çevrimdışı
   hesaplanıyor (`@photostructure/tz-lookup`, CC0).
 
-#### Sağlayıcı seçimi neden Stadia Maps — ve neden ücretli
+#### Jeton (`MAPBOX_PUBLIC_TOKEN`) — sır değil, kısıtlı
 
-Mimarinin şartı şuydu: kareyi **sunucuda önbelleğe alıp kendi alan adımızdan
-servis edebilmek**. Karşılaştırılan sağlayıcılarda durum:
+`pk.*` jetonu tasarım gereği HTML'e basılır; Değişmez #6 anlamında bir sır
+**değildir**. Korumasını Mapbox panelindeki **URL kısıtlaması** sağlar (yalnız
+`https://caka.app/*` ve geliştirme için localhost); kısıtlamayı Mapbox
+`Referer` başlığına bakarak uygular. Yani referrer politikasının origin
+göndermesi aynı zamanda teknik bir zorunluluktur — `no-referrer` verilseydi
+jeton kısıtlaması isteği reddederdi.
+
+#### Sağlayıcı seçimi — proxy mimarisine izin verenler para istedi
+
+Soru artık "kim sunucuda önbelleğe izin veriyor" değil; o soruya **ücretsiz**
+bir cevap çıkmadı. Karşılaştırma, düzeltmesiyle birlikte:
 
 | Sağlayıcı | Sunucuda önbellekleyip yeniden sunmak |
 |---|---|
-| **Stadia Maps** (`static_cacheable`) | ✅ Şartlarda **açıkça** izinli — "images may be saved, cached, modified, embedded… and redistributed by your… systems or your… infrastructure", **ücretli abonelik sürdüğü sürece** |
+| **Mapbox** (seçilen) | ❌ **Açıkça yasak.** Bu kayıt önce "⚠️ şartlar sessiz" diyordu; **yanlıştı ve sessizce düzeltilmiyor**: Product Terms §2.8.1 önbellekten dağıtımı, proxy'lemeyi ve "screenshot or other static image" ile ikame etmeyi ad ad yasaklıyor, §1.9(iv)-(v) erişimin "directly from Mapbox APIs" olmasını şart koşuyor |
+| Önceki sağlayıcı (bu değişiklikle sökülen) | ✅ Şartlarında **açıkça** izinliydi — ama yalnız **ücretli abonelik sürdüğü sürece** (20 USD/ay); ücretsiz katmanı ayrıca ticari kullanıma kapalıydı. Adı ve şart alıntısı kaydın önceki sürümünde (git geçmişi) durur |
 | MapTiler | ❌ Açıkça yasak ("prohibited to store, save, and/or redistribute any map content from a server-side cache") |
 | Thunderforest | ❌ Açıkça yasak ("caching proxies… are not permitted") |
 | CARTO basemaps | ❌ Ücretsiz genel kullanıma kapalı (yalnız kurumsal müşteriler) |
 | `tile.openstreetmap.org` | ❌ Toplu indirme/proxy yasak; ayrıca koyu stili yok |
-| Mapbox / Geoapify | ⚠️ Şartlar **sessiz** — sessizlik izin değildir |
+| Geoapify | ⚠️ Şartlar **sessiz** — sessizlik izin değildir |
 | OpenFreeMap / Protomaps | — Yalnız vektör; Worker içinde raster üretecek bir yol yok (Canvas/WebGL yok) |
 
-Yani ücretsiz seçeneklerin hiçbiri bu mimariye sözleşmeyle izin vermiyor.
-Ücretsiz kalmanın tek yolu **etkileşimli haritaya geçip ziyaretçiyi kutucuk
-sunucusuna bağlamaktı** — bu kaydın A bölümüne yeni bir satır, her profil
-görüntülemesinde bir üçüncü taraf ve ~200 KB JS demek. Bedel karşılaştırması
-bu yüzden "para mı, gizlilik mi" oldu ve para seçildi: **Stadia Maps Starter,
-20 USD/ay.**
+Yani proxy mimarisine sözleşmeyle izin veren tek yol **aylık ödeme**ydi. Takas
+açıktı ve bu kez **para değil, gizlilik bedeli seçildi**: dekoratif bir kart
+için aylık 20 USD abonelik alınmadı, karşılığında ziyaretçi üçüncü bir tarafa
+tanıtılmış oldu. Bu, kaydın A bölümüne bilerek eklenmiş bir satırdır — bedeli
+gizlemek değil, yazmak.
 
-Anahtar (`STADIA_API_KEY`) tanımlanana kadar özellik kapalı; kart haritasız
-hâliyle çalışır. Yani bu satır, anahtar tanımlandığı gün canlıya girer.
+**Ücretsiz katman ve maliyet tavanı yok.** Mapbox statik görselde ayda **50.000
+istek** ücretsiz; sonrası 500 bine kadar **1,00 USD/1.000**. Kart görüntülemesi
+başına iki istek (uzak kare + yakın kare) düştüğü için 50.000 istek ≈ **ayda
+25.000 konum kartı görüntülemesi**; aynı ziyaretçinin 12 saat içindeki tekrar
+görüntülemeleri bedava, çünkü Mapbox görseli `max-age=43200` ile veriyor ve
+tarayıcı kendi önbelleğinden okuyor.
+
+Dürüstlük notu: **Mapbox harcama tavanı sunmuyor** ("Mapbox does not provide
+the ability to cap your monthly billing"). Ücretsiz katman aşıldığında harita
+kararmıyor, 429 dönmüyor — **faturalanıyor**. Ödeme yöntemi tanımlı değilse
+fatura gecikmiş hâle geliyor ve nihayetinde "the account will be deactivated …
+all access tokens and Mapbox services are immediately suspended"; o noktada
+kart sessizce haritasız tasarımına düşer. Ayrı bir hız sınırı da var:
+**dakikada 1.250 istek** → HTTP 429.
 
 #### Atıf yükümlülüğü — kartta görünür
 
-Kare `manual_attribution=true` ile filigransız isteniyor; yükümlülük bize
-geçiyor ve kart sağ alt köşesinde **`© Stadia Maps © OpenMapTiles ©
-OpenStreetMap`** yazıyor (`components/location-card.tsx`). Arama sonuçlarının
-atfı (`© OpenStreetMap contributors — Photon (Komoot)`) editör panelinde
-görünür. Harita verisi ODbL, stil ve kutucuklar sağlayıcının.
+Kare `attribution=false&logo=false` ile filigransız isteniyor. Bu bir kaçış
+değil, zorunluluk: kartın `object-fit: cover` düzeni ve yakınlaşma dönüşümü
+gömülü filigranı kırpıp götürüyor. Yükümlülük dolayısıyla bize geçiyor ve
+kart **sağ alt köşesinde** şunları basıyor (`components/location-card.tsx`):
+
+- Resmî **Mapbox kelime markası** (Mapbox'ın atıf için `mapbox-gl.css` ile
+  dağıttığı SVG),
+- **© Mapbox** → `www.mapbox.com/about/maps`,
+- **© OpenStreetMap** → `www.openstreetmap.org/copyright`,
+- **Improve this map** → `apps.mapbox.com/feedback/`.
+
+Dayanak: Product Terms **§1.4.1** (logo + iki © bağlantısı) ve **§1.4.2**
+("Improve this map"), ayrıca Mapbox'ın atıf kılavuzu — statik görsellerde aynı
+kümeyi "in a textual description near the image" istiyor. Harita verisi
+**ODbL** (OpenStreetMap); stil Mapbox'ın `dark-v11`'i. Arama sonuçlarının atfı
+(`© OpenStreetMap contributors — Photon (Komoot)`) editör panelinde görünür.
 
 ---
 
@@ -180,7 +249,6 @@ yapar, dolayısıyla ziyaretçinin IP adresi tedarikçiye ulaşmaz.
 | **GitHub, Inc.** | Katkı grafiği verisinin alınması (public HTML parçası `/users/<login>/contributions`, `server/github.ts`; kimlik doğrulaması yok) | Yalnızca gösterilecek **GitHub kullanıcı adı**. Ziyaretçinin IP'si GitHub'a ulaşmaz | Veri kaynağı / ayrı veri sorumlusu | ABD | **Evet** (giden handle bakımından) | ⬚ *(boş — OQ2a)* |
 | **og:image kazıması** — hedef siteler (`server/og.ts`) | Bağlantının önizleme görselinin bulunması | Profil sahibinin girdiği **URL**; isteği Worker atar, gövde akış hâlinde ve en fazla 1 MB okunur | Bizim tedarikçimiz değil | Belirsiz — URL'i profil sahibi girer | Duruma göre | ⬚ *(uygulanamaz)* |
 | **Önizleme görseli proxy'si** — hedef host'lar (`server/image-proxy.ts`) | Uzak önizleme görselinin birinci taraftan servis edilmesi | Yalnızca görselin **adresi**; isteği Worker atar, ziyaretçinin IP'si ve User Agent'ı uzak host'a ulaşmaz | Bizim tedarikçimiz değil; host'u profil sahibi seçer | Belirsiz | Duruma göre | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
-| **Stadia Maps** (Fiveonefour Labs / Stadia Maps, ABD) — statik harita karesi (`server/map-frame.ts`) | Konum kartının koyu harita görüntüsü. Kareyi **Worker** çeker, Cache API'de tutar ve `caka.app`'ten servis eder; ziyaretçinin tarayıcısı Stadia'ya **hiç bağlanmaz** | Profil sahibinin seçtiği yerin **yuvarlanmış** koordinatı (≈1,1 km) ve yakınlaşma kademesi. Ziyaretçinin IP'si ve User Agent'ı Stadia'ya ulaşmaz | Bizim tedarikçimiz (harita verisi sağlayıcısı) | ABD merkezli; sunum ağı küresel | **Evet** (giden koordinat bakımından) | ⬚ *(boş — OQ2a)* |
 | **Photon (Komoot GmbH, Almanya)** — yer arama (`server/location.ts`) | Editörde yazdıkça yer arama; anahtarsız açık uç. **Yalnız oturumlu kullanıcı** tetikler, ziyaretçi asla | Düzenleyenin yazdığı **arama metni** ("kadıköy") ve arayüz dili. İsteği Worker atar; kullanıcının IP'si Komoot'a ulaşmaz | Veri kaynağı / ayrı veri sorumlusu | Almanya / AB | **Hayır** (AB içi; yine de yurt dışı) | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
 | **YouTube (Google LLC)** — oEmbed, kanal sayfası, RSS akışı (`server/youtube.ts`) | Video/kanal bilgisinin ve en son videonun alınması | Profil sahibinin girdiği **video/kanal adresi**; istek Worker'dan gider, ziyaretçinin IP'si YouTube'a ulaşmaz | Ayrı veri sorumlusu | ABD | **Evet** (giden adres bakımından) | ⬚ *(boş — OQ2a)* |
 | **jsDelivr (Prospect One)** — Kur'an metni CDN'i (`server/quran.ts`) | Ayet bloğunda gösterilecek Arapça metnin ve Türkçe mealin alınması; `cdn.jsdelivr.net/gh/fawazahmed0/quran-api` statik JSON | Yalnızca istenen **sure/ayet numarası** (arama sorgusu gönderilmez — arama Worker içinde yapılır). İstek **yalnız editörde**, oturumlu kullanıcı için atılır; ziyaretçinin IP'si CDN'e ulaşmaz | Bizim tedarikçimiz değil; açık kaynak dağıtım ağı | Polonya merkezli, anycast küresel ağ | **Evet** (giden ayet numarası bakımından) | ⬚ *(uygulanamaz — sözleşme tarafı yok, kişisel veri gitmiyor)* |
@@ -218,9 +286,10 @@ parça değil.
 - **CAPTCHA/bot koruma script'i yok.**
 - **Ödeme sağlayıcısı yok** (ticarileşme henüz yok).
 
-- **Etkileşimli harita / kutucuk sunucusu yok.** Konum kartı statik kare
-  kullanıyor; ziyaretçi hiçbir harita sunucusuna bağlanmıyor (bkz. §A üstündeki
-  konum notu).
+- **Etkileşimli harita / kutucuk sunucusu yok.** Konum kartı iki statik
+  `<img>` kullanıyor: harita JS'i, kutucuk akışı ve etkileşim yok. **Ama
+  ziyaretçi artık `api.mapbox.com`'a doğrudan bağlanıyor** — bu satır "üçüncü
+  taraf teması yok" demek DEĞİLDİR; bkz. §A'daki Mapbox satırı ve konum notu.
 
 Bu liste boş kaldığı sürece footer'daki çerez iddiası ayakta kalır. Buraya bir
 satır eklendiği gün `cookie-inventory.md` ve `trust-claims.md` de aynı commit'te

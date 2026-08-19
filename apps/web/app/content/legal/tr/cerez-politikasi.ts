@@ -567,6 +567,29 @@ export const cerezPolitikasiSections: LegalSection[] = [
           [
             {
               kind: "strong",
+              text: "Konum kartındaki harita (Mapbox). ",
+            },
+            "Bir profilde konum kartı varsa, kartın koyu harita görüntüsünü " +
+              "tarayıcın doğrudan ",
+            { kind: "strong", text: "api.mapbox.com" },
+            " adresinden çeker. Bu istekte ",
+            {
+              kind: "strong",
+              text: "IP adresin ve User Agent'ın Mapbox'a ulaşır",
+            },
+            "; adres ayrıca profil sahibinin seçtiği yerin yaklaşık " +
+              "koordinatını taşır. Hangi profile baktığın gitmez — istekle " +
+              "birlikte yalnızca caka.app alan adı bildirilir, sayfanın " +
+              "adresi değil. Bu görseli de kendi sunucumuzdan geçirmeyi " +
+              "tercih ederdik, önizleme görsellerinde öyle yapıyoruz; ama " +
+              "Mapbox'ın kullanım şartları harita görüntüsünü önbelleğe alıp " +
+              "kendi alan adımızdan sunmayı açıkça yasaklıyor. Ölçtük: bu " +
+              "istek cihazına çerez yazmıyor, yanıtta çerez başlığı yok. " +
+              "Konum kartı olmayan sayfalarda böyle bir istek hiç yapılmaz.",
+          ],
+          [
+            {
+              kind: "strong",
               text: "Gömülü oynatıcılar (YouTube, Spotify) — yalnız sen oynata basarsan. ",
             },
             "Bir profildeki YouTube veya Spotify kartı açılışta ",
@@ -602,7 +625,7 @@ export const cerezPolitikasiSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "İlk üç istek cihazına hiçbir şey yazmaz; bu yüzden ",
+          "İlk dört istek cihazına hiçbir şey yazmaz; bu yüzden ",
           { kind: "link", text: "4. bölümdeki tabloda", href: "#cerez-tablosu" },
           " yer almazlar. Tablo yalnızca ",
           { kind: "strong", text: "bizim" },
