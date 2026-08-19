@@ -87,8 +87,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
     profileData?.theme && Object.hasOwn(PROFILE_THEME_COLORS, profileData.theme)
       ? (profileData.theme as ProfileTheme)
       : null;
+  // Landing kendi kaydırma göstergesini taşıyor (sağdaki dikey hap), bu yüzden
+  // tarayıcının çubuğu orada gizlenir. İşaret KÖK elemanda çünkü kaydırma
+  // çubuğu belgeye ait — bölüm içi bir sınıfla kapatılamaz. Yalnız ana sayfa:
+  // editör, panel ve profil sayfalarında çubuk yerinde kalır (oralarda uzun
+  // listeler var ve kullanıcının nerede olduğunu çubuktan okuması gerekiyor).
+  // Route kimlikleri dile göre `${locale}/home` biçiminde üretiliyor
+  // (`app/routes.ts`), Türkçe kök ise `index` route'u — ikisi de yakalanır.
+  const isLanding = matches.some(
+    (match) => match.id === "routes/home" || match.id.endsWith("/home"),
+  );
   return (
-    <html lang={locale} data-profile-theme={profileTheme ?? undefined}>
+    <html
+      lang={locale}
+      data-profile-theme={profileTheme ?? undefined}
+      data-landing={isLanding ? "" : undefined}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -34,6 +34,32 @@
  * yerinde dururken medyanın üstüne binmesi.
  * ==================================================================== */
 
+/* ---------------------------------------------------------------- *
+ * BELGE KAYDIRMA ÇUBUĞU: landing'de gizli.
+ *
+ * Sayfa kendi göstergesini taşıyor (sağdaki dikey hap, `.lp-progress`), iki
+ * çubuk yan yana gürültü oluyordu. İşaret kök elemanda (`root.tsx`) çünkü
+ * kaydırma çubuğu BELGEYE ait — bir bölüme sınıf vererek kapatılamaz.
+ *
+ * Kaydırmanın KENDİSİ kapanmıyor: tekerlek, klavye (Space/PageDown/Home/End),
+ * dokunmatik ve `scrollIntoView` aynen çalışır; giden yalnız çubuğun görüntüsü.
+ * Yalnız ana sayfada: editör, panel ve profil sayfalarında çubuk yerinde
+ * kalır — oralarda uzun listeler var ve kullanıcının konumunu çubuktan
+ * okuması gerekiyor.
+ *
+ * `scrollbar-gutter` bilerek YOK: yer ayırmak, çubuğu gizleyip boşluğu
+ * bırakmak olurdu. Çubuk üstte duran (overlay) sistemlerde zaten yer
+ * kaplamıyor; kaplayanlarda sayfa birkaç piksel genişliyor ve landing
+ * ortalanmış bir düzen olduğu için bu fark görünmüyor.
+ * ---------------------------------------------------------------- */
+html[data-landing] {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* eski Edge */
+}
+html[data-landing]::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari */
+}
+
 :root {
   --lp-gutter: 16px;
   --lp-radius: var(--radius-2xl);
