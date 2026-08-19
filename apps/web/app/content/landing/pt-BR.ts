@@ -120,6 +120,19 @@ export const ptBR = {
     next: "Próximo cartão",
     trackLabel: "Cartões da vitrine",
   },
+  karakterler: {
+    title: "Cada página se parece com quem a fez",
+    body: "Um mesmo produto, seis profissões. As telas desses celulares são páginas reais do Caka, não capturas.",
+    trackLabel: "Cartões de personagens",
+    jobs: {
+      yazilimci: "Engenheiro de software",
+      youtuber: "YouTuber",
+      sporHocasi: "Personal trainer",
+      muzisyen: "Músico",
+      gazeteci: "Jornalista",
+      diyetisyen: "Nutricionista",
+    },
+  },
   faq: {
     title: "Dúvidas? Respondidas",
     label: "Perguntas frequentes",
