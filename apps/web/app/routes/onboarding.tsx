@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 import { Form, Link, data, redirect, useSearchParams } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
+import telefonMockup from "~/assets/landing/vitrin/telefon-busra.webp";
 import { AppleIcon } from "~/components/icons/apple";
 import { GoogleIcon } from "~/components/icons/google";
 import {
@@ -194,6 +195,25 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
           {app.setup.haveAccountSignIn}
         </Link>
       </div>
+
+      {/* Adresin ARDINDAN ne geldiğini gösteren tek dekor: gerçek bir Caka
+          sayfasının mockup'ı (laboratuvardan; bkz. `scripts/lab-telefon.mjs`).
+
+          AKIŞI GECİKTİRMEZ: formdan SONRA geliyor, `lazy` yükleniyor ve
+          `sm` altındaki dar ekranlarda hiç basılmıyor — kayıt akışının ilk
+          adımı tek bir input, dekor onun önüne geçmemeli. `aria-hidden`:
+          burada bilgi taşımıyor, formun yanındaki metinler zaten anlatıyor;
+          ekran okuyucuya fazladan bir cümle okutmak akışı uzatırdı. */}
+      <img
+        src={telefonMockup}
+        alt=""
+        aria-hidden
+        width={640}
+        height={1176}
+        loading="lazy"
+        decoding="async"
+        className="mt-10 hidden h-80 w-auto object-contain sm:block lg:h-96"
+      />
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="max-w-sm rounded-2xl text-center">

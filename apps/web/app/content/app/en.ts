@@ -269,9 +269,7 @@ export const en = {
     noAccount: "Don't have an account?",
     claimAddress: "Claim your address",
     homeAria: "Caka home page",
-    demoRole: "ceramics studio · İzmir",
-    demoLinkCalendar: "Studio calendar",
-    demoLinkContact: "Contact",
+    demoAlt: "A real Caka page: dietitian Büşra Kaya's booking link, meal plan document and gallery",
 
     signOut: "Sign out",
     accountMenu: "Account menu",

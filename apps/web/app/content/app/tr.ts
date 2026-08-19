@@ -279,9 +279,7 @@ export const tr = {
     noAccount: "Hesabın yok mu?",
     claimAddress: "Adresini al",
     homeAria: "Caka ana sayfa",
-    demoRole: "seramik atölyesi · İzmir",
-    demoLinkCalendar: "Atölye takvimi",
-    demoLinkContact: "İletişim",
+    demoAlt: "Örnek bir Caka sayfası: diyetisyen Büşra Kaya'nın randevu bağlantısı, beslenme programı ve galerisi",
 
     signOut: "Çıkış yap",
     accountMenu: "Hesap menüsü",

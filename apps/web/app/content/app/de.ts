@@ -271,9 +271,7 @@ export const de = {
     noAccount: "Noch kein Konto?",
     claimAddress: "Sichere dir deine Adresse",
     homeAria: "Caka Startseite",
-    demoRole: "Keramikwerkstatt · İzmir",
-    demoLinkCalendar: "Werkstattkalender",
-    demoLinkContact: "Kontakt",
+    demoAlt: "Eine echte Caka-Seite: Terminlink, Ernährungsplan und Galerie der Diätassistentin Büşra Kaya",
 
     signOut: "Abmelden",
     accountMenu: "Kontomenü",
