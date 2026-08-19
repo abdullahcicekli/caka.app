@@ -58,12 +58,13 @@ segmenti eklemek gerekir; cache girdisi ikiye çıkar).
 
 ## 3. `github_calendar` satır temizliği
 
-Kullanıcı GitHub handle'ını değiştirdikçe eski login satırı tabloda kalıyor;
-hesap silmede de temizlenmiyor (Değişmez #9'daki asset temizlik disiplininin
-karşılığı yok). Bugün zararsız: layout'ta o login kalmayınca satır hiç
-sorgulanmıyor, en fazla ölü satır olarak duruyor.
+Hesap silme artık kullanıcının layout'undaki login satırlarını temizliyor
+(`server/account.ts`). Kalan boşluk: kullanıcı GitHub handle'ını değiştirdikçe
+eski login satırı tabloda kalıyor ve hiç sorgulanmayan satırlar için budama
+yok. Bugün zararsız: layout'ta o login kalmayınca satır hiç sorgulanmıyor, en
+fazla ölü satır olarak duruyor.
 
-Yapılacak: hesap silme akışına temizlik ekle; istenirse uzun süre
+Yapılacak: handle profilden çıkarıldığında satırı düşür; istenirse uzun süre
 sorgulanmamış satırlar için budama.
 
 ## 4. Mobil çentik payı (`viewport-fit=cover`)
@@ -140,15 +141,13 @@ sunucumuzdan servis ediliyor — `apps/web/app/fonts/`, `app.css`'teki
 taşıyor: **unicode subset'i şekillendirmeyi sessizce bozabiliyor**, o yüzden
 subset alınacaksa öncesi/sonrası HarfBuzz'la karşılaştırılmalı.
 
-## 8. Self-servis silme ve dışa aktarma
+## 8. Veri dışa aktarma
 
-Bugün ne self-servis hesap silme ne de **veri dışa aktarma** var; KVKK m.11
-haklarının hiçbiri ürün içinden kullanılamıyor; hepsi e-postayla ve elle
-karşılanıyor. Ertelendi çünkü doğru yapılması JSON dışa aktarma formatı, R2
-nesnelerinin paketlenmesi ve silme sonrası yedek politikası kararı istiyor —
-sonuncusu artık `/gizlilik` §7'de yazılı (silme talebinden sonra en geç 3 ay,
-Silme Yönetmeliği m.11/3) — yani hedef süre belli, uygulaması yok. Kullanıcı sayısı düşükken elle karşılamak makul; ölçek
-büyüdüğünde bu bir yük olur.
+Self-servis hesap silme yapıldı (Ayarlar → Hesap). **Veri dışa aktarma** hâlâ
+yok: KVKK m.11'in bu ayağı ürün içinden kullanılamıyor, e-postayla ve elle
+karşılanıyor. Ertelendi çünkü doğru yapılması bir JSON dışa aktarma formatı ve
+R2 nesnelerinin paketlenmesi kararını istiyor. Kullanıcı sayısı düşükken elle
+karşılamak makul; ölçek büyüdüğünde bu bir yük olur.
 
 ## 9. İlgili kişi başvuru yordamı
 
@@ -208,10 +207,10 @@ envanteri unutmak bugün sessiz geçiyor.
 
 `profile_view_daily` ve `link_click_daily` satırları **süresiz** duruyor.
 Panel yalnız son 30 günü gösteriyor (`OLCUM_PENCERE_GUN`) ama bu bir
-görüntüleme filtresi; daha eski satırlar tabloda kalıyor. Bugün ne bir cron
-tetikleyicisi var ne de satırları silen bir yol: `ON DELETE cascade` şemada
-tanımlı, fakat profil silme bugün elle (e-postayla) yapıldığı için pratikte
-neredeyse hiç işlemiyor.
+görüntüleme filtresi; daha eski satırlar tabloda kalıyor. Bugün satırları toplu
+silen bir yol yok: hesap silmede sayaçlar temizleniyor
+(`server/account.ts`), ama yaşayan bir profilin eski satırlarını budayan cron
+tetikleyicisi yok.
 
 Zararı bugün sınırlı: satırlar kişiyi değil günü, ülke kodunu ve blok
 kimliğini taşıyan sayaçlar — olay kaydı değil, tek bir ziyaret geri

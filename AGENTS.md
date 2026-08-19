@@ -76,9 +76,14 @@ yeni metin önce Türkçe yazılır, tip sözleşmesi ondan türer.
    React Router meta API'si dışında bir yolla (string `<head>`,
    `dangerouslySetInnerHTML`) basılmaz.
 9. **R2 anahtarları** düz UUID'dir (`asset.id` = R2 key); path segmentli anahtar
-   üretme. Asset silme yalnızca hesap silmede yapılır.
+   üretme. Asset silme yalnızca hesap silmede yapılır (`server/account.ts`).
 10. **Adres değişikliği semantiği:** eski adres 30 gün 302 yönlendirir ve
     kilitlidir (`username_redirect`). 301 KULLANMA (tarayıcı süresiz cache'ler).
+    Aynı tablo silinmiş hesapların adını da 30 gün kilitler: `profile_id` NULL
+    olan satır **hedefsiz kilittir**, yönlendirmez ve 404 verir. Ad doluluğu
+    soran her yol (`isUsernameAvailable`, `findForeignLock`, `changeUsername`
+    batch'i) bu NULL satırları da engel saymalı — SQL'de `NULL <> 'x'` TRUE
+    değildir, `ne` tek başına kaçırır.
 11. **Deploy = migration + deploy, her seferinde.** Prod'a çıkış yalnız
     `pnpm --filter @caka/web run deploy` ile yapılır; script `build → wrangler
     d1 migrations apply caka-db --remote → wrangler deploy` sırasını izler
