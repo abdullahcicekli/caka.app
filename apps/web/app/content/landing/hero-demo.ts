@@ -64,14 +64,14 @@ import avatarSelin from "~/assets/landing/serit/selin.webp";
 import avatarSena from "~/assets/landing/serit/sena.webp";
 import coverGeceYolu from "~/assets/landing/cover-gece-yolu.webp";
 import coverSadeHayat from "~/assets/landing/cover-sade-hayat.webp";
-import detailElif from "~/assets/landing/detail-elif.webp";
-import detailNaz from "~/assets/landing/detail-naz.webp";
 import mapTown from "~/assets/landing/map-town.webp";
 import thumbPodcast from "~/assets/landing/thumb-podcast.webp";
 import sceneNaz from "~/assets/landing/scene-naz.webp";
 import ogKonser from "~/assets/landing/og-konser.webp";
+import sceneMarangoz from "~/assets/landing/scene-marangoz.webp";
+import sceneMimar from "~/assets/landing/scene-mimar.webp";
 import sceneSelin from "~/assets/landing/scene-selin.webp";
-import sceneSelinTools from "~/assets/landing/scene-selin-tools.webp";
+import sceneYazi from "~/assets/landing/scene-yazi.webp";
 import { githubLoginKey, type GithubCalendar } from "~/lib/github-calendar";
 
 /**
@@ -210,10 +210,18 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   "demo-kaan-profile": avatarKaan,
   "demo-deniz-profile": avatarDeniz,
   "demo-ahmet-profile": avatarAhmet,
-  // Kişi TAŞIMAYAN detay kırpmaları: sosyal kartın og önizlemesi.
-  "demo-halil-threads": sceneSelinTools,
-  "demo-burak-linkedin": detailElif,
-  "demo-furkan-link": detailNaz,
+  // Kişi TAŞIMAYAN yakın planlar: sosyal kartın og önizlemesi ve yazarın
+  // bağlantısı. GÖRSEL KARTIN SAHİBİNİN İŞİNİ ANLATIR:
+  //   Halil  marangoz → rende, keski, talaş olan tezgâh
+  //   Burak  mimar    → maket, teknik çizim, cetvel
+  //   Furkan yazar    → defter, dolmakalem, kupa (loş çalışma masası)
+  // Üçü de bir dönem BAŞKA birinin karesiydi (çömlekçi tezgâhı, raf önünde
+  // cam vazo, seslendirmenin masası) ve kart konusuyla ilgisiz duruyordu.
+  // Bu yüzden DOSYA ADLARI ARTIK KİŞİYE DEĞİL KONUYA GÖRE: kadro yeniden
+  // dağıtılınca kişi adı taşıyan dosya adı yanlışa düşüyor, konu adı düşmüyor.
+  "demo-halil-threads": sceneMarangoz,
+  "demo-burak-linkedin": sceneMimar,
+  "demo-furkan-link": sceneYazi,
   // Bağlantı kartının marka çipi. Favicon YOKSA kart alan adının BAŞ
   // HARFİNİ gösteriyor ("S", "O") — şeritte yer tutucu harf bırakmamak için
   // dört kişisel sitenin favicon'u sahibinin portresi. (Kişisel sitelerde
