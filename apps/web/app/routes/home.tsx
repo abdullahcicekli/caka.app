@@ -3,11 +3,15 @@ import { env } from "cloudflare:workers";
 import type { Route } from "./+types/home";
 import { AudienceSection } from "~/components/landing/audience-section";
 import { CtaSection } from "~/components/landing/cta-section";
+import { EditorialSection } from "~/components/landing/editorial-section";
 import { FaqSection } from "~/components/landing/faq-section";
 import { Hero } from "~/components/landing/hero";
 import { MinutesSection } from "~/components/landing/minutes-section";
 import { Navbar } from "~/components/landing/navbar";
+import { OutroSection } from "~/components/landing/outro-section";
+import { ScrollIndicator } from "~/components/landing/scroll-indicator";
 import { ShareSection } from "~/components/landing/share-section";
+import { ShowcaseSection } from "~/components/landing/showcase-section";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { publishedLegalDocumentIds } from "~/content/legal";
@@ -107,30 +111,38 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { user, ogImage, publishedLegal, locale };
 }
 
+/**
+ * Kaydirma gostergesinin izledigi bolumler. Gosterge dekoratif; ayni
+ * capalarin gercek baglantilari menu katmaninda ve footer'da.
+ */
+const SECTION_IDS = ["hero", "urun", "vitrin", "sss", "kapanis"] as const;
+
 export default function Home({ loaderData }: Route.ComponentProps) {
   const landing = useCatalog(landingCatalog);
   return (
-    <div className="bg-kirec">
-      <Navbar
-        login={landing.nav.login}
-        cta={landing.nav.cta}
-        user={loaderData.user}
-      />
-      <main>
-        <Hero hero={landing.hero} />
+    <div className="lp">
+      <Navbar nav={landing.nav} user={loaderData.user} />
+      <main id="hero">
+        <Hero hero={landing.hero} cta={landing.nav.cta} />
+        <EditorialSection editorial={landing.editorial} />
         <MinutesSection minutes={landing.minutes} />
         <ShareSection share={landing.share} />
         <AudienceSection audience={landing.audience} />
+        <ShowcaseSection showcase={landing.showcase} />
         <FaqSection
           faq={landing.faq}
           publishedLegal={loaderData.publishedLegal}
         />
-        <CtaSection cta={landing.closingCta} />
+        <div id="kapanis">
+          <CtaSection cta={landing.closingCta} />
+        </div>
       </main>
       <SiteFooter
         footer={landing.footer}
         publishedLegal={loaderData.publishedLegal}
       />
+      <OutroSection outro={landing.outro} />
+      <ScrollIndicator ids={SECTION_IDS} />
     </div>
   );
 }

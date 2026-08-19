@@ -6,7 +6,10 @@ import type { LandingContent } from "~/content/landing";
 import { useHref } from "~/lib/locale";
 
 /**
- * SSS: erik renk bloğu, ortalanmış başlık + açılır-kapanır soru kartları.
+ * SSS: solda etiket sütunu, sağda ince çizgilerle ayrılmış akordeon.
+ *
+ * Akordeon `<details>/<summary>` — açılıp kapanması, klavye erişimi ve
+ * sayfa-içi arama (Ctrl+F) tarayıcının kendi işi; JS yok.
  *
  * `publishedLegal` loader'dan gelir: cevabın dayandığı hukuki belge yayına
  * hazır değilse bağlantı gösterilmez (kapı prod'da 404 veriyor). Cevabın metni
@@ -21,12 +24,13 @@ export function FaqSection({
 }) {
   const localize = useHref();
   return (
-    <section className="bg-erik">
-      <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-8 lg:py-28">
-        <h2 className="text-4xl leading-[1.05] font-bold tracking-tight text-erik-acik sm:text-5xl">
-          {faq.title}
-        </h2>
-        <div className="mx-auto mt-9 flex max-w-2xl flex-col gap-3 text-left">
+    <section id="sss" className="lp-section lp-shell">
+      <div className="lp-faq">
+        <div>
+          <p className="lp-eyebrow">{faq.label}</p>
+          <h2 className="lp-h3 mt-3">{faq.title}</h2>
+        </div>
+        <div>
           {faq.items.map((item) => {
             const link =
               item.link &&
@@ -35,25 +39,19 @@ export function FaqSection({
                 ? item.link
                 : null;
             return (
-              <details
-                key={item.question}
-                className="group rounded-2xl bg-erik-koyu"
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-lg font-semibold text-erik-beyaz">
+              <details key={item.question} className="lp-faq-item">
+                <summary>
                   {item.question}
-                  <NavArrowDown
-                    aria-hidden
-                    className="size-5 flex-none text-erik-acik transition-transform group-open:rotate-180"
-                  />
+                  <NavArrowDown aria-hidden width={20} height={20} />
                 </summary>
-                <p className="px-6 pb-5 text-[15px] leading-relaxed text-erik-beyaz/80">
+                <p className="lp-faq-answer">
                   {item.answer}
                   {link ? (
                     <>
                       {" "}
                       <Link
                         to={localize(link.href)}
-                        className="font-semibold text-erik-acik underline underline-offset-4 hover:opacity-80"
+                        className="font-medium text-murekkep underline underline-offset-4 hover:opacity-70"
                       >
                         {link.label}
                       </Link>

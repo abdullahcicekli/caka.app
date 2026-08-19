@@ -6,7 +6,7 @@ import { cn } from "~/lib/utils";
 
 /** Hap biçimli CTA. Renk kararları varyantta kalır; çağıran yalnızca niyet seçer. */
 const pillVariants = cva(
-  "inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium whitespace-nowrap transition-colors",
+  "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-murekkep",
   {
     variants: {
       variant: {
@@ -20,6 +20,10 @@ const pillVariants = cva(
         lime: "bg-kirec text-murekkep hover:bg-kirec/90",
         /** Cam blok üzerindeki CTA: seftali zemin */
         seftali: "bg-seftali text-seftali-koyu hover:bg-seftali/90",
+        /** Koyu blok üzerindeki CTA: beyaz hap */
+        light: "bg-white text-murekkep hover:bg-zemin",
+        /** Açık zemin üzerinde ikincil eylem: çerçeveli hap */
+        outline: "border border-sinir bg-white text-murekkep hover:border-murekkep",
       },
     },
     defaultVariants: { variant: "ink" },

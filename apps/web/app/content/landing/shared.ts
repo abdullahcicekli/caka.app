@@ -57,6 +57,8 @@ export const landingAssets = {
   },
   shareImage: shareCards,
   phoneImage: phone3d,
+  // Menü katmanındaki medya kartı.
+  menuImage: creatorNaz,
   // Yalnızca Caka'ya ait, var olduğu doğrulanmış hesaplar. `github.com/caka-app`
   // ve `x.com/cakaapp` 404 dönüyordu; `instagram.com/caka.app` ise Caka'ya ait
   // değil, o yüzden kaldırıldı. Bu liste `home.tsx`'teki Organization şemasının

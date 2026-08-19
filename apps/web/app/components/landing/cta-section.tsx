@@ -1,15 +1,21 @@
 import { ClaimForm } from "./claim-form";
 import type { LandingContent } from "~/content/landing";
 
-/** Kapanış CTA'sı: mor renk bloğu, lila başlık, adres formu + lime buton. */
+/**
+ * Koyu kapanış bloğu: mürekkep zemin, beyaz başlık, kireç vurgulu satır ve
+ * adres formu.
+ *
+ * Referanstaki blokta düz bir hap düğme var; burada onun yerine adres formu
+ * duruyor — ziyaretçi tek adımda hem adını seçiyor hem kayda giriyor, bu
+ * ürünün gerçek dönüşüm yolu.
+ */
 export function CtaSection({ cta }: { cta: LandingContent["closingCta"] }) {
   return (
-    <section className="bg-mor">
-      <div className="mx-auto flex max-w-3xl flex-col items-center px-4 pt-20 pb-28 text-center sm:px-8">
-        <h2 className="text-4xl leading-[1.05] font-bold tracking-tight whitespace-pre-line text-mor-acik sm:text-5xl">
-          {cta.title}
-        </h2>
-        <div className="mt-10 w-full max-w-xl">
+    <section className="lp-section-tight lp-shell">
+      <div className="lp-dark">
+        <h2 className="lp-h2">{cta.title}</h2>
+        <p className="lp-dark-accent">{cta.accent}</p>
+        <div className="w-full max-w-xl">
           <ClaimForm claim={cta.claim} buttonVariant="lime" />
         </div>
       </div>

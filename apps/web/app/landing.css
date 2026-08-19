@@ -1,0 +1,773 @@
+/* ==================================================================== *
+ * LANDING (ana sayfa + hukuki sayfaların kabuğu)
+ *
+ * NEDEN AYRI DOSYA: `app.css` 3800 satır ve paralel çalışan başka ajanların
+ * da dokunduğu bir yüzey. Landing'in tamamı buraya alındı; `app.css` yalnız
+ * tek satırlık `@import` ile bağlar. Marka token'ları (`@theme`) orada kalır —
+ * burada YALNIZ `var(--color-*)` okunur, ham hex yazılmaz (Değişmez #4).
+ *
+ * TASARIM DİLİ (referans: sunday.ai'den ölçülen değerler)
+ *   tip ölçeği   H1 120px/1.0/-0.025em, H2 84px/1.1 @1440 → clamp'lendi
+ *   köşe         kart 16px (kılavuz `--radius-2xl`), eylem 999px (hap)
+ *   easing       cubic-bezier(.4, 0, .2, 1) — 150 / 200 / 300ms
+ *   ritim        bölüm arası clamp(72px, 9vw, 160px)
+ *   oluk         16px (mobil) → 24px (masaüstü); kartlar oluktan içeri oturur
+ *
+ * HAREKET: bütün kaydırma koreografisi `--lp-p` (0→1 ilerleme) değişkenini
+ * okur. Değişkeni JS yazar (rAF, tek stil yazımı); `prefers-reduced-motion:
+ * reduce` altında JS hiç kurulmaz ve varsayılan `--lp-p: 1` kalır — yani
+ * koreografi BİTMİŞ hâliyle, statik ve okunur durur. `app.css`'teki genel
+ * koruma bloğu da süreleri sıfırlar.
+ * ==================================================================== */
+
+:root {
+  --lp-gutter: 16px;
+  --lp-radius: var(--radius-2xl);
+  --lp-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lp-nav-h: 60px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --lp-gutter: 24px;
+    --lp-nav-h: 64px;
+  }
+}
+
+.lp {
+  background: var(--color-zemin);
+  color: var(--color-murekkep);
+}
+
+/* Yatay taşma kilidi: sabitlenen bölümler ve karusel hiçbir genişlikte
+   gövdeyi yana kaydırmaz. `clip` yerine `hidden` DEĞİL — `overflow: hidden`
+   içeride `position: sticky`yi kırar. */
+.lp {
+  overflow-x: clip;
+}
+
+.lp-shell {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1440px;
+  padding-inline: var(--lp-gutter);
+}
+
+/* Ölçü: uzun metin tam genişlikte okunmaz. */
+.lp-measure { max-width: 62ch; }
+
+/* ---------------------------------------------------------------- *
+ * Tipografi ölçeği
+ * ---------------------------------------------------------------- */
+
+.lp-display {
+  font-size: clamp(44px, 10.4vw, 132px);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.lp-h2 {
+  font-size: clamp(32px, 6vw, 76px);
+  font-weight: 700;
+  line-height: 1.03;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.lp-h3 {
+  font-size: clamp(22px, 2.4vw, 32px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+/* Editoryal blok: tek cümle, başlıktan küçük ama gövdeden çok büyük. */
+.lp-lede {
+  font-size: clamp(22px, 3.4vw, 44px);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  text-wrap: pretty;
+}
+
+.lp-kicker {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: pre-line;
+  text-align: center;
+}
+.lp-kicker span {
+  display: block;
+  color: color-mix(in srgb, var(--color-murekkep) 55%, transparent);
+}
+.lp-kicker span:first-child { color: var(--color-murekkep); }
+
+.lp-body {
+  font-size: 17px;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-murekkep) 68%, transparent);
+  text-wrap: pretty;
+}
+
+.lp-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-murekkep) 45%, transparent);
+}
+
+/* ---------------------------------------------------------------- *
+ * Yüzen hap navbar
+ * ---------------------------------------------------------------- */
+
+.lp-nav {
+  position: sticky;
+  z-index: 60;
+  top: 12px;
+  padding-inline: var(--lp-gutter);
+}
+
+.lp-nav-pill {
+  display: flex;
+  min-height: var(--lp-nav-h);
+  max-width: 1440px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: white;
+  padding: 8px 8px 8px 18px;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--color-murekkep) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--color-murekkep) 6%, transparent);
+}
+
+.lp-nav-brand { display: flex; align-items: center; flex: none; }
+.lp-nav-brand img { display: block; width: auto; height: 24px; }
+.lp-nav-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* Hamburger: üç değil iki çizgi (referanstaki gibi), açıkken çarpıya döner. */
+.lp-burger {
+  position: relative;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 999px;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color 150ms var(--lp-ease);
+}
+.lp-burger:hover { background: var(--color-zemin); }
+.lp-burger:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
+.lp-burger i {
+  position: absolute;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-murekkep);
+  transition: translate 200ms var(--lp-ease), rotate 200ms var(--lp-ease);
+}
+.lp-burger i:first-child { translate: 0 -4px; }
+.lp-burger i:last-child { translate: 0 4px; }
+.lp-burger[aria-expanded="true"] i:first-child { translate: 0 0; rotate: 45deg; }
+.lp-burger[aria-expanded="true"] i:last-child { translate: 0 0; rotate: -45deg; }
+
+/* ---------------------------------------------------------------- *
+ * Menü katmanı
+ *
+ * Hap navbarın altından açılan beyaz kart + arkasında perde. Kart,
+ * navbarın kendisiyle aynı hizada durur (aynı oluk, aynı maks genişlik).
+ * ---------------------------------------------------------------- */
+
+.lp-menu-scrim {
+  position: fixed;
+  z-index: 55;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-murekkep) 45%, transparent);
+  animation: lp-fade 200ms var(--lp-ease) both;
+}
+
+@keyframes lp-fade { from { opacity: 0; } }
+
+.lp-menu {
+  position: absolute;
+  z-index: 61;
+  top: calc(var(--lp-nav-h) + 8px);
+  right: var(--lp-gutter);
+  left: var(--lp-gutter);
+  overflow: hidden;
+  margin-inline: auto;
+  max-width: 720px;
+  border-radius: var(--lp-radius);
+  background: white;
+  padding: 20px;
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--color-murekkep) 18%, transparent);
+  animation: lp-menu-in 220ms var(--lp-ease) both;
+}
+
+@keyframes lp-menu-in {
+  from { opacity: 0; translate: 0 -8px; scale: 0.985; }
+}
+
+.lp-menu-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .lp-menu-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.lp-menu-links { display: flex; flex-direction: column; gap: 2px; }
+.lp-menu-links a {
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-murekkep);
+  transition: background-color 150ms var(--lp-ease), opacity 150ms var(--lp-ease);
+}
+.lp-menu-links a:hover { background: var(--color-zemin); }
+.lp-menu-links a:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
+
+.lp-menu-card {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  min-height: 168px;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: 12px;
+  background: var(--color-kirec);
+  padding: 16px;
+  gap: 4px;
+}
+.lp-menu-card img {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+.lp-menu-card::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-murekkep) 82%, transparent) 0%,
+    color-mix(in srgb, var(--color-murekkep) 30%, transparent) 48%,
+    transparent 78%
+  );
+}
+.lp-menu-card strong,
+.lp-menu-card span { position: relative; z-index: 2; color: white; }
+.lp-menu-card strong { font-size: 15px; font-weight: 600; }
+.lp-menu-card span { font-size: 13px; opacity: 0.82; }
+
+.lp-menu-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 18px;
+  border-top: 1px solid var(--color-sinir);
+  padding-top: 12px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-murekkep) 55%, transparent);
+}
+
+/* ---------------------------------------------------------------- *
+ * Hero
+ *
+ * Mekanik: başlık bloğu `sticky top`, medya normal akışta ve daha yüksek
+ * z-index'te. Kaydırınca medya yukarı kayar ve YERİNDE DURAN başlığın
+ * üstüne biner. Tamamen CSS — scroll listener yok.
+ * ---------------------------------------------------------------- */
+
+.lp-hero { position: relative; padding-top: clamp(40px, 7vw, 88px); }
+
+.lp-hero-head {
+  position: sticky;
+  z-index: 0;
+  top: calc(var(--lp-nav-h) + 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 2vw, 26px);
+  padding-bottom: clamp(28px, 5vw, 64px);
+  text-align: center;
+}
+
+.lp-hero-title { white-space: pre-line; }
+
+.lp-hero-media {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: var(--lp-radius);
+  background: var(--color-kirec);
+  /* Oran SABİT: görseller yüklenirken sayfa kaymaz (CLS = 0). */
+  aspect-ratio: 4 / 5;
+}
+@media (min-width: 768px) { .lp-hero-media { aspect-ratio: 16 / 9; } }
+
+/* MOBIL: serit akmaz. Iki portre blogu doldurur, kalanlar gizli ve `lazy`
+   (gizli tembel gorsel indirilmez) — mobil transferi yariya iner.
+   MASAUSTU: liste iki kez basilir ve -%50'de basa sararak kesintisiz akar. */
+.lp-hero-strip {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 8px;
+  padding: 8px;
+}
+.lp-hero-strip img {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  height: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.lp-hero-strip img.is-extra { display: none; }
+
+@media (min-width: 768px) {
+  .lp-hero-strip { width: max-content; gap: 12px; padding: 12px; }
+  .lp-hero-strip img {
+    width: auto;
+    flex: none;
+    aspect-ratio: 3 / 4;
+  }
+  .lp-hero-strip img.is-extra { display: block; }
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .lp-hero-strip {
+    animation: lp-strip var(--lp-strip-duration, 48s) linear infinite;
+    animation-play-state: var(--lp-strip-state, running);
+  }
+}
+@keyframes lp-strip {
+  from { translate: 0 0; }
+  to { translate: -50% 0; }
+}
+
+/* Medyanın üstüne binen hap CTA. */
+.lp-hero-cta {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  margin-top: -26px;
+}
+
+.lp-strip-toggle {
+  position: absolute;
+  /* Mobilde serit akmiyor; durdurma dugmesi de anlamsiz. */
+  display: none;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: inline-flex;
+  height: 34px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-murekkep) 74%, transparent);
+  padding-inline: 12px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 150ms var(--lp-ease);
+}
+.lp-strip-toggle:hover { background: var(--color-murekkep); }
+.lp-strip-toggle:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+@media (min-width: 768px) { .lp-strip-toggle { display: inline-flex; } }
+
+/* ---------------------------------------------------------------- *
+ * Bölüm ritmi
+ * ---------------------------------------------------------------- */
+
+.lp-section { padding-block: clamp(72px, 9vw, 160px); }
+.lp-section-tight { padding-block: clamp(48px, 6vw, 104px); }
+
+/* ---------------------------------------------------------------- *
+ * Sabitlenen ifade bölümü
+ *
+ * Kelimeler önce dağınık (çapraz kaymış, hafif döndürülmüş) durur; sayfa
+ * kaydıkça `--lp-p` 0→1 gider ve hepsi tek satıra oturur. Kayma miktarları
+ * SABİT bir tablodan gelir (bileşen `--lp-dx/--lp-dy/--lp-rot` yazar) —
+ * rastgelelik yok, sunucu ve istemci aynı çıktıyı üretir.
+ * ---------------------------------------------------------------- */
+
+/* Kaydirma yolu: sabit duran cocuk bu yukseklik boyunca yerinde kalir ve
+   `--lp-p` 0'dan 1'e gider. `--lp-p: 1` VARSAYILAN: JS hic calismazsa
+   (hareket azaltma, script hatasi) koreografi bitmis halde durur. */
+.lp-pinned {
+  position: relative;
+  --lp-p: 1;
+  min-height: 240svh;
+}
+@media (max-width: 767px) { .lp-pinned { min-height: 200svh; } }
+.lp-pinned-sticky {
+  position: sticky;
+  top: 0;
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 4vw, 48px);
+  padding-block: 80px;
+  text-align: center;
+}
+
+.lp-words {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 0.28em;
+}
+.lp-word {
+  display: inline-block;
+  translate: calc(var(--lp-dx) * (1 - var(--lp-p))) calc(var(--lp-dy) * (1 - var(--lp-p)));
+  rotate: calc(var(--lp-rot) * (1 - var(--lp-p)));
+  will-change: translate, rotate;
+}
+
+/* Paragraf koreografinin sonunda belirir. */
+.lp-pinned-body {
+  opacity: clamp(0, calc((var(--lp-p) - 0.62) / 0.3), 1);
+  translate: 0 calc(16px * (1 - clamp(0, calc((var(--lp-p) - 0.62) / 0.3), 1)));
+}
+
+/* ---------------------------------------------------------------- *
+ * Bölünmüş kartlar (metin kartı + medya kartı)
+ * ---------------------------------------------------------------- */
+
+.lp-split {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .lp-split { grid-template-columns: 1fr 1fr; }
+  /* Yalniz gorsel sira degisir; DOM sirasi (metin -> medya) korunur. */
+  .lp-split-reverse > :first-child { order: 2; }
+}
+
+.lp-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--lp-radius);
+  padding: clamp(24px, 3vw, 44px);
+}
+.lp-card-text { background: white; justify-content: space-between; gap: 32px; }
+
+.lp-card-media {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  min-height: 320px;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: var(--lp-radius);
+  background: var(--color-zemin);
+  padding: 16px;
+  gap: 16px;
+}
+.lp-card-media img {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(78%, 460px);
+  height: auto;
+}
+.lp-card-media > * { position: relative; z-index: 1; }
+
+.lp-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.lp-badge {
+  border-radius: 999px;
+  background: color-mix(in srgb, white 78%, transparent);
+  padding: 5px 12px;
+  color: var(--color-murekkep);
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+
+.lp-title-pill {
+  align-self: flex-start;
+  border-radius: 999px;
+  background: var(--color-murekkep);
+  padding: 7px 16px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------- *
+ * Yatay karusel
+ *
+ * Kaydırma NATIVE: `overflow-x: auto` + snap. Klavye kabın kendisinde
+ * çalışır (odaklanabilir kaydırma kabı ok tuşlarıyla kayar) ve ayrıca
+ * ileri/geri düğmeleri ile segment düğmeleri var.
+ * ---------------------------------------------------------------- */
+
+.lp-track {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding-inline: var(--lp-gutter);
+  padding-block: 4px;
+  scroll-padding-inline: var(--lp-gutter);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.lp-track::-webkit-scrollbar { display: none; }
+.lp-track:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 4px; }
+
+.lp-slide {
+  display: flex;
+  overflow: hidden;
+  width: min(84vw, 460px);
+  flex: none;
+  flex-direction: column;
+  border-radius: var(--lp-radius);
+  background: white;
+  scroll-snap-align: start;
+}
+@media (min-width: 1024px) { .lp-slide { width: 460px; } }
+
+.lp-slide-copy { padding: 20px 20px 16px; }
+.lp-slide-copy h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.lp-slide-copy p {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
+}
+.lp-slide-media {
+  display: grid;
+  margin: 0 12px 12px;
+  min-height: 220px;
+  flex: 1;
+  border-radius: 12px;
+  place-items: center;
+  overflow: hidden;
+}
+.lp-slide-media img { width: 100%; height: 100%; object-fit: cover; }
+.lp-slide-media[data-tint="kirec"] { background: var(--color-kirec); }
+.lp-slide-media[data-tint="zemin"] { background: var(--color-zemin); }
+.lp-slide-media[data-tint="murekkep"] { background: var(--color-murekkep); }
+/* Ürün illüstrasyonları beyaz zeminli: kırpılmaz, nefes alsın. */
+.lp-slide-media[data-tint="kirec"] img,
+.lp-slide-media[data-tint="zemin"] img {
+  width: 82%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Segment kontrolü */
+.lp-segments {
+  display: inline-flex;
+  gap: 2px;
+  border-radius: 999px;
+  background: white;
+  padding: 4px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-murekkep) 8%, transparent);
+}
+.lp-segment {
+  border-radius: 999px;
+  padding: 8px 18px;
+  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 200ms var(--lp-ease), color 200ms var(--lp-ease);
+}
+.lp-segment:hover { color: var(--color-murekkep); }
+.lp-segment[aria-current="true"] { background: var(--color-zemin); color: var(--color-murekkep); }
+.lp-segment:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
+
+.lp-arrow {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-sinir);
+  border-radius: 999px;
+  background: white;
+  place-items: center;
+  color: var(--color-murekkep);
+  cursor: pointer;
+  transition: border-color 150ms var(--lp-ease), opacity 150ms var(--lp-ease);
+}
+.lp-arrow:hover { border-color: var(--color-murekkep); }
+.lp-arrow:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- *
+ * Kaydırma göstergesi (dekoratif)
+ *
+ * Ekran okuyucuya kapalı (`aria-hidden`) ve TEK gezinme yolu değil: aynı
+ * bölümlere menü katmanından ve footer'dan bağlantı var. Dokunmatikte ve
+ * dar ekranda hiç görünmez.
+ * ---------------------------------------------------------------- */
+
+.lp-progress {
+  position: fixed;
+  z-index: 40;
+  top: 50%;
+  right: 14px;
+  display: none;
+  width: 26px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 70%, transparent);
+  padding: 10px 0;
+  translate: 0 -50%;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+@media (min-width: 1280px) and (pointer: fine) {
+  .lp-progress { display: flex; }
+}
+.lp-progress-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-murekkep) 25%, transparent);
+  transition: height 260ms var(--lp-ease), background-color 260ms var(--lp-ease);
+}
+.lp-progress-dot.is-active {
+  height: 22px;
+  background: var(--color-murekkep);
+}
+
+/* ---------------------------------------------------------------- *
+ * SSS
+ * ---------------------------------------------------------------- */
+
+.lp-faq {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .lp-faq { grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr); gap: 64px; }
+}
+
+.lp-faq-item { border-top: 1px solid var(--color-sinir); }
+.lp-faq-item:last-child { border-bottom: 1px solid var(--color-sinir); }
+.lp-faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 20px;
+  cursor: pointer;
+  list-style: none;
+  font-size: clamp(17px, 1.6vw, 20px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.lp-faq-item summary::-webkit-details-marker { display: none; }
+.lp-faq-item summary:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: -2px; }
+.lp-faq-item svg { flex: none; transition: rotate 200ms var(--lp-ease); }
+.lp-faq-item[open] svg { rotate: 180deg; }
+.lp-faq-answer {
+  max-width: 62ch;
+  padding-bottom: 22px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--color-murekkep) 68%, transparent);
+}
+
+/* ---------------------------------------------------------------- *
+ * Koyu CTA bloğu
+ * ---------------------------------------------------------------- */
+
+.lp-dark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(20px, 3vw, 36px);
+  border-radius: var(--lp-radius);
+  background: var(--color-murekkep);
+  padding: clamp(48px, 8vw, 128px) clamp(20px, 4vw, 64px);
+  text-align: center;
+  color: white;
+}
+.lp-dark h2 { white-space: pre-line; color: white; }
+.lp-dark-accent {
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 500;
+  color: var(--color-kirec);
+}
+
+/* ---------------------------------------------------------------- *
+ * Kireç kapanış alanı
+ * ---------------------------------------------------------------- */
+
+.lp-outro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  background: var(--color-kirec);
+  padding-block: clamp(64px, 10vw, 148px);
+  text-align: center;
+  color: var(--color-kirec-koyu);
+}
+.lp-outro-line {
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 500;
+}
+.lp-outro-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.lp-outro-pill {
+  border: 1px solid color-mix(in srgb, var(--color-kirec-koyu) 35%, transparent);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+.lp-outro-mark { margin-top: clamp(24px, 5vw, 64px); }
+.lp-outro-mark img { width: auto; height: 34px; }
+
+/* ---------------------------------------------------------------- *
+ * Footer
+ * ---------------------------------------------------------------- */
+
+.lp-footer {
+  border-radius: var(--lp-radius) var(--lp-radius) 0 0;
+  background: white;
+}
+.lp-footer-grid {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .lp-footer-grid { grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 32px; }
+}
+.lp-footer-col h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-murekkep);
+}
+.lp-footer-col ul { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.lp-footer-link {
+  font-size: 14px;
+  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
+  transition: color 150ms var(--lp-ease);
+}
+.lp-footer-link:hover { color: var(--color-murekkep); }
