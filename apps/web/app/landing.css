@@ -364,10 +364,10 @@ html[data-landing]::-webkit-scrollbar {
   background: var(--color-kirec);
   /* Yükseklik SABİT ve satırların toplamına eşit: oranla tahmin etmek
      yerine içerikten türer, kartlar yüklenirken sayfa kaymaz (CLS = 0).
-     iki satır: 240 + 12 + 156 + 24 dolgu = 432; üç satır: + 240 + 12 = 684. */
-  height: 432px;
+     iki satır: 324 + 12 + 240 + 24 dolgu = 600; üç satır: + 240 + 12 = 852. */
+  height: 600px;
 }
-@media (min-width: 1280px) { .lp-hero-media { height: 684px; } }
+@media (min-width: 1280px) { .lp-hero-media { height: 852px; } }
 
 /* ---------------------------------------------------------------- *
  * Hero bento şeridi
@@ -378,12 +378,27 @@ html[data-landing]::-webkit-scrollbar {
  * ÖLÇÜ SÖZLEŞMESİ: kartlar container query ile bant seçiyor ve
  * `.profile-grid-item` `container-type: size` taşıyor — bu, hücrenin KESİN
  * genişlik VE yükseklik bilmesini şart koşar. O yüzden ölçüler yüzde değil,
- * ızgaranın gerçek adımlarıdır: genişlik 178 / 368, yükseklik 156 / 240.
+ * ürünün ızgarasının GERÇEK adımlarıdır (`GRID_UNIT`, @caka/shared):
+ * 8 sütun, `grid-auto-rows: 72px`, 12px boşluk → sütun birimi 83px.
  * Kart ne bir vitrine sıkıştırılır ne de ürünün kullanmadığı bir ene gerilir.
+ *
+ * MOZAİK: satır artık eşit karo dizisi değil, SÜTUN dizisi. Bir sütun ya tek
+ * büyük kart taşır ya da üst üste iki/üç küçük kart — yükseklikleri satırı
+ * tam doldurur. Ölçü çeşitliliği süs değil: kartlar konteyner sorgusuyla
+ * çalıştığından aynı blok iki kutuda iki farklı düzen gösteriyor.
  *
  * YATAY KAYDIRMA ÇUBUĞU YOK: satırlar `overflow: hidden`, dış blok
  * `overflow: hidden` ve `.lp` `overflow-x: clip`.
  * ---------------------------------------------------------------- */
+
+/* Izgara adımları — ürünün `.profile-grid`'iyle birebir aynı sayılar.
+   n birim genişlik = n*83 + (n-1)*12 → 2:178, 4:368, 8:748
+   n birim yükseklik = n*72 + (n-1)*12 → 1:72, 2:156, 3:240, 4:324 */
+.lp-tower {
+  --lp-cell-w: 83px;
+  --lp-cell-h: 72px;
+  --lp-cell-gap: 12px;
+}
 
 .lp-tower {
   display: flex;
@@ -399,6 +414,10 @@ html[data-landing]::-webkit-scrollbar {
   position: relative;
   overflow: hidden;
   width: 100%;
+  /* Yükseklik satırın birim sayısından türer (`--lp-tower-h`, bileşen yazar). */
+  height: calc(
+    var(--lp-tower-h) * var(--lp-cell-h) + (var(--lp-tower-h) - 1) * var(--lp-cell-gap)
+  );
   /* Kenarlarda yumuşak solma: kartlar birden kesilmiş gibi durmasın. */
   mask-image: linear-gradient(
     to right,
@@ -408,8 +427,6 @@ html[data-landing]::-webkit-scrollbar {
     transparent 100%
   );
 }
-.lp-tower-row[data-h="s"] { height: 156px; }
-.lp-tower-row[data-h="m"] { height: 240px; }
 
 /* Üçüncü satır yalnız geniş ekranda: dar ekranda blok iki satır boyunda. */
 .lp-tower-row[data-row="2"] { display: none; }
@@ -434,19 +451,41 @@ html[data-landing]::-webkit-scrollbar {
   }
 }
 
+/* Kayma tam BİR KOPYA kadar: bileşen listeyi üç kez basıyor (REPEAT), yani
+   `100% / 3`. Bölme calc'te yapılıyor — "33.3333%" yazmak her döngüde
+   birkaç piksellik bir sıçrama bırakırdı. İki kopya YETMİYORDU: kayma o
+   zaman tek kopya eni kadar olur ve satır ondan geniş her ekranda sarma
+   noktasında boşluk gösterirdi. */
 @keyframes lp-tower-left {
   from { translate: 0 0; }
-  to { translate: -50% 0; }
+  to { translate: calc(-100% / 3) 0; }
 }
 @keyframes lp-tower-right {
-  from { translate: -50% 0; }
+  from { translate: calc(-100% / 3) 0; }
   to { translate: 0 0; }
 }
 
-/* Hücre: kartın kendi konteyneri. Ölçüler ızgaranın gerçek adımları. */
-.lp-tower-cell { height: 100%; flex: none; }
-.lp-tower-cell[data-w="n"] { width: 178px; }
-.lp-tower-cell[data-w="w"] { width: 368px; }
+/* Sütun: satır yüksekliğini ya tek kart doldurur ya da üst üste iki/üç kart
+   böler. Genişlik birim sayısından türer (`--lp-tower-w`). */
+.lp-tower-col {
+  display: flex;
+  height: 100%;
+  flex: none;
+  flex-direction: column;
+  gap: var(--lp-cell-gap);
+  width: calc(
+    var(--lp-tower-w) * var(--lp-cell-w) + (var(--lp-tower-w) - 1) * var(--lp-cell-gap)
+  );
+}
+
+/* Hücre: kartın kendi konteyneri (`container-type: size` ister, yani kesin
+   yükseklik şart). Yükseklik birim sayısından türer (`--lp-tower-ch`). */
+.lp-tower-cell {
+  flex: none;
+  height: calc(
+    var(--lp-tower-ch) * var(--lp-cell-h) + (var(--lp-tower-ch) - 1) * var(--lp-cell-gap)
+  );
+}
 
 /* Medyanın üstüne binen hap: tek parça bir kabuk (beyaz), içinde adres
    alanı ve koyu gönder düğmesi. Dar ekranda alt alta iner. */
