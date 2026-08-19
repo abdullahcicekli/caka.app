@@ -114,6 +114,17 @@ yeni metin önce Türkçe yazılır, tip sözleşmesi ondan türer.
 - **Oturum okuma:** `getSession(env, request)` (`server/auth.ts`);
   profil işlemleri `server/profile.ts`.
 
+- **Landing vitrin mockup'ları (karakter şeridi):** telefonun içi gerçek
+  `ProfileCanvas`'tır, ekran görüntüsü yapıştırması değil. Yeniden üretmek
+  için `apps/web` içinden: `node scripts/lab-tohum.mjs` (galeri/avatar/belge
+  asset'lerini yerel R2'ye yazar) → `pnpm dev` → `node scripts/lab-cek.mjs
+  <port>`. Laboratuvar route'u `/__lab/karakterler` yalnız geliştirmede
+  kayıtlıdır (`app/routes.ts`); personalar `app/content/landing/personas.ts`,
+  çıktı `app/assets/landing/vitrin/`. Görsel kaynak/lisans kaydı
+  `app/assets/landing/GORSEL-KAYNAKLARI.md` — yeni görsel eklenirse oraya da
+  satır girer. Konum kartı mockup'ta bilerek haritasızdır (Mapbox şartları
+  statik kopyayı yasaklıyor, bkz. `server/map-frame.ts`).
+
 ## Doğrulama beklentisi
 
 Değişiklik sonrası asgari: `pnpm typecheck` + `pnpm test` yeşil; davranış

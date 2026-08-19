@@ -102,7 +102,7 @@ const YOUTUBE_AKISLARI: YoutubeFeedMap = {
   },
 };
 
-function Kart({ persona }: { persona: Persona }) {
+function Kart({ persona, kaydir = 0 }: { persona: Persona; kaydir?: number }) {
   const telefonSagda = persona.side === "left";
   return (
     <figure className="lab-cerceve">
@@ -110,7 +110,13 @@ function Kart({ persona }: { persona: Persona }) {
         <img className="lab-foto" src={persona.photo} alt="" />
         <div className={`lab-telefon ${telefonSagda ? "is-sag" : "is-sol"}`}>
           <div className="dashboard-preview">
-            <div className="dashboard-preview-scale">
+            <div
+              className="dashboard-preview-scale"
+              // Döngü karesi: sayfa telefonun içinde kayar. `translateY`
+              // ölçekten SONRA uygulanmalı, yoksa piksel değeri 0.9091 ile
+              // çarpılır ve kareler eşit aralıklı olmaz.
+              style={kaydir ? { translate: `0 ${-kaydir}px` } : undefined}
+            >
               <ProfileCanvas
                 layout={persona.layout}
                 theme={persona.theme}
@@ -136,13 +142,14 @@ function Kart({ persona }: { persona: Persona }) {
 export default function LabKarakterler() {
   const [params] = useSearchParams();
   const secili = params.get("p");
+  const kaydir = Number(params.get("kaydir") ?? 0) || 0;
   const liste = secili ? LANDING_PERSONAS.filter((p) => p.id === secili) : LANDING_PERSONAS;
 
   return (
     <div className={`lab-sayfa ${secili ? "is-tek" : ""}`}>
       <style>{LAB_CSS}</style>
       {liste.map((persona) => (
-        <Kart key={persona.id} persona={persona} />
+        <Kart key={persona.id} persona={persona} kaydir={kaydir} />
       ))}
     </div>
   );
@@ -188,7 +195,9 @@ const LAB_CSS = `
 }
 .lab-telefon .dashboard-preview-scale {
   width: 396px;
-  height: 856px;
+  /* Döngü kareleri sayfayı yukarı öteliyor; kap gerçek içerik boyunda
+     olmalı ki altta boş bir bant açılmasın. */
+  height: 1500px;
   transform: scale(0.9091);
   transform-origin: top left;
 }

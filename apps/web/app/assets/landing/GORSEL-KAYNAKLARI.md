@@ -50,3 +50,5 @@ dağıtmak yasak — burada kart içeriği olarak kullanılıyorlar, dağıtılm
 | `busra-og-1.jpg` | https://unsplash.com/photos/grey-and-black-pen-on-calendar-book-ebvCsRypmxM | Renáta-Adrienn | `photo-1529651737248-dad5e287768e` | Unsplash License (ücretsiz) |
 | `ozan-kapak.jpg` | https://unsplash.com/photos/a-close-up-of-purple-smoke-on-a-black-background--X_TzWEZK3c | engin akyurt | `photo-1634976269795-afdad51715c8` | Unsplash License (ücretsiz) |
 | `kaan-video.jpg` | https://unsplash.com/photos/camera-on-tripod-with-zoom-lens-IcwAKUhNGXs | Sirisvisual | `photo-1612548403247-aa2873e9422d` | Unsplash License (ücretsiz) |
+| `kaan-son-video.jpg` | https://unsplash.com/photos/view-of-istanbul-skyline-with-mosques-and-bosphorus-strait-UM_YUJUGK6g | Spenser Sembrat | `photo-1763965367191-6455ef032c79` | Unsplash License (ücretsiz) |
+| `ozan-galeri-3.jpg` | https://unsplash.com/photos/amber-vinyl-record-on-turntable-KA1WM_yQGF8 | Jakob Rosen | `photo-1616714109948-c74fe5029a4d` | Unsplash License (ücretsiz) |
