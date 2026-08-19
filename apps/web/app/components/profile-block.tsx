@@ -6,12 +6,14 @@ import {
   classifyYouTubeUrl,
   faviconImageKey,
   shortenFileName,
+  mapFrameImageKey,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
 } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
+import { LocationCard } from "~/components/location-card";
 import { SpotifyCard, YoutubePlayMark, YoutubeVideoCard } from "~/components/media-embed";
 import { RichTextView } from "~/components/rich-text";
 import {
@@ -481,6 +483,30 @@ export function ProfileBlockCard({
         </article>
       );
     }
+    // Konum: koyu harita + yerel saat pili. Harita kareleri de imzalı birinci
+    // taraf yolları (bkz. `server/map-frame.ts`); ziyaretçi harita sunucusuna
+    // hiç bağlanmaz. Kart kendi saat/yakınlaşma durumunu tuttuğu için ayrı
+    // bileşen — hook'lar bir `switch` dalının içinde yaşayamaz.
+    case "location":
+      return (
+        <LocationCard
+          data={block.data}
+          frames={
+            block.data.lat === null || block.data.lon === null
+              ? { far: "", near: "" }
+              : {
+                  far:
+                    signedImages?.[
+                      mapFrameImageKey("far", block.data.lat, block.data.lon)
+                    ] ?? "",
+                  near:
+                    signedImages?.[
+                      mapFrameImageKey("near", block.data.lat, block.data.lon)
+                    ] ?? "",
+                }
+          }
+        />
+      );
 
     default: {
       // Tanınmayan tip: derleyici burada hata verir. Çalışma anında (eski

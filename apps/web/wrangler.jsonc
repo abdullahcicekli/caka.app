@@ -12,8 +12,11 @@
 	},
 	// Sırlar burada DEĞİL: `wrangler secret put <ad>` ile tanımlanır
 	// (Değişmez #6). Bugünkü liste: BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID,
-	// GOOGLE_CLIENT_SECRET, APPLE_PRIVATE_KEY, IMAGE_PROXY_SECRET.
+	// GOOGLE_CLIENT_SECRET, APPLE_PRIVATE_KEY, IMAGE_PROXY_SECRET,
+	// STADIA_API_KEY.
 	// IMAGE_PROXY_SECRET tanımsızsa /api/gorsel tamamen kapalıdır.
+	// STADIA_API_KEY tanımsızsa /api/harita kapalıdır ve konum kartı
+	// haritasız hâline düşer.
 	"vars": {
 		"BETTER_AUTH_URL": "https://caka.app",
 		"APPLE_CLIENT_ID": "app.caka.web",

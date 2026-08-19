@@ -32,6 +32,7 @@ export const de = {
     youtube: "YouTube",
     spotify: "Spotify",
     document: "Dokument",
+    location: "Standort",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -46,6 +47,7 @@ export const de = {
     youtube_channel_url: "Gib einen YouTube-Kanallink ein",
     spotify_url: "Gib einen Spotify-Link ein",
     document_missing: "Lade ein Dokument hoch",
+    location_missing: "Suche deinen Ort und wähle ihn aus",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -159,6 +161,16 @@ export const de = {
     spotifyLinkLabel: "Spotify-Link",
     spotifyHint:
       "Titel, Alben, Playlists, Künstler, Podcasts und Folgen lassen sich hinzufügen — wir fügen das ein, was du einfügst.",
+    locationSearchLabel: "Wo du bist",
+    locationSearchPlaceholder: "Stadt oder Bezirk suchen…",
+    locationSearching: "Wird gesucht…",
+    locationNoResults: (query: string) => `Kein Ort für „${query}“ gefunden.`,
+    locationSelected: (label: string) => `${label} ausgewählt`,
+    locationClear: "Standort entfernen",
+    locationPrivacyHint:
+      "Die Suche bleibt auf Stadt-/Bezirksebene, und die Koordinate wird vor dem Speichern auf etwa 1 km gerundet. Auf deiner Seite erscheinen Ortsname, Land, eine ungefähre Position und die dortige Ortszeit — nicht deine genaue Adresse.",
+    locationTimeZone: (zone: string) => `Zeitzone: ${zone}`,
+    locationNoTimeZone: "Für diesen Ort wurde keine Zeitzone gefunden; die Karte zeigt keine Uhr.",
     fixIssue: "Beheben",
     removeBlock: "Entfernen",
     editedElsewhere: "Die Seite wurde an anderer Stelle bearbeitet.",
@@ -313,6 +325,9 @@ export const de = {
       "Dieser Kanal wurde nicht gefunden. Prüf die Adresse oder versuch die /channel/UC…-Adresse des Kanals.",
     youtubeVideoNotFound:
       "Das Video wurde nicht gefunden. Es wurde vielleicht gelöscht oder ist privat, oder der Link wurde unvollständig kopiert.",
+
+    locationQueryTooLong: (max: number) => `Die Suche darf höchstens ${max} Zeichen lang sein`,
+    locationUnavailable: "Der Standortdienst hat nicht geantwortet. Bitte versuche es gleich noch einmal.",
 
     uploadOnlyJpegPng: "Du kannst nur JPEG oder PNG hochladen",
     uploadTooLarge: "Das Foto darf höchstens 5 MB groß sein",

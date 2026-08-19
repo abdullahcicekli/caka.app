@@ -11,6 +11,8 @@ import { documentApi } from "./document-api";
 import { imageProxyApi } from "./image-proxy";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
+import { locationApi } from "./location-api";
+import { mapFrameApi } from "./map-frame";
 import { ogApi } from "./og";
 import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
@@ -46,6 +48,13 @@ honoApp.route("/api/youtube", youtubeApi);
 // Editörün Spotify çözümleme ucu: GET /api/spotify?url=… — tür (parça/albüm/
 // liste/…) ve kimlik kayıt anında burada çözülür, render tekrarlamaz.
 honoApp.route("/api/spotify", spotifyApi);
+// Editörün konum arama ucu: GET /api/konum?q=… — yer, ülke, koordinat ve
+// saat dilimi kayıt anında burada çözülür, render tekrarlamaz. Oturum ister.
+honoApp.route("/api/konum", locationApi);
+// Konum kartının statik harita karesi (R58): GET /api/harita — kareyi Worker
+// çeker ve birinci taraftan servis eder; ziyaretçi harita sunucusuna hiç
+// bağlanmaz. İmzalı; anahtar/sır tanımsızsa tamamen kapalı.
+honoApp.route("/api/harita", mapFrameApi);
 // Uzak önizleme görselleri birinci taraftan servis edilir (backlog #6):
 // ziyaretçinin IP/UA'sı uzak host'a gitmez, üçüncü taraf çerezi yazılamaz.
 honoApp.route("/api/gorsel", imageProxyApi);

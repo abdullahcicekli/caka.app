@@ -1,6 +1,6 @@
 import { formatFileSize, formatUploadDate, type SpotifyKind } from "@caka/shared";
 
-import { type NumberFormat, relativeTime, shortNumber } from "./shared";
+import { type NumberFormat, clock24, relativeTime, shortNumber } from "./shared";
 
 const numbers: NumberFormat = { decimal: ",", thousand: "B", million: "Mn", billion: "Mr" };
 
@@ -115,6 +115,18 @@ export const tr = {
          "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
         (day, month, year) => `${day} ${month} ${year}`,
       ),
+  },
+
+  /**
+   * Konum kartı. Kartta kullanıcı verisi dışında görünen tek metin saat;
+   * atıf (`MAP_ATTRIBUTION`) marka adlarından oluştuğu için çevrilmez.
+   */
+  location: {
+    /** Yer adı boş kaydedilmişse (eski/yarım blok) kartın yazdığı ad. */
+    fallbackLabel: "Konum",
+    cardLabel: (label: string) => `Konum: ${label}`,
+    /** Türkçe 24 saatlik gösterim kullanır. */
+    clock: (hour: number, minute: number) => clock24(hour, minute),
   },
 
   /** GitHub katkı grafiğinin ekran okuyucu etiketi. */

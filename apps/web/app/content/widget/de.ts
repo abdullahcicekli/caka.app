@@ -2,7 +2,7 @@ import { formatFileSize, formatUploadDate, type SpotifyKind } from "@caka/shared
 
 import type { WidgetContent } from "./index";
 
-import { type NumberFormat, relativeTime, shortNumber } from "./shared";
+import { type NumberFormat, clock24, relativeTime, shortNumber } from "./shared";
 
 const numbers: NumberFormat = { decimal: ",", thousand: "Tsd.", million: "Mio.", billion: "Mrd." };
 
@@ -89,6 +89,12 @@ export const de = {
          "Juli", "August", "September", "Oktober", "November", "Dezember"],
         (day, month, year) => `${day}. ${month} ${year}`,
       ),
+  },
+
+  location: {
+    fallbackLabel: "Standort",
+    cardLabel: (label: string) => `Standort: ${label}`,
+    clock: (hour: number, minute: number) => clock24(hour, minute),
   },
 
   github: {

@@ -34,6 +34,7 @@ export const tr = {
     youtube: "YouTube",
     spotify: "Spotify",
     document: "Belge",
+    location: "Konum",
   } satisfies Record<ProfileBlock["type"], string>,
 
   /** Yayını engelleyen blok sorunlarının kullanıcıya görünen karşılığı. */
@@ -49,6 +50,7 @@ export const tr = {
     youtube_channel_url: "YouTube kanal bağlantısı gir",
     spotify_url: "Spotify bağlantısı gir",
     document_missing: "Belge yükle",
+    location_missing: "Bulunduğun yeri ara ve seç",
   } satisfies Record<BlockIssueId, string>,
 
   /** Izgara sınırı aşıldığında gösterilen mesaj. */
@@ -167,6 +169,17 @@ export const tr = {
     spotifyLinkLabel: "Spotify bağlantısı",
     spotifyHint:
       "Parça, albüm, çalma listesi, sanatçı, podcast ve bölüm eklenebilir — ne yapıştırdıysan onu ekleriz.",
+    locationSearchLabel: "Bulunduğun yer",
+    locationSearchPlaceholder: "Şehir ya da ilçe ara…",
+    locationSearching: "Aranıyor…",
+    locationNoResults: (query: string) => `“${query}” için yer bulunamadı.`,
+    locationSelected: (label: string) => `${label} seçildi`,
+    locationClear: "Konumu kaldır",
+    /** Ne yayınlandığını açıkça söyler; ev adresi hassas veridir. */
+    locationPrivacyHint:
+      "Yalnız şehir/ilçe düzeyinde arama yapılır ve koordinat yaklaşık 1 km'ye yuvarlanarak kaydedilir. Sayfanda görünen: yer adı, ülke, yaklaşık konum ve oranın yerel saati — tam adresin değil.",
+    locationTimeZone: (zone: string) => `Saat dilimi: ${zone}`,
+    locationNoTimeZone: "Bu yer için saat dilimi bulunamadı; kartta saat görünmeyecek.",
     fixIssue: "Düzelt",
     removeBlock: "Kaldır",
     editedElsewhere: "Sayfa başka bir yerde düzenlendi.",
@@ -322,6 +335,9 @@ export const tr = {
       "Bu kanal bulunamadı. Adresi kontrol et ya da kanalın /channel/UC… adresini dene.",
     youtubeVideoNotFound:
       "Video bulunamadı. Video silinmiş, gizli olabilir ya da bağlantı eksik kopyalanmış.",
+
+    locationQueryTooLong: (max: number) => `Arama en fazla ${max} karakter olabilir`,
+    locationUnavailable: "Konum servisi şu anda yanıt vermedi. Birazdan tekrar dene.",
 
     uploadOnlyJpegPng: "Yalnızca JPEG veya PNG yükleyebilirsin",
     uploadTooLarge: "Fotoğraf en fazla 5 MB olabilir",

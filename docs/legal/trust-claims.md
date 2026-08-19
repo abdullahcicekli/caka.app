@@ -85,6 +85,12 @@ Fark önemli, çünkü:
   **çevirmek yanlış olur** — oynatıcı yüklendikten sonra sayfada üçüncü
   taraf çerezi bulunabilir. Kapıyı ayakta tutan şey, bunun ancak
   ziyaretçinin bilinçli tıklamasıyla ve önceden söylenerek olması.
+- **Konum kartı ifadeyi değiştirmiyor** (2026-08-19'da eklendi, kontrol
+  edildi). Harita görüntüsü birinci taraf `/api/harita` yolundan geliyor;
+  ziyaretçinin tarayıcısı harita sağlayıcısına **hiç** istek atmıyor, yanıt
+  bizde sıfırdan kuruluyor ve cihaza hiçbir şey yazılmıyor. Yer arama yalnız
+  editörde, oturumlu kullanıcı için çalışıyor. `cookies.ts` envanterine yeni
+  girdi eklenmedi. Ayrıntı: `vendor-register.md` §B'nin üstündeki konum notu.
 - Ölçüm beacon'ı cihaza yazmasa da isteğin kendisinde IP ve User Agent
   Cloudflare'e ulaşır. "Hiçbir veri toplamıyoruz" demek de bu yüzden yanlış
   olurdu ve denmedi.
@@ -111,6 +117,9 @@ güncellenene kadar yanlıştır:
 4. Reklam veya remarketing pikseli eklenmesi.
 5. Ertelenmiş panel analitiği hattının (R48) cihaza yazacak biçimde kurulması —
    tasarım gereği yazmayacak, ama kurulduğunda bu dosya yeniden doğrulanır.
+6. Konum kartının **etkileşimli haritaya** çevrilmesi (MapLibre + kutucuk
+   sunucusu). O gün ziyaretçi doğrudan bir harita sunucusuna bağlanır;
+   `vendor-register.md` §A'ya satır girer ve bu dosya yeniden doğrulanır.
 
 ---
 

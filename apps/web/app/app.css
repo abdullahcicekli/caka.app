@@ -2234,6 +2234,201 @@ button.photo-cell:focus-visible {
   .profile-block-spotify.is-playing .media-frame { min-height: 352px; }
 }
 
+/* ---------------------------------------------------------------------------
+   Konum kartı (harita + yerel saat pili)
+
+   Kart bir GÖRÜNTÜ: harita kenardan kenara, metin üstüne biner. İki harita
+   karesi üst üste durur ve yakınlaşma efekti aralarındaki geçişle yapılır —
+   ekstra bir kütüphane ya da JS animasyonu yok.
+
+   Kareler BİRİNCİ TARAF (`/api/harita`); ziyaretçi harita sunucusuna hiç
+   bağlanmaz (R58).
+--------------------------------------------------------------------------- */
+.profile-block-location {
+  position: relative;
+  align-items: flex-end;
+  /* Harita hep koyu; kartın kendi teması ne olursa olsun metin beyaz okunur.
+     Zemin, kare yüklenene kadar (ve haritasız hâlde) görünen renk. */
+  background: var(--color-murekkep);
+  color: white;
+  isolation: isolate;
+}
+/* Haritasız hâl (anahtar yok / kare çekilemedi): kart boş kalmaz, sakin bir
+   gradyan olur. Nokta ve etiket yerinde durur. */
+.profile-block-location.is-mapless {
+  background:
+    radial-gradient(120% 90% at 50% 40%, color-mix(in srgb, var(--color-mavi) 34%, transparent), transparent 70%),
+    var(--color-murekkep);
+}
+.loc-map { position: absolute; inset: 0; display: block; overflow: hidden; }
+.loc-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Uzak → yakın geçişi. 900 ms yeterince görülür, yeterince sakin. */
+  transition: opacity 900ms cubic-bezier(.32,.72,.35,1),
+              scale 1100ms cubic-bezier(.32,.72,.35,1);
+}
+/* BAŞLANGIÇ: uzak kare tam görünür, yakın kare hafif büyütülmüş ve saydam.
+   Kart bağlanınca (`is-near`) yakın kare açılıp yerine oturur — izleyicinin
+   gördüğü, ülkeden şehre inen bir yakınlaşma.
+
+   UZAK KARE SÖNMEZ, ALTTA KALIR. Sıfıra indirilseydi yakın kare herhangi bir
+   sebeple yüklenemediğinde (404, ağ) kart bomboş kalırdı; opak bir JPEG olan
+   yakın kare zaten üstünü tamamen örtüyor, yani görünürde fark yok ama
+   altında bir ağ var. */
+.loc-frame.is-far { opacity: 1; scale: 1; }
+.loc-frame.is-near { opacity: 0; scale: 1.35; }
+.profile-block-location.is-near .loc-frame.is-far { scale: 1.08; }
+.profile-block-location.is-near .loc-frame.is-near { opacity: 1; scale: 1; }
+
+/* Harita etiketlerinin üstüne binen metni okunur tutan alt karartma. */
+.loc-map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(10 10 14 / 0.78) 0%, rgb(10 10 14 / 0.28) 38%, transparent 62%);
+}
+
+/* Konum noktası: nabız atmayan, sabit bir işaret. Merkezde çünkü kare de
+   koordinat merkezli isteniyor. */
+.loc-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  translate: -50% -50%;
+  border: 2.5px solid white;
+  border-radius: 999px;
+  background: var(--color-mavi);
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--color-mavi) 28%, transparent),
+    0 4px 12px rgb(0 0 0 / 0.45);
+}
+/* Yakınlaşma bitmeden nokta görünmez: uzak karede 14px'lik bir nokta bir
+   ülkeyi işaretlemiş olurdu, yanıltıcı. */
+.loc-dot { opacity: 0; transition: opacity 500ms ease 700ms; }
+.profile-block-location.is-near .loc-dot,
+.profile-block-location.is-mapless .loc-dot { opacity: 1; }
+
+/* Saat pili — referanstaki gibi kartın üstünde küçük bir kapsül. Yalnız
+   bağlandıktan sonra basılır (hidrasyon; bkz. `components/location-card.tsx`). */
+.loc-clock {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 999px;
+  background: rgb(12 12 18 / 0.62);
+  padding: 5px 11px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  /* Kare arkasında da okunsun diye; `backdrop-filter` desteklenmeyen
+     tarayıcıda zaten yeterince koyu bir zemin var. */
+  backdrop-filter: blur(8px);
+}
+.loc-clock-mark { font-size: 11px; line-height: 1; }
+.loc-clock small { opacity: 0.62; font-size: 10.5px; font-weight: 500; }
+
+.loc-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  /* Alt dolgu atıf şeridini AYIRIR: uzun bir yer adı `nowrap` olduğu için
+     kartın sonuna kadar uzayabiliyor ve atfın altından geçiyordu. */
+  padding: 14px 16px 22px;
+}
+.profile-block-location strong {
+  overflow: hidden;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-block-location .loc-foot small {
+  overflow: hidden;
+  opacity: 0.72;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Atıf GÖRÜNÜR olmak zorunda (`manual_attribution=true` ile filigran
+   kapatıldı). Küçük ama okunur; kartın en sakin köşesinde durur. */
+.loc-attrib {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.55);
+  font-size: 9px;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* GENİŞ kartlarda (≥ 6 birim ≈ 558px) ad büyür ve atıf sola kaçmaz. */
+@container (min-width: 520px) {
+  .profile-block-location strong { font-size: 20px; }
+  .profile-block-location .loc-foot { padding: 18px 20px 24px; }
+}
+
+/* Hareket azaltma tercihi: geçiş yok, doğrudan yakın kare. Bir profil
+   kartındaki süs animasyonu, kullanıcının açıkça istemediği bir şey. */
+@media (prefers-reduced-motion: reduce) {
+  .loc-frame, .loc-dot { transition: none; }
+  .loc-frame.is-near { opacity: 1; scale: 1; }
+  /* Uzak kare burada da gizlenmez: yakın kare `lazy` yükleniyor ve gizlenseydi
+     o yüklenene kadar kart boş görünürdü. */
+  .loc-frame.is-far { scale: 1; }
+  .loc-dot { opacity: 1; }
+}
+
+/* Editörün konum arama sonuçları. Liste, panelin diğer alanlarıyla aynı
+   kutu diline uyar. */
+.inspector-options { display: flex; flex-direction: column; gap: 4px; margin-top: -4px; }
+.inspector-options button {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--color-sinir);
+  border-radius: var(--radius-lg);
+  padding: 8px 11px;
+  background: white;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+.inspector-options button:hover { border-color: var(--color-murekkep); }
+.inspector-options small { color: color-mix(in srgb, var(--color-murekkep) 52%, transparent); font-size: 11px; font-weight: 400; }
+.inspector-secondary {
+  min-height: 38px;
+  border: 1px solid var(--color-sinir);
+  border-radius: var(--radius-lg);
+  background: white;
+  cursor: pointer;
+  font-size: 12.5px;
+}
+
 /* ---------------------------------------------------------------- *
  * Belge (CV) kartı.
  *

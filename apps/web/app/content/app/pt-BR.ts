@@ -32,6 +32,7 @@ export const ptBR = {
     youtube: "YouTube",
     spotify: "Spotify",
     document: "Documento",
+    location: "Localização",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -46,6 +47,7 @@ export const ptBR = {
     youtube_channel_url: "Escreva um link de canal do YouTube",
     spotify_url: "Escreva um link do Spotify",
     document_missing: "Envie um documento",
+    location_missing: "Busque e escolha o seu lugar",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -159,6 +161,16 @@ export const ptBR = {
     spotifyLinkLabel: "Link do Spotify",
     spotifyHint:
       "Dá para adicionar faixas, álbuns, playlists, artistas, podcasts e episódios — adicionamos o que você colar.",
+    locationSearchLabel: "Onde você está",
+    locationSearchPlaceholder: "Busque uma cidade ou bairro…",
+    locationSearching: "Buscando…",
+    locationNoResults: (query: string) => `Nenhum lugar encontrado para “${query}”.`,
+    locationSelected: (label: string) => `${label} selecionado`,
+    locationClear: "Remover localização",
+    locationPrivacyHint:
+      "A busca fica no nível de cidade ou bairro e a coordenada é arredondada para cerca de 1 km antes de ser salva. Sua página mostra o nome do lugar, o país, uma posição aproximada e a hora local de lá — não o seu endereço exato.",
+    locationTimeZone: (zone: string) => `Fuso horário: ${zone}`,
+    locationNoTimeZone: "Nenhum fuso horário encontrado para este lugar; o cartão não vai mostrar a hora.",
     fixIssue: "Corrigir",
     removeBlock: "Remover",
     editedElsewhere: "A página foi editada em outro lugar.",
@@ -313,6 +325,9 @@ export const ptBR = {
       "Este canal não foi encontrado. Confira o endereço ou tente o endereço /channel/UC… do canal.",
     youtubeVideoNotFound:
       "O vídeo não foi encontrado. Pode ter sido excluído ou estar privado, ou o link pode ter sido copiado incompleto.",
+
+    locationQueryTooLong: (max: number) => `A busca pode ter no máximo ${max} caracteres`,
+    locationUnavailable: "O serviço de localização não respondeu. Tente de novo em instantes.",
 
     uploadOnlyJpegPng: "Você só pode enviar JPEG ou PNG",
     uploadTooLarge: "A foto pode ter no máximo 5 MB",

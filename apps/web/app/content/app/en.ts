@@ -32,6 +32,7 @@ export const en = {
     youtube: "YouTube",
     spotify: "Spotify",
     document: "Document",
+    location: "Location",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -46,6 +47,7 @@ export const en = {
     youtube_channel_url: "Enter a YouTube channel link",
     spotify_url: "Enter a Spotify link",
     document_missing: "Upload a document",
+    location_missing: "Search for and pick your place",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -158,6 +160,16 @@ export const en = {
     spotifyLinkLabel: "Spotify link",
     spotifyHint:
       "Tracks, albums, playlists, artists, podcasts and episodes can be added — whatever you paste is what we add.",
+    locationSearchLabel: "Where you are",
+    locationSearchPlaceholder: "Search a city or district…",
+    locationSearching: "Searching…",
+    locationNoResults: (query: string) => `No place found for “${query}”.`,
+    locationSelected: (label: string) => `${label} selected`,
+    locationClear: "Remove location",
+    locationPrivacyHint:
+      "Search is limited to city/district level and the coordinate is rounded to about 1 km before it is saved. Your page shows the place name, country, an approximate location and the local time there — not your exact address.",
+    locationTimeZone: (zone: string) => `Time zone: ${zone}`,
+    locationNoTimeZone: "No time zone found for this place; the card will not show a clock.",
     fixIssue: "Fix",
     removeBlock: "Remove",
     editedElsewhere: "The page was edited somewhere else.",
@@ -311,6 +323,9 @@ export const en = {
       "That channel couldn't be found. Check the address or try the channel's /channel/UC… address.",
     youtubeVideoNotFound:
       "The video couldn't be found. It may have been deleted or made private, or the link may have been copied incompletely.",
+
+    locationQueryTooLong: (max: number) => `Search can be at most ${max} characters`,
+    locationUnavailable: "The location service did not respond. Please try again shortly.",
 
     uploadOnlyJpegPng: "You can only upload JPEG or PNG",
     uploadTooLarge: "The photo can be at most 5 MB",

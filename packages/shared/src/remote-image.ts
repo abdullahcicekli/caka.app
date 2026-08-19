@@ -13,6 +13,8 @@
 // erişemez. Katman yine de gerekli, çünkü asıl hedef bulut metadata uçları
 // ve açıkça özel adreslerdir.
 
+import { SIGNATURE_HEX_LENGTH, hmacHex, timingSafeEqual } from "./signature";
+
 /** Proxy'nin ziyaretçiye döndürmeyi kabul ettiği içerik tipleri.
  * SVG bilerek yok: içinde script/dış kaynak taşıyabilir.
  * ICO var: favicon'ların klasik biçimi ve `/favicon.ico` çoğu sitede bu
@@ -228,51 +230,19 @@ export function checkProxyImageUrl(raw: string): ProxyUrlCheck {
 
 /** İmzanın taşındığı sorgu parametresi. */
 export const PROXY_SIGNATURE_PARAM = "s";
-/** İmzanın hex uzunluğu — 32 hex = 128 bit; kaba kuvvete fazlasıyla yeter. */
-export const PROXY_SIGNATURE_HEX_LENGTH = 32;
-
-// Anahtar her imzada yeniden import edilir: WebCrypto'da bu mikrosaniyelik
-// bir iş ve modül düzeyinde sır tutan bir önbellekten daha temiz.
-function hmacKey(secret: string) {
-  return crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-}
+/** Geriye uyum: imza uzunluğu artık ortak ilkellerde tanımlı. */
+export const PROXY_SIGNATURE_HEX_LENGTH = SIGNATURE_HEX_LENGTH;
 
 /**
- * Kanonik adresin HMAC-SHA256 imzası (hex, kısaltılmış).
+ * Kanonik adresin HMAC-SHA256 imzası.
  *
  * İmza HAM kullanıcı girdisi üzerinde değil, `checkProxyImageUrl`'ün
  * ürettiği KANONİK adres üzerinde hesaplanır: proxy de doğrulamadan önce
  * aynı kanonikleştirmeyi yapar, yoksa "https://a.com/x" ile
  * "https://a.com:443/x" farklı imzalar üretirdi.
  */
-async function signCanonical(canonicalUrl: string, secret: string): Promise<string> {
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    await hmacKey(secret),
-    new TextEncoder().encode(canonicalUrl),
-  );
-  let hex = "";
-  for (const byte of new Uint8Array(signature)) hex += byte.toString(16).padStart(2, "0");
-  return hex.slice(0, PROXY_SIGNATURE_HEX_LENGTH);
-}
-
-/**
- * Sabit zamanlı hex karşılaştırma. Uzunluk farkı erken dönüşle sızar; bu
- * kasıtlı, çünkü imza uzunluğu zaten sabit ve herkesçe bilinen bir sayı.
- */
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let index = 0; index < a.length; index += 1) {
-    diff |= a.charCodeAt(index) ^ b.charCodeAt(index);
-  }
-  return diff === 0;
+function signCanonical(canonicalUrl: string, secret: string): Promise<string> {
+  return hmacHex(canonicalUrl, secret);
 }
 
 /**

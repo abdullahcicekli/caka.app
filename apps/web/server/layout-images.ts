@@ -12,13 +12,16 @@
 // kaybolurdu. `githubCalendars` zaten aynı deseni kullanıyor (bkz.
 // `server/github.ts`); bu ona kardeş.
 import {
+  LOCATION_ZOOM_STEPS,
   classifyYouTubeUrl,
   faviconImageKey,
+  mapFrameImageKey,
   youtubeThumbnailUrl,
   type ProfileLayout,
 } from "@caka/shared";
 
 import { signImageProxyPath } from "./image-proxy";
+import { signMapFramePaths } from "./map-frame";
 
 /**
  * Kayıtlı `ogImage` yoksa adresten TÜRETİLEBİLİR bir önizleme var mı?
@@ -100,7 +103,6 @@ export async function signLayoutImages(
       { id: faviconImageKey(block.id), url: remoteFaviconOf(block) },
     ])
     .filter((entry) => entry.url !== "");
-  if (targets.length === 0) return {};
 
   const signed = await Promise.all(
     targets.map(async (entry) => [entry.id, await signImageProxyPath(env, entry.url)] as const),
@@ -110,5 +112,36 @@ export async function signLayoutImages(
   for (const [id, path] of signed) {
     if (path) map[id] = path;
   }
+  await addMapFrames(env, layout, map);
   return map;
+}
+
+/**
+ * Konum kartlarının iki harita karesi. AYRI bir imza yolu, çünkü hedef bir
+ * uzak görsel adresi değil: `/api/harita` sağlayıcı adresini kendisi kurar
+ * (API anahtarı ziyaretçiye ulaşmasın diye — bkz. `server/map-frame.ts`).
+ * İmza bu yüzden adresi değil, koordinat + kademe çiftini kapsar.
+ *
+ * Anahtar ya da sır tanımsızsa `signMapFramePaths` null döner ve blok
+ * eşlemeye hiç girmez — kart haritasız tasarımına düşer.
+ */
+async function addMapFrames(
+  env: Env,
+  layout: ProfileLayout,
+  map: SignedImageMap,
+): Promise<void> {
+  const blocks = layout.blocks.filter(
+    (block) => block.type === "location" && block.data.lat !== null && block.data.lon !== null,
+  );
+  if (blocks.length === 0) return;
+  await Promise.all(
+    blocks.map(async (block) => {
+      if (block.type !== "location" || block.data.lat === null || block.data.lon === null) return;
+      const frames = await signMapFramePaths(env, block.data.lat, block.data.lon);
+      if (!frames) return;
+      for (const step of LOCATION_ZOOM_STEPS) {
+        map[mapFrameImageKey(step, block.data.lat, block.data.lon)] = frames[step];
+      }
+    }),
+  );
 }

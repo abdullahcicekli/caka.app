@@ -45,6 +45,8 @@ import {
   detectSocialFromUrl,
   galleryBlockCount,
   faviconImageKey,
+  GEOCODE_ATTRIBUTION,
+  mapFrameImageKey,
   layoutIssues,
   ensureLayoutPositions,
   normalizeTheme,
@@ -60,6 +62,8 @@ import {
   type BlockSize,
   type ProfileBlock,
   type ProfileLayout,
+  type LocationSuggestion,
+  type LocationZoomStep,
   type ProfileTheme,
   type SocialPlatform,
   type SpotifyKind,
@@ -170,6 +174,16 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
         size: "2x1",
         data: { title: "", fileName: "", bytes: 0, uploadedAt: 0 },
       };
+    // Konum bloğu BOŞ doğar: yer, kullanıcı arayıp seçince yazılır. `2x2`
+    // (368×324) `BLOCK_GRID_LIMITS.location`'ın tabanı — daha küçüğünde harita
+    // etiketleri okunmuyor.
+    case "location":
+      return {
+        id,
+        type,
+        size: "2x2",
+        data: { label: "", country: "", countryCode: "", lat: null, lon: null, timeZone: "" },
+      };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
     default: {
@@ -196,6 +210,7 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   spotify: false,
   // Panelde kısayolu yok; araç çubuğundan ya da blok galerisinden eklenir.
   document: false,
+  location: false,
 };
 
 /**
@@ -288,6 +303,12 @@ function uploadPhotoFile(
     request.send(file);
   });
 }
+/** `/api/konum` başarılı yanıtı; hata dalında yalnız `error` döner. */
+type LocationHit = LocationSuggestion & {
+  /** İmzalı birinci taraf harita kareleri; anahtar/sır yoksa null. */
+  frames: Record<LocationZoomStep, string> | null;
+};
+type LocationSearchResponse = { results: LocationHit[] } | { error: string };
 
 function Inspector({
   block,
@@ -299,6 +320,7 @@ function Inspector({
   close,
   onSignedImage,
   multiPhotoBlocked,
+  rememberImage,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
@@ -326,6 +348,10 @@ function Inspector({
    * alırdı.
    */
   multiPhotoBlocked?: string | null;
+  /** Aynı eşlemeye ANAHTARIYLA yazar. Harita kareleri blok kimliğine değil
+      koordinata anahtarlandığı için (bkz. `mapFrameImageKey`) blok kimliğini
+      varsayan `onSignedImage` yetmiyor. */
+  rememberImage: (key: string, path: string) => void;
 }) {
   const app = useCatalog(appCatalog);
   const widget = useCatalog(widgetCatalog);
@@ -359,6 +385,14 @@ function Inspector({
   const [spotifyBusy, setSpotifyBusy] = useState(false);
   const [spotifyError, setSpotifyError] = useState<string | null>(null);
   const spotifyAttemptedRef = useRef("");
+  // Konum: arama metni bloğun DIŞINDA tutulur. Bloğa yalnız SEÇİLEN sonuç
+  // yazılır (YouTube/Spotify ile aynı gerekçe) — yarım yazılmış bir arama
+  // hiçbir zaman kaydedilmez.
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationResults, setLocationResults] = useState<LocationHit[] | null>(null);
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const locationAttemptedRef = useRef("");
   // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
   // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
   const [socialLink, setSocialLink] = useState(() =>
@@ -372,6 +406,10 @@ function Inspector({
     setSpotifyInput(block.type === "spotify" ? block.data.url : "");
     spotifyAttemptedRef.current = block.type === "spotify" ? block.data.url : "";
     setSpotifyError(null);
+    setLocationQuery("");
+    setLocationResults(null);
+    setLocationError(null);
+    locationAttemptedRef.current = "";
     setUploadError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız blok değişince
   }, [block.id]);
@@ -665,6 +703,49 @@ function Inspector({
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız adres değişince
   }, [spotifyInput, block.id]);
+
+  /**
+   * Yeri `/api/konum`'a sorar. Sonuç LİSTE olarak gösterilir ve kullanıcı
+   * seçer — YouTube/Spotify'dan farkı bu: orada yapıştırılan adres hangi
+   * içerik olduğunu tek başına söylüyordu, burada "Antalya" beş yer olabilir.
+   */
+  async function searchLocation(value: string) {
+    locationAttemptedRef.current = value;
+    setLocationBusy(true);
+    setLocationError(null);
+    try {
+      const response = await fetch(`/api/konum?q=${encodeURIComponent(value)}`);
+      const result = (await response.json()) as LocationSearchResponse;
+      // Yavaş bir yanıt, kullanıcının o sırada yazdığı yeni aramanın
+      // sonucunun üstüne yazmasın.
+      if (locationAttemptedRef.current !== value) return;
+      if (!response.ok || !("results" in result)) {
+        setLocationResults(null);
+        setLocationError(
+          ("error" in result && result.error) || app.api.locationUnavailable,
+        );
+        return;
+      }
+      setLocationResults(result.results);
+    } catch {
+      if (locationAttemptedRef.current !== value) return;
+      setLocationResults(null);
+      setLocationError(app.api.locationUnavailable);
+    } finally {
+      if (locationAttemptedRef.current === value) setLocationBusy(false);
+    }
+  }
+
+  // Yazdıkça ara. 500 ms: Photon'un politikası "adil kullanım" istiyor ve her
+  // tuş vuruşunda istek atmak adil değil.
+  useEffect(() => {
+    if (block.type !== "location") return;
+    const value = locationQuery.trim();
+    if (value.length < 2 || value === locationAttemptedRef.current) return;
+    const timer = window.setTimeout(() => void searchLocation(value), 500);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız arama değişince
+  }, [locationQuery, block.id]);
 
   // Alanlar tip başına tek bir switch'te toplanır: `never` default'u sayesinde
   // yeni bir blok tipi eklendiğinde derleyici burada durur (eskiden art arda
@@ -1089,6 +1170,103 @@ function Inspector({
             {!spotifyBusy && !spotifyError && resolved ? (
               <p className="inspector-hint">{resolved}</p>
             ) : null}
+          </>
+        );
+      }
+      case "location": {
+        const picked = block.data.lat !== null && block.data.lon !== null;
+        return (
+          <>
+            <label>{app.editor.locationSearchLabel}
+              <input
+                type="search"
+                value={locationQuery}
+                placeholder={app.editor.locationSearchPlaceholder}
+                onChange={(event) => setLocationQuery(event.target.value)}
+              />
+              {/* Ne yayınlandığı AÇIKÇA yazar: ev adresi hassas veridir ve
+                  kullanıcı bir harita kartı koyarken bunu düşünmeyebilir. */}
+              <small className="inspector-hint">{app.editor.locationPrivacyHint}</small>
+            </label>
+            {locationBusy ? (
+              <p className="inspector-hint">{app.editor.locationSearching}</p>
+            ) : null}
+            {locationError ? (
+              <p className="inspector-error" role="alert">{locationError}</p>
+            ) : null}
+            {!locationBusy && !locationError && locationResults?.length === 0 ? (
+              <p className="inspector-hint">
+                {/* ARANAN metin yazılır, kutunun o anki içeriği değil:
+                    kullanıcı yazmaya devam etmişse ikisi ayrışır. */}
+                {app.editor.locationNoResults(locationAttemptedRef.current)}
+              </p>
+            ) : null}
+            {locationResults?.length ? (
+              <ul className="inspector-options">
+                {locationResults.map((result) => (
+                  <li key={`${result.label}|${result.lat}|${result.lon}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData({
+                          label: result.label,
+                          country: result.country,
+                          countryCode: result.countryCode,
+                          lat: result.lat,
+                          lon: result.lon,
+                          timeZone: result.timeZone,
+                        });
+                        // Kareleri hemen eşlemeye yaz: kullanıcı haritayı
+                        // kaydedip sayfayı yenilemeden görmeli.
+                        if (result.frames) {
+                          for (const step of ["far", "near"] as const) {
+                            rememberImage(
+                              mapFrameImageKey(step, result.lat, result.lon),
+                              result.frames[step],
+                            );
+                          }
+                        }
+                        setLocationResults(null);
+                        setLocationQuery("");
+                        locationAttemptedRef.current = "";
+                      }}
+                    >
+                      <strong>{result.label}</strong>
+                      {result.country ? <small>{result.country}</small> : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {picked ? (
+              <>
+                <p className="inspector-hint">
+                  {app.editor.locationSelected(block.data.label)}
+                </p>
+                <p className="inspector-hint">
+                  {block.data.timeZone
+                    ? app.editor.locationTimeZone(block.data.timeZone)
+                    : app.editor.locationNoTimeZone}
+                </p>
+                <button
+                  type="button"
+                  className="inspector-secondary"
+                  onClick={() =>
+                    setData({
+                      label: "",
+                      country: "",
+                      countryCode: "",
+                      lat: null,
+                      lon: null,
+                      timeZone: "",
+                    })
+                  }
+                >
+                  {app.editor.locationClear}
+                </button>
+              </>
+            ) : null}
+            <small className="inspector-hint">{GEOCODE_ATTRIBUTION}</small>
           </>
         );
       }
@@ -1876,6 +2054,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           setDims={(w, h) => resizeBlockDims(selected.id, w, h)}
           onSignedImage={(path) => rememberSignedImage(selected.id, path)}
           multiPhotoBlocked={multiPhotoBlocked}
+          rememberImage={rememberSignedImage}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));

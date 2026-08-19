@@ -2,7 +2,7 @@ import { formatFileSize, formatUploadDate, type SpotifyKind } from "@caka/shared
 
 import type { WidgetContent } from "./index";
 
-import { type NumberFormat, relativeTime, shortNumber } from "./shared";
+import { type NumberFormat, clock12, relativeTime, shortNumber } from "./shared";
 
 const numbers: NumberFormat = { decimal: ".", thousand: "K", million: "M", billion: "B" };
 
@@ -89,6 +89,13 @@ export const en = {
          "July", "August", "September", "October", "November", "December"],
         (day, month, year) => `${month} ${day}, ${year}`,
       ),
+  },
+
+  location: {
+    fallbackLabel: "Location",
+    cardLabel: (label: string) => `Location: ${label}`,
+    /** English uses the 12-hour clock. */
+    clock: (hour: number, minute: number) => clock12(hour, minute, "AM", "PM"),
   },
 
   github: {

@@ -55,3 +55,21 @@ export function relativeTime(isoDate: string, now: number, labels: RelativeTimeL
   if (days < 365) return labels.months(Math.floor(days / 30));
   return labels.years(Math.floor(days / 365));
 }
+
+/**
+ * "02:31" — 24 saatlik gösterim (tr, de, es, pt-BR).
+ *
+ * `Intl` KULLANILMIYOR: dosyanın başındaki gerekçenin aynısı. Saat pili yalnız
+ * istemcide basıldığı için teknik olarak mümkün olurdu, ama o zaman aynı sayfa
+ * iki tarayıcıda iki farklı ayırıcıyla (dar boşluk, farklı iki nokta)
+ * görünebilirdi. Biçim burada, dilin kendi kataloğunda sabit.
+ */
+export function clock24(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/** "2:31 AM" — 12 saatlik gösterim (en). Öğlen 12 PM, gece yarısı 12 AM. */
+export function clock12(hour: number, minute: number, am: string, pm: string): string {
+  const twelve = hour % 12 === 0 ? 12 : hour % 12;
+  return `${twelve}:${String(minute).padStart(2, "0")} ${hour < 12 ? am : pm}`;
+}

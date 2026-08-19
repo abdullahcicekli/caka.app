@@ -130,6 +130,17 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
   sunucudan gelir ve kartın yazdığı etikettir; dosyanın kendisi R2'dedir
   (aşağıda §2). Dosya adı kullanıcının seçtiği addır ve **kişisel veri
   içerebilir** ("abdullah-cicekli-ozgecmis.pdf"), profilde herkese görünür.
+- **Konum bloğu** (varsa) şunları tutar: yer adı ("Kadıköy, İstanbul"), ülke
+  adı, ISO ülke kodu, **iki ondalığa yuvarlanmış** enlem/boylam (≈1,1 km) ve
+  IANA saat dilimi. Hepsi kullanıcının editörde ARAYIP SEÇTİĞİ sonuçtan gelir;
+  cihazın konum servisi hiç kullanılmaz, ziyaretçiden de konum istenmez.
+  Yuvarlama şemada zorunludur (`packages/shared/src/layout.ts`) — sokak
+  çözünürlüğünde bir koordinat kaydedilemez. Arama yalnız oturumlu kullanıcı
+  için, yalnız editörde çalışır (`server/location-api.ts`); saat dilimi
+  koordinattan **çevrimdışı** hesaplanır, hiçbir servise sorulmaz. Kartın
+  harita görseli de birinci taraftan servis edilir (`server/map-frame.ts`),
+  yani ziyaretçinin tarayıcısı harita sağlayıcısına istek atmaz
+  (`vendor-register.md` §B).
 - `onboarding_data` ilk kurulumda verilen yanıtları tutar.
 - **Amaç:** public profilin yayınlanması. **Sebep:** m.5/2-c.
 - **Süre:** hesap yaşadığı sürece. `draft_layout` yayınlanana kadar; ayrı bir
