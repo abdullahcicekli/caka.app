@@ -102,18 +102,24 @@ export function ProfileBlockCard({
   // verir. Eskiden `if` zinciriydi ve tanınmayan tip sessizce `status`
   // dalına düşüp `block.data.text` üzerinde çalışma anında patlıyordu.
   switch (block.type) {
-    case "profile":
+    case "profile": {
+      // Avatar önce KAYITLI asset'ten gelir (`/i/<uuid>`), yoksa eşlemeden.
+      // Eşleme dalı üründe hiç çalışmaz — `server/layout-images.ts` profil
+      // bloğu için "" döndürüyor, yani `signedImages` bu kimliği taşımıyor.
+      // Dal, görselini doğrudan veren çağıranlar için var (landing şeridi):
+      // orada avatar boş kalsaydı kart baş harf çipine düşerdi ("KA") ve
+      // ziyaretçi ürünü yer tutucularla tanırdı.
+      const avatarUrl = block.data.avatarAssetId
+        ? `/i/${block.data.avatarAssetId}`
+        : signedImage || null;
       return (
-      <article className="profile-block profile-block-profile">
-        <ProfileAvatar
-          name={block.data.name}
-          avatarUrl={block.data.avatarAssetId ? `/i/${block.data.avatarAssetId}` : null}
-          className="size-16"
-        />
-        <strong>{block.data.name}</strong>
-        <p>{block.data.title}</p>
-      </article>
-    );
+        <article className="profile-block profile-block-profile">
+          <ProfileAvatar name={block.data.name} avatarUrl={avatarUrl} className="size-16" />
+          <strong>{block.data.name}</strong>
+          <p>{block.data.title}</p>
+        </article>
+      );
+    }
 
     case "social": {
     // YAPIŞTIRILAN ADRES BLOĞUN TİPİNDEN DAHA GÜÇLÜDÜR. Sosyal kart bir
