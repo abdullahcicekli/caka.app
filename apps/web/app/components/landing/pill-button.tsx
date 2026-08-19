@@ -6,20 +6,22 @@ import { cn } from "~/lib/utils";
 
 /** Hap biçimli CTA. Renk kararları varyantta kalır; çağıran yalnızca niyet seçer. */
 const pillVariants = cva(
-  "inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium whitespace-nowrap transition-colors",
+  "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
   {
     variants: {
       variant: {
+        /* Odak halkası varyanta bağlı: koyu blok üzerinde mürekkep bir
+           halka görünmezdi (mürekkep üstüne mürekkep). */
         /** Navbar birincil CTA'sı: mürekkep zemin */
-        ink: "bg-murekkep text-white hover:bg-murekkep/85",
+        ink: "bg-murekkep text-white hover:bg-murekkep/85 focus-visible:outline-murekkep",
         /** Navbar ikincil: zemin tonunda yumuşak hap */
-        soft: "bg-zemin text-murekkep hover:bg-sinir",
+        soft: "bg-zemin text-murekkep hover:bg-sinir focus-visible:outline-murekkep",
         /** Lime blok üzerindeki birincil CTA: koyu zeytin zemin */
-        heroDark: "bg-kirec-koyu text-white hover:bg-kirec-koyu/90",
+        heroDark: "bg-kirec-koyu text-white hover:bg-kirec-koyu/90 focus-visible:outline-kirec-koyu",
         /** Mavi blok üzerindeki CTA: kireç zemin */
-        lime: "bg-kirec text-murekkep hover:bg-kirec/90",
+        lime: "bg-kirec text-murekkep hover:bg-kirec/90 focus-visible:outline-white",
         /** Cam blok üzerindeki CTA: seftali zemin */
-        seftali: "bg-seftali text-seftali-koyu hover:bg-seftali/90",
+        seftali: "bg-seftali text-seftali-koyu hover:bg-seftali/90 focus-visible:outline-murekkep",
       },
     },
     defaultVariants: { variant: "ink" },

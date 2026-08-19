@@ -345,11 +345,7 @@ export function LegalPage({
   const bindingNotice = legalBindingNotice(locale);
   return (
     <div className="bg-zemin">
-      <Navbar
-        login={landing.nav.login}
-        cta={landing.nav.cta}
-        user={user}
-      />
+      <Navbar nav={landing.nav} user={user} />
       <main className="mx-auto max-w-3xl px-6 pt-14 pb-24 sm:px-10 sm:pt-20">
         <h1 className="text-3xl font-semibold text-murekkep sm:text-4xl">
           {titles.title}

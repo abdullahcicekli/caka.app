@@ -1,6 +1,9 @@
 @import "tailwindcss" source(".");
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Landing yüzeyi ayrı dosyada: `app.css` üzerinde paralel çalışma oluyor ve
+   landing tek blok hâlinde taşınabilir kalsın. Marka token'ları burada. */
+@import "./landing.css";
 
 @custom-variant dark (&:is(.dark *));
 

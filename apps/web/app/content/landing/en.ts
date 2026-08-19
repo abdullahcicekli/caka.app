@@ -11,36 +11,115 @@ export const en = {
   nav: {
     login: { label: "Log in", href: "/login" },
     cta: { label: "Start free", href: "/onboarding" },
+    menu: {
+      label: "Site menu",
+      open: "Menu",
+      close: "Close menu",
+      links: [
+        { label: "How it works", href: "/#urun" },
+        { label: "Showcase", href: "/#vitrin" },
+        { label: "Questions", href: "/#sss" },
+        { label: "Log in", href: "/login" },
+      ],
+      card: {
+        title: "A page built from blocks",
+        body: "Links, photos, music, maps — all on one grid.",
+      },
+      meta: ["A personal page that's yours", "No advertising or analytics cookies"],
+    },
   },
   hero: {
+    kicker: "One address for your personal page\nFree, live in minutes",
     title: "A bio link\nthat's yours.",
-    body: "One link for your Instagram, TikTok, YouTube and every other profile — bringing together everything you share, make and sell.",
+    media: {
+      alt: "Portraits showing Caka pages",
+      pause: "Pause the strip",
+      play: "Play the strip",
+    },
+    tower: {
+      bio: "Musician · Istanbul",
+      link: "New single is out",
+      status: "In the studio this week",
+      document: "Press kit",
+      location: "Kadıköy, Istanbul",
+      country: "Türkiye",
+      youtube: "Studio diary — episode 3",
+      link2: "Tour dates",
+      text: "Open for new work — say hello.",
+    },
+    // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
+    // değerli hâli, adın orada talep edilmesidir.
     claim: {
       domain: "caka.app/",
       placeholder: "yourname",
       cta: "Start free",
       action: "/onboarding",
     },
-    marquee: landingAssets.marquee,
+  },
+  editorial: {
+    body: "One link for your Instagram, TikTok, YouTube and every other profile — bringing together everything you share, make and sell.",
   },
   minutes: {
-    title: "Build your Caka page\nin minutes",
+    title: "Build your Caka page in minutes",
     body: "Gather your social accounts, sites, projects and shop into one link. Tune every detail yourself, or start from a ready-made theme.",
     cta: { label: "Start free", href: "/onboarding" },
   },
   share: {
     title: "Share your Caka\nwherever you want",
-    body: "Put your address on your profiles, your videos and your business card. Bring offline traffic to your page with your QR code.",
+    body: "Put your address on your profiles, your videos and your business card. You pick the card people see when your link is shared, too.",
     cta: { label: "Start free", href: "/onboarding" },
+    badges: ["One address", "Share image"],
+    pill: "Sharing",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Know your audience,\nkeep their attention",
-    body: "See which link gets clicked, where your visitors come from and what actually works. Update your page accordingly.",
+    body: "See which link gets clicked, which country your visitors come from and what actually works. Update your page accordingly.",
     cta: { label: "Start free", href: "/onboarding" },
+    badges: ["Clicks", "Countries"],
+    pill: "Analytics",
+  },
+  showcase: {
+    title: "Designed for real use",
+    body: "Three steps: build your page, share it, then measure it.",
+    segments: [
+      { id: "kur", label: "Build" },
+      { id: "paylas", label: "Share" },
+      { id: "olc", label: "Measure" },
+    ],
+    cards: [
+      {
+        title: "Block grid",
+        body: "Drag your blocks, resize them, build the page in your own layout.",
+      },
+      {
+        title: "Ready-made themes",
+        body: "Settle colour and type in one pick, then change whatever you like.",
+      },
+      {
+        title: "One address",
+        body: "caka.app/yourname — the single link you put on your profiles, videos and business card.",
+      },
+      {
+        title: "Share image",
+        body: "You pick the card people see when your link is shared — template and photo are yours.",
+      },
+      {
+        title: "Click summary",
+        body: "See which block draws attention, then rearrange your page around it.",
+      },
+      {
+        title: "Countries",
+        body: "See which country your visitors come from, and know which audience you are talking to.",
+      },
+    ],
+    prev: "Previous card",
+    next: "Next card",
+    trackLabel: "Showcase cards",
   },
   faq: {
     title: "Questions? Answered",
+    label: "Frequently asked",
     items: [
       {
         question: "What is Caka?",
@@ -76,6 +155,7 @@ export const en = {
   },
   closingCta: {
     title: "Open your own corner\nof the internet today",
+    accent: "Free. Ad-free. Yours.",
     claim: {
       domain: "caka.app/",
       placeholder: "yourname",
@@ -83,12 +163,26 @@ export const en = {
       action: "/onboarding",
     },
   },
+  outro: {
+    line: "The page you open today still belongs to you tomorrow.",
+    pills: ["Open source", "In five languages", "caka.app"],
+  },
   footer: {
+    tagline: "Caka — a personal page that's yours",
     columns: [
+      {
+        title: "Product",
+        links: [
+          { label: "How it works", href: "/#urun" },
+          { label: "Showcase", href: "/#vitrin" },
+          { label: "Questions", href: "/#sss" },
+        ],
+      },
       {
         title: "Caka",
         links: [
-          { label: "How it works", href: "/#urun" },
+          { label: "Start free", href: "/onboarding" },
+          { label: "Log in", href: "/login" },
           { label: "Contact", href: "mailto:hello@caka.app" },
         ],
       },
