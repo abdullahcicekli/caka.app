@@ -199,10 +199,6 @@ export const tr = {
   // Sayfanın en altındaki kireç alan: kısa bir cümle, üç hap bilgi, logo.
   // Hap bilgiler SABİTTİR — tarih/saat gibi istemcide değişen bir değer
   // yazılmaz, yoksa sunucu çıktısıyla ilk render ayrışır (hidrasyon).
-  outro: {
-    line: "Bugün açtığın sayfa, yarın da senin kalır.",
-    pills: ["Kaynak kodu açık", "Beş dilde", "caka.app"],
-  },
   footer: {
     // Yalnızca çalışan hedefler: gerçek çapalar (/#urun, /#karakterler, /#sss —
     // footer hukuki sayfalarda da render edildiği için mutlak yolla), tek

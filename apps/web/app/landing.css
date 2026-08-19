@@ -889,6 +889,27 @@ html[data-landing]::-webkit-scrollbar {
  * Kap `tabindex="0"` ile odaklanabilir, yani ok tuşları da kaydırır.
  * ---------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------- *
+ * Karakter şeridinin SABİTLENMESİ
+ *
+ * Bölüm görüntü alanını doldurunca sayfa orada durur ve dikey kaydırma
+ * şeridi yatay sürer. Yükseklik JS'ten gelir (sahne boyu + sürülecek
+ * mesafe) çünkü mesafe kart sayısına ve ekran genişliğine bağlı.
+ *
+ * `[data-pinned="acik"]` OLMADAN bu kurallar hiç uygulanmaz: JS yoksa,
+ * hareket azaltılmışsa ya da ekran darsa bölüm sıradan bir blok olarak
+ * akar ve native yatay kaydırma çalışır.
+ * ---------------------------------------------------------------- */
+
+.lp-pin[data-pinned="acik"] .lp-pin-stage {
+  position: sticky;
+  /* Ortalama `top` DEĞERİYLE yapılır, `translate` ile DEĞİL: sticky kutuyu
+     dönüşümden ÖNCE hesaplıyor, yani `translate: -50%` sahneyi kendi
+     kutusundan yarım boy erken koparıyor ve bölümün altında o kadar boşluk
+     bırakıyordu. Değer JS'ten geliyor çünkü sahnenin boyu içeriğe bağlı. */
+  top: var(--lp-pin-top, 0px);
+}
+
 .lp-track {
   display: flex;
   overflow-x: auto;
@@ -1042,30 +1063,6 @@ html[data-landing]::-webkit-scrollbar {
 /* ---------------------------------------------------------------- *
  * Kireç kapanış alanı
  * ---------------------------------------------------------------- */
-
-.lp-outro {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  background: var(--color-kirec);
-  padding-block: clamp(64px, 10vw, 148px);
-  text-align: center;
-  color: var(--color-kirec-koyu);
-}
-.lp-outro-line {
-  font-size: clamp(16px, 2vw, 20px);
-  font-weight: 500;
-}
-.lp-outro-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.lp-outro-pill {
-  border: 1px solid color-mix(in srgb, var(--color-kirec-koyu) 35%, transparent);
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 14px;
-}
-.lp-outro-mark { margin-top: clamp(24px, 5vw, 64px); }
-.lp-outro-mark img { width: auto; height: 34px; }
 
 /* ---------------------------------------------------------------- *
  * Footer
