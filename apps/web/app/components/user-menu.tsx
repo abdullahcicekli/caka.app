@@ -36,16 +36,12 @@ function signOut() {
   });
 }
 
-/** Menü gövdesi: navbar (avatar) ve panel (geniş) tetikleyicileri paylaşır. */
-function AccountMenuContent({
-  user,
-  showDashboard = false,
-}: {
-  user: SessionUser;
-  /** "Panel" satırı yalnız panel DIŞINDAN açılan menüde (navbar) görünür;
-      panelin kendi kenar çubuğunda bulunduğun yere bağlantı olurdu. */
-  showDashboard?: boolean;
-}) {
+/** Panel kenar çubuğunun hesap menüsü gövdesi.
+ *
+ * "Panel" satırı YOK: bu menü yalnız panelin içinde açılıyor, bulunduğun
+ * yere bağlantı vermek anlamsız olurdu. (Navbar artık kendi hesap
+ * bölümünü menü katmanında taşıyor — bkz. `MenuAccountSection`.) */
+function AccountMenuContent({ user }: { user: SessionUser }) {
   const app = useCatalog(appCatalog);
   return (
     <>
@@ -65,16 +61,6 @@ function AccountMenuContent({
       <DropdownMenuSeparator />
       {user.username ? (
         <>
-          {/* Panel ilk sırada: oturumlu kullanıcının navbardan aradığı şey
-              önce burası. Adresi olmayan kullanıcıya gösterilmez —
-              /dashboard onboarding'e geri yollardı. */}
-          {showDashboard ? (
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard">
-                <ViewGrid /> {app.nav.dashboard}
-              </Link>
-            </DropdownMenuItem>
-          ) : null}
           <DropdownMenuItem asChild>
             <a href={`/${user.username}`} target="_blank" rel="noreferrer">
               <OpenNewWindow /> {app.nav.viewProfile}
@@ -108,32 +94,88 @@ function AccountMenuContent({
   );
 }
 
-/** Oturumlu kullanıcının navbar profil menüsü. */
-export function UserMenu({ user }: { user: SessionUser }) {
+/**
+ * Landing menü katmanının hesap bölümü — oturum açıkken katmanın EN ÜSTÜNDE.
+ *
+ * Radix dropdown'ı değil, düz bir liste. Sebebi: katman zaten
+ * `role="dialog"` ve kendi odak tuzağını yönetiyor; içine ikinci bir menü
+ * koymak iki tuzağı iç içe geçirir ve Escape'in hangisini kapatacağı
+ * belirsizleşirdi. Satırlar sıradan bağlantı, odak sırası katmanın
+ * doğal sırası.
+ *
+ * Eskiden burada avatara bağlı AYRI bir dropdown vardı; iki ayrı katman
+ * aynı köşeden açılıyordu. Tek panelde birleşti.
+ */
+export function MenuAccountSection({
+  user,
+  onNavigate,
+}: {
+  user: SessionUser;
+  onNavigate: () => void;
+}) {
   const app = useCatalog(appCatalog);
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={app.auth.accountMenu}
-          className="cursor-pointer rounded-full ring-sinir transition hover:ring-4"
-        >
-          <ProfileAvatar name={user.name} avatarUrl={user.avatarUrl} className="size-10 text-sm" />
-        </button>
-      </DropdownMenuTrigger>
-      {/* Site menüsüyle AYNI dil: aynı köşe yarıçapı (`--lp-radius`), aynı
-          gölge, aynı 8px açıklık, aynı iç boşluk ritmi. Sınıf yalnız BU
-          varyantta — panelin kenar çubuğundaki `SidebarUserMenu` kendi
-          bağlamında kalır. */}
-      <DropdownMenuContent
-        align="end"
-        sideOffset={8}
-        className="lp-account-menu w-64 rounded-2xl p-2 ring-0"
-      >
-        <AccountMenuContent user={user} showDashboard />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="lp-menu-account">
+      <div className="lp-menu-account-head">
+        <ProfileAvatar
+          name={user.name}
+          avatarUrl={user.avatarUrl}
+          className="size-9 flex-none text-xs"
+        />
+        <span className="lp-menu-account-id">
+          <strong>{user.name}</strong>
+          {user.username ? <small>caka.app/{user.username}</small> : null}
+        </span>
+      </div>
+      <ul className="lp-menu-account-links">
+        {user.username ? (
+          <>
+            {/* Panel ilk sırada: oturumlu kullanıcının navbardan aradığı şey
+                önce burası. Adresi olmayan kullanıcıya gösterilmez —
+                /dashboard onboarding'e geri yollardı. */}
+            <li>
+              <Link to="/dashboard" onClick={onNavigate}>
+                <ViewGrid width={17} height={17} aria-hidden /> {app.nav.dashboard}
+              </Link>
+            </li>
+            <li>
+              <a
+                href={`/${user.username}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={onNavigate}
+              >
+                <OpenNewWindow width={17} height={17} aria-hidden /> {app.nav.viewProfile}
+              </a>
+            </li>
+            <li>
+              <Link to="/edit" onClick={onNavigate}>
+                <EditPencil width={17} height={17} aria-hidden /> {app.nav.editProfile}
+              </Link>
+            </li>
+          </>
+        ) : (
+          <li>
+            <Link to="/onboarding" onClick={onNavigate}>
+              <OpenNewWindow width={17} height={17} aria-hidden /> {app.auth.claimAddress}
+            </Link>
+          </li>
+        )}
+        {/* Ayarlar sayfası henüz yok: yerini tutar ama ODAK ALMAZ — tıklanamaz
+            bir satırı Tab döngüsüne sokmak klavye kullanıcısını boşa durdurur. */}
+        <li>
+          <span className="lp-menu-account-soon">
+            <Settings width={17} height={17} aria-hidden /> {app.nav.accountSettings}
+            <em>{app.nav.comingSoon}</em>
+          </span>
+        </li>
+        <li>
+          <button type="button" className="lp-menu-account-out" onClick={signOut}>
+            <LogOut width={17} height={17} aria-hidden /> {app.auth.signOut}
+          </button>
+        </li>
+      </ul>
+    </div>
   );
 }
 

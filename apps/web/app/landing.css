@@ -345,24 +345,89 @@ html[data-landing]::-webkit-scrollbar {
 .lp-menu-card span { font-size: 12.5px; line-height: 1.35; opacity: 0.86; }
 
 /* ---------------------------------------------------------------- *
- * Navbar hesap menüsü (oturum açıkken)
+ * Navbar hesap bölümü (oturum açıkken)
  *
- * `UserMenu` bir Radix dropdown'ı: zaten düğmenin altında ve sağa yaslı
- * açılıyor. Eksik olan tek şey DİLDİ — 12px köşe ve genel `shadow-lg`,
- * yanındaki site menüsünün 16px köşesi ve yumuşak gölgesiyle
- * uyuşmuyordu. Bu sınıf ikisini eşitler.
+ * Ayrı bir dropdown YOK: avatar da hamburger de aynı menü katmanını
+ * açıyor, hesap satırları o katmanın en üstünde duruyor. Eskiden avatar
+ * kendi Radix katmanını açıyordu ve aynı köşeden iki farklı panel
+ * çıkıyordu.
  *
- * Sınıf yalnız navbar varyantına verilir; panelin kenar çubuğundaki
- * `SidebarUserMenu` almaz (Değişmez: paneli bozma).
+ * Satırlar site bağlantılarından KASITLI olarak küçük: katmanın ana işi
+ * bölümlere gitmek, hesap satırları ikincil. Aynı boyda olsalardı panel
+ * dokuz eşit satırlık bir listeye dönüşür ve hiyerarşi kaybolurdu.
  * ---------------------------------------------------------------- */
 
-.lp-account-menu {
-  box-shadow: 0 24px 60px color-mix(in srgb, var(--color-murekkep) 18%, transparent);
+.lp-nav-avatar {
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: box-shadow 150ms var(--lp-ease);
 }
-/* Satırların köşesi de kartın köşe ailesinden (12px), 8px değil. */
-.lp-account-menu [data-slot="dropdown-menu-item"] {
+.lp-nav-avatar:hover { box-shadow: 0 0 0 4px var(--color-sinir); }
+.lp-nav-avatar:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
+
+.lp-menu-col { display: flex; flex-direction: column; gap: 12px; }
+
+.lp-menu-account {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-sinir);
+  padding-bottom: 12px;
+}
+
+.lp-menu-account-head { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+.lp-menu-account-id { display: grid; min-width: 0; }
+.lp-menu-account-id strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lp-menu-account-id small {
+  overflow: hidden;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-murekkep) 50%, transparent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lp-menu-account-links { display: flex; flex-direction: column; gap: 1px; }
+.lp-menu-account-links a,
+.lp-menu-account-links .lp-menu-account-soon,
+.lp-menu-account-links .lp-menu-account-out {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
   border-radius: var(--radius-xl);
-  padding-block: 7px;
+  padding: 7px 10px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--color-murekkep);
+  text-align: start;
+  transition: background-color 150ms var(--lp-ease);
+}
+.lp-menu-account-links a:hover,
+.lp-menu-account-links .lp-menu-account-out:hover { background: var(--color-zemin); }
+.lp-menu-account-links a:focus-visible,
+.lp-menu-account-links .lp-menu-account-out:focus-visible {
+  outline: 2px solid var(--color-murekkep);
+  outline-offset: 2px;
+}
+.lp-menu-account-links .lp-menu-account-out { cursor: pointer; color: var(--color-tehlike); }
+/* Tıklanamaz satır: imleç de bunu söylesin, hover'da zemin değişmesin. */
+.lp-menu-account-soon { color: color-mix(in srgb, var(--color-murekkep) 45%, transparent); }
+.lp-menu-account-soon em {
+  margin-inline-start: auto;
+  border-radius: var(--radius-full);
+  background: var(--color-zemin);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .lp-menu-meta {

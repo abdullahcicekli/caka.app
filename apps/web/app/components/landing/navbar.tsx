@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type RefObject,
@@ -9,11 +10,13 @@ import {
 import { Link, useLocation } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
-import { UserMenu, type SessionUser } from "~/components/user-menu";
+import { ProfileAvatar } from "~/components/profile-avatar";
+import { MenuAccountSection, type SessionUser } from "~/components/user-menu";
 import { PillLink } from "./pill-button";
 import { landingAssets } from "~/content/landing/shared";
+import { appCatalog } from "~/content/app";
 import type { NavContent } from "~/content/landing";
-import { useHref } from "~/lib/locale";
+import { useCatalog, useHref } from "~/lib/locale";
 
 interface NavbarProps {
   nav: NavContent;
@@ -26,10 +29,17 @@ interface NavbarProps {
  * İki eylem + bir menü düğmesi taşır. Bölüm bağlantıları menü katmanındadır:
  * hap dar ekranda da tek satırda kalsın diye. Navbar hukuki sayfalarda da
  * render edilir, bu yüzden menüdeki çapalar mutlak yolla yazılıdır (`/#urun`).
+ *
+ * TEK KATMAN: oturum açıkken avatar da hamburger de AYNI paneli açar, hesap
+ * satırları o panelin en üstünde durur. Eskiden avatar kendi Radix
+ * dropdown'ını açıyordu; aynı köşeden iki ayrı katman çıkıyor ve kullanıcı
+ * aradığı satırın hangisinde olduğunu tetikleyiciden kestiremiyordu.
  */
 export function Navbar({ nav, user }: NavbarProps) {
   const localize = useHref();
+  const app = useCatalog(appCatalog);
   const [open, setOpen] = useState(false);
+  const avatarRef = useRef<HTMLButtonElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
   const menuId = useId();
   const { pathname, hash } = useLocation();
@@ -42,11 +52,38 @@ export function Navbar({ nav, user }: NavbarProps) {
 
   // KARARLI olmak zorunda: katmanın odak efekti buna bağlı, satır içi bir
   // arrow her render'da efekti söküp kurar ve odağı ilk bağlantıya geri
-  // zıplatırdı.
+  // zıplatırdı. Odak, katmanı EN SON açan tetikleyiciye döner — kullanıcı
+  // avatardan açtıysa hamburgere atlamak yerini kaybettirirdi.
+  const openerRef = useRef<RefObject<HTMLButtonElement | null>>(burgerRef);
   const closeMenu = useCallback(() => {
     setOpen(false);
-    burgerRef.current?.focus();
+    openerRef.current.current?.focus();
   }, []);
+  const toggleFrom = useCallback((ref: RefObject<HTMLButtonElement | null>) => {
+    openerRef.current = ref;
+    setOpen((value) => !value);
+  }, []);
+
+  // Dizi KARARLI olmak zorunda: katmanın odak efektinin bağımlılığı bu.
+  // Her render'da yeni bir dizi üretilseydi efekt sökülüp kurulur ve odak
+  // ilk bağlantıya geri zıplardı. Bağımlılık `user` değil `hasUser`: `user`
+  // nesnesi çağıranda satır içi kuruluyor, kimliği her render'da değişiyor.
+  const hasUser = Boolean(user);
+  const triggerRefs = useMemo(
+    () => (hasUser ? [avatarRef, burgerRef] : [burgerRef]),
+    [hasUser],
+  );
+
+  // Oturum açıkken "Giriş yap" satırı düşer: kullanıcı zaten girmiş, o satır
+  // onu kendi hesabının olmadığı bir sayfaya yollardı. Eleme ADRESE göre,
+  // etikete göre değil — etiket beş dilde farklı, adres tek.
+  const menuLinks = useMemo(
+    () =>
+      hasUser
+        ? nav.menu.links.filter((link) => link.href !== nav.login.href)
+        : nav.menu.links,
+    [hasUser, nav.menu.links, nav.login.href],
+  );
 
   return (
     <header className="lp-nav">
@@ -61,7 +98,21 @@ export function Navbar({ nav, user }: NavbarProps) {
 
         <div className="lp-nav-actions">
           {user ? (
-            <UserMenu user={user} />
+            <button
+              ref={avatarRef}
+              type="button"
+              className="lp-nav-avatar"
+              aria-expanded={open}
+              aria-controls={open ? menuId : undefined}
+              aria-label={app.auth.accountMenu}
+              onClick={() => toggleFrom(avatarRef)}
+            >
+              <ProfileAvatar
+                name={user.name}
+                avatarUrl={user.avatarUrl}
+                className="size-10 text-sm"
+              />
+            </button>
           ) : (
             <>
               <PillLink
@@ -85,7 +136,7 @@ export function Navbar({ nav, user }: NavbarProps) {
             // `aria-controls` birakmak yerine oznitelik hic basilmaz.
             aria-controls={open ? menuId : undefined}
             aria-label={open ? nav.menu.close : nav.menu.open}
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => toggleFrom(burgerRef)}
           >
             <i aria-hidden />
             <i aria-hidden />
@@ -97,7 +148,9 @@ export function Navbar({ nav, user }: NavbarProps) {
         <MenuLayer
           id={menuId}
           menu={nav.menu}
-          closeRef={burgerRef}
+          links={menuLinks}
+          user={user ?? null}
+          triggerRefs={triggerRefs}
           onClose={closeMenu}
         />
       ) : null}
@@ -109,23 +162,30 @@ const FOCUSABLE = 'a[href], button:not([disabled])';
 
 /**
  * Menü katmanı: solda büyük bağlantı listesi, sağda medya kartı, altta meta
- * satırı.
+ * satırı. Oturum açıksa bağlantıların ÜSTÜNDE hesap bölümü.
  *
  * Erişilebilirlik: `role="dialog"` + `aria-modal`, açılışta ilk bağlantıya
  * odak, Tab katmanın içinde döner (odak tuzağı), Escape kapatır ve odağı
- * hamburgere geri verir. Perdeye tıklamak da kapatır.
+ * katmanı açan düğmeye geri verir. Perdeye tıklamak da kapatır.
  */
 function MenuLayer({
   id,
   menu,
-  closeRef,
+  links,
+  user,
+  triggerRefs,
   onClose,
 }: {
   id: string;
   menu: NavContent["menu"];
-  /** Hamburger (acikken carpi): odak dongusune DAHIL — katmanin gorunur
-      kapatma denetimi o ve klavyeyle de erisilebilir olmali. */
-  closeRef: RefObject<HTMLButtonElement | null>;
+  /** Gösterilecek bölüm bağlantıları — `menu.links`in oturuma göre elenmiş
+      hâli (bkz. `Navbar`). */
+  links: NavContent["menu"]["links"];
+  user: SessionUser | null;
+  /** Katmani acan hap dugmeleri (avatar, hamburger): odak dongusune DAHIL —
+      katmanin gorunur kapatma denetimleri onlar ve klavyeyle de erisilebilir
+      olmalilar. */
+  triggerRefs: RefObject<HTMLButtonElement | null>[];
   onClose: () => void;
 }) {
   const localize = useHref();
@@ -156,12 +216,12 @@ function MenuLayer({
       }
       if (event.key !== "Tab") return;
 
-      // Kapatma düğmesi de döngüye girer ve DOM SIRASINDA olduğu yere
-      // konur: hamburger panelden ÖNCE geliyor. Sona konsaydı ileri yöndeki
-      // kenar o olurdu, son bağlantıdan Tab yakalanmaz ve odak perdenin
-      // arkasındaki sayfaya kaçardı.
+      // Hap düğmeleri de döngüye girer ve DOM SIRASINDA oldukları yere
+      // konur: ikisi de panelden ÖNCE geliyor. Sona konsalardı ileri
+      // yöndeki kenar onlar olurdu, son bağlantıdan Tab yakalanmaz ve odak
+      // perdenin arkasındaki sayfaya kaçardı.
       const items = [
-        closeRef.current,
+        ...triggerRefs.map((ref) => ref.current),
         ...panel.querySelectorAll<HTMLElement>(FOCUSABLE),
       ].filter((item): item is HTMLElement => item !== null);
       if (items.length === 0) return;
@@ -173,7 +233,7 @@ function MenuLayer({
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [closeRef, onClose]);
+  }, [triggerRefs, onClose]);
 
   return (
     <>
@@ -198,15 +258,18 @@ function MenuLayer({
             <strong>{menu.card.title}</strong>
             <span>{menu.card.body}</span>
           </div>
-          <ul className="lp-menu-links">
-            {menu.links.map((link) => (
-              <li key={link.href}>
-                <Link to={localize(link.href)} onClick={onClose}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="lp-menu-col">
+            {user ? <MenuAccountSection user={user} onNavigate={onClose} /> : null}
+            <ul className="lp-menu-links">
+              {links.map((link) => (
+                <li key={link.href}>
+                  <Link to={localize(link.href)} onClick={onClose}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <p className="lp-menu-meta">
           {menu.meta.map((item) => (
