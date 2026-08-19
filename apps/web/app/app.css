@@ -21,18 +21,18 @@
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
   /**
-   * Arapça hat (ayet kartı). WEB FONTU YOK, BİLİNÇLİ: Satoshi zaten
-   * Fontshare'den geliyor ve tedarikçi kaydında "her sayfa yüklemesinde IP +
-   * User Agent" satırıyla duruyor (`docs/legal/vendor-register.md`). İkinci
-   * bir font host'u eklemek ziyaretçiyi bir üçüncü tarafa daha tanıtırdı
-   * (R58) ve çerez/tedarikçi envanterine yeni bir girdi açardı — bir kart
-   * için ödenecek bedel değil. Zincir işletim sistemlerinin kendi nesih
-   * yüzlerini sırayla dener; hiçbiri yoksa `serif`e düşer ve metin yine
-   * doğru okunur (Arapça harf birleşmesi yazı tipine değil, metin motoruna
-   * bağlı). Bedeli: hat yüzü cihazdan cihaza değişir.
+   * Arapça hat (ayet kartı). ARTIK KENDİ SUNUCUMUZDAN BİR WEB FONTU VAR —
+   * yüzü aşağıdaki `@font-face` kuruyor, gerekçesi orada.
+   *
+   * Sistem zinciri arkada duruyor: font henüz inmediyse ya da bir gün
+   * indirilemezse metin yine okunur kalır. Ama artık ona GÜVENİLMİYOR:
+   * `ara-quranuthmanihaf` edisyonu `U+08F0/08F1/08F2` (açık fethateyn /
+   * ötreyn / esreyn) işaretlerini 6.643 kez kullanıyor ve bu üç kod noktası
+   * Arabic Extended-A bloğunda — sistem nesih yüzlerinin çoğunda yok, boş
+   * kare (tofu) olarak çıkıyorlardı.
    */
-  --font-arabic: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic",
-    "Segoe UI", "Traditional Arabic", "Al Bayan", "Amiri", serif;
+  --font-arabic: "Amiri Quran", "SF Arabic", "Geeza Pro", "Noto Naskh Arabic",
+    "Noto Sans Arabic", "Segoe UI", "Traditional Arabic", "Al Bayan", "Amiri", serif;
 
   --color-zemin: #f7f6f2;
   --color-murekkep: #14141a;
@@ -109,6 +109,54 @@
       transform: translateY(-50%);
     }
   }
+}
+
+/* ---------------------------------------------------------------- *
+ * Kur'an hattı — Amiri Quran 1.003, KENDİ SUNUCUMUZDAN.
+ *
+ * NEDEN VAR: `ara-quranuthmanihaf` edisyonunun tamamı tarandı (6236 ayet,
+ * 69 farklı kod noktası — liste `apps/web/tests/quran-font.test.ts`'te ve
+ * teste bağlı). Üçü Arabic Extended-A bloğunda: `U+08F0` açık fethateyn
+ * (2901 geçiş), `U+08F1` açık ötreyn (1807), `U+08F2` açık esreyn (1935).
+ * Sistem nesih yüzlerinin çoğu bu bloğu taşımıyor; kartta boş kare (tofu)
+ * çıkıyordu. Bir kutsal metnin eksik render edilmesi kabul edilemez.
+ *
+ * NEDEN DIŞ CDN DEĞİL: ziyaretçi sayfası hiçbir üçüncü tarafa gitmez (R58).
+ * Google Fonts ya da jsDelivr ziyaretçinin IP + User-Agent'ını oraya
+ * taşırdı ve tedarikçi kaydına yeni bir satır açardı. Dosya depoda.
+ *
+ * NEDEN AMIRI QURAN: SIL OFL 1.1 (lisans metni `fonts/amiri-quran-OFL.txt`,
+ * kayıt `docs/legal/vendor-register.md` §F). Doğrudan Kur'an dizgisi için
+ * tasarlanmış tek OFL yüzü; 69 kod noktasının tamamını kapsıyor (ölçüldü).
+ * KFGQPC (Kral Fahd Kompleksi) hattı teknik olarak daha kanonik ama
+ * yeniden dağıtım şartları OFL kadar açık değil — alınmadı.
+ *
+ * NEDEN SUBSET YOK: `pyftsubset --unicodes=<69> --layout-features='*'` ile
+ * dosya 62,3 KB → 39,3 KB'a iniyor AMA şekillendirme bozuluyor. Ölçüm:
+ * 6236 ayetin tamamı HarfBuzz ile şekillendirilip karşılaştırıldı; subset
+ * alınmış yüz 5285 ayette FARKLI SAYIDA glif üretti (ligatür kaybı) ve
+ * 5325 ayette işaret konumları kaydı. Yalnız `--glyphs='*'` (yani hiçbir
+ * glifi atmayan) subset birebir aynı çıktıyı verdi. 23 KB için ayetin
+ * hattını bozmak seçenek değil: tam yüz gönderiliyor.
+ *
+ * `unicode-range` Arapça bloklarıyla sınırlı ve BOŞLUĞU (U+0020) İÇERMEZ:
+ * yalnız Arapça harf içeren bir metin dosyayı indirtebilsin. Boşluk yedek
+ * yüzden gelir (Amiri Quran'ın boşluk ilerlemesi 292/1000 em, tipik serif
+ * 0,25em — 30px'te ~1,3px fark, kelime arasında görünmez).
+ *
+ * `font-display: block`: `swap` olsaydı yedek yüz önce basılır, yani
+ * kullanıcı önce TOFU görür sonra düzelirdi — düzeltmeye çalıştığımız şeyin
+ * ta kendisi. `optional` ise yavaş bağlantıda fontu hiç kullanmaz ve tofu
+ * kalıcı olurdu. `block` metni en fazla ~3 sn görünmez tutar, sonra yedeğe
+ * düşer ve font gelince yine de değiştirir.
+ * ---------------------------------------------------------------- */
+@font-face {
+  font-family: "Amiri Quran";
+  src: url("./fonts/amiri-quran.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200F, U+FB50-FDFF, U+FE70-FEFF;
 }
 
 /* İlk giriş kurulumu */
@@ -3555,6 +3603,59 @@ button.photo-cell:focus-visible {
    bu sınıf taşıyor. Yalnız kenarlık değil zemin de değişir — kenarlık farkı
    tek başına düşük görüşte seçilemiyordu. */
 .ayet-result.is-active { border-color: var(--color-murekkep); background: var(--color-kum); }
+/* Seçilen ayetin kutusu. Arama sonucu satırının (`.ayet-result`) aynı görsel
+   dili: aynı kenarlık, aynı radius, aynı strong+small hiyerarşisi. Ayıran
+   tek şey zemin (kum) ve daha kalın kenarlık — "bu bir seçenek değil, seçim"
+   demek için. Yeni bir dil icat edilmedi. */
+.ayet-picked {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--color-murekkep);
+  border-radius: var(--radius-lg);
+  background: var(--color-kum);
+  padding: 10px 11px;
+}
+.ayet-picked-legend {
+  margin: 0;
+  color: color-mix(in srgb, var(--color-murekkep) 55%, transparent);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ayet-picked > strong { font-size: 12.5px; font-weight: 600; }
+/* Önizleme KISALTILIR, ama metin kırpılmaz: kutuda iki satır görünür, ayetin
+   tamamı kartta durur. `line-clamp` seçilmesinin sebebi, kutunun panelin
+   yarısını yemesini engellemek. */
+.ayet-picked-arabic,
+.ayet-picked-meal {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+/* Satır aralığı 2.5: Amiri Quran'ın glif kutusu 2.449em (ascent 1.815 +
+   descent 0.634, `head`/`hhea`'dan okundu). `line-clamp` kutuyu KIRPTIĞI için
+   daha dar bir aralıkta ilk satırın işaretleri ve son satırın kuyrukları
+   kesiliyordu — ölçüldü. Kartta bu sorun yok: orada kırpan bir kutu yok. */
+.ayet-picked-arabic {
+  font-family: var(--font-arabic);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 2.5;
+  text-align: start;
+}
+.ayet-picked-meal {
+  color: color-mix(in srgb, var(--color-murekkep) 72%, transparent);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.ayet-picked-actions { display: flex; gap: 6px; margin-top: 2px; }
+.ayet-picked-actions button { flex: 1; }
 .ayet-result strong { font-size: 12px; font-weight: 600; }
 .ayet-result small { color: color-mix(in srgb, var(--color-murekkep) 60%, transparent); font-size: 11.5px; font-weight: 400; line-height: 1.4; }
 /* Fotoğraf listesi KENDİ İÇİNDE kayar. Eskiden liste büyüdükçe "Fotoğraf

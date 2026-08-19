@@ -188,7 +188,11 @@ export const en = {
       `${count === 1 ? "1 verse" : `${count} verses`} listed. Use the arrow keys to browse, Enter to select.`,
     ayetNoResults: (query: string) => `No verse found for “${query}”.`,
     ayetFailed: "The verse source could not be reached — check your connection.",
-    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} added`,
+    ayetPickedLegend: "Selected verse",
+    ayetSearchOpen: "Choose another verse",
+    ayetSearchClose: "Close search",
+    ayetClear: "Remove verse",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} selected`,
     ayetSourceNote: (translator: string) =>
       `The Arabic text is in Uthmani script (Hafs); the Turkish translation is by ${translator} and is credited at the foot of the card.`,
     fixIssue: "Fix",

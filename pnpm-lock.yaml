@@ -128,6 +128,9 @@ importers:
       vite:
         specifier: ^8.0.3
         version: 8.2.1(@types/node@22.20.1)(esbuild@0.25.12)(jiti@2.7.0)
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)
       wrangler:
         specifier: ^4.123.0
         version: 4.123.0(@cloudflare/workers-types@5.20260815.1)

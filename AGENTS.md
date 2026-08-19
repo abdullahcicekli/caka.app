@@ -11,7 +11,7 @@ yeni metin önce Türkçe yazılır, tip sözleşmesi ondan türer.
 |---|---|
 | `pnpm dev` | Vite + Miniflare (lokal D1/R2); port 5173 doluysa 5174'e kayar. **İşin bitince kapat** — bkz. "Arkada bırakma" |
 | `pnpm typecheck` | Her değişiklikten sonra çalıştır; temiz olmalı |
-| `pnpm test` | Vitest (`packages/shared`) |
+| `pnpm test` | Vitest — `packages/shared` (saf kurallar) + `apps/web` (`tests/`, bugün Kur'an hattının kapsama sınaması) |
 | `pnpm --filter @caka/web run deploy` | **Prod'a çıkışın tek yolu** (Değişmez #11): build + bekleyen D1 migration'larını `--remote` uygula + `wrangler deploy` → caka.app. **`run` sözcüğü şart:** pnpm'in rezerve `deploy` komutu script'i gölgeler; çıplak `pnpm deploy` kökte `ERR_PNPM_NOTHING_TO_DEPLOY` verir |
 | `pnpm exec wrangler d1 migrations apply caka-db --local` | `apps/web` içinden; şema değişince |
 | `pnpm exec wrangler types` | `wrangler.jsonc` değişince Env tiplerini yeniden üret |
