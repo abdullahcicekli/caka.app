@@ -30,6 +30,13 @@
  *
  *        node scripts/lab-denetim.mjs
  *
+ *   5) Kişisiz, saydam zeminli tek telefon (giriş ve kayıt sayfaları için):
+ *
+ *        http://localhost:5173/__lab/karakterler?p=busra&tel=1
+ *        node scripts/lab-telefon.mjs
+ *
+ *      Çıktı: `app/assets/landing/vitrin/telefon-<id>.webp`
+ *
  * ─── NEDEN BÖYLE ───────────────────────────────────────────────────────────
  *
  * Telefonun içi bir ekran görüntüsü DEĞİL, `ProfileCanvas`'ın kendisidir:
@@ -109,6 +116,52 @@ const YOUTUBE_AKISLARI: YoutubeFeedMap = {
   },
 };
 
+/**
+ * Telefonun içi — kartın da döngünün de ortak parçası. Ayrı bir bileşen
+ * olması şart değildi ama "yalnız telefon" modu (bkz. `Sahne`) aynı düğümü
+ * ikinci kez yazmak zorunda kalmasın diye ayrıldı.
+ */
+function Telefon({ persona, kaydir }: { persona: Persona; kaydir: number }) {
+  return (
+    <div className="dashboard-preview">
+      <div
+        className="dashboard-preview-scale"
+        // Döngü karesi: sayfa telefonun içinde kayar. `translateY`
+        // ölçekten SONRA uygulanmalı, yoksa piksel değeri 0.9091 ile
+        // çarpılır ve kareler eşit aralıklı olmaz.
+        style={kaydir ? { translate: `0 ${-kaydir}px` } : undefined}
+      >
+        <ProfileCanvas
+          layout={persona.layout}
+          theme={persona.theme}
+          githubCalendars={GITHUB_TAKVIMLERI}
+          signedImages={persona.images}
+          youtubeFeeds={YOUTUBE_AKISLARI}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * YALNIZ TELEFON (`?tel=1`): stüdyo karesi ve kişi yok, saydam zeminde
+ * duran bir telefon. Giriş (`routes/login.tsx`) ve kayıt
+ * (`routes/onboarding.tsx`) sayfaları bu varlığı kullanıyor: oralarda
+ * arkasındaki zemin sayfanın kendi rengi, o yüzden alfa şart.
+ *
+ * Gölge `.lab-telefon::after` ile kutunun DIŞINA taşıyor; çekim bu sahneyi
+ * alır (telefonun kendisini değil), yoksa gölge kırpılırdı.
+ */
+function Sahne({ persona }: { persona: Persona }) {
+  return (
+    <div className="lab-sahne" data-persona={persona.id}>
+      <div className="lab-telefon">
+        <Telefon persona={persona} kaydir={0} />
+      </div>
+    </div>
+  );
+}
+
 function Kart({ persona, kaydir = 0 }: { persona: Persona; kaydir?: number }) {
   const telefonSagda = persona.side === "left";
   return (
@@ -116,23 +169,7 @@ function Kart({ persona, kaydir = 0 }: { persona: Persona; kaydir?: number }) {
       <div className="lab-kart" data-persona={persona.id} style={{ background: persona.backdrop }}>
         <img className="lab-foto" src={persona.photo} alt="" />
         <div className={`lab-telefon ${telefonSagda ? "is-sag" : "is-sol"}`}>
-          <div className="dashboard-preview">
-            <div
-              className="dashboard-preview-scale"
-              // Döngü karesi: sayfa telefonun içinde kayar. `translateY`
-              // ölçekten SONRA uygulanmalı, yoksa piksel değeri 0.9091 ile
-              // çarpılır ve kareler eşit aralıklı olmaz.
-              style={kaydir ? { translate: `0 ${-kaydir}px` } : undefined}
-            >
-              <ProfileCanvas
-                layout={persona.layout}
-                theme={persona.theme}
-                githubCalendars={GITHUB_TAKVIMLERI}
-                signedImages={persona.images}
-                youtubeFeeds={YOUTUBE_AKISLARI}
-              />
-            </div>
-          </div>
+          <Telefon persona={persona} kaydir={kaydir} />
         </div>
       </div>
       {/* ALTYAZI VARLIĞA GÖMÜLMEZ: beş dilde değişir, webp'e basılsaydı
@@ -150,17 +187,31 @@ export default function LabKarakterler() {
   const [params] = useSearchParams();
   const secili = params.get("p");
   const kaydir = Number(params.get("kaydir") ?? 0) || 0;
+  const yalnizTelefon = params.get("tel") === "1";
   const liste = secili ? LANDING_PERSONAS.filter((p) => p.id === secili) : LANDING_PERSONAS;
 
   return (
-    <div className={`lab-sayfa ${secili ? "is-tek" : ""}`}>
+    <div className={`lab-sayfa ${secili ? "is-tek" : ""} ${yalnizTelefon ? "is-telefon" : ""}`}>
       <style>{LAB_CSS}</style>
-      {liste.map((persona) => (
-        <Kart key={persona.id} persona={persona} kaydir={kaydir} />
-      ))}
+      {/* Saydamlık gövdeden gelir: `omitBackground` yalnız tarayıcının
+          varsayılan beyazını kaldırır, `body`'nin kendi zemini (app.css)
+          boyanmaya devam ederdi ve telefonun etrafında opak bir dikdörtgen
+          kalırdı. Bu kural yalnız tel modunda basılır. */}
+      {yalnizTelefon ? <style>{TELEFON_CSS}</style> : null}
+      {liste.map((persona) =>
+        yalnizTelefon ? (
+          <Sahne key={persona.id} persona={persona} />
+        ) : (
+          <Kart key={persona.id} persona={persona} kaydir={kaydir} />
+        ),
+      )}
     </div>
   );
 }
+
+const TELEFON_CSS = `
+html, body { background: transparent !important; }
+`;
 
 /**
  * Stil route'un içinde: laboratuvar üretim CSS'ine (app.css) hiçbir kural
@@ -223,6 +274,26 @@ const LAB_CSS = `
   background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.4), transparent 70%);
   filter: blur(6px);
 }
+
+/* YALNIZ TELEFON MODU (?tel=1): stüdyo yok, saydam zemin. Sahne yalnız
+   gölgeye yer açar; çekim bu kutunun sınırını alır. */
+.lab-sayfa.is-telefon { background: transparent; padding: 0; gap: 0; }
+/* Dolgu gölgeyi TAM İÇERMELİ: taşan bir gölge çekimde sert bir kenarla
+   kesilir ve varlıkta gri bir dikdörtgen olarak görünür. */
+.lab-sahne { padding: 70px 70px 84px; }
+/* relative KALMALI: gölge telefona göre konumlanıyor; static yapılırsa
+   sahneye tutunur ve kadrajın dışına düşer. */
+.lab-sayfa.is-telefon .lab-telefon { position: relative; bottom: auto; }
+/* Stüdyo karesinde telefon YERDE DURUYOR: yana düşen sert bir gölge ve
+   altında bir yer izi var. Tek başına duran varlıkta zemin yok — gölge
+   simetrik ve yumuşak olmalı, yoksa telefon boşlukta eğik durur gibi görünür. */
+.lab-sayfa.is-telefon .lab-telefon .dashboard-preview {
+  box-shadow:
+    0 0 0 11px #16181d,
+    0 0 0 13px rgb(255 255 255 / 0.14),
+    0 22px 44px rgb(0 0 0 / 0.18);
+}
+.lab-sayfa.is-telefon .lab-telefon::after { display: none; }
 
 .lab-cerceve { margin: 0; }
 .lab-altyazi {

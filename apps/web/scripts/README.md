@@ -10,9 +10,19 @@ girmezler.
 | `lab-denetim.mjs` | `/__lab/karakterler` DOM'unu tarar; kartlarda **yer tutucu** (baş harf çipi, boş avatar) kalmışsa listeler ve 1 ile çıkar. Çekimden önce sıfır bulgu vermeli. |
 | `lab-cek.mjs` | Altı kartı 2x DPR ile çeker, `app/assets/landing/vitrin/<id>.webp` üretir. |
 | `lab-gif.mjs` | Tek personada kısa kaydırma döngüsü (animasyonlu webp + gif). |
+| `lab-telefon.mjs` | Kişisiz, **saydam zeminli** tek telefon (`?tel=1` modu). Giriş ve kayıt sayfaları bunu kullanır: `telefon-<id>.webp`. |
 
-Sıra: `lab-tohum.mjs` → `pnpm dev` → `lab-denetim.mjs` → `lab-cek.mjs`.
+Sıra: `lab-tohum.mjs` → `pnpm dev` → `lab-denetim.mjs` → `lab-cek.mjs`
+(+ gerekiyorsa `lab-telefon.mjs`).
 Ayrıntı ve gerekçeler `app/routes/lab.karakterler.tsx` başlığında.
+
+Çıktıların nereye gittiği:
+
+| Varlık | Kullanan |
+| --- | --- |
+| `vitrin/<id>.webp` (6) | Landing karakter şeridi (`components/landing/karakterler-section.tsx`) |
+| `vitrin/emre-dongu.webp` | Aynı şerit; hareket tercihi açıksa |
+| `vitrin/telefon-busra.webp` | `routes/login.tsx` sağ panel + `routes/onboarding.tsx` |
 
 ## Neden `playwright` bir devDependency
 

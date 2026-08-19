@@ -74,4 +74,21 @@ Kaynak seçimi ürünün gerçekte ne bulacağını taklit eder:
 
 Bu varlıkların hiçbiri üretim paketine girmez: yalnız laboratuvar route'undan
 (`routes/lab.karakterler.tsx`, `import.meta.env.DEV` kapılı) okunuyorlar ve
-landing'e giden şey `vitrin/` altındaki webp'lerdir.
+üretime giden şey `vitrin/` altındaki webp'lerdir.
+
+## 4. `vitrin/` — üretime giden çıktılar
+
+Hepsi laboratuvardan üretildi; elle çizilmiş varlık yok. Yeniden üretmek için
+`scripts/README.md`.
+
+| Dosya | Nerede görünür |
+| --- | --- |
+| `emre / kaan / serkan / ozan / zeynep / busra.webp` | Landing karakter şeridi |
+| `emre-dongu.webp` | Aynı şerit; hareket tercihi açıksa |
+| `telefon-busra.webp` | `/login` sağ paneli ve `/onboarding` |
+
+`telefon-busra.webp` SAYDAM (alfa) ve kişisizdir: arkasındaki zemin sayfanın
+kendi rengidir (girişte kireç, kayıtta beyaz), o yüzden tek varlık iki sayfaya
+yetiyor. Giriş sayfasında eskiden elle yazılmış sahte bir profil kartı ve
+`creator-selin.webp` (123 KB) duruyordu; yerine geçen bu mockup 34 KB ve
+telefonun içi ürünün kendi `ProfileCanvas`'ı.
