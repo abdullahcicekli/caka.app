@@ -31,10 +31,14 @@ Hero şeridinde **her görsel yalnız bir kez** geçer. Dört portreyle on beş 
 doldurmak (avatar + kart kapağı + önizleme aynı fotoğraftan) gözle hemen
 yakalanıyordu. İş bölümü:
 
-- **Yüz yalnız avatarda.** Avatarlar dört kaynak portrenin kırpmasıdır. Aynı
-  personadan ikinci bir portre ÜRETMEK başka bir yüz getirir ve şeritte
-  düzeltilen kimlik kusurunu (kadın fotoğrafı taşıyan kartın "Kerem Aydın"
-  diye etiketlenmesi) geri koyardı.
+- **Yüz yalnız avatarda.** Şeridin avatarları artık `serit/<slug>.webp` —
+  24 kişilik kadronun kendi kareleri (`serit/README.md`). Aynı kişiden ikinci
+  bir portre ÜRETMEK başka bir yüz getirir ve şeritte düzeltilen kimlik
+  kusurunu (kadın fotoğrafı taşıyan kartın "Kerem Aydın" diye
+  etiketlenmesi) geri koyardı.
+  Eski `avatar-{kerem,selin,elif,naz}.webp` kırpmaları **silindi**: kadro
+  24 kişiye çıkınca aynı dört ad için iki ayrı yüz seti kalıyordu. Kırpma
+  komutları aşağıda kayıt olarak duruyor.
 - **Kart görselleri kişi taşımaz:** personanın dünyasından bir sahne ya da
   nesne. Kimlik iddiası taşımadıkları için hangi yüzün çıktığı sorun değil,
   dolayısıyla her personaya kendi görsel seti düşebiliyor.
