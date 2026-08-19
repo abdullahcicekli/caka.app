@@ -76,23 +76,51 @@ const ASSET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
  *  sıkılaştırmayı diğerinde delik bırakırdı. */
 const IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/**
+ * EDGE ÖNBELLEĞİ ZORUNLU (ölçüldü, 2026-08-20).
+ *
+ * Worker'ın ÜRETTİĞİ yanıtlar CDN önbelleğine kendiliğinden girmez —
+ * `Cache-Control` başlığı yalnız ZİYARETÇİNİN tarayıcısını bağlar. Bu yol
+ * Cache API'ye yazmadığı için her istek, her ziyaretçide R2'ye iniyordu:
+ * canlı bir profilde beş görselin tamamı `cf-cache-status` başlığı bile
+ * taşımıyordu ve tekrarlı istekler ilk istek kadar sürüyordu (~1,0 sn).
+ * `/api/gorsel` ve `/og` aynı kalıbı zaten kullanıyor.
+ *
+ * ANAHTAR = ADRESİN KENDİSİ ve içerik değişmez: asset id bir UUID, aynı id
+ * ikinci bir gövde almıyor (yeni yükleme yeni id açar). Bu yüzden hem
+ * `immutable` başlığı hem de sorgu parametresi taşımayan bir anahtar güvenli.
+ */
 honoApp.get("/i/:id", async (c) => {
   const id = c.req.param("id");
   if (!ASSET_ID_PATTERN.test(id)) return c.notFound();
+
+  // Workers Cache API: tip tanımında `default` yok (og-image.ts ile aynı kalıp).
+  const cache = (caches as unknown as { default: Cache }).default;
+  const cacheKey = new Request(`${new URL(c.req.url).origin}/i/${id}`, { method: "GET" });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
   const object = await c.env.BUCKET.get(id);
   if (!object) return c.notFound();
   if (!IMAGE_CONTENT_TYPES.has(object.httpMetadata?.contentType ?? "")) {
     return c.notFound();
   }
-  return new Response(object.body, {
+  const response = new Response(object.body, {
     headers: {
       "Content-Type": object.httpMetadata?.contentType ?? "application/octet-stream",
       "Cache-Control": "public, max-age=31536000, immutable",
+      // R2'nin etag'i: önbellek girdisi bir gün düşerse tarayıcı 304'e
+      // düşebilsin. `immutable` yüzünden normalde hiç sorulmaz.
+      ETag: object.httpEtag,
       "X-Content-Type-Options": "nosniff",
       "Content-Disposition": "inline",
       "Content-Security-Policy": "default-src 'none'; sandbox",
     },
   });
+  // Gövde bir akış: `clone()` akışı ikiye ayırır, biri ziyaretçiye gider,
+  // öteki önbelleğe yazılır. Yazma yanıtı bekletmez (`waitUntil`).
+  c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  return response;
 });
 
 /**
