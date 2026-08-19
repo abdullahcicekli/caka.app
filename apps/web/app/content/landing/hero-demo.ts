@@ -267,6 +267,7 @@ function social(
       // görseli `heroTowerImages`ten okur (bkz. `profile-block.tsx`).
       ogImage: hasOg ? "https://example.com/og.jpg" : "",
       favicon: "",
+      variant: "card",
     },
   };
 }
@@ -296,6 +297,9 @@ function link(
       url,
       ogImage: og ? `https://${host}/og.jpg` : "",
       favicon: favicon ? `https://${host}/favicon.ico` : "",
+      // Şema `variant`ı `.default("card")` ile tanımlıyor: girdide isteğe
+      // bağlı ama ÇIKTI tipinde zorunlu, o yüzden burada yazılı olmalı.
+      variant: "card",
     },
   };
 }
@@ -531,6 +535,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
                   label: "",
                   ogImage: "",
                   favicon: "",
+                  variant: "card",
                 },
               },
             },
