@@ -67,6 +67,16 @@ export function LocationCard({
   }, [data.timeZone]);
 
   const hasMap = Boolean(frames.far || frames.near);
+  // Atıf yalnız SAĞLAYICIDAN gelen kare için. Landing şeridi bu karta
+  // paketlenmiş, ÜRETİLMİŞ bir harita veriyor (bkz. `content/landing/
+  // hero-demo.ts`) — o içerik Mapbox'ın değil ve onu Mapbox'a atfetmek yanlış
+  // bir kaynak beyanı olurdu.
+  //
+  // Kural şüphe hâlinde atıf LEHİNE: yalnız birinci taraf yol (tek "/" ile
+  // başlayan paketlenmiş dosya) muaf; uzak adreslerin hepsi atıf gösterir.
+  const frame = frames.far || frames.near;
+  const providerMap =
+    hasMap && !(frame.startsWith("/") && !frame.startsWith("//"));
   const label = data.label || w.location.fallbackLabel;
 
   return (
@@ -135,7 +145,7 @@ export function LocationCard({
           dışında kalırdı) ve yükümlülük bize geçiyor. Sağlayıcının şartları
           WORDMARK'ı da istiyor, o yüzden ilk bağlantının içinde duruyor.
           Metinler çevrilmez — şartlarda birebir yazılı. */}
-      {hasMap ? (
+      {providerMap ? (
         <small className="loc-attrib">
           {MAP_ATTRIBUTION_LINKS.map((link, index) => (
             <a key={link.href} href={link.href} target="_blank" rel="noreferrer">

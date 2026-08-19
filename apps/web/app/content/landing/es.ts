@@ -35,20 +35,36 @@ export const es = {
     kicker: "Una dirección para tu página personal\nGratis, publicada en minutos",
     title: "Un enlace bio\nhecho a tu medida.",
     media: {
-      alt: "Retratos que muestran páginas de Caka",
+      alt: "Una franja con tarjetas de cuatro páginas de Caka",
       pause: "Detener la tira",
       play: "Reproducir la tira",
     },
     tower: {
-      bio: "Músico · Estambul",
-      link: "Nuevo single ya disponible",
-      status: "Esta semana en el estudio",
-      document: "Kit de prensa",
-      location: "Kadıköy, Estambul",
-      country: "Turquía",
-      youtube: "Diario de estudio — episodio 3",
-      link2: "Fechas de gira",
-      text: "Abierto a nuevos proyectos: escríbeme.",
+      kerem: {
+        bio: "Músico · Estambul",
+        status: "Esta semana en el estudio",
+        document: "Kit de prensa",
+        link: "Fechas de conciertos",
+      },
+      selin: {
+        bio: "Cerámica · Bodrum",
+        status: "Taller abierto el sábado",
+        link: "Nueva colección: Toprak",
+        location: "Bodrum, Muğla",
+        country: "Turquía",
+      },
+      elif: {
+        bio: "Pódcast · Ankara",
+        status: "Nuevo episodio el jueves",
+        youtube: "Sade Hayat — detrás del episodio 7",
+        link: "Todos los episodios",
+      },
+      naz: {
+        bio: "Locutora · Esmirna",
+        status: "Agenda abierta para grabar",
+        text: "Escríbeme para trabajos de voz.",
+        link: "Historias en audio",
+      },
     },
     // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
     // değerli hâli, adın orada talep edilmesidir.

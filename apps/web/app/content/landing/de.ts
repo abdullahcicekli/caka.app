@@ -35,20 +35,36 @@ export const de = {
     kicker: "Eine Adresse für deine persönliche Seite\nKostenlos, in Minuten online",
     title: "Ein Bio-Link,\nder zu dir passt.",
     media: {
-      alt: "Porträts, die Caka-Seiten zeigen",
+      alt: "Ein Streifen mit Karten aus vier Caka-Seiten",
       pause: "Streifen anhalten",
       play: "Streifen abspielen",
     },
     tower: {
-      bio: "Musiker · Istanbul",
-      link: "Neue Single ist da",
-      status: "Diese Woche im Studio",
-      document: "Pressemappe",
-      location: "Kadıköy, Istanbul",
-      country: "Türkei",
-      youtube: "Studio-Tagebuch — Folge 3",
-      link2: "Tourdaten",
-      text: "Offen für neue Projekte — schreib mir.",
+      kerem: {
+        bio: "Musiker · Istanbul",
+        status: "Diese Woche im Studio",
+        document: "Pressemappe",
+        link: "Tourdaten",
+      },
+      selin: {
+        bio: "Keramik · Bodrum",
+        status: "Werkstatt samstags offen",
+        link: "Neue Kollektion: Toprak",
+        location: "Bodrum, Muğla",
+        country: "Türkei",
+      },
+      elif: {
+        bio: "Podcast · Ankara",
+        status: "Neue Folge am Donnerstag",
+        youtube: "Sade Hayat — hinter Folge 7",
+        link: "Alle Folgen",
+      },
+      naz: {
+        bio: "Sprecherin · Izmir",
+        status: "Termine sind frei",
+        text: "Schreib mir für Sprecherjobs.",
+        link: "Hörgeschichten",
+      },
     },
     // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
     // değerli hâli, adın orada talep edilmesidir.

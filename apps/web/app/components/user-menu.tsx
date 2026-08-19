@@ -122,7 +122,15 @@ export function UserMenu({ user }: { user: SessionUser }) {
           <ProfileAvatar name={user.name} avatarUrl={user.avatarUrl} className="size-10 text-sm" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      {/* Site menüsüyle AYNI dil: aynı köşe yarıçapı (`--lp-radius`), aynı
+          gölge, aynı 8px açıklık, aynı iç boşluk ritmi. Sınıf yalnız BU
+          varyantta — panelin kenar çubuğundaki `SidebarUserMenu` kendi
+          bağlamında kalır. */}
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="lp-account-menu w-64 rounded-2xl p-2 ring-0"
+      >
         <AccountMenuContent user={user} showDashboard />
       </DropdownMenuContent>
     </DropdownMenu>

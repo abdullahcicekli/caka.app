@@ -227,8 +227,16 @@ html[data-landing]::-webkit-scrollbar {
 /* ---------------------------------------------------------------- *
  * Menü katmanı
  *
- * Hap navbarın altından açılan beyaz kart + arkasında perde. Kart,
- * navbarın kendisiyle aynı hizada durur (aynı oluk, aynı maks genişlik).
+ * HAMBURGERE BAĞLI bir katman: ortalanmış bir modal değil, düğmenin hemen
+ * altında ve sağa yaslı açılan bir kart. Açılış hareketi de o köşeden
+ * büyür (`transform-origin: 100% 0`).
+ *
+ * Sağ kenar navbar HAPININ sağ kenarına oturur. Hap ortalanmış ve maks
+ * 1440px olduğu için hizalama sabit bir sayıyla verilemez: `.lp-nav`ın
+ * kendi eni üzerinden hesaplanır (aşağıdaki `right`).
+ *
+ * Erişilebilirlik davranışı DEĞİŞMEDİ: `role="dialog"`, odak tuzağı,
+ * Escape, odağın hamburgere dönüşü ve gövde kaydırma kilidi yerinde.
  * ---------------------------------------------------------------- */
 
 .lp-menu-scrim {
@@ -245,36 +253,46 @@ html[data-landing]::-webkit-scrollbar {
   position: absolute;
   z-index: 3;
   top: calc(var(--lp-nav-h) + 8px);
-  right: var(--lp-gutter);
-  left: var(--lp-gutter);
-  overflow: hidden;
-  margin-inline: auto;
-  max-width: 720px;
+  /* Hapın sağ kenarıyla hizalanır: oluk + hapın ortalanmaktan doğan payı.
+     `100%` burada `.lp-nav`ın dolgu kutusu, yani görüntü alanı genişliği. */
+  right: calc(var(--lp-gutter) + max(0px, (100% - 2 * var(--lp-gutter) - 1440px) / 2));
+  left: auto;
+  overflow: hidden auto;
+  width: min(560px, calc(100% - 2 * var(--lp-gutter)));
+  /* Kısa ekranda katman görüntü alanını taşmaz, kendi içinde kayar. */
+  max-height: calc(100dvh - var(--lp-nav-h) - 32px);
   border-radius: var(--lp-radius);
   background: white;
-  padding: 20px;
+  padding: 18px;
   box-shadow: 0 24px 60px color-mix(in srgb, var(--color-murekkep) 18%, transparent);
-  animation: lp-menu-in 220ms var(--lp-ease) both;
+  /* Düğmenin köşesinden büyür. */
+  transform-origin: 100% 0;
+  animation: lp-menu-in 200ms var(--lp-ease) both;
 }
 
 @keyframes lp-menu-in {
-  from { opacity: 0; translate: 0 -8px; scale: 0.985; }
+  from { opacity: 0; translate: 0 -6px; scale: 0.92; }
 }
 
+/* Görsel SOLDA, bağlantılar SAĞDA. Görsel sütunu sabit: bağlantı listesi
+   kalan yeri alsın, uzun bir etiket geldiğinde kart daralmasın. */
 .lp-menu-grid {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   grid-template-columns: 1fr;
 }
-@media (min-width: 640px) {
-  .lp-menu-grid { grid-template-columns: 1fr 1fr; }
+@media (min-width: 560px) {
+  .lp-menu-grid { grid-template-columns: 196px 1fr; }
 }
 
 .lp-menu-links { display: flex; flex-direction: column; gap: 2px; }
 .lp-menu-links a {
+  display: block;
   border-radius: var(--radius-xl);
-  padding: 6px 8px;
-  font-size: clamp(22px, 3.4vw, 30px);
+  padding: 7px 10px;
+  /* Katman artık düğmeye bağlı ve dar: tipografi de o kutuya göre.
+     Eskiden 30px'e kadar çıkıyordu ve 560px'lik kartta satırlar sarıyordu. */
+  font-size: clamp(19px, 2.2vw, 23px);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--color-murekkep);
@@ -287,13 +305,16 @@ html[data-landing]::-webkit-scrollbar {
   position: relative;
   display: flex;
   overflow: hidden;
-  min-height: 168px;
+  min-height: 132px;
   flex-direction: column;
   justify-content: flex-end;
   border-radius: var(--radius-xl);
   background: var(--color-kirec);
-  padding: 16px;
+  padding: 14px;
   gap: 4px;
+}
+@media (min-width: 560px) {
+  .lp-menu-card { min-height: 208px; }
 }
 .lp-menu-card img {
   position: absolute;
@@ -302,7 +323,9 @@ html[data-landing]::-webkit-scrollbar {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 22%;
+  /* Tepeden çekilmiş bir masa: odak ortada. (Portre görseldeyken %22 yüze
+     nişan alıyordu.) */
+  object-position: 50% 50%;
 }
 .lp-menu-card::after {
   content: "";
@@ -318,14 +341,35 @@ html[data-landing]::-webkit-scrollbar {
 }
 .lp-menu-card strong,
 .lp-menu-card span { position: relative; z-index: 2; color: white; }
-.lp-menu-card strong { font-size: 15px; font-weight: 600; }
-.lp-menu-card span { font-size: 13px; opacity: 0.82; }
+.lp-menu-card strong { font-size: 14px; font-weight: 600; line-height: 1.25; text-wrap: balance; }
+.lp-menu-card span { font-size: 12.5px; line-height: 1.35; opacity: 0.86; }
+
+/* ---------------------------------------------------------------- *
+ * Navbar hesap menüsü (oturum açıkken)
+ *
+ * `UserMenu` bir Radix dropdown'ı: zaten düğmenin altında ve sağa yaslı
+ * açılıyor. Eksik olan tek şey DİLDİ — 12px köşe ve genel `shadow-lg`,
+ * yanındaki site menüsünün 16px köşesi ve yumuşak gölgesiyle
+ * uyuşmuyordu. Bu sınıf ikisini eşitler.
+ *
+ * Sınıf yalnız navbar varyantına verilir; panelin kenar çubuğundaki
+ * `SidebarUserMenu` almaz (Değişmez: paneli bozma).
+ * ---------------------------------------------------------------- */
+
+.lp-account-menu {
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--color-murekkep) 18%, transparent);
+}
+/* Satırların köşesi de kartın köşe ailesinden (12px), 8px değil. */
+.lp-account-menu [data-slot="dropdown-menu-item"] {
+  border-radius: var(--radius-xl);
+  padding-block: 7px;
+}
 
 .lp-menu-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
-  margin-top: 18px;
+  margin-top: 14px;
   border-top: 1px solid var(--color-sinir);
   padding-top: 12px;
   font-size: 13px;
@@ -364,10 +408,10 @@ html[data-landing]::-webkit-scrollbar {
   background: var(--color-kirec);
   /* Yükseklik SABİT ve satırların toplamına eşit: oranla tahmin etmek
      yerine içerikten türer, kartlar yüklenirken sayfa kaymaz (CLS = 0).
-     iki satır: 240 + 12 + 156 + 24 dolgu = 432; üç satır: + 240 + 12 = 684. */
-  height: 432px;
+     iki satır: 324 + 12 + 240 + 24 dolgu = 600; üç satır: + 156 + 12 = 768. */
+  height: 600px;
 }
-@media (min-width: 1280px) { .lp-hero-media { height: 684px; } }
+@media (min-width: 1280px) { .lp-hero-media { height: 768px; } }
 
 /* ---------------------------------------------------------------- *
  * Hero bento şeridi
@@ -378,12 +422,27 @@ html[data-landing]::-webkit-scrollbar {
  * ÖLÇÜ SÖZLEŞMESİ: kartlar container query ile bant seçiyor ve
  * `.profile-grid-item` `container-type: size` taşıyor — bu, hücrenin KESİN
  * genişlik VE yükseklik bilmesini şart koşar. O yüzden ölçüler yüzde değil,
- * ızgaranın gerçek adımlarıdır: genişlik 178 / 368, yükseklik 156 / 240.
+ * ürünün ızgarasının GERÇEK adımlarıdır (`GRID_UNIT`, @caka/shared):
+ * 8 sütun, `grid-auto-rows: 72px`, 12px boşluk → sütun birimi 83px.
  * Kart ne bir vitrine sıkıştırılır ne de ürünün kullanmadığı bir ene gerilir.
+ *
+ * MOZAİK: satır artık eşit karo dizisi değil, SÜTUN dizisi. Bir sütun ya tek
+ * büyük kart taşır ya da üst üste iki/üç küçük kart — yükseklikleri satırı
+ * tam doldurur. Ölçü çeşitliliği süs değil: kartlar konteyner sorgusuyla
+ * çalıştığından aynı blok iki kutuda iki farklı düzen gösteriyor.
  *
  * YATAY KAYDIRMA ÇUBUĞU YOK: satırlar `overflow: hidden`, dış blok
  * `overflow: hidden` ve `.lp` `overflow-x: clip`.
  * ---------------------------------------------------------------- */
+
+/* Izgara adımları — ürünün `.profile-grid`'iyle birebir aynı sayılar.
+   n birim genişlik = n*83 + (n-1)*12 → 2:178, 4:368, 8:748
+   n birim yükseklik = n*72 + (n-1)*12 → 1:72, 2:156, 3:240, 4:324 */
+.lp-tower {
+  --lp-cell-w: 83px;
+  --lp-cell-h: 72px;
+  --lp-cell-gap: 12px;
+}
 
 .lp-tower {
   display: flex;
@@ -399,6 +458,10 @@ html[data-landing]::-webkit-scrollbar {
   position: relative;
   overflow: hidden;
   width: 100%;
+  /* Yükseklik satırın birim sayısından türer (`--lp-tower-h`, bileşen yazar). */
+  height: calc(
+    var(--lp-tower-h) * var(--lp-cell-h) + (var(--lp-tower-h) - 1) * var(--lp-cell-gap)
+  );
   /* Kenarlarda yumuşak solma: kartlar birden kesilmiş gibi durmasın. */
   mask-image: linear-gradient(
     to right,
@@ -408,8 +471,6 @@ html[data-landing]::-webkit-scrollbar {
     transparent 100%
   );
 }
-.lp-tower-row[data-h="s"] { height: 156px; }
-.lp-tower-row[data-h="m"] { height: 240px; }
 
 /* Üçüncü satır yalnız geniş ekranda: dar ekranda blok iki satır boyunda. */
 .lp-tower-row[data-row="2"] { display: none; }
@@ -434,25 +495,60 @@ html[data-landing]::-webkit-scrollbar {
   }
 }
 
+/* Kayma tam BİR KOPYA kadar: bileşen listeyi üç kez basıyor (REPEAT), yani
+   `100% / 3`. Bölme calc'te yapılıyor — "33.3333%" yazmak her döngüde
+   birkaç piksellik bir sıçrama bırakırdı. İki kopya YETMİYORDU: kayma o
+   zaman tek kopya eni kadar olur ve satır ondan geniş her ekranda sarma
+   noktasında boşluk gösterirdi. */
 @keyframes lp-tower-left {
   from { translate: 0 0; }
-  to { translate: -50% 0; }
+  to { translate: calc(-100% / 3) 0; }
 }
 @keyframes lp-tower-right {
-  from { translate: -50% 0; }
+  from { translate: calc(-100% / 3) 0; }
   to { translate: 0 0; }
 }
 
-/* Hücre: kartın kendi konteyneri. Ölçüler ızgaranın gerçek adımları. */
-.lp-tower-cell { height: 100%; flex: none; }
-.lp-tower-cell[data-w="n"] { width: 178px; }
-.lp-tower-cell[data-w="w"] { width: 368px; }
+/* Sütun: satır yüksekliğini ya tek kart doldurur ya da üst üste iki/üç kart
+   böler. Genişlik birim sayısından türer (`--lp-tower-w`). */
+.lp-tower-col {
+  display: flex;
+  height: 100%;
+  flex: none;
+  flex-direction: column;
+  gap: var(--lp-cell-gap);
+  width: calc(
+    var(--lp-tower-w) * var(--lp-cell-w) + (var(--lp-tower-w) - 1) * var(--lp-cell-gap)
+  );
+}
+
+/* Hücre: kartın kendi konteyneri (`container-type: size` ister, yani kesin
+   yükseklik şart). Yükseklik birim sayısından türer (`--lp-tower-ch`). */
+.lp-tower-cell {
+  flex: none;
+  height: calc(
+    var(--lp-tower-ch) * var(--lp-cell-h) + (var(--lp-tower-ch) - 1) * var(--lp-cell-gap)
+  );
+}
 
 /* Medyanın üstüne binen hap: tek parça bir kabuk (beyaz), içinde adres
    alanı ve koyu gönder düğmesi. Dar ekranda alt alta iner. */
+/*
+ * YAPIŞKAN, çünkü sayfanın TEK dönüşüm noktası ilk ekranda görünmüyordu.
+ * Ölçüm (1440×802): hap katlamanın 469px altındaydı — ziyaretçi kaydırmadan
+ * göremiyordu. Hero'yu katlamaya sığdırmak bir seçenek değildi: şerit
+ * kartların GERÇEK ızgara adımlarından türüyor (en kısa satır 156px) ve
+ * başlığı okunmaz bir puntoya indirmek gerekirdi.
+ *
+ * Bunun yerine hap hero boyunca ekranın altına yapışıyor: ilk boyamada
+ * görünür, şeridin üstünde yüzer, hero biterken kendi yerine oturur.
+ * Kapsayıcı `.lp-hero` olduğu için bölüm bitince yapışma da biter —
+ * sayfanın geri kalanını takip etmez.
+ */
 .lp-hero-cta {
-  position: relative;
-  z-index: 2;
+  position: sticky;
+  z-index: 3;
+  bottom: clamp(14px, 2.4vh, 26px);
   display: flex;
   justify-content: center;
   margin-top: -28px;
@@ -466,9 +562,14 @@ html[data-landing]::-webkit-scrollbar {
   border-radius: 999px;
   background: white;
   padding: 6px 6px 6px 20px;
+  /* Hareketli ve rengârenk bir şeridin üstünde yüzüyor: `0 1px 2px` orada
+     kayboluyordu. Yükselti üç katmanla veriliyor — ince bir çeper, yakın bir
+     temas gölgesi ve geniş bir yayılım. Renk DEĞİŞMEDİ: kireç şeridin
+     üstünde beyaz hap + siyah düğme en yüksek kontrastı veriyor. */
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--color-murekkep) 10%, transparent),
-    0 10px 30px color-mix(in srgb, var(--color-murekkep) 12%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--color-murekkep) 6%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-murekkep) 14%, transparent),
+    0 18px 44px color-mix(in srgb, var(--color-murekkep) 26%, transparent);
 }
 .lp-claim-field {
   display: flex;
@@ -503,24 +604,30 @@ html[data-landing]::-webkit-scrollbar {
   .lp-claim-submit { width: 100%; }
 }
 
+/* Duraklatma bir YARDIMCI kontrol. Eskiden CTA hapıyla neredeyse aynı
+   hizada, aynı koyulukta duruyor ve dikkati bölüyordu; küçüldü, soluklaştı
+   ve köşeye çekildi. Odaklanınca ve üzerine gelince tam kontrasta çıkar —
+   WCAG 2.2.2'nin istediği "bulunabilir durdurma" bundan zarar görmez. */
 .lp-strip-toggle {
   position: absolute;
   z-index: 2;
   display: inline-flex;
-  right: 12px;
-  bottom: 12px;
-  height: 34px;
+  right: 10px;
+  bottom: 10px;
+  height: 28px;
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-murekkep) 74%, transparent);
-  padding-inline: 12px;
+  background: color-mix(in srgb, var(--color-murekkep) 52%, transparent);
+  padding-inline: 10px;
   color: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  transition: background-color 150ms var(--lp-ease);
+  opacity: 0.72;
+  transition: background-color 150ms var(--lp-ease), opacity 150ms var(--lp-ease);
 }
-.lp-strip-toggle:hover { background: var(--color-murekkep); }
+.lp-strip-toggle:hover,
+.lp-strip-toggle:focus-visible { background: var(--color-murekkep); opacity: 1; }
 .lp-strip-toggle:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 /* Hareket azaltmada serit zaten akmiyor; durdurma dugmesi de gorunmez.
    Karar CSS'te, JS'te DEGIL: React ile gizlense dugme once basilip sonra

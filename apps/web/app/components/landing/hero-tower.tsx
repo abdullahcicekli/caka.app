@@ -10,7 +10,15 @@ import {
 import type { LandingContent } from "~/content/landing";
 
 /** Satır başına akış süresi. Farklı süreler şeride derinlik verir. */
-const ROW_SECONDS = [64, 52, 76];
+const ROW_SECONDS = [78, 64, 92];
+
+/**
+ * Liste kaç kez basılır. ÜÇ, iki değil: animasyon `-100%/3` kadar kaydırıyor,
+ * yani sarma anında ekranda kalan içerik listenin iki kopyası kadar oluyor.
+ * İki kopyada kayma tek kopya eniydi ve satır o enden geniş her ekranda
+ * (yani 1440'ta bile) sarma noktasında BOŞLUK gösteriyordu.
+ */
+const REPEAT = 3;
 
 interface HeroTowerProps {
   media: LandingContent["hero"]["media"];
@@ -21,20 +29,20 @@ interface HeroTowerProps {
  * Hero medyası: ürünün KENDİ kartlarından kurulmuş, YATAY akan bento
  * satırları.
  *
- * Stok fotoğraf şeridinin yerini aldı. Kartlar `ProfileBlockCard` — yani
- * `/:username` sayfasında çıkanın birebir aynısı; landing'de gösterilen ile
- * ürünün ürettiği ayrışamaz. Dört portre de artık bu kartların içinde
- * yaşıyor (bağlantı önizlemesi, video kapağı, albüm kapağı, sosyal önizleme).
+ * Kartlar `ProfileBlockCard` — yani `/:username` sayfasında çıkanın birebir
+ * aynısı; landing'de gösterilen ile ürünün ürettiği ayrışamaz.
+ *
+ * MOZAİK: her satır eşit karolardan değil, SÜTUNLARDAN oluşur; bir sütun ya
+ * tek büyük kart taşır ya da üst üste iki/üç küçük kart. Ölçüler ürünün
+ * yarım birimli ızgarasının gerçek adımlarıdır (bkz. `hero-demo.ts`) ve her
+ * kart `BLOCK_GRID_LIMITS` tabanına uyar — hiçbir kart hak etmediği kutuya
+ * sıkıştırılmaz. Kartlar konteyner sorgusuyla çalıştığından aynı blok tipi
+ * iki ölçüde iki farklı düzen gösterir; şerit bunu bilerek yapar.
  *
  * DEKORATİF VE ETKİLEŞİMSİZ: sarmalayıcı `inert` taşır, dolayısıyla
  * kartlardaki bağlantılar ne odak alır ne ekran okuyucuya okunur. Sonsuz
  * tekrarlanan onlarca bağlantı arasında Tab'lamak klavye kullanıcısı için
  * tuzak olurdu. Şeridin ne olduğunu bir `sr-only` cümle söyler.
- *
- * ÖLÇÜ: kartlar container query ile bant seçiyor ve `.profile-grid-item`
- * `container-type: size` istiyor — yani hücrenin KESİN genişliği ve
- * yüksekliği olmalı. İkisi de ızgaranın gerçek adımlarından geliyor
- * (178/368 × 156/240); kart ne sıkıştırılıyor ne geriliyor.
  *
  * HAREKET: akış yalnız `prefers-reduced-motion: no-preference` altında
  * kurulur (CSS); ayrıca her koşulda durdurma düğmesi var (WCAG 2.2.2).
@@ -61,7 +69,7 @@ export function HeroTower({ media, tower }: HeroTowerProps) {
           <TowerRowView
             key={index}
             row={row}
-            seconds={ROW_SECONDS[index] ?? 60}
+            seconds={ROW_SECONDS[index] ?? 72}
             index={index}
           />
         ))}
@@ -87,25 +95,38 @@ function TowerRowView({
   seconds: number;
   index: number;
 }) {
-  // Kesintisiz döngü: liste iki kez basılır, animasyon -%50'de başa sarar.
-  const loop = [...row.cards, ...row.cards];
+  // Kesintisiz döngü: sütun listesi REPEAT kez basılır, animasyon bir
+  // kopyalık mesafe kaydırıp başa sarar.
+  const loop = Array.from({ length: REPEAT }, () => row.columns).flat();
   return (
-    <div className="lp-tower-row" data-row={index} data-h={row.height}>
+    <div
+      className="lp-tower-row"
+      data-row={index}
+      style={{ "--lp-tower-h": row.h } as CSSProperties}
+    >
       <div
         className="lp-tower-run"
         style={{ "--lp-tower-seconds": `${seconds}s` } as CSSProperties}
       >
-        {loop.map((card, position) => (
+        {loop.map((column, position) => (
           <div
-            key={`${card.block.id}-${position}`}
-            className="lp-tower-cell profile-grid-item"
-            data-w={card.width}
+            key={`${column.cells[0]?.block.id ?? position}-${position}`}
+            className="lp-tower-col"
+            style={{ "--lp-tower-w": column.w } as CSSProperties}
           >
-            <ProfileBlockCard
-              block={card.block}
-              githubCalendars={heroTowerCalendars}
-              signedImages={heroTowerImages}
-            />
+            {column.cells.map((cell) => (
+              <div
+                key={cell.block.id}
+                className="lp-tower-cell profile-grid-item"
+                style={{ "--lp-tower-ch": cell.h } as CSSProperties}
+              >
+                <ProfileBlockCard
+                  block={cell.block}
+                  githubCalendars={heroTowerCalendars}
+                  signedImages={heroTowerImages}
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>

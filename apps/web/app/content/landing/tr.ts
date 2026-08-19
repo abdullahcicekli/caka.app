@@ -45,22 +45,39 @@ export const tr = {
     kicker: "Kişisel sayfan için tek adres\nÜcretsiz, dakikalar içinde yayında",
     title: "Sana göre\nbir bio linki.",
     media: {
-      alt: "Caka sayfalarını gösteren portreler",
+      alt: "Dört Caka sayfasından kartların yan yana aktığı şerit",
       pause: "Şeridi durdur",
       play: "Şeridi oynat",
     },
-    // Hero şeridindeki örnek Caka sayfasının çevrilen metinleri. Şeridin
-    // çevrilmeyen kısmı (adlar, adresler, kimlikler, görseller) `hero-demo.ts`te.
+    // Hero şeridindeki DÖRT örnek Caka sayfasının çevrilen metinleri.
+    // Personaların kendisi (adlar, kullanıcı adları, adresler, görseller,
+    // eser adları) çevrilmez ve `hero-demo.ts`te durur.
     tower: {
-      bio: "Müzisyen · İstanbul",
-      link: "Yeni single yayında",
-      status: "Bu hafta stüdyodayım",
-      document: "Basın kiti",
-      location: "Kadıköy, İstanbul",
-      country: "Türkiye",
-      youtube: "Stüdyo günlüğü — 3. bölüm",
-      link2: "Konser takvimi",
-      text: "Yeni işler için mesaj atabilirsin.",
+      kerem: {
+        bio: "Müzisyen · İstanbul",
+        status: "Bu hafta stüdyodayım",
+        document: "Basın kiti",
+        link: "Konser takvimi",
+      },
+      selin: {
+        bio: "Seramik · Bodrum",
+        status: "Atölye cumartesi açık",
+        link: "Yeni koleksiyon: Toprak",
+        location: "Bodrum, Muğla",
+        country: "Türkiye",
+      },
+      elif: {
+        bio: "Podcast · Ankara",
+        status: "Yeni bölüm perşembe",
+        youtube: "Sade Hayat — 7. bölümün kamera arkası",
+        link: "Tüm bölümler",
+      },
+      naz: {
+        bio: "Seslendirme · İzmir",
+        status: "Kayıt için takvim açık",
+        text: "Seslendirme işleri için mesaj atabilirsin.",
+        link: "Sesli hikâyeler",
+      },
     },
     // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
     // değerli hâli, adın orada talep edilmesidir.
