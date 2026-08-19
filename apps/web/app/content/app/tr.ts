@@ -200,7 +200,13 @@ export const tr = {
       `${count} ayet listelendi. Ok tuşlarıyla gez, Enter ile seç.`,
     ayetNoResults: (query: string) => `“${query}” için ayet bulunamadı.`,
     ayetFailed: "Ayet kaynağına ulaşılamadı — bağlantını kontrol et.",
-    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} eklendi`,
+    /** Seçim kutusunun başlığı; kutu ne seçildiğini ve metnin önizlemesini taşır. */
+    ayetPickedLegend: "Seçili ayet",
+    ayetSearchOpen: "Başka ayet seç",
+    ayetSearchClose: "Aramayı kapat",
+    ayetClear: "Ayeti kaldır",
+    /** Yalnız ekran okuyucuya: seçim kutusu görünenin karşılığı. */
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} seçildi`,
     ayetSourceNote: (translator: string) =>
       `Arapça metin Osmanî hattadır (Hafs); meal ${translator} mealidir ve kartın altında kaynak olarak görünür.`,
     fixIssue: "Düzelt",

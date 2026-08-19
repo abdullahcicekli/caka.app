@@ -189,7 +189,11 @@ export const de = {
       `${count === 1 ? "1 Vers" : `${count} Verse`} aufgelistet. Mit den Pfeiltasten navigieren, mit der Eingabetaste auswählen.`,
     ayetNoResults: (query: string) => `Kein Vers für „${query}“ gefunden.`,
     ayetFailed: "Die Versquelle war nicht erreichbar — prüf deine Verbindung.",
-    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} hinzugefügt`,
+    ayetPickedLegend: "Ausgewählter Vers",
+    ayetSearchOpen: "Anderen Vers wählen",
+    ayetSearchClose: "Suche schließen",
+    ayetClear: "Vers entfernen",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} ausgewählt`,
     ayetSourceNote: (translator: string) =>
       `Der arabische Text steht in Uthmani-Schrift (Hafs); die türkische Übersetzung stammt von ${translator} und wird unten auf der Karte genannt.`,
     fixIssue: "Beheben",

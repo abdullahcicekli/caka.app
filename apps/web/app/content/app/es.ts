@@ -189,7 +189,11 @@ export const es = {
       `${count === 1 ? "1 versículo" : `${count} versículos`} en la lista. Usa las flechas para navegar y Intro para seleccionar.`,
     ayetNoResults: (query: string) => `No se encontró ningún versículo para «${query}».`,
     ayetFailed: "No se pudo acceder a la fuente de versículos — revisa tu conexión.",
-    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} añadido`,
+    ayetPickedLegend: "Versículo seleccionado",
+    ayetSearchOpen: "Elegir otro versículo",
+    ayetSearchClose: "Cerrar la búsqueda",
+    ayetClear: "Quitar el versículo",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} seleccionado`,
     ayetSourceNote: (translator: string) =>
       `El texto árabe está en escritura uthmani (Hafs); la traducción al turco es de ${translator} y se acredita al pie de la tarjeta.`,
     fixIssue: "Corregir",
