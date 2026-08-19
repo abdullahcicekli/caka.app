@@ -162,8 +162,11 @@ export const ptBR = {
     linkVariantLegend: "Versão do cartão",
     linkVariantCard: "Cartão com identidade",
     linkVariantImage: "Somente imagem",
+    linkVariantFavicon: "Somente favicon",
     linkVariantHint:
       "“Somente imagem” entrega o cartão inteiro à imagem de pré-visualização; o cartão se ajusta à caixa mais próxima de 1,91:1.",
+    linkVariantFaviconHint:
+      "“Somente favicon” reduz o cartão a um único ícone: o favicon centralizado, sem texto. Se o site não tiver ícone, resta a letra da marca, então o cartão nunca fica vazio.",
     linkVariantNoPreview:
       "Este endereço não devolve imagem de pré-visualização; a versão “somente imagem” seria um cartão vazio.",
     optionalTitle: "Título (opcional)",

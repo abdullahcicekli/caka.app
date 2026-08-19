@@ -216,8 +216,14 @@ const profileCardSchema = z.object({
  *           hedefte (kişisel site, ürün sayfası) kartın yanındaki kimlik
  *           satırını gürültü buluyorsa bu sürümü seçer. og:image yoksa kart
  *           `card` gibi çizilir — boş bir kutu göstermek yerine.
+ * `favicon` — kart tek bir SİMGEDİR: favicon (yoksa marka harfi) ortada,
+ *           büyük; yazı yok. Sayfada çok sayıda bağlantı olan kullanıcı için
+ *           uygulama rafı gibi bir dizilim sağlar. `image`den farkı, bunun
+ *           BOŞ KART RİSKİ OLMAMASIDIR: favicon inmese bile kartın altında
+ *           zaten marka harfi duruyor (bkz. `.mark-favicon`), yani sürüm
+ *           her hedefte seçilebilir.
  */
-export const linkVariantSchema = z.enum(["card", "image"]);
+export const linkVariantSchema = z.enum(["card", "image", "favicon"]);
 export type LinkVariant = z.infer<typeof linkVariantSchema>;
 
 const socialBlockSchema = z.object({
@@ -1002,6 +1008,10 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
 export const LINK_GRID_LIMITS: Record<LinkVariant, BlockGridLimits> = {
   card: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
   image: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
+  // Simge kartı: taban ötekilerle aynı, tavan `card` gibi 4 satır. Simge
+  // kartın kısa kenarından türediği için (bkz. `.is-favicon`, app.css) her
+  // ölçüde ortalı ve orantılı kalır; ayrı bir tavan gerekmiyor.
+  favicon: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
 };
 
 /**
@@ -1018,6 +1028,17 @@ export const LINK_GRID_LIMITS: Record<LinkVariant, BlockGridLimits> = {
  * yüksekliğinde olurdu ve kart şeride dönerdi.
  */
 export const LINK_IMAGE_DIMS = { w: 5, h: 3 } as const;
+
+/**
+ * "Yalnız simge" sürümüne geçilince kartın oturduğu kutu.
+ *
+ * KARE'YE EN YAKIN BASAMAK: simge kartı bir uygulama ikonudur, şerit değil.
+ * Masaüstü basamakları (genişlik 95w−12, yükseklik 84h−12) arasında
+ * **2×2 = 178×156 → 1,14** kareye en yakını (karşılaştırma: 2×1 = 2,38 ·
+ * 3×2 = 1,78 · 2×3 = 0,74). Mobilde 2 kolon zaten yarım genişlik, 2 satır
+ * 126px → 1,38; yine kareye yakın kalıyor.
+ */
+export const LINK_FAVICON_DIMS = { w: 2, h: 2 } as const;
 
 export const AYET_GRID_DEFAULTS: Record<AyetVariant, { w: number; h: number }> = {
   meal: { w: 4, h: 3 },

@@ -52,6 +52,7 @@ import {
   GRID_COLUMNS,
   layoutIssues,
   LINK_GRID_LIMITS,
+  LINK_FAVICON_DIMS,
   LINK_IMAGE_DIMS,
   mapFrameImageKey,
   MAX_GALLERY_BLOCKS,
@@ -86,6 +87,7 @@ import { localizedRedirect } from "../../server/locale";
 import { DEFAULT_LOCALE } from "@caka/shared";
 import { appCatalog } from "~/content/app";
 import { widgetCatalog } from "~/content/widget";
+import { prepareImageForUpload } from "~/lib/image-upload";
 import { useCatalog } from "~/lib/locale";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { localeFromRequest } from "../../server/locale";
@@ -328,14 +330,17 @@ type SpotifyResolveResponse =
  * Aynı köken POST'unda tarayıcı `Origin` başlığını gönderir, yani uçtaki
  * `hasSameOrigin` kapısı XHR'de de sağlanır.
  */
-function uploadPhotoFile(
+async function uploadPhotoFile(
   file: File,
   onProgress: (percent: number) => void,
 ): Promise<{ id?: string; error?: string }> {
+  // Ham fotoğraf yola çıkmadan küçültülür (bkz. `lib/image-upload.ts`).
+  // Küçültülemeyen dosya olduğu gibi döner, yani bu satır bir kapı değil.
+  const prepared = await prepareImageForUpload(file);
   return new Promise((resolve) => {
     const request = new XMLHttpRequest();
     request.open("POST", "/api/onboarding/avatar");
-    request.setRequestHeader("Content-Type", file.type);
+    request.setRequestHeader("Content-Type", prepared.type);
     request.upload.onprogress = (event) => {
       if (!event.lengthComputable) return;
       // %100 dosya SUNUCUYA VARDI demek, "kaydedildi" demek değil; yanıt
@@ -353,7 +358,7 @@ function uploadPhotoFile(
     };
     request.onerror = () => resolve({});
     request.onabort = () => resolve({});
-    request.send(file);
+    request.send(prepared);
   });
 }
 /** `/api/konum` başarılı yanıtı; hata dalında yalnız `error` döner. */
@@ -1038,6 +1043,7 @@ function Inspector({
           [
             ["card", app.editor.linkVariantCard],
             ["image", app.editor.linkVariantImage],
+            ["favicon", app.editor.linkVariantFavicon],
           ] as const
         ).map(([variant, label]) => (
           <button
@@ -1051,8 +1057,16 @@ function Inspector({
             {label}
           </button>
         ))}
+        {/* İpucu SEÇİLİ sürümü anlatır. Üç sürüm olunca tek bir cümle
+            hepsini anlatamıyordu; kullanıcı da zaten seçtiği şeyin ne
+            yaptığını okumak istiyor. "Yalnız simge"nin kapalı hâli yok,
+            o yüzden önizleme uyarısı yalnız öteki iki sürümde geçerli. */}
         <small className="inspector-hint">
-          {hasLinkPreview ? app.editor.linkVariantHint : app.editor.linkVariantNoPreview}
+          {current === "favicon"
+            ? app.editor.linkVariantFaviconHint
+            : hasLinkPreview
+              ? app.editor.linkVariantHint
+              : app.editor.linkVariantNoPreview}
         </small>
       </fieldset>
     );
@@ -1067,10 +1081,15 @@ function Inspector({
     const limits =
       block.type === "link" ? LINK_GRID_LIMITS[variant] : BLOCK_GRID_LIMITS.social;
     const current = block.pos?.lg;
+    // "Yalnız görsel" og'un oranına, "yalnız simge" kareye oturur; ikisinde
+    // de ölçü sürümün BÜTÜN ANLAMI, kullanıcıyı doğru kutuyu elle aramaya
+    // bırakmak o anlamı boşa çıkarırdı. `card`a dönerken ölçüye dokunulmaz.
     const target =
       variant === "image"
         ? LINK_IMAGE_DIMS
-        : { w: current?.w ?? limits.minW, h: current?.h ?? limits.minH };
+        : variant === "favicon"
+          ? LINK_FAVICON_DIMS
+          : { w: current?.w ?? limits.minW, h: current?.h ?? limits.minH };
     setDims(
       Math.min(Math.max(target.w, limits.minW), limits.maxW),
       Math.min(Math.max(target.h, limits.minH), limits.maxH),

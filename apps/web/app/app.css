@@ -2203,6 +2203,46 @@ button.photo-cell:focus-visible {
 }
 .profile-block-link.is-image .link-go { display: none; }
 
+/* "Yalnız simge" sürümü: kart tek bir uygulama ikonudur.
+ *
+ * ÖLÇÜ KISA KENARDAN TÜRER (`cqmin`), genişlikten değil: kart 2×2'de kareye
+ * yakın ama kullanıcı onu 8×2'lik bir şeride çekebiliyor. `cqw` ile simge o
+ * şeritte kartın dışına taşardı; `cqmin` her ölçüde ortalı ve orantılı
+ * kalıyor. Tavan 96px — 8×4'lük bir kutuda simge kartı kaplamasın, nesne
+ * gibi dursun. `container-type: size` `.profile-grid-item`'da zaten var.
+ *
+ * Metin `is-image`'deki gibi DOM'da KALIR, yalnız görünmez: kart bir
+ * bağlantı ve erişilebilir adı o satırlardan geliyor. */
+.profile-block-link.is-favicon {
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.profile-block-link.is-favicon .link-body {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.profile-block-link.is-favicon .link-go { display: none; }
+/* Görünen çip `.link-body`nin İÇİNDE olamaz (o gizli); sürüm için kartın
+   doğrudan çocuğu olarak ikinci bir kopya çizilir. */
+.profile-block-link.is-favicon .link-icon {
+  display: grid;
+  width: min(96px, 46cqmin);
+  height: min(96px, 46cqmin);
+  flex: none;
+  place-items: center;
+  border-radius: 24%;
+  font-size: min(44px, 21cqmin);
+  font-weight: 600;
+  line-height: 1;
+}
+
 /* ---------------------------------------------------------------- *
  * Yerinde oynatma (facade → iframe) — YouTube videosu ve Spotify.
  *

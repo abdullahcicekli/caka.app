@@ -94,8 +94,9 @@ function WebLinkCard({
   preview: string;
   favicon: string;
   imgLoading: "eager" | "lazy";
-  /** `image` sürümünde kart bütünüyle önizleme görselidir; çip ve yazı
-      görünmez (DOM'da kalır — bağlantının erişilebilir adı onlardan gelir). */
+  /** `image` sürümünde kart bütünüyle önizleme görselidir, `favicon`
+      sürümünde tek bir simge; ikisinde de yazı görünmez (DOM'da kalır —
+      bağlantının erişilebilir adı onlardan gelir). */
   variant?: LinkVariant;
 }) {
   const target = prettyLinkTarget(url);
@@ -103,17 +104,38 @@ function WebLinkCard({
   // Görseli olmayan bir hedefte "yalnız görsel" boş kutu demek olurdu; kart
   // sessizce normal hâline döner. (Editörde sürüm düğmesi de o hâlde kapalı.)
   const imageOnly = variant === "image" && preview !== "";
+  // "Yalnız simge"nin böyle bir yedeği YOK ve gerekmiyor: favicon inmezse
+  // çipin altındaki marka harfi görünür kalır, yani kart hiçbir hâlde boş
+  // olmuyor. Önizleme görseli varsa bile basılmaz — sürümün tamamı simge.
+  const faviconOnly = variant === "favicon";
   return (
     <a
-      className={`profile-block profile-block-link${preview ? " has-og" : ""}${
-        imageOnly ? " is-image" : ""
-      }`}
+      className={`profile-block profile-block-link${
+        preview && !faviconOnly ? " has-og" : ""
+      }${imageOnly ? " is-image" : ""}${faviconOnly ? " is-favicon" : ""}`}
       href={url || undefined}
       target="_blank"
       rel="noreferrer"
     >
-      {preview ? (
+      {preview && !faviconOnly ? (
         <img className="link-og" src={preview} alt="" loading={imgLoading} draggable={false} />
+      ) : null}
+      {/* "Yalnız simge" sürümünün GÖRÜNEN çipi. `.link-body` o sürümde ekran
+          okuyucuya bırakılıp görsel olarak gizlendiği için içindeki çip de
+          gizleniyor; büyük simge bu yüzden ayrı bir düğüm. */}
+      {faviconOnly ? (
+        <span className={`platform-mark link-mark link-icon ${brand.tone}`} aria-hidden>
+          {brand.initial}
+          {favicon ? (
+            <img
+              className="mark-favicon"
+              src={favicon}
+              alt=""
+              loading={imgLoading}
+              draggable={false}
+            />
+          ) : null}
+        </span>
       ) : null}
       <span className="link-body">
         <span className={`platform-mark link-mark ${brand.tone}`} aria-hidden>

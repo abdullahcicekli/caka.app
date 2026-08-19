@@ -162,8 +162,11 @@ export const de = {
     linkVariantLegend: "Kartenversion",
     linkVariantCard: "Karte mit Identität",
     linkVariantImage: "Nur Bild",
+    linkVariantFavicon: "Nur Favicon",
     linkVariantHint:
       "„Nur Bild“ überlässt die ganze Karte dem Vorschaubild; die Karte rastet auf dem Kasten ein, der 1,91:1 am nächsten kommt.",
+    linkVariantFaviconHint:
+      "„Nur Favicon“ reduziert die Karte auf ein einziges Symbol: das Favicon mittig, kein Text. Hat die Seite kein Symbol, bleibt der Markenbuchstabe — die Karte ist also nie leer.",
     linkVariantNoPreview:
       "Diese Adresse liefert kein Vorschaubild; die Version „nur Bild“ wäre eine leere Karte.",
     optionalTitle: "Titel (optional)",

@@ -161,8 +161,11 @@ export const en = {
     linkVariantLegend: "Card version",
     linkVariantCard: "Card with identity",
     linkVariantImage: "Image only",
+    linkVariantFavicon: "Favicon only",
     linkVariantHint:
       "“Image only” gives the whole card to the preview image; the card snaps to the box closest to 1.91:1.",
+    linkVariantFaviconHint:
+      "“Favicon only” reduces the card to a single icon: the favicon centred, no text. If the site has no icon the brand letter remains, so the card is never empty.",
     linkVariantNoPreview:
       "This address returns no preview image; the “image only” version would be an empty card.",
     optionalTitle: "Title (optional)",

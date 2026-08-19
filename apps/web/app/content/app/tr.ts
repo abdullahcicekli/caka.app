@@ -170,8 +170,11 @@ export const tr = {
     linkVariantLegend: "Kart sürümü",
     linkVariantCard: "Kimlikli kart",
     linkVariantImage: "Yalnız görsel",
+    linkVariantFavicon: "Yalnız simge",
     linkVariantHint:
       "“Yalnız görsel” kartı bütünüyle önizleme görseline bırakır; kart 1,91:1 oranına en yakın kutuya oturur.",
+    linkVariantFaviconHint:
+      "“Yalnız simge” kartı tek bir ikona indirir: favicon ortada, yazı yok. Site simge vermiyorsa marka harfi kalır, yani kart hiçbir hâlde boş olmaz.",
     linkVariantNoPreview:
       "Bu adres bir önizleme görseli vermiyor; “yalnız görsel” sürümü boş bir kart olurdu.",
     optionalTitle: "Başlık (isteğe bağlı)",
