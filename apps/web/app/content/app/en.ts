@@ -166,11 +166,9 @@ export const en = {
     locationSearchPlaceholder: "Search a city or district…",
     locationSearching: "Searching…",
     locationNoResults: (query: string) => `No place found for “${query}”.`,
-    locationSelected: (label: string) => `${label} selected`,
     locationClear: "Remove location",
     locationPrivacyHint:
       "Search is limited to city/district level and the coordinate is rounded to about 1 km before it is saved. Your page shows the place name, country, an approximate location and the local time there — not your exact address.",
-    locationTimeZone: (zone: string) => `Time zone: ${zone}`,
     locationNoTimeZone: "No time zone found for this place; the card will not show a clock.",
     ayetVariantLegend: "Card version",
     ayetVariantArabic: "Arabic only",
@@ -213,7 +211,7 @@ export const en = {
     themeAria: "Theme",
     addText: "Add text",
     addStatus: "Add announcement",
-    addYoutube: "Add YouTube",
+    addLocation: "Add location",
     youtubePlaceholder: "youtube.com/watch?v=… or youtube.com/@channel",
     spotifyPlaceholder: "open.spotify.com/track/… or spotify:album:…",
 

@@ -167,11 +167,9 @@ export const ptBR = {
     locationSearchPlaceholder: "Busque uma cidade ou bairro…",
     locationSearching: "Buscando…",
     locationNoResults: (query: string) => `Nenhum lugar encontrado para “${query}”.`,
-    locationSelected: (label: string) => `${label} selecionado`,
     locationClear: "Remover localização",
     locationPrivacyHint:
       "A busca fica no nível de cidade ou bairro e a coordenada é arredondada para cerca de 1 km antes de ser salva. Sua página mostra o nome do lugar, o país, uma posição aproximada e a hora local de lá — não o seu endereço exato.",
-    locationTimeZone: (zone: string) => `Fuso horário: ${zone}`,
     locationNoTimeZone: "Nenhum fuso horário encontrado para este lugar; o cartão não vai mostrar a hora.",
     ayetVariantLegend: "Versão do card",
     ayetVariantArabic: "Só árabe",
@@ -214,7 +212,7 @@ export const ptBR = {
     themeAria: "Tema",
     addText: "Adicionar texto",
     addStatus: "Adicionar aviso",
-    addYoutube: "Adicionar YouTube",
+    addLocation: "Adicionar localização",
     youtubePlaceholder: "youtube.com/watch?v=… ou youtube.com/@canal",
     spotifyPlaceholder: "open.spotify.com/track/… ou spotify:album:…",
 

@@ -175,12 +175,10 @@ export const tr = {
     locationSearchPlaceholder: "Şehir ya da ilçe ara…",
     locationSearching: "Aranıyor…",
     locationNoResults: (query: string) => `“${query}” için yer bulunamadı.`,
-    locationSelected: (label: string) => `${label} seçildi`,
     locationClear: "Konumu kaldır",
     /** Ne yayınlandığını açıkça söyler; ev adresi hassas veridir. */
     locationPrivacyHint:
       "Yalnız şehir/ilçe düzeyinde arama yapılır ve koordinat yaklaşık 1 km'ye yuvarlanarak kaydedilir. Sayfanda görünen: yer adı, ülke, yaklaşık konum ve oranın yerel saati — tam adresin değil.",
-    locationTimeZone: (zone: string) => `Saat dilimi: ${zone}`,
     locationNoTimeZone: "Bu yer için saat dilimi bulunamadı; kartta saat görünmeyecek.",
     ayetVariantLegend: "Kart sürümü",
     ayetVariantArabic: "Yalnız Arapça",
@@ -227,7 +225,7 @@ export const tr = {
     themeAria: "Tema",
     addText: "Metin ekle",
     addStatus: "Duyuru ekle",
-    addYoutube: "YouTube ekle",
+    addLocation: "Konum ekle",
     youtubePlaceholder: "youtube.com/watch?v=… ya da youtube.com/@kanal",
     spotifyPlaceholder: "open.spotify.com/track/… ya da spotify:album:…",
 

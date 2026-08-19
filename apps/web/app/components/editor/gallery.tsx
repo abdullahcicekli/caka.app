@@ -48,7 +48,12 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   // Tek "Fotoğraf" girişi: `image` ve `gallery` birleşti, kullanıcı kaç
   // fotoğraf koyacağını blok tipi seçerek değil fotoğraf ekleyerek söylüyor.
   gallery: { icon: MediaImage, enabled: true },
-  youtube: { icon: MediaVideo, enabled: true },
+  // YOUTUBE KAPALI (kullanıcı kararı): blok galeriden de araç çubuğundan da
+  // kaldırıldı, yani YENİ bir YouTube bloğu eklenemiyor. Tip ve render'ı
+  // yerinde duruyor — mevcut sayfalardaki kartlar çalışmaya, sahibi de onları
+  // düzenlemeye devam ediyor; yalnız EKLEME yolu kapalı. Geri açmak için
+  // burayı `true` yapmak yeter.
+  youtube: { icon: MediaVideo, enabled: false },
   spotify: { icon: MusicDoubleNote, enabled: true },
   document: { icon: Page, enabled: true },
   location: { icon: MapPin, enabled: true },

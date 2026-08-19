@@ -879,9 +879,18 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   // YouTube kartı yerinde OYNATILIYOR, yani boyutu bir oynatıcı boyutudur.
   // Ölçüm: 2 track genişlikte (masaüstü 374px) 16:9 bir video 210px yükseklik
   // ister; 1 track yalnız 156px (mobilde 138px) veriyor, yani oynatıcı ya
-  // kırpılır ya kıymık gibi kalırdı. Taban bu yüzden 2x2. Video ve kanal
-  // aynı sınırları paylaşır ki tip değiştirmek bloğu yeniden boyutlandırmasın.
-  youtube: { minW: 4, minH: 4, maxW: 8, maxH: 4 },
+  // kırpılır ya kıymık gibi kalırdı. Genişlik tabanı bu yüzden 4 birim.
+  //
+  // YÜKSEKLİK TABANI 4 DEĞİL 3. `minH: 4` (324px) tabanla tavanı eşitliyordu:
+  // kart hiç küçülmüyordu ve başlıksız bir videoda oynatıcı 4 birim genişlikte
+  // yalnız 217px istediği için kartta ~107px ölü bant kalıyordu — kullanıcı
+  // bunu kısaltamıyordu. 3 birim (masaüstü 240px, mobil 213px) oynatıcının
+  // KENDİ istediği yükseklik + dolgu: video tam genişlikte kalır, ölü bant
+  // 20px'e iner. Daha aşağısı (2 birim = 156px) videoyu genişlikten keserdi.
+  // Video ve kanal aynı sınırları paylaşır ki tip değiştirmek bloğu yeniden
+  // boyutlandırmasın; kanal kartının yan yana düzeni 200px konteyner eşiğine
+  // bağlı, 240/213 o eşiğin üstünde kalıyor.
+  youtube: { minW: 4, minH: 3, maxW: 8, maxH: 4 },
   // Spotify'ın kompakt parça oynatıcısı 152px (ölçüldü); masaüstünde 2x1
   // (374x156) buna tam oturuyor, o yüzden yükseklik tabanı 1. Genişlik tabanı
   // 2: 181px'lik bir oynatıcıda kontroller sığmıyor. Albüm/liste/sanatçı

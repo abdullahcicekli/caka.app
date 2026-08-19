@@ -2247,11 +2247,18 @@ button.photo-cell:focus-visible {
    bozuyordu — ölçüm: 748×156'lık kartta 5,55 (kıymık), 368×156'da 2,63.
    Genişlik kalan yükseklikten hesaplanır; başlık varsa (`:has`) pay büyür. */
 .profile-block-youtube.is-video.is-embed:not(.is-shorts) .yt-media {
-  width: min(100%, calc((100cqh - 30px) * 16 / 9));
+  width: min(100%, calc((100cqh - 24px) * 16 / 9));
   align-self: center;
 }
 .profile-block-youtube.is-video.is-embed:not(.is-shorts):has(.youtube-meta) .yt-media {
   width: min(100%, calc((100cqh - 76px) * 16 / 9));
+}
+/* BAŞLIKSIZ KART: metin bloğu hiç basılmadığında oynatıcı kutunun tek
+   çocuğudur; sütun diziliminin varsayılan `flex-start`'ı onu yukarı yapıştırıp
+   altta ölü bir bant bırakıyordu. Başlık yoksa kart yalnızca videodur, o da
+   ortalanır — kare hücrede üstte ve altta eşit pay kalır. */
+.profile-block-youtube.is-video.is-embed:not(:has(.youtube-meta)) {
+  justify-content: center;
 }
 /* 2×2 mobilde (350×288) oynatıcı 326×183; başlık + kanal + uyarı için
    geriye 71px kalıyor. Boşluk 10 yerine 8: üç satır rahat sığsın. */
@@ -3573,6 +3580,19 @@ button.photo-cell:focus-visible {
 .inspector-hint { margin-top: -2px; color: color-mix(in srgb, var(--color-murekkep) 52%, transparent); font-size: 11.5px; font-weight: 400; line-height: 1.45; }
 .inspector-upload { position: relative; display: flex; min-height: 88px; align-items: center; justify-content: center; border: 1px dashed var(--color-sinir); border-radius: var(--radius-lg); flex-direction: column; gap: 6px; color: color-mix(in srgb, var(--color-murekkep) 56%, transparent); font-size: 11px; font-weight: 400; overflow: hidden; }
 .inspector-upload input { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
+/* Panel içi kart önizlemesi (konum). Kutu bir BOYUT KONTEYNERİDİR: kart
+   tuvalde container query'lerle diziliyor, burada bir konteyner olmasaydı en
+   yakın üst konteynerin ölçüsüne göre yanlış basamağı seçerdi (atıf şeridi de
+   o basamağa bağlı). Oran, bloğun ızgara tabanı olan 368×324 — kullanıcı
+   panelde gördüğü kadrajı tuvalde de görür. */
+.inspector-preview {
+  container-type: size;
+  width: 100%;
+  aspect-ratio: 368 / 324;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+}
+
 .inspector-fields input:focus, .inspector-fields textarea:focus, .inspector-fields select:focus { border-color: var(--color-murekkep); }
 /* Sürüm seçici (ayet kartı): üç seçenek yan yana. `select` DEĞİL, çünkü
    seçim kartın ölçüsünü de değiştiriyor — sonucu görünür bir düğmeye

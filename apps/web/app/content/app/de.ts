@@ -167,11 +167,9 @@ export const de = {
     locationSearchPlaceholder: "Stadt oder Bezirk suchen…",
     locationSearching: "Wird gesucht…",
     locationNoResults: (query: string) => `Kein Ort für „${query}“ gefunden.`,
-    locationSelected: (label: string) => `${label} ausgewählt`,
     locationClear: "Standort entfernen",
     locationPrivacyHint:
       "Die Suche bleibt auf Stadt-/Bezirksebene, und die Koordinate wird vor dem Speichern auf etwa 1 km gerundet. Auf deiner Seite erscheinen Ortsname, Land, eine ungefähre Position und die dortige Ortszeit — nicht deine genaue Adresse.",
-    locationTimeZone: (zone: string) => `Zeitzone: ${zone}`,
     locationNoTimeZone: "Für diesen Ort wurde keine Zeitzone gefunden; die Karte zeigt keine Uhr.",
     ayetVariantLegend: "Kartenvariante",
     ayetVariantArabic: "Nur Arabisch",
@@ -214,7 +212,7 @@ export const de = {
     themeAria: "Theme",
     addText: "Text hinzufügen",
     addStatus: "Ankündigung hinzufügen",
-    addYoutube: "YouTube hinzufügen",
+    addLocation: "Standort hinzufügen",
     youtubePlaceholder: "youtube.com/watch?v=… oder youtube.com/@kanal",
     spotifyPlaceholder: "open.spotify.com/track/… oder spotify:album:…",
 

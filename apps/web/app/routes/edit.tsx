@@ -4,8 +4,8 @@ import { env } from "cloudflare:workers";
 import {
   Computer,
   Link as LinkIcon,
+  MapPin,
   MediaImage,
-  MediaVideo,
   Megaphone,
   NavArrowDown,
   NavArrowLeft,
@@ -366,6 +366,7 @@ function Inspector({
   onSignedImage,
   multiPhotoBlocked,
   rememberImage,
+  signedImages,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
@@ -399,6 +400,9 @@ function Inspector({
       koordinata anahtarlandığı için (bkz. `mapFrameImageKey`) blok kimliğini
       varsayan `onSignedImage` yetmiyor. */
   rememberImage: (key: string, path: string) => void;
+  /** Panelin içindeki önizleme kartı da tuvaldeki kartla AYNI eşlemeyi okur;
+      yoksa harita kareleri boş kalırdı. */
+  signedImages: Readonly<Record<string, string>>;
 }) {
   const app = useCatalog(appCatalog);
   const widget = useCatalog(widgetCatalog);
@@ -1601,14 +1605,26 @@ function Inspector({
             ) : null}
             {picked ? (
               <>
-                <p className="inspector-hint">
-                  {app.editor.locationSelected(block.data.label)}
-                </p>
-                <p className="inspector-hint">
-                  {block.data.timeZone
-                    ? app.editor.locationTimeZone(block.data.timeZone)
-                    : app.editor.locationNoTimeZone}
-                </p>
+                {/* SEÇİMİN KANITI KARTIN KENDİSİ. Burada eskiden iki düz satır
+                    vardı ("Elazığ, Turkey seçildi" + "Saat dilimi: …");
+                    kullanıcı haritanın doğru yeri gösterip göstermediğini
+                    ancak paneli kapatıp tuvale bakarak anlıyordu. Önizleme
+                    tuvaldeki kartın TA KENDİSİ (`ProfileBlockCard`), aynı
+                    imzalı kareleri okur — ayrı bir "panel içi harita" yazmak
+                    iki ayrı doğruluk kaynağı üretirdi.
+                    `inert`: kartın atıf bağlantıları panelin sekme sırasına
+                    girmesin; bu bir önizleme, etkileşim yüzeyi değil. Atıf
+                    METNİ görünür kalır (sağlayıcının şartı bunu istiyor);
+                    tıklanabilir hâli tuvaldeki kartta ve yayındaki sayfada.
+                    Konum adı ve yerel saat kartın üstünde zaten yazıyor. */}
+                <div className="inspector-preview" inert>
+                  <ProfileBlockCard block={block} signedImages={signedImages} />
+                </div>
+                {/* Saat dilimi ÇÖZÜLEMEDİYSE uyarı kalır: kartta saat hiç
+                    görünmeyeceği için önizleme bunu tek başına anlatamaz. */}
+                {block.data.timeZone ? null : (
+                  <p className="inspector-hint">{app.editor.locationNoTimeZone}</p>
+                )}
                 <button
                   type="button"
                   className="inspector-secondary"
@@ -2557,8 +2573,16 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         >
           <MediaImage width={19} height={19} />
         </button>
-        <button type="button" data-tooltip="YouTube ekle" aria-label={app.editor.addYoutube} onClick={() => add("youtube")}>
-          <MediaVideo width={19} height={19} />
+        {/* Konum, YouTube'un yerini aldı: çubuk en sık eklenen altı bloğu
+            taşıyor ve YouTube bloğu artık kullanıcı isteğiyle listelerden
+            çıkarıldı (bkz. `CONTENT_CATALOG`, gallery.tsx). */}
+        <button
+          type="button"
+          data-tooltip={app.editor.addLocation}
+          aria-label={app.editor.addLocation}
+          onClick={() => add("location")}
+        >
+          <MapPin width={19} height={19} />
         </button>
         <button
           type="button"
@@ -2617,6 +2641,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           onSignedImage={(path) => rememberSignedImage(selected.id, path)}
           multiPhotoBlocked={multiPhotoBlocked}
           rememberImage={rememberSignedImage}
+          signedImages={signedImages}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));
