@@ -159,6 +159,13 @@ export const es = {
     youtubeHint:
       "Distinguimos las direcciones de vídeo y de canal: añadimos lo que pegues.",
     linkTitlePlaceholder: "Ej. Portafolio",
+    linkVariantLegend: "Versión de la tarjeta",
+    linkVariantCard: "Tarjeta con identidad",
+    linkVariantImage: "Solo imagen",
+    linkVariantHint:
+      "“Solo imagen” deja toda la tarjeta a la imagen de vista previa; la tarjeta se ajusta al cuadro más cercano a 1,91:1.",
+    linkVariantNoPreview:
+      "Esta dirección no devuelve imagen de vista previa; la versión “solo imagen” sería una tarjeta vacía.",
     optionalTitle: "Título (opcional)",
     spotifyLinkLabel: "Enlace de Spotify",
     spotifyHint:

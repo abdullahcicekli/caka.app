@@ -159,6 +159,13 @@ export const de = {
     youtubeHint:
       "Wir unterscheiden Video- und Kanaladressen — wir fügen das ein, was du einfügst.",
     linkTitlePlaceholder: "z. B. Portfolio",
+    linkVariantLegend: "Kartenversion",
+    linkVariantCard: "Karte mit Identität",
+    linkVariantImage: "Nur Bild",
+    linkVariantHint:
+      "„Nur Bild“ überlässt die ganze Karte dem Vorschaubild; die Karte rastet auf dem Kasten ein, der 1,91:1 am nächsten kommt.",
+    linkVariantNoPreview:
+      "Diese Adresse liefert kein Vorschaubild; die Version „nur Bild“ wäre eine leere Karte.",
     optionalTitle: "Titel (optional)",
     spotifyLinkLabel: "Spotify-Link",
     spotifyHint:

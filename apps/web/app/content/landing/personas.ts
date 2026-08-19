@@ -187,6 +187,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "GitHub",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -212,6 +213,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://emrekilic.dev/yazilar/postgres-kuyruk",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -224,6 +226,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://github.com/emrekilic/pgqueue",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -238,6 +241,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "LinkedIn",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -252,6 +256,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "X",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
       ],
@@ -346,6 +351,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "Instagram",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -360,6 +366,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "TikTok",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
       ],
@@ -417,6 +424,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://wa.me/905321112233",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -457,6 +465,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "Instagram",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -471,6 +480,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "YouTube",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
       ],
@@ -545,6 +555,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://ozansahin.com/takvim",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -559,6 +570,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "Instagram",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -573,6 +585,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "YouTube",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
       ],
@@ -635,6 +648,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://ornekgazete.com/ekonomi/enflasyon-sepeti-agustos",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -647,6 +661,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://ornekgazete.com/dosya/secim-gecesi",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -659,6 +674,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://zeynepaydin.com/arsiv",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -673,6 +689,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "X",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -687,6 +704,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "LinkedIn",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
       ],
@@ -734,6 +752,7 @@ export const LANDING_PERSONAS: Persona[] = [
             url: "https://dytbusrakaya.com/randevu",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -787,6 +806,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "Instagram",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
         {
@@ -801,6 +821,7 @@ export const LANDING_PERSONAS: Persona[] = [
             label: "E-posta",
             ogImage: "",
             favicon: "",
+            variant: "card",
           },
         },
       ],

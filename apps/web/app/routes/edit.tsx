@@ -36,6 +36,7 @@ import { linkHostLabel } from "~/lib/link-preview";
 import { noIndexMeta } from "~/lib/seo";
 import {
   AYET_GRID_LIMITS,
+  BLOCK_GRID_LIMITS,
   blockGridLimits,
   blockIssue,
   createBlockId,
@@ -49,6 +50,8 @@ import {
   GEOCODE_ATTRIBUTION,
   GRID_COLUMNS,
   layoutIssues,
+  LINK_GRID_LIMITS,
+  LINK_IMAGE_DIMS,
   mapFrameImageKey,
   MAX_GALLERY_BLOCKS,
   normalizeTheme,
@@ -63,6 +66,7 @@ import {
   spotifyDefaultSize,
   withDerivedSmPositions,
   type AyetVariant,
+  type LinkVariant,
   type BlockSize,
   type LocationSuggestion,
   type LocationZoomStep,
@@ -128,9 +132,29 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
   const id = createBlockId();
   switch (type) {
     case "link":
-      return { id, type, size: "1x1", data: { title: "", url: "", ogImage: "", favicon: "" } };
+      // Sürüm `card` doğar: yeni blokta henüz og:image yok, "yalnız görsel"
+      // boş bir kutu demek olurdu.
+      return {
+        id,
+        type,
+        size: "1x1",
+        data: { title: "", url: "", ogImage: "", favicon: "", variant: "card" },
+      };
     case "social":
-      return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "", favicon: "" } };
+      return {
+        id,
+        type,
+        size: "1x1",
+        data: {
+          platform: "instagram",
+          handle: "",
+          url: "",
+          label: "Instagram",
+          ogImage: "",
+          favicon: "",
+          variant: "card",
+        },
+      };
     case "text":
       return { id, type, size: "2x1", data: { text: "" } };
     case "status":
@@ -407,6 +431,10 @@ function Inspector({
   const app = useCatalog(appCatalog);
   const widget = useCatalog(widgetCatalog);
   const onboarding = useOnboardingLists();
+  // "Yalnız görsel" sürümünün ön koşulu: İMZALI bir önizleme adresi. Ham
+  // `data.ogImage`'a bakmak yetmez — imza sırrı yoksa ya da adres reddedilmişse
+  // kart görseli hiç çizmiyor, sürüm de boş bir kutu üretirdi.
+  const hasLinkPreview = Boolean(signedImages[block.id]);
   const [uploading, setUploading] = useState(false);
   // Çoklu seçimde tek bir "Yükleniyor…" beş fotoğraf boyunca donmuş görünür;
   // kaçıncı dosyada olunduğu ve o dosyanın yüzdesi yazılınca bekleme
@@ -984,6 +1012,70 @@ function Inspector({
    * kabul edilemez. Küçültme yapılmaz — kullanıcı kartı bilerek büyütmüş
    * olabilir, sürüm değişikliği onu geri almamalı.
    */
+  /**
+   * Bağlantı kartının sürümünü değiştirir.
+   *
+   * "Yalnız görsel"e geçerken kart 1,91:1'e EN YAKIN ızgara kutusuna oturur
+   * (`LINK_IMAGE_DIMS`): sürümün bütün anlamı görselin kırpılmadan durması,
+   * kullanıcıyı doğru kutuyu elle aramaya bırakmak o anlamı boşa çıkarırdı.
+   * Geri dönerken ölçüye dokunulmaz, yalnız sürümün sınırlarına çekilir —
+   * kullanıcının kendi seçtiği boy sebepsiz yere sıfırlanmasın.
+   */
+  /**
+   * Sürüm seçici. İki yerde birden çiziliyor — bağlantı bloğunda ve sosyal
+   * bloğun "web sitesi" platformunda — çünkü ikisi de aynı kartı (`WebLinkCard`)
+   * çiziyor. Ayet kartındaki seçicinin aynısı: sürüm hem kartın çizimini hem
+   * taban ölçüsünü değiştirdiği için açılır liste değil, sonucu görünür düğme.
+   * Önizleme görseli YOKSA "yalnız görsel" boş bir kutu olurdu: düğme kapanır
+   * ve gerekçesi yazılır.
+   */
+  function variantPicker(current: LinkVariant) {
+    return (
+      <fieldset className="inspector-choices">
+        <legend>{app.editor.linkVariantLegend}</legend>
+        {(
+          [
+            ["card", app.editor.linkVariantCard],
+            ["image", app.editor.linkVariantImage],
+          ] as const
+        ).map(([variant, label]) => (
+          <button
+            key={variant}
+            type="button"
+            className={current === variant ? "is-active" : ""}
+            aria-pressed={current === variant}
+            disabled={variant === "image" && !hasLinkPreview}
+            onClick={() => setLinkVariant(variant)}
+          >
+            {label}
+          </button>
+        ))}
+        <small className="inspector-hint">
+          {hasLinkPreview ? app.editor.linkVariantHint : app.editor.linkVariantNoPreview}
+        </small>
+      </fieldset>
+    );
+  }
+
+  function setLinkVariant(variant: LinkVariant) {
+    if (block.type !== "link" && block.type !== "social") return;
+    update({ variant });
+    // Sınır yalnız BAĞLANTI bloğunda sürüme bağlı; sosyal kartın tavanı
+    // (8×6) zaten iki sürüme de yetiyor ve onu daraltmak yayındaki blokları
+    // kırpardı.
+    const limits =
+      block.type === "link" ? LINK_GRID_LIMITS[variant] : BLOCK_GRID_LIMITS.social;
+    const current = block.pos?.lg;
+    const target =
+      variant === "image"
+        ? LINK_IMAGE_DIMS
+        : { w: current?.w ?? limits.minW, h: current?.h ?? limits.minH };
+    setDims(
+      Math.min(Math.max(target.w, limits.minW), limits.maxW),
+      Math.min(Math.max(target.h, limits.minH), limits.maxH),
+    );
+  }
+
   function setAyetVariant(variant: AyetVariant) {
     if (block.type !== "ayet") return;
     update({ variant });
@@ -1186,6 +1278,11 @@ function Inspector({
                 }
               />
             </label>
+            {/* Sürüm YALNIZ "web sitesi" platformunda: marka kartları bir
+                PROFİLİ gösteriyor, önizleme görseli tek başına kimliği
+                anlatmaz. Web sitesi kartı ise bağlantı kartıyla aynı bileşen
+                (`WebLinkCard`), yani aynı sürümleri alabilir. */}
+            {block.data.platform === "website" ? variantPicker(block.data.variant) : null}
           </>
         );
       case "link":
@@ -1212,6 +1309,7 @@ function Inspector({
                 onChange={(event) => update({ url: event.target.value, ogImage: "", favicon: "" })}
               />
             </label>
+            {variantPicker(block.data.variant)}
           </>
         );
       case "status":
@@ -2315,7 +2413,15 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       id: createBlockId(),
       type: "social",
       size: "1x1",
-      data: { platform: pick.platform, handle: "", url: "", label: config.label, ogImage: "", favicon: "" },
+      data: {
+        platform: pick.platform,
+        handle: "",
+        url: "",
+        label: config.label,
+        ogImage: "",
+        favicon: "",
+        variant: "card",
+      },
     });
   }
 

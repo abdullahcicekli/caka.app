@@ -158,6 +158,13 @@ export const en = {
     youtubeHint:
       "We tell video and channel addresses apart — whichever you paste is what we add.",
     linkTitlePlaceholder: "e.g. Portfolio",
+    linkVariantLegend: "Card version",
+    linkVariantCard: "Card with identity",
+    linkVariantImage: "Image only",
+    linkVariantHint:
+      "“Image only” gives the whole card to the preview image; the card snaps to the box closest to 1.91:1.",
+    linkVariantNoPreview:
+      "This address returns no preview image; the “image only” version would be an empty card.",
     optionalTitle: "Title (optional)",
     spotifyLinkLabel: "Spotify link",
     spotifyHint:

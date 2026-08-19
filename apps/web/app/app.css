@@ -1998,44 +1998,34 @@ button.photo-cell:focus-visible {
   .profile-block-youtube.is-video:not(.is-shorts) .youtube-meta { order: 1; }
 }
 
-/* --- ORTA + KISA (2×1): önizleme kapak olur, metin rozete iner --- */
+/* --- ORTA + KISA (2×1): önizleme yanda, küçük ama TAM --------- */
 @container (min-width: 200px) and (max-width: 499px) and (max-height: 199px) {
-  /* Önizleme kartı KAPLAR, metin onun üstünde bir rozete iner.
-     Eskiden görsel sağda 16:9 bir kutuydu ve genişliği metinle paylaşıyordu:
-     kutu 161×112'ye (1,44) düşüyor, 1,91:1 og görselinin iki yanı — yani
-     yazısı — kırpılıyordu. Tam kanamada görsel kartın tüm genişliğini alır
-     (2 track = 328-374px), kırpma yalnız dikeyde ve simetrik kalır. */
+  /* Önizleme ALTA sığmaz (kimlik satırından sonra ~68px kalıyor, 1,91:1 bir
+     görsel orada 4,9'luk bir şerit olurdu) ama YANA sığar: kutu genişliğin
+     %45'iyle sınırlanır (368px'lik kartta 165×86) ve kimlik satırına ~170px
+     kalır. Küçük ama TAM bir önizleme.
+
+     BURASI ÖNCE "KAPAK" MODUYDU: görsel kartın tamamını kaplıyor, metin de
+     erişilebilirlik için DOM'da kalıp gözden gizleniyordu. İki sorunu vardı —
+     kart 2,4 en-boya çıktığı için 1,91:1 og'un altı üstü kırpılıyordu ve
+     kartta okunacak hiçbir şey kalmıyordu (favicon da, alan adı da yok).
+     Sosyal kartın aynı kovadaki kuralı zaten yandaki düzendi; site kartları
+     tek bileşende birleşince (bkz. `WebLinkCard`) bu ayrışmanın anlamı da
+     kalmadı. Kutunun oranı og'un oranıyla aynı olduğu için kırpma yok. */
   .profile-block-link.has-og {
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding: 0;
-    gap: 0;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px;
   }
   .profile-block-link.has-og .link-og {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    width: 45%;
+    height: auto;
+    max-height: 100%;
     flex: none;
-    border-radius: 0;
   }
-  /* GÖRSELİN ÜSTÜNE HİÇBİR ŞEY BİNMEZ. Önce başlık burada cam bir rozetti;
-     ölçüde og görselinin kendi yazısının tam üstüne oturuyordu (og'lar
-     yazılarını sol ortaya koyuyor, rozetin yeri de orası). Görsel çıkmışsa
-     zaten kartın söyleyeceğini söylüyor.
-     Metin DOM'da kalır, yalnız GÖRÜNMEZ: kart bir bağlantı ve erişilebilir
-     adı bu satırlardan geliyor — `display:none` verilse ekran okuyucuya
-     adsız bir bağlantı kalırdı. */
-  .profile-block-link.has-og .link-body {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+  .profile-block-link.has-og .link-body { min-width: 0; flex: 1; }
 }
 
 /* --- GENİŞ + KISA (4×1): önizleme yanda, tam ve kırpılmamış ---- */
@@ -2158,6 +2148,48 @@ button.photo-cell:focus-visible {
   .profile-block-youtube.is-channel.has-latest .yt-channel-head .youtube-meta { flex: none; }
   .profile-block-youtube.is-channel.has-latest .yt-latest { flex: 1; }
 }
+
+/* --- BAĞLANTI: "YALNIZ GÖRSEL" SÜRÜMÜ --------------------------- *
+ *
+ * Kart bütünüyle og:image'dir — çip yok, başlık yok, alan adı yok. Kullanıcı
+ * bunu editörde açıkça seçer (`linkVariantImage`) ve seçtiği anda kart 1,91:1'e
+ * en yakın kutuya oturur (`LINK_IMAGE_DIMS`), yani kırpma en aza iner.
+ *
+ * BLOK BÜTÜN KONTEYNER SORGULARINDAN SONRA GELİR. Kovalar aynı özgüllükte
+ * (`.profile-block-link.has-og .link-og`) yazıldığı için kazanan kaynak
+ * sırasıdır; bu blok yukarı taşınırsa 2×1 kovası sürümü ezer ve kullanıcı
+ * seçtiği şeyi göremez.
+ *
+ * Metin DOM'da KALIR, yalnız görünmez: kart bir bağlantı ve erişilebilir adı
+ * o satırlardan geliyor — `display: none` verilseydi ekran okuyucuya adsız bir
+ * bağlantı kalırdı. */
+.profile-block-link.is-image { padding: 0; gap: 0; }
+.profile-block-link.is-image .link-og {
+  /* `display` AÇIKÇA yazılır: en küçük tile kovası (1×1) görseli gizliyor ve
+     yalnız çipi bırakıyor — "yalnız görsel" sürümünde o kural kartı bomboş
+     bırakırdı. */
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  flex: none;
+  border-radius: 0;
+  aspect-ratio: auto;
+}
+.profile-block-link.is-image .link-body {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.profile-block-link.is-image .link-go { display: none; }
 
 /* ---------------------------------------------------------------- *
  * Yerinde oynatma (facade → iframe) — YouTube videosu ve Spotify.
@@ -2620,6 +2652,54 @@ button.photo-cell:focus-visible {
 @container (max-width: 250px) {
   .profile-block-location strong { font-size: 15px; }
   .profile-block-location .loc-foot { padding-bottom: 46px; }
+}
+
+/* --- konum kartı: küçülme basamakları --------------------------- *
+ *
+ * Kartın tabanı 2×2'ye indi (bkz. `BLOCK_GRID_LIMITS.location`). Küçülürken
+ * kart bozulmaz, SADELEŞİR — her basamakta en az bilgi veren öğe önce gider:
+ *
+ *   ülke satırı → saat pilindeki UTC ofseti → yazı boyları → dolgular
+ *
+ * ATIF HİÇBİR BASAMAKTA DÜŞMEZ: sağlayıcının şartı "prominent and can be
+ * easily viewed" diyor; küçülen yalnız yazı boyu (yukarıdaki dar kart
+ * kuralları) ve gerektiğinde ikinci satıra iner. */
+
+/* KISA (yükseklik < 200px): dikeyde yer yok. Ülke satırı düşer — yer adı
+   zaten ülkeyi çoğu zaman söylüyor ("Elazığ, Turkey") — ad küçülür, saat
+   pili ofsetini bırakır ve nokta incelir. */
+@container (max-height: 199px) {
+  /* ALT DOLGUYA DOKUNULMAZ: onu GENİŞLİK kuralları belirliyor (atıf kaç satıra
+     iniyorsa o kadar yer istiyor). Kısayol `padding` yazılsaydı bu kural daha
+     sonra geldiği için alt dolguyu da ezer ve yer adı atfın üstüne binerdi. */
+  .profile-block-location .loc-foot { padding-top: 10px; padding-inline: 12px; }
+  .profile-block-location strong { font-size: 14px; }
+  .profile-block-location .loc-foot small { display: none; }
+  .loc-clock {
+    top: 8px;
+    left: 8px;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: 10.5px;
+  }
+  .loc-clock small { display: none; }
+  .loc-dot {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--color-mavi) 26%, transparent),
+      0 3px 8px rgb(0 0 0 / 0.4);
+  }
+}
+
+/* EN KÜÇÜK KUTU (2×2 = 178×156 ve altı): ad tek satıra sığsın diye 13px,
+   yan dolgu iyice daralır. Atıf bu genişlikte üç satıra iniyor; ona gereken
+   46px'lik alt dolgu `max-width: 250px` kuralından geliyor. */
+@container (max-width: 199px) and (max-height: 199px) {
+  .profile-block-location strong { font-size: 13px; }
+  .profile-block-location .loc-foot { padding-top: 8px; padding-inline: 10px; }
+  .loc-clock { top: 6px; left: 6px; padding: 2px 7px; font-size: 10px; }
 }
 
 /* Hareket azaltma tercihi: geçiş yok, doğrudan yakın kare. Bir profil

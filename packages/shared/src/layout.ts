@@ -202,6 +202,24 @@ const profileCardSchema = z.object({
   }),
 });
 
+/**
+ * SİTE KARTININ SÜRÜMÜ (ayet kartındaki `variant` ile aynı desen). İki blok
+ * da kullanır: `link` bloğu ve sosyal bloğun "web sitesi" platformu — ikisi
+ * render'da zaten tek bileşen (`WebLinkCard`).
+ *
+ * `card`  — favicon çipi + başlık + okunur alan adı, önizleme varsa yanında.
+ *           Kartın normal hâli ve varsayılanı; önizlemesi olmayan hedeflerin
+ *           çoğunluk olduğu ölçüldüğü için (bkz. `lib/link-preview.ts`) taban
+ *           budur.
+ * `image` — kart BÜTÜNÜYLE og:image'dir: çip de yazı da yoktur, görsel
+ *           kanamalı durur. Kullanıcı önizlemesi kendi başına konuşan bir
+ *           hedefte (kişisel site, ürün sayfası) kartın yanındaki kimlik
+ *           satırını gürültü buluyorsa bu sürümü seçer. og:image yoksa kart
+ *           `card` gibi çizilir — boş bir kutu göstermek yerine.
+ */
+export const linkVariantSchema = z.enum(["card", "image"]);
+export type LinkVariant = z.infer<typeof linkVariantSchema>;
+
 const socialBlockSchema = z.object({
   ...blockBase,
   type: z.literal("social"),
@@ -222,6 +240,12 @@ const socialBlockSchema = z.object({
     // Sitenin favicon'u (kayıt anında sayfadan okunur ya da /favicon.ico'dan
     // türetilir). Ziyaretçiye imzalı proxy'den servis edilir.
     favicon: optionalHttpUrlSchema.default(""),
+    // YALNIZ "web sitesi" platformunda anlamlı: marka platformlarının kartı
+    // bir profildir, önizleme görseli tek başına kimliği anlatmaz. Alan yine
+    // de sosyal verinin tamamında duruyor — dala göre değişen bir şema
+    // (`z.discriminatedUnion` içinde ikinci bir ayrım) editörde her yamayı
+    // dallandırmayı gerektirirdi.
+    variant: linkVariantSchema.default("card"),
   }),
 });
 
@@ -236,6 +260,9 @@ const linkBlockSchema = z.object({
     // sözleşme (kayıt anında çekilir, saklanır, render yeniden çekmez).
     ogImage: optionalHttpUrlSchema.default(""),
     favicon: optionalHttpUrlSchema.default(""),
+    // Eski kayıtlarda alan yok; `default` onları kartın bugünkü hâlinde
+    // bırakır, yani sürüm eklemek yayındaki hiçbir sayfayı değiştirmez.
+    variant: linkVariantSchema.default("card"),
   }),
 });
 
@@ -905,12 +932,21 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   // 4 birim (368px). Yükseklik tabanı 2 birim (156px, mobilde 138): kapak
   // 124px, metin bloğu 94px istiyor, ikisi yan yana sığıyor.
   document: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
-  // Harita kartı bir GÖRÜNTÜDÜR: dar bir şeritte ne etiketler ne de saat pili
-  // okunur. Taban 4x4 (masaüstünde 368x324) — kareye yakın bu kutuda 512x384
-  // kare `cover` ile çok az kırpılıyor ve şehir adları okunuyor. 4x3 (240px)
-  // denendi: pil harita etiketlerinin üstüne biniyor. Tavan 8x6, yani tam
-  // genişlikte üç satırlık bir "kapak" haritası da mümkün.
-  location: { minW: 4, minH: 4, maxW: 8, maxH: 6 },
+  // Harita kartı bir GÖRÜNTÜDÜR ve 4×4 (368×324) onun EN İYİ ölçüsü: 512×384
+  // kare orada `cover` ile çok az kırpılıyor ve şehir adları okunuyor. Ama
+  // taban olarak 4×4 fazla katıydı — kart sayfada hep yarım satır kaplıyor ve
+  // kullanıcı onu küçültemiyordu.
+  //
+  // TABAN 2×2 (178×156). Kart o ölçüde artık "okunur harita" değil, bir KONUM
+  // ROZETİ: kare hâlâ yerin siluetini veriyor, nokta merkezde duruyor, yer adı
+  // ve saat pili küçülüyor, ülke satırı düşüyor (bkz. app.css, "konum kartı:
+  // küçülme basamakları"). Harita etiketlerinin okunmadığı doğru — ama o
+  // ölçüyü kullanıcı bilerek seçiyor ve alternatifi kartı hiç küçültememekti.
+  // Atıf şeridi her basamakta GÖRÜNÜR kalır (sağlayıcının şartı); küçülen
+  // yalnız yazı boyu.
+  //
+  // Tavan 8x6, yani tam genişlikte üç satırlık bir "kapak" haritası da mümkün.
+  location: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
   // Ayet kartının tabanı SÜRÜME bağlı (bkz. `AYET_GRID_LIMITS`); buradaki
   // kayıt tipin en GEVŞEK sürümüdür, yani "meal". Tek bir tip için üç farklı
   // taban gerektiği hâlde ayrı üç blok tipi açılmadı: veri, editör alanları ve
@@ -952,6 +988,34 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
  * kullanıcı kartı büyütebilmeli. Sığmayan metin KISALTILMAZ, kaydırılır
  * (bkz. `.ayet-body`, app.css).
  */
+/**
+ * Bağlantı kartının sürüm başına ızgara sınırı.
+ *
+ * `card` tabanı tip tablosundakiyle aynı (2×2 = 178×156): kimlik satırı orada
+ * okunuyor. `image` sürümünde kartın içeriği tek bir görsel olduğu için taban
+ * gevşer ve TAVAN yükselir (6 satır): kanamalı bir og, sayfanın üstünde tam
+ * genişlikte bir "kapak" olarak da kullanılabilsin.
+ */
+export const LINK_GRID_LIMITS: Record<LinkVariant, BlockGridLimits> = {
+  card: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
+  image: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
+};
+
+/**
+ * "Yalnız görsel" sürümüne geçilince kartın oturduğu kutu.
+ *
+ * og:image'in fiili standardı 1,91:1. Izgara o oranı tam veremez; masaüstü
+ * basamakları (genişlik 95w−12, yükseklik 84h−12) arasında en yakını
+ * **5×3 = 463×240 → 1,93**. Karşılaştırma: 4×2 = 2,36 · 8×4 = 2,31 ·
+ * 8×5 = 1,83 · 6×4 = 1,72. Yani 5×3 dışındaki her seçim görselin ya iki
+ * yanını ya altını üstünü gözle görülür biçimde kırpardı.
+ *
+ * Mobilde ızgara 4 kolon: genişlik 4'e kırpılır (350×213 → 1,64) ve kırpma
+ * yanlardan olur — kaçınılmaz, çünkü mobilde 1,91'lik bir kutu ancak 2 satır
+ * yüksekliğinde olurdu ve kart şeride dönerdi.
+ */
+export const LINK_IMAGE_DIMS = { w: 5, h: 3 } as const;
+
 export const AYET_GRID_LIMITS: Record<AyetVariant, BlockGridLimits> = {
   meal: { minW: 4, minH: 3, maxW: 8, maxH: 8 },
   arabic: { minW: 4, minH: 4, maxW: 8, maxH: 8 },
@@ -960,13 +1024,14 @@ export const AYET_GRID_LIMITS: Record<AyetVariant, BlockGridLimits> = {
 
 /**
  * Bloğun gerçek ızgara sınırları. Çoğu tipte bu `BLOCK_GRID_LIMITS[type]`
- * ile aynıdır; ayet bloğunda sürüme göre değişir. Sınırı okuyan HER YER
+ * ile aynıdır; ayet ve bağlantı bloklarında sürüme göre değişir. Sınırı okuyan HER YER
  * (editör gridstack'i, yazma şeması, `ensureLayoutPositions`) buradan
  * okur ki üçü ayrışmasın.
  */
 export function blockGridLimits(block: ProfileBlock): BlockGridLimits | null {
   if (block.type === "profile") return null;
   if (block.type === "ayet") return AYET_GRID_LIMITS[block.data.variant];
+  if (block.type === "link") return LINK_GRID_LIMITS[block.data.variant];
   return BLOCK_GRID_LIMITS[block.type];
 }
 

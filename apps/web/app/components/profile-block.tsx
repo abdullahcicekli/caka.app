@@ -5,6 +5,7 @@ import { Download, Eye } from "iconoir-react";
 import {
   classifyYouTubeUrl,
   faviconImageKey,
+  type LinkVariant,
   shortenFileName,
   mapFrameImageKey,
   type ProfileBlock,
@@ -84,6 +85,7 @@ function WebLinkCard({
   preview,
   favicon,
   imgLoading,
+  variant = "card",
 }: {
   url: string;
   /** İsteğe bağlı başlık; yoksa alan adı satırı tek başına yeter. */
@@ -92,12 +94,20 @@ function WebLinkCard({
   preview: string;
   favicon: string;
   imgLoading: "eager" | "lazy";
+  /** `image` sürümünde kart bütünüyle önizleme görselidir; çip ve yazı
+      görünmez (DOM'da kalır — bağlantının erişilebilir adı onlardan gelir). */
+  variant?: LinkVariant;
 }) {
   const target = prettyLinkTarget(url);
   const brand = linkBrand(url);
+  // Görseli olmayan bir hedefte "yalnız görsel" boş kutu demek olurdu; kart
+  // sessizce normal hâline döner. (Editörde sürüm düğmesi de o hâlde kapalı.)
+  const imageOnly = variant === "image" && preview !== "";
   return (
     <a
-      className={`profile-block profile-block-link${preview ? " has-og" : ""}`}
+      className={`profile-block profile-block-link${preview ? " has-og" : ""}${
+        imageOnly ? " is-image" : ""
+      }`}
       href={url || undefined}
       target="_blank"
       rel="noreferrer"
@@ -271,6 +281,7 @@ export function ProfileBlockCard({
           preview={signedImage}
           favicon={signedFavicon}
           imgLoading={imgLoading}
+          variant={block.data.variant}
         />
       );
     }
@@ -338,6 +349,7 @@ export function ProfileBlockCard({
           preview={signedImage}
           favicon={signedFavicon}
           imgLoading={imgLoading}
+          variant={block.data.variant}
         />
       );
 

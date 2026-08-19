@@ -159,6 +159,13 @@ export const ptBR = {
     youtubeHint:
       "A gente diferencia endereços de vídeo e de canal — adicionamos o que você colar.",
     linkTitlePlaceholder: "Ex. Portfólio",
+    linkVariantLegend: "Versão do cartão",
+    linkVariantCard: "Cartão com identidade",
+    linkVariantImage: "Somente imagem",
+    linkVariantHint:
+      "“Somente imagem” entrega o cartão inteiro à imagem de pré-visualização; o cartão se ajusta à caixa mais próxima de 1,91:1.",
+    linkVariantNoPreview:
+      "Este endereço não devolve imagem de pré-visualização; a versão “somente imagem” seria um cartão vazio.",
     optionalTitle: "Título (opcional)",
     spotifyLinkLabel: "Link do Spotify",
     spotifyHint:

@@ -167,6 +167,13 @@ export const tr = {
     youtubeHint:
       "Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.",
     linkTitlePlaceholder: "Örn. Portfolyo",
+    linkVariantLegend: "Kart sürümü",
+    linkVariantCard: "Kimlikli kart",
+    linkVariantImage: "Yalnız görsel",
+    linkVariantHint:
+      "“Yalnız görsel” kartı bütünüyle önizleme görseline bırakır; kart 1,91:1 oranına en yakın kutuya oturur.",
+    linkVariantNoPreview:
+      "Bu adres bir önizleme görseli vermiyor; “yalnız görsel” sürümü boş bir kart olurdu.",
     optionalTitle: "Başlık (isteğe bağlı)",
     spotifyLinkLabel: "Spotify bağlantısı",
     spotifyHint:
