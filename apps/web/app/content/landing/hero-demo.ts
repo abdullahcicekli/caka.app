@@ -57,6 +57,7 @@ import {
 import avatarAhmet from "~/assets/landing/serit/ahmet.webp";
 import avatarDeniz from "~/assets/landing/serit/deniz.webp";
 import avatarEsra from "~/assets/landing/serit/esra.webp";
+import avatarYusuf from "~/assets/landing/serit/yusuf.webp";
 import avatarFurkan from "~/assets/landing/serit/furkan.webp";
 import avatarKaan from "~/assets/landing/serit/kaan.webp";
 import avatarOzan from "~/assets/landing/serit/ozan.webp";
@@ -69,6 +70,7 @@ import thumbPodcast from "~/assets/landing/thumb-podcast.webp";
 import sceneNaz from "~/assets/landing/scene-naz.webp";
 import ogKonser from "~/assets/landing/og-konser.webp";
 import sceneMarangoz from "~/assets/landing/scene-marangoz.webp";
+import sceneMutfak from "~/assets/landing/scene-mutfak.webp";
 import sceneMimar from "~/assets/landing/scene-mimar.webp";
 import sceneSelin from "~/assets/landing/scene-selin.webp";
 import sceneYazi from "~/assets/landing/scene-yazi.webp";
@@ -220,6 +222,7 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   // Bu yüzden DOSYA ADLARI ARTIK KİŞİYE DEĞİL KONUYA GÖRE: kadro yeniden
   // dağıtılınca kişi adı taşıyan dosya adı yanlışa düşüyor, konu adı düşmüyor.
   "demo-halil-threads": sceneMarangoz,
+  "demo-yusuf-link": sceneMutfak,
   "demo-burak-linkedin": sceneMimar,
   "demo-furkan-link": sceneYazi,
   // Bağlantı kartının marka çipi. Favicon YOKSA kart alan adının BAŞ
@@ -231,6 +234,7 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   [faviconImageKey("demo-ozan-link")]: avatarOzan,
   [faviconImageKey("demo-furkan-link")]: avatarFurkan,
   [faviconImageKey("demo-esra-link")]: avatarEsra,
+  [faviconImageKey("demo-yusuf-link")]: avatarYusuf,
   // Konum kartının harita karesi. ÜRETİLMİŞ, gerçek coğrafya DEĞİL — ve
   // bu bilinçli bir karar, eksiklik değil:
   //
@@ -462,21 +466,22 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           cells: [
             {
               h: 3,
+              // BELGE KARTI DEĞİL, YALNIZ GÖRSEL BAĞLANTI. Burada 463x240'lık
+              // bir belge kartı duruyordu: o boyutta kartın yarısını jenerik
+              // PDF sayfa simgesi kaplıyor ve şeridin en büyük öğesi bir yer
+              // tutucu grafiği oluyordu. `variant: "image"` kartı bütünüyle
+              // görsele bırakıyor; başlık ve adres DOM'da kalır, bağlantının
+              // erişilebilir adı onlardan gelir.
               block: {
-                id: "demo-yusuf-document",
-                type: "document",
+                id: "demo-yusuf-link",
+                type: "link",
                 size: "2x2",
                 data: {
-                  // assetId ŞART: boş bırakılırsa kart editörün "belge ekle"
-                  // boş durumuna düşer ve landing'de düzenleyici arayüzü
-                  // sızardı. Şerit `inert`, indirme bağlantısı tıklanamaz.
-                  assetId: "7d1c2f60-9a3e-4b18-8f52-0c6d5e14a9b3",
                   title: copy.yusuf.document,
-                  fileName: "yusuf-ates-menu.pdf",
-                  bytes: 412_000,
-                  // Sabit epoch (2026-02-18, UTC). Kart tarihi UTC getters
-                  // ile biçimlendiriyor: sunucu ve istemci aynı günü yazar.
-                  uploadedAt: 1_771_372_800_000,
+                  url: "https://yusufates.com/menu",
+                  ogImage: "https://yusufates.com/og.jpg",
+                  favicon: "https://yusufates.com/favicon.ico",
+                  variant: "image",
                 },
               },
             },
