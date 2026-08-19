@@ -2,7 +2,7 @@
 // Sosyal platform kartları marka tonlarını (platform-*) kullanır; içerik
 // blokları nötr kartlardır. Araç çubuğunun üstünde popover olarak açılır;
 // dışarı tıklama/Escape ile kapanma editördeki ortak panel handler'ındadır.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link as LinkIcon,
   MapPin,
@@ -78,6 +78,7 @@ export function BlockGallery({
   blockers?: BlockAddBlockers;
 }) {
   const onboarding = useOnboardingLists();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
 
@@ -93,6 +94,15 @@ export function BlockGallery({
     () => CONTENT_ITEMS.filter((item) => matches(app.blockTypes[item.type])),
     [needle, app],
   );
+  // Aramaya odak YALNIZCA fiziksel imleçli cihazlarda. Dokunmatikte odak
+  // klavyeyi açar; galeri klavyenin altında kalır ve listeyi kaydırmak
+  // imkânsızlaşır — kullanıcı önce blokları görmeli, arama isteğe bağlı.
+  useEffect(() => {
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      searchRef.current?.focus();
+    }
+  }, []);
+
   const showSocial = category !== "content" && socialItems.length > 0;
   const showContent = category !== "social" && contentItems.length > 0;
 
@@ -101,7 +111,7 @@ export function BlockGallery({
         <label className="gallery-search">
           <Search width={19} height={19} aria-hidden />
           <input
-            autoFocus
+            ref={searchRef}
             type="search"
             placeholder={app.editor.searchPlaceholder}
             value={query}
