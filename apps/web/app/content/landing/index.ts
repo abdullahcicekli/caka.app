@@ -31,7 +31,6 @@ export type FaqItem = LandingContent["faq"]["items"][number];
 export type FaqSection = LandingContent["faq"];
 export type ShareSection = LandingContent["share"];
 export type AudienceSection = LandingContent["audience"];
-export type OutroSection = LandingContent["outro"];
 export type HeroTowerText = LandingContent["hero"]["tower"];
 
 export type { SocialLink } from "./shared";

@@ -9,7 +9,6 @@ import { Hero } from "~/components/landing/hero";
 import { KarakterlerSection } from "~/components/landing/karakterler-section";
 import { MinutesSection } from "~/components/landing/minutes-section";
 import { Navbar } from "~/components/landing/navbar";
-import { OutroSection } from "~/components/landing/outro-section";
 import { ScrollIndicator } from "~/components/landing/scroll-indicator";
 import { ShareSection } from "~/components/landing/share-section";
 import { SiteFooter } from "~/components/landing/site-footer";
@@ -151,7 +150,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         footer={landing.footer}
         publishedLegal={loaderData.publishedLegal}
       />
-      <OutroSection outro={landing.outro} />
       <ScrollIndicator ids={SECTION_IDS} />
     </div>
   );

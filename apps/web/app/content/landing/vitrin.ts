@@ -41,9 +41,9 @@ export interface KarakterKarti {
  */
 export const KARAKTER_KARTLARI: KarakterKarti[] = [
   { id: "emre", name: "Emre Kılıç", job: "yazilimci", backdrop: "#14356f", image: emre },
-  { id: "kaan", name: "Kaan Demirtaş", job: "youtuber", backdrop: "#e2542a", image: kaan },
+  { id: "busra", name: "Büşra Kaya", job: "diyetisyen", backdrop: "#69bab4", image: busra },
   { id: "serkan", name: "Serkan Yıldız", job: "sporHocasi", backdrop: "#4cb63a", image: serkan },
   { id: "ozan", name: "Ozan Şahin", job: "muzisyen", backdrop: "#6a2ba0", image: ozan },
   { id: "zeynep", name: "Zeynep Aydın", job: "gazeteci", backdrop: "#c98a3a", image: zeynep },
-  { id: "busra", name: "Büşra Kaya", job: "diyetisyen", backdrop: "#69bab4", image: busra },
+  { id: "kaan", name: "Kaan Demirtaş", job: "youtuber", backdrop: "#e2542a", image: kaan },
 ];

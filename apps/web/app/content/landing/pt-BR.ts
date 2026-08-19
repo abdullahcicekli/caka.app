@@ -167,10 +167,6 @@ export const ptBR = {
       action: "/onboarding",
     },
   },
-  outro: {
-    line: "A página que você abre hoje continua sua amanhã.",
-    pills: ["Código aberto", "Em cinco idiomas", "caka.app"],
-  },
   footer: {
     tagline: "Caka — uma página pessoal do seu jeito",
     columns: [

@@ -167,10 +167,6 @@ export const es = {
       action: "/onboarding",
     },
   },
-  outro: {
-    line: "La página que abres hoy mañana sigue siendo tuya.",
-    pills: ["Código abierto", "En cinco idiomas", "caka.app"],
-  },
   footer: {
     tagline: "Caka — una página personal a tu medida",
     columns: [
