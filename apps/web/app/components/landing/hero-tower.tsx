@@ -1,5 +1,7 @@
 import { useState, type CSSProperties } from "react";
 
+import type { ProfileTheme } from "@caka/shared";
+
 import { ProfileBlockCard } from "~/components/profile-block";
 import {
   heroTowerCalendars,
@@ -19,6 +21,66 @@ const ROW_SECONDS = [78, 64, 92];
  * (yani 1440'ta bile) sarma noktasında BOŞLUK gösteriyordu.
  */
 const REPEAT = 3;
+
+/**
+ * PERSONA BAŞINA TEMA — sütun ya da hücre başına DEĞİL.
+ *
+ * Tema profil düzeyinde bir özniteliktir: bir sayfanın tek teması olur. Şerit
+ * dört personanın sayfa parçalarını akıtıyor ve aynı persona birden çok
+ * sütunda geçiyor (Kerem üç kez, adı ve `@keremaydin` etiketiyle). Temayı
+ * sütuna bağlasaydık aynı kişinin sayfası şeritte iki farklı temada görünür,
+ * yani tam da bu şeritte bir kez düzeltilen kimlik tutarsızlığının (kadın
+ * fotoğrafı taşıyan kartın "Kerem Aydın" diye etiketlenmesi) tema hâli
+ * doğardı.
+ *
+ * RİTİM VERİDEN GELİR, rastgele değil: `hero-demo.ts` "yan yana ve üst üste
+ * gelen kartlar farklı personalara aittir — satırın son sütunu ile ilk sütunu
+ * da komşudur" kuralını zaten uyguluyor. Farklı persona ⇒ farklı tema
+ * olduğundan komşu iki kart hiçbir yerde aynı temayı taşımıyor; döngü sarma
+ * noktasında da taşımıyor.
+ *
+ * DÖRT TEMA, ALTI DEĞİL. `light` ve `lavanta` şeritte YOK — süs kararı değil,
+ * ölçüm kararı: ikincil kart metni (link kartındaki alan adı, sosyal karttaki
+ * handle) o iki temada 4,19 ve 3,98 kontrastta kalıyor, 12-13px metin için
+ * AA eşiği 4,5 (`docs/backlog.md` #15). Şerit ürünün vitrini; AA'yı geçmeyen
+ * bir kombinasyonu vitrine koymuyoruz. Şeritte ölçülen en düşük metin oranı
+ * artık 5,03:1 (canlı sayfa, alfa kompozisyonu ve degrade durakları dâhil).
+ * Ayrıca beyaz kart fıstık yeşili zeminde 1,38:1 kalıyordu — kart kenarı
+ * neredeyse görünmüyordu; dört koyu kart zemine 9,25-13,26 ile oturuyor.
+ *
+ * BİLİNEN SINIR: durum kartı kart yüzeyini değil VURGU rengini kullanıyor
+ * (`--profile-gradient`) ve hiçbir tema vurgusu fıstık yeşiline 3:1 ile
+ * oturmuyor — ufuk 2,24 · neon 2,31 · zumrut 1,44 · dark 1,00. Sonuncusu
+ * çünkü `dark`ın vurgusu `--color-kirec`, yani şerit zemininin TA KENDİSİ.
+ * Tek zeminle bunu çözmek matematiksel olarak mümkün değil: koyu kart
+ * yüzeylerinin 3:1'i için zemin luminansı ≥0,125, açık vurguların 3:1'i için
+ * ≤0,126 olmalı ve mor/turuncu vurgular o pencerede de geçmiyor. Üründe bu
+ * kartlar kendi tema zeminlerinin üstünde duruyor ve sorun yok; burada
+ * çözüm ancak şerit zemininin değişmesi olurdu.
+ *
+ * Eşleşmeler personanın kendi görsel dünyasını yankılar:
+ *   Kerem  müzisyen, "Gece Yolu" (gece yolu, indigo-kömür)  → dark
+ *   Selin  seramik  (toprak, kum, terracotta)               → ufuk
+ *   Elif   podcast  "Sade Hayat" (adaçayı, okra, yulaf)     → zumrut
+ *   Naz    seslendirme (koyu erik kabin, mor)               → neon
+ */
+const PERSONA_THEMES: Record<string, ProfileTheme> = {
+  kerem: "dark",
+  selin: "ufuk",
+  elif: "zumrut",
+  naz: "neon",
+};
+
+/**
+ * Blok kimlikleri `demo-<persona>-<ne>` biçiminde (bkz. `hero-demo.ts`);
+ * tema oradan okunur, hücreye ayrı bir alan eklenmez. Tanınmayan bir kimlik
+ * gelirse sarmalayıcının teması geçerli kalır.
+ */
+const FALLBACK_THEME: ProfileTheme = "dark";
+
+function personaTheme(blockId: string): ProfileTheme {
+  return PERSONA_THEMES[blockId.split("-")[1] ?? ""] ?? FALLBACK_THEME;
+}
 
 interface HeroTowerProps {
   media: LandingContent["hero"]["media"];
@@ -57,7 +119,9 @@ export function HeroTower({ media, tower }: HeroTowerProps) {
         className="lp-tower"
         // Kartlar renklerini profil temasından okur (`[data-profile-theme]`).
         // `.profile-canvas` KULLANILMIYOR: o 100svh ve kendi zeminini getirir.
-        data-profile-theme="light"
+        // Buradaki tema yalnız TABANDIR; her hücre personasının temasını
+        // kendi üstüne yazar (bkz. `PERSONA_THEMES`).
+        data-profile-theme={FALLBACK_THEME}
         // `inert`: içerideki bağlantılar odak almaz, ekran okuyucuya da
         // görünmez. Anlamı aşağıdaki `sr-only` cümle taşır.
         inert
@@ -118,6 +182,11 @@ function TowerRowView({
               <div
                 key={cell.block.id}
                 className="lp-tower-cell profile-grid-item"
+                // Tema HÜCREDE, sütunda değil: satır 2'nin bir sütunu iki
+                // ayrı personanın durum kartını üst üste taşıyor (Kerem +
+                // Selin), sütuna yazılan tema o kartlardan birini yanlış
+                // temaya sokardı.
+                data-profile-theme={personaTheme(cell.block.id)}
                 style={{ "--lp-tower-ch": cell.h } as CSSProperties}
               >
                 {/* GÖRSELLER HEMEN İNER. Şerit CSS `transform` ile

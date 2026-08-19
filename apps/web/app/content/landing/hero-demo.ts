@@ -170,7 +170,9 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   // Manzara görseller (1,91:1 — `.link-og`, `.social-og`, video kapağı).
   // Her biri BİR kez geçiyor: aynı görselin iki kartta çıkması şeridi
   // "dört fotoğrafla on beş yer doldurulmuş" gibi gösteriyordu.
-  // İki kadraj KARAKTER ŞERİDİNDEN geliyor (`assets/landing/vitrin/`): Kaan'ın
+  // İki kadraj KARAKTER ŞERİDİNİN kişi fotoğraflarından geliyor
+  // (`assets/landing/lab/kisi-*.webp`, 2000×1480 — render'dan değil, çünkü
+  // oradan kırpınca büyütme gerekiyordu): Kaan'ın
   // set ekipmanı Elif'in "kamera arkası" videosunun kapağına, Ozan'ın plak +
   // amfi köşesi Kerem'in konser bağlantısına düşüyor. İkisi de KİŞİSİZ kırpma
   // — kart görselinin kimlik iddiası taşımaması kuralı korunuyor (yukarı bkz.).
