@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   BLOCK_GRID_LIMITS,
+  AYET_GRID_LIMITS,
   GRID_COLUMNS,
+  GRID_UNIT,
   PROFILE_BIO_MAX,
+  blockGridLimitIssue,
+  blockGridLimits,
   blockIssue,
   detectSocialFromUrl,
   ensureLayoutPositions,
@@ -11,6 +15,7 @@ import {
   parseProfileLayout,
   placeNewBlock,
   profileLayoutSchema,
+  profileLayoutWriteSchema,
   sizeFromDims,
   sizeToDims,
   socialUrl,
@@ -423,5 +428,132 @@ describe("belge bloğu şeması", () => {
 
   it("tip tabanı kartın ölçülen asgarisidir (yarım birimde 4×2)", () => {
     expect(BLOCK_GRID_LIMITS.document).toEqual({ minW: 4, minH: 2, maxW: 8, maxH: 4 });
+  });
+});
+
+// --- Ayet bloğu ------------------------------------------------------------
+
+function ayetBlock(
+  variant: "arabic" | "meal" | "both",
+  overrides: Partial<{
+    arabic: string;
+    meal: string;
+    w: number;
+    h: number;
+    surah: number;
+    verse: number;
+  }> = {},
+): ProfileBlock {
+  const w = overrides.w ?? AYET_GRID_LIMITS[variant].minW;
+  const h = overrides.h ?? AYET_GRID_LIMITS[variant].minH;
+  return {
+    id: "blk_ayet",
+    type: "ayet",
+    size: "2x2",
+    pos: { lg: { x: 0, y: 0, w, h }, sm: { x: 0, y: 0, w: Math.min(w, 4), h } },
+    data: {
+      variant,
+      surah: overrides.surah ?? 112,
+      verse: overrides.verse ?? 1,
+      surahName: "İhlâs",
+      arabic: overrides.arabic ?? "قُلۡ هُوَ ٱللَّهُ أَحَدٌ",
+      meal: overrides.meal ?? "De ki; O Allah bir tektir",
+      mealEdition: "tur-elmalilihamdiya",
+      mealTranslator: "Elmalılı Hamdi Yazır",
+    },
+  };
+}
+
+describe("ayet bloğu", () => {
+  it("şema ayeti kabul eder ve varsayılanları doldurur", () => {
+    const parsed = profileLayoutSchema.parse({
+      version: 1,
+      grid: GRID_UNIT,
+      blocks: [
+        profileBlock,
+        { id: "blk_a", type: "ayet", size: "2x2", data: { surah: 2, verse: 255 } },
+      ],
+    });
+    const block = parsed.blocks[1];
+    if (block.type !== "ayet") throw new Error("ayet bloğu bekleniyordu");
+    expect(block.data.variant).toBe("both");
+    expect(block.data.arabic).toBe("");
+    expect(block.data.mealTranslator).toBe("");
+  });
+
+  it("sınır dışı sure numarasını şema reddeder", () => {
+    const bad = profileLayoutSchema.safeParse({
+      version: 1,
+      grid: GRID_UNIT,
+      blocks: [profileBlock, { id: "blk_a", type: "ayet", data: { surah: 115, verse: 1 } }],
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it("sure başına ayet tavanı YAZMA şemasında uygulanır", () => {
+    // İhlâs 4 ayet; 9. ayet yok. Okuma şeması geçirir (eski kayıt yüzünden
+    // yayındaki sayfa kararmasın), yazma şeması reddeder.
+    const layout = {
+      version: 1 as const,
+      grid: GRID_UNIT,
+      blocks: [profileBlock, ayetBlock("meal", { surah: 112, verse: 9 })],
+    };
+    expect(profileLayoutSchema.safeParse(layout).success).toBe(true);
+    const written = profileLayoutWriteSchema.safeParse(layout);
+    expect(written.success).toBe(false);
+    if (!written.success) {
+      expect(written.error.issues.some((issue) => issue.message === "ayet_ref")).toBe(true);
+    }
+  });
+
+  it("sürüm başına taban ölçüsü farklıdır ve `both` en yükseğidir", () => {
+    // Ölçüler YARIM BİRİMDE: 3 = 240px, 4 = 324px, 5 = 408px (masaüstü).
+    expect(AYET_GRID_LIMITS.meal.minH).toBe(3);
+    expect(AYET_GRID_LIMITS.arabic.minH).toBe(4);
+    expect(AYET_GRID_LIMITS.both.minH).toBe(5);
+    expect(AYET_GRID_LIMITS.meal.minH).toBeLessThan(AYET_GRID_LIMITS.arabic.minH);
+    expect(AYET_GRID_LIMITS.arabic.minH).toBeLessThan(AYET_GRID_LIMITS.both.minH);
+    // Genişlik tabanı üçünde de 4 yarım birim (= eski 2 hücre, 368px).
+    expect(AYET_GRID_LIMITS.meal.minW).toBe(4);
+    expect(AYET_GRID_LIMITS.arabic.minW).toBe(4);
+    expect(AYET_GRID_LIMITS.both.minW).toBe(4);
+  });
+
+  it("blockGridLimits sınırı TİPTEN değil SÜRÜMDEN okur", () => {
+    expect(blockGridLimits(ayetBlock("meal"))).toEqual(AYET_GRID_LIMITS.meal);
+    expect(blockGridLimits(ayetBlock("arabic"))).toEqual(AYET_GRID_LIMITS.arabic);
+    expect(blockGridLimits(ayetBlock("both"))).toEqual(AYET_GRID_LIMITS.both);
+  });
+
+  it("sürümün tabanının altındaki blok sınır ihlali sayılır", () => {
+    expect(blockGridLimitIssue(ayetBlock("meal", { h: 3 }))).toBeNull();
+    // Aynı ölçü, Arapça sürümünde ihlal.
+    expect(blockGridLimitIssue(ayetBlock("arabic", { h: 3 }))).not.toBeNull();
+    expect(blockGridLimitIssue(ayetBlock("arabic", { h: 4 }))).toBeNull();
+    expect(blockGridLimitIssue(ayetBlock("both", { h: 4 }))).not.toBeNull();
+    expect(blockGridLimitIssue(ayetBlock("both", { h: 5 }))).toBeNull();
+    // Genişlik tabanı da sürümden bağımsız uygulanır.
+    expect(blockGridLimitIssue(ayetBlock("meal", { w: 2 }))).not.toBeNull();
+  });
+
+  it("ensureLayoutPositions bloğu sürümünün tabanına büyütür", () => {
+    const fixed = ensureLayoutPositions({
+      version: 1,
+      grid: GRID_UNIT,
+      blocks: [profileBlock, ayetBlock("both", { h: 2, w: 2 })],
+    });
+    const block = fixed.blocks[1];
+    expect(block.pos!.lg.h).toBe(AYET_GRID_LIMITS.both.minH);
+    expect(block.pos!.lg.w).toBe(AYET_GRID_LIMITS.both.minW);
+    expect(block.pos!.sm.h).toBe(AYET_GRID_LIMITS.both.minH);
+    expect(ensureLayoutPositions(fixed)).toEqual(fixed);
+  });
+
+  it("eksik metin yalnız SÜRÜMÜN istediği alan boşsa yayını engeller", () => {
+    expect(blockIssue(ayetBlock("arabic", { meal: "" }))).toBeNull();
+    expect(blockIssue(ayetBlock("meal", { arabic: "" }))).toBeNull();
+    expect(blockIssue(ayetBlock("both", { meal: "" }))).toBe("ayet_verse");
+    expect(blockIssue(ayetBlock("arabic", { arabic: "" }))).toBe("ayet_verse");
+    expect(blockIssue(ayetBlock("meal", { meal: "" }))).toBe("ayet_verse");
   });
 });

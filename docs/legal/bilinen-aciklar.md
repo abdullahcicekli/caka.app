@@ -99,6 +99,37 @@ sadeleştirme.** Parasal tavan yok (EK-1(1)(a) maddi zararı da kapsayacak
 
 ---
 
+## 5. Ayet bloğunun meali — sadeleştirmenin telif durumu belirsiz
+
+**Durum:** kabul edildi, kaynak ve gerekçe `vendor-register.md` §F'de yazılı.
+
+Ayet bloğu Türkçe meali `tur-elmalilihamdiya` edisyonundan alıyor. **Elmalılı
+Hamdi Yazır 27 Mayıs 1942'de öldü**, yani özgün meal FSEK m.27'ye göre
+31.12.2012'den beri kamu malı — bu taraf kesin.
+
+Belirsiz olan: elimizdeki edisyonun dili özgün 1935-1939 metninin değil, bir
+**sadeleştirmenin** dili gibi okunuyor. Sadeleştirme FSEK m.6 anlamında işleme
+eser sayılırsa sadeleştirenin kendi telifi sürüyor olabilir; ancak edisyonu
+dağıtan hiçbir kaynak sadeleştireni adlandırmıyor, dolayısıyla hak sahibi de
+tespit edilemiyor.
+
+**Neden yine de yayınlandı:** özgün eser kamu malı, çevirmen adı her kartta
+atıf olarak basılıyor, metin değiştirilmeden aktarılıyor ve bir hak sahibi
+ortaya çıkarsa değişiklik tek bir sabitte (`MEAL_EDITION`, `server/quran.ts`).
+Şema da ikinci bir meali taşıyacak biçimde kuruldu: her blok hangi mealle
+yazıldığını kendi verisinde saklıyor (`mealEdition`, `mealTranslator`), yani
+kaynak değişse bile eski bloklar yanlış çevirmene atfedilmez.
+
+**Nasıl kapanır:** doğrudan Elmalılı'nın özgün metnine dayanan, sadeleştirme
+içermeyen bir edisyona geçmek; ya da bugünkü edisyonun sadeleştireninden izin
+almak.
+
+**Kapsam dışı:** Diyanet İşleri meali. Güncel eser, telifi Diyanet'te ve
+Tanzil kopyası "yalnız ticari olmayan kullanım" kaydıyla dağıtılıyor — bilerek
+alınmadı.
+
+---
+
 ## Doğrulanamayanlar — rakamla yayınlanmamalı
 
 - 2026 tüketici hakem heyeti parasal sınırı: bir kaynak 186.000 TL ve RG

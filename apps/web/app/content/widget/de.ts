@@ -97,6 +97,14 @@ export const de = {
     clock: (hour: number, minute: number) => clock24(hour, minute),
   },
 
+  ayet: {
+    name: "Koranvers",
+    empty: "Vers auswählen",
+    reference: (surahName: string, verse: number) => `Sure ${surahName}, Vers ${verse}`,
+    label: (surahName: string, verse: number) => `Sure ${surahName}, Vers ${verse}`,
+    mealCredit: (translator: string) => `Türkische Übersetzung: ${translator}`,
+  },
+
   github: {
     heatmapLabel: (total: number) => `${total} Beiträge im letzten Jahr`,
   },

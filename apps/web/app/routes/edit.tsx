@@ -34,23 +34,25 @@ import { ProfileBlockCard } from "~/components/profile-block";
 import { linkHostLabel } from "~/lib/link-preview";
 import { noIndexMeta } from "~/lib/seo";
 import {
-  DOCUMENT_CONTENT_TYPE,
-  DOCUMENT_MAX_BYTES,
-  GALLERY_MAX_PHOTOS,
-  GRID_COLUMNS,
-  MAX_GALLERY_BLOCKS,
-  PHOTO_LAYOUTS,
+  AYET_GRID_LIMITS,
+  blockGridLimits,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
-  galleryBlockCount,
-  faviconImageKey,
-  GEOCODE_ATTRIBUTION,
-  mapFrameImageKey,
-  layoutIssues,
+  DOCUMENT_CONTENT_TYPE,
+  DOCUMENT_MAX_BYTES,
   ensureLayoutPositions,
+  faviconImageKey,
+  GALLERY_MAX_PHOTOS,
+  galleryBlockCount,
+  GEOCODE_ATTRIBUTION,
+  GRID_COLUMNS,
+  layoutIssues,
+  mapFrameImageKey,
+  MAX_GALLERY_BLOCKS,
   normalizeTheme,
   parseProfileLayout,
+  PHOTO_LAYOUTS,
   photoBlockCount,
   photoRecommendedSize,
   placeNewBlock,
@@ -59,11 +61,12 @@ import {
   socialUrl,
   spotifyDefaultSize,
   withDerivedSmPositions,
+  type AyetVariant,
   type BlockSize,
-  type ProfileBlock,
-  type ProfileLayout,
   type LocationSuggestion,
   type LocationZoomStep,
+  type ProfileBlock,
+  type ProfileLayout,
   type ProfileTheme,
   type SocialPlatform,
   type SpotifyKind,
@@ -184,6 +187,27 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
         size: "2x2",
         data: { label: "", country: "", countryCode: "", lat: null, lon: null, timeZone: "" },
       };
+    // Ayet bloğu BOŞ doğar: hangi ayet olduğu ancak arama sonucundan seçilince
+    // belli olur. Varsayılan sürüm "ikisi birlikte" — kartın tam hâli budur ve
+    // kullanıcı istemediğini kapatır. Taban ölçü de o sürümün tabanıdır
+    // (`AYET_GRID_LIMITS.both` = 2×3); `size` sözlüğünde 3 satırlık bir etiket
+    // olmadığı için en yakın etiket yazılır, gerçek yerleşim `pos`tan okunur.
+    case "ayet":
+      return {
+        id,
+        type,
+        size: "2x2",
+        data: {
+          variant: "both",
+          surah: 1,
+          verse: 1,
+          surahName: "",
+          arabic: "",
+          meal: "",
+          mealEdition: "",
+          mealTranslator: "",
+        },
+      };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
     default: {
@@ -211,6 +235,9 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   // Panelde kısayolu yok; araç çubuğundan ya da blok galerisinden eklenir.
   document: false,
   location: false,
+  // Ayet bloğu boş doğuyor ve kullanılabilir olması için arama gerekiyor;
+  // panelden tek tıkla eklenen bir kısayol boş kart bırakırdı.
+  ayet: false,
 };
 
 /**
@@ -309,6 +336,23 @@ type LocationHit = LocationSuggestion & {
   frames: Record<LocationZoomStep, string> | null;
 };
 type LocationSearchResponse = { results: LocationHit[] } | { error: string };
+/** `/api/ayet` arama satırı; tam metin taşımaz (bkz. `server/quran-api.ts`). */
+type AyetSearchHit = { surah: number; verse: number; surahName: string; snippet: string };
+
+type AyetSearchResponse = { hits: AyetSearchHit[] } | { error: string };
+
+/** `/api/ayet/sec` yanıtı — doğrudan bloğun verisine yazılır. */
+type AyetResolveResponse =
+  | {
+      surah: number;
+      verse: number;
+      surahName: string;
+      arabic: string;
+      meal: string;
+      mealEdition: string;
+      mealTranslator: string;
+    }
+  | { error: string };
 
 function Inspector({
   block,
@@ -335,6 +379,8 @@ function Inspector({
   /** Bloğu YARIM BİRİM ölçüsüyle boyutlandırır. `setSize`in sözlüğü kaba
       (genişlik 2/4/8, yükseklik 2/4); fotoğraf bloğu ara basamaklarda da
       durabildiği için büyütme oradan geçemez. */
+  /** Bloğu ham ızgara ölçüsüyle boyutlandırır. Ayet kartında şart: "ikisi
+      birlikte" sürümü 3 satır ister ve boyut sözlüğünde o etiket yok. */
   setDims: (w: number, h: number) => void;
   remove: () => void;
   close: () => void;
@@ -393,6 +439,15 @@ function Inspector({
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const locationAttemptedRef = useRef("");
+  // Ayet: YouTube/Spotify'daki desenin arama yapan hâli. Ham sorgu ayrı
+  // tutulur; blok yalnız listeden BİR SATIR SEÇİLİNCE değişir — yazarken
+  // kartın altından ayetin kayması kabul edilemezdi.
+  const [ayetQuery, setAyetQuery] = useState("");
+  const [ayetHits, setAyetHits] = useState<AyetSearchHit[]>([]);
+  const [ayetBusy, setAyetBusy] = useState(false);
+  const [ayetError, setAyetError] = useState<string | null>(null);
+  const [ayetEmpty, setAyetEmpty] = useState(false);
+  const ayetAttemptedRef = useRef("");
   // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
   // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
   const [socialLink, setSocialLink] = useState(() =>
@@ -410,6 +465,11 @@ function Inspector({
     setLocationResults(null);
     setLocationError(null);
     locationAttemptedRef.current = "";
+    setAyetQuery("");
+    ayetAttemptedRef.current = "";
+    setAyetHits([]);
+    setAyetError(null);
+    setAyetEmpty(false);
     setUploadError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız blok değişince
   }, [block.id]);
@@ -746,6 +806,99 @@ function Inspector({
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız arama değişince
   }, [locationQuery, block.id]);
+
+  /**
+   * Ayet arar: `/api/ayet?q=…` hem "Bakara 255" gibi adresleri hem mealde
+   * metin aramasını çözer, ayrımı SUNUCU yapar (kural `@caka/shared/quran`'da,
+   * iki tarafın da göreceği yerde). Yanıt yalnız kısaltılmış meal taşır —
+   * tam metin ancak bir satır seçilince istenir.
+   */
+  async function searchAyet(value: string) {
+    ayetAttemptedRef.current = value;
+    setAyetBusy(true);
+    setAyetError(null);
+    setAyetEmpty(false);
+    try {
+      const response = await fetch(`/api/ayet?q=${encodeURIComponent(value)}`);
+      const result = (await response.json()) as AyetSearchResponse;
+      if (!response.ok || !("hits" in result)) {
+        setAyetHits([]);
+        setAyetError(("error" in result && result.error) || app.editor.ayetFailed);
+        return;
+      }
+      setAyetHits(result.hits);
+      setAyetEmpty(result.hits.length === 0);
+    } catch {
+      setAyetHits([]);
+      setAyetError(app.editor.ayetFailed);
+    } finally {
+      setAyetBusy(false);
+    }
+  }
+
+  /**
+   * Seçilen ayetin TAM metnini alır ve bloğa yazar. Arapça, meal, sure adı ve
+   * çevirmen adı buradan sonra kayıttadır; ziyaretçi sayfası bir daha hiçbir
+   * dış kaynağa gitmez (R58).
+   */
+  async function pickAyet(surah: number, verse: number) {
+    if (block.type !== "ayet") return;
+    setAyetBusy(true);
+    setAyetError(null);
+    try {
+      const response = await fetch(`/api/ayet/sec?sure=${surah}&ayet=${verse}`);
+      const result = (await response.json()) as AyetResolveResponse;
+      if (!response.ok || !("arabic" in result)) {
+        setAyetError(("error" in result && result.error) || app.editor.ayetFailed);
+        return;
+      }
+      setData({ ...block.data, ...result });
+      // Sonuç listesi kapanır: kullanıcı seçtiğini kartta görsün, panel de
+      // "hâlâ arıyorsun" demesin.
+      setAyetHits([]);
+      setAyetQuery("");
+      ayetAttemptedRef.current = "";
+    } catch {
+      setAyetError(app.editor.ayetFailed);
+    } finally {
+      setAyetBusy(false);
+    }
+  }
+
+  /**
+   * Sürüm değiştirir ve kartı yeni sürümün TABANINA büyütür. Spotify'daki
+   * gerekçenin aynısı: kırpılmış bir kartı kullanıcıya elle düzelttirmek
+   * kabul edilemez. Küçültme yapılmaz — kullanıcı kartı bilerek büyütmüş
+   * olabilir, sürüm değişikliği onu geri almamalı.
+   */
+  function setAyetVariant(variant: AyetVariant) {
+    if (block.type !== "ayet") return;
+    update({ variant });
+    const limits = AYET_GRID_LIMITS[variant];
+    const current = block.pos?.lg;
+    setDims(
+      Math.max(current?.w ?? limits.minW, limits.minW),
+      Math.max(current?.h ?? limits.minH, limits.minH),
+    );
+  }
+
+  // Yazdıktan kısa süre sonra kendiliğinden ara. 400ms: arama bir ağ çağrısı
+  // ama sonuç listesi anlık geri bildirim; 700ms (Spotify'ın adres çözümleme
+  // gecikmesi) burada donuk hissettiriyordu.
+  useEffect(() => {
+    if (block.type !== "ayet") return;
+    const value = ayetQuery.trim();
+    if (!value) {
+      setAyetHits([]);
+      setAyetEmpty(false);
+      ayetAttemptedRef.current = "";
+      return;
+    }
+    if (value === ayetAttemptedRef.current) return;
+    const timer = window.setTimeout(() => void searchAyet(value), 400);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız sorgu değişince
+  }, [ayetQuery, block.id]);
 
   // Alanlar tip başına tek bir switch'te toplanır: `never` default'u sayesinde
   // yeni bir blok tipi eklendiğinde derleyici burada durur (eskiden art arda
@@ -1270,6 +1423,82 @@ function Inspector({
           </>
         );
       }
+      case "ayet": {
+        const data = block.data;
+        const selected = data.surahName && (data.arabic || data.meal)
+          ? app.editor.ayetSelected(data.surahName, data.verse)
+          : null;
+        return (
+          <>
+            {/* Sürüm ÖNCE gelir: kartın hem tipografisini hem taban ölçüsünü
+                o belirliyor, yani "hangi ayet" sorusundan daha yapısal. */}
+            <fieldset className="inspector-choices">
+              <legend>{app.editor.ayetVariantLegend}</legend>
+              {(
+                [
+                  ["arabic", app.editor.ayetVariantArabic],
+                  ["meal", app.editor.ayetVariantMeal],
+                  ["both", app.editor.ayetVariantBoth],
+                ] as const
+              ).map(([variant, label]) => (
+                <button
+                  key={variant}
+                  type="button"
+                  className={data.variant === variant ? "is-active" : ""}
+                  aria-pressed={data.variant === variant}
+                  onClick={() => setAyetVariant(variant)}
+                >
+                  {label}
+                </button>
+              ))}
+              <small className="inspector-hint">{app.editor.ayetVariantHint}</small>
+            </fieldset>
+
+            <label>
+              {app.editor.ayetSearchLabel}
+              <input
+                type="search"
+                value={ayetQuery}
+                placeholder={app.editor.ayetSearchPlaceholder}
+                onChange={(event) => setAyetQuery(event.target.value)}
+              />
+              <small className="inspector-hint">{app.editor.ayetSearchHint}</small>
+            </label>
+            {ayetBusy ? <p className="inspector-hint">{app.editor.ayetSearching}</p> : null}
+            {ayetError ? (
+              <p className="inspector-error" role="alert">
+                {ayetError}
+              </p>
+            ) : null}
+            {!ayetBusy && !ayetError && ayetEmpty ? (
+              <p className="inspector-hint">{app.editor.ayetNoResults(ayetQuery.trim())}</p>
+            ) : null}
+            {ayetHits.length > 0 ? (
+              // Liste bir <ul> değil düğme yığını: her satır bir eylem
+              // (ayeti seç), gezinilecek bir içerik değil.
+              <div className="ayet-results" role="group" aria-label={app.editor.ayetSearchLabel}>
+                {ayetHits.map((hit) => (
+                  <button
+                    key={`${hit.surah}:${hit.verse}`}
+                    type="button"
+                    className="ayet-result"
+                    onClick={() => void pickAyet(hit.surah, hit.verse)}
+                  >
+                    <strong>{widget.ayet.reference(hit.surahName, hit.verse)}</strong>
+                    <small lang="tr">{hit.snippet}</small>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {!ayetBusy && !ayetError && selected ? (
+              <p className="inspector-hint">{selected}</p>
+            ) : null}
+            {data.mealTranslator ? (
+              <p className="inspector-hint">{app.editor.ayetSourceNote(data.mealTranslator)}</p>
+            ) : null}
+          </>
+        );
+      }
       // Metin bloğu tuval üzerinde Tiptap ile düzenlenir; panelde alanı yok.
       case "text":
         return null;
@@ -1422,6 +1651,11 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
    * Boyutlandırmanın ölçü tabanlı hâli. `size` etiketi de yeniden türetilir:
    * o alan yalnız `pos`suz eski kayıtların akış sınıfı, ama bayat kalırsa
    * blok başka bir deploy'da yanlış genişlikte akardı.
+   * Aynı iş, ama boyut SÖZLÜĞÜNDEN geçmeden. Ayet kartının "ikisi birlikte"
+   * sürümü 3 satır ister ve sözlükte üç satırlık bir etiket yok (`BlockSize`
+   * yüksekliği 1 ya da 2). `size` yine yazılır — pos'suz eski kayıtların akış
+   * sınıfı odur — ama en yakın etikete yuvarlanır; gerçek yerleşimi `pos`
+   * taşıdığı için görünürde kayıp yok.
    */
   function resizeBlockDims(blockId: string, w: number, h: number) {
     const size = sizeFromDims(w, h);
@@ -1432,13 +1666,26 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           if (block.id !== blockId || block.type === "profile") return block;
           if (!block.pos) return { ...block, size } as ProfileBlock;
           const lgW = Math.min(w, GRID_COLUMNS.lg);
-          const smW = Math.min(w, GRID_COLUMNS.sm);
+          // Mobil ölçü ELLE AYARLANMIŞSA (smManual) üstüne yazılmaz, yalnız
+          // yeni tabana kadar büyütülür. Aksi hâlde kullanıcının mobilde
+          // bilerek uzattığı kart, masaüstünde bir sürüm değiştirildiği için
+          // sessizce kısalırdı. smManual olmayan bloklarda sm zaten aşağıda
+          // `withDerivedSmPositions` ile lg'den yeniden türetiliyor.
+          const smW = block.smManual
+            ? Math.max(block.pos.sm.w, Math.min(w, GRID_COLUMNS.sm))
+            : Math.min(w, GRID_COLUMNS.sm);
+          const smH = block.smManual ? Math.max(block.pos.sm.h, h) : h;
           return {
             ...block,
             size,
             pos: {
               lg: { ...block.pos.lg, x: Math.min(block.pos.lg.x, GRID_COLUMNS.lg - lgW), w: lgW, h },
-              sm: { ...block.pos.sm, x: Math.min(block.pos.sm.x, GRID_COLUMNS.sm - smW), w: smW, h },
+              sm: {
+                ...block.pos.sm,
+                x: Math.min(block.pos.sm.x, GRID_COLUMNS.sm - smW),
+                w: smW,
+                h: smH,
+              },
             },
           } as ProfileBlock;
         }),
@@ -1681,7 +1928,15 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
 
   function insertBlock(block: ProfileBlock) {
     setLayout((current) => {
-      const { w, h } = sizeToDims(block.size);
+      const dims = sizeToDims(block.size);
+      // Boyut sözlüğü tip tabanını BİLMEZ: ayet kartının "ikisi birlikte"
+      // sürümü 3 satır istiyor ama sözlükte üç satırlık etiket yok. Taban
+      // burada uygulanmazsa blok sınırın altında doğar ve ilk otomatik kayıt
+      // (`profileLayoutWriteSchema`) 400 döner — kullanıcı sayfasını
+      // kaydedemez hâle gelirdi.
+      const limits = blockGridLimits(block);
+      const w = Math.min(Math.max(dims.w, limits?.minW ?? 1), limits?.maxW ?? GRID_COLUMNS.lg);
+      const h = Math.min(Math.max(dims.h, limits?.minH ?? 1), limits?.maxH ?? 4);
       const lg = placeNewBlock(current.blocks, w, h);
       const positioned = {
         ...block,

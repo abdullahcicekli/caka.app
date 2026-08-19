@@ -33,6 +33,7 @@ export const es = {
     spotify: "Spotify",
     document: "Documento",
     location: "Ubicación",
+    ayet: "Versículo del Corán",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -48,6 +49,7 @@ export const es = {
     spotify_url: "Escribe un enlace de Spotify",
     document_missing: "Sube un documento",
     location_missing: "Busca y elige tu lugar",
+    ayet_verse: "Elige un versículo",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -171,6 +173,22 @@ export const es = {
       "La búsqueda se limita al nivel de ciudad o distrito y la coordenada se redondea a aproximadamente 1 km antes de guardarse. En tu página se ven el nombre del lugar, el país, una posición aproximada y la hora local de allí, no tu dirección exacta.",
     locationTimeZone: (zone: string) => `Zona horaria: ${zone}`,
     locationNoTimeZone: "No se encontró zona horaria para este lugar; la tarjeta no mostrará la hora.",
+    ayetVariantLegend: "Versión de la tarjeta",
+    ayetVariantArabic: "Solo árabe",
+    ayetVariantMeal: "Solo traducción",
+    ayetVariantBoth: "Las dos juntas",
+    ayetVariantHint:
+      "La versión define la tipografía de la tarjeta y su tamaño mínimo: la escritura árabe necesita más espacio y mostrar las dos necesita el máximo.",
+    ayetSearchLabel: "Buscar versículos",
+    ayetSearchPlaceholder: "Bakara 255 o una palabra",
+    ayetSearchHint:
+      "Escribe el nombre de la sura y el número de versículo («Bakara 255», «2:255») o busca una palabra en la traducción al turco.",
+    ayetSearching: "Buscando versículos…",
+    ayetNoResults: (query: string) => `No se encontró ningún versículo para «${query}».`,
+    ayetFailed: "No se pudo acceder a la fuente de versículos — revisa tu conexión.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} añadido`,
+    ayetSourceNote: (translator: string) =>
+      `El texto árabe está en escritura uthmani (Hafs); la traducción al turco es de ${translator} y se acredita al pie de la tarjeta.`,
     fixIssue: "Corregir",
     removeBlock: "Quitar",
     editedElsewhere: "La página se ha editado en otro sitio.",
@@ -328,6 +346,11 @@ export const es = {
 
     locationQueryTooLong: (max: number) => `La búsqueda puede tener como máximo ${max} caracteres`,
     locationUnavailable: "El servicio de ubicación no respondió. Vuelve a intentarlo en un momento.",
+    ayetUnavailable: "La fuente de versículos no ha respondido ahora mismo. Inténtalo en un momento.",
+    ayetSurahUnknown: "No existe esa sura. Escribe un número del 1 al 114 o el nombre de una sura.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `La sura ${surahName} tiene ${count} versículos; no hay ninguno con ese número.`,
+    ayetQueryTooShort: (min: number) => `Escribe al menos ${min} letras para buscar.`,
 
     uploadOnlyJpegPng: "Solo puedes subir JPEG o PNG",
     uploadTooLarge: "La foto puede pesar como máximo 5 MB",

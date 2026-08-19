@@ -33,6 +33,7 @@ export const de = {
     spotify: "Spotify",
     document: "Dokument",
     location: "Standort",
+    ayet: "Koranvers",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -48,6 +49,7 @@ export const de = {
     spotify_url: "Gib einen Spotify-Link ein",
     document_missing: "Lade ein Dokument hoch",
     location_missing: "Suche deinen Ort und wähle ihn aus",
+    ayet_verse: "Wähle einen Vers",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -171,6 +173,22 @@ export const de = {
       "Die Suche bleibt auf Stadt-/Bezirksebene, und die Koordinate wird vor dem Speichern auf etwa 1 km gerundet. Auf deiner Seite erscheinen Ortsname, Land, eine ungefähre Position und die dortige Ortszeit — nicht deine genaue Adresse.",
     locationTimeZone: (zone: string) => `Zeitzone: ${zone}`,
     locationNoTimeZone: "Für diesen Ort wurde keine Zeitzone gefunden; die Karte zeigt keine Uhr.",
+    ayetVariantLegend: "Kartenvariante",
+    ayetVariantArabic: "Nur Arabisch",
+    ayetVariantMeal: "Nur Übersetzung",
+    ayetVariantBoth: "Beides zusammen",
+    ayetVariantHint:
+      "Die Variante bestimmt Typografie und Mindestgröße der Karte: arabische Schrift braucht mehr Platz, beides zusammen am meisten.",
+    ayetSearchLabel: "Verse suchen",
+    ayetSearchPlaceholder: "Bakara 255 oder ein Stichwort",
+    ayetSearchHint:
+      "Gib Surenname und Versnummer ein („Bakara 255“, „2:255“) oder suche nach einem Wort in der türkischen Übersetzung.",
+    ayetSearching: "Verse werden gesucht…",
+    ayetNoResults: (query: string) => `Kein Vers für „${query}“ gefunden.`,
+    ayetFailed: "Die Versquelle war nicht erreichbar — prüf deine Verbindung.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} hinzugefügt`,
+    ayetSourceNote: (translator: string) =>
+      `Der arabische Text steht in Uthmani-Schrift (Hafs); die türkische Übersetzung stammt von ${translator} und wird unten auf der Karte genannt.`,
     fixIssue: "Beheben",
     removeBlock: "Entfernen",
     editedElsewhere: "Die Seite wurde an anderer Stelle bearbeitet.",
@@ -328,6 +346,11 @@ export const de = {
 
     locationQueryTooLong: (max: number) => `Die Suche darf höchstens ${max} Zeichen lang sein`,
     locationUnavailable: "Der Standortdienst hat nicht geantwortet. Bitte versuche es gleich noch einmal.",
+    ayetUnavailable: "Die Versquelle hat gerade nicht geantwortet. Versuch es gleich noch mal.",
+    ayetSurahUnknown: "Diese Sure gibt es nicht. Gib eine Zahl zwischen 1 und 114 oder einen Surennamen ein.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `Die Sure ${surahName} hat ${count} Verse; einen Vers mit dieser Nummer gibt es nicht.`,
+    ayetQueryTooShort: (min: number) => `Gib mindestens ${min} Buchstaben ein, um zu suchen.`,
 
     uploadOnlyJpegPng: "Du kannst nur JPEG oder PNG hochladen",
     uploadTooLarge: "Das Foto darf höchstens 5 MB groß sein",

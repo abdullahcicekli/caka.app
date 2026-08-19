@@ -33,6 +33,7 @@ export const ptBR = {
     spotify: "Spotify",
     document: "Documento",
     location: "Localização",
+    ayet: "Versículo do Alcorão",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -48,6 +49,7 @@ export const ptBR = {
     spotify_url: "Escreva um link do Spotify",
     document_missing: "Envie um documento",
     location_missing: "Busque e escolha o seu lugar",
+    ayet_verse: "Escolha um versículo",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -171,6 +173,22 @@ export const ptBR = {
       "A busca fica no nível de cidade ou bairro e a coordenada é arredondada para cerca de 1 km antes de ser salva. Sua página mostra o nome do lugar, o país, uma posição aproximada e a hora local de lá — não o seu endereço exato.",
     locationTimeZone: (zone: string) => `Fuso horário: ${zone}`,
     locationNoTimeZone: "Nenhum fuso horário encontrado para este lugar; o cartão não vai mostrar a hora.",
+    ayetVariantLegend: "Versão do card",
+    ayetVariantArabic: "Só árabe",
+    ayetVariantMeal: "Só tradução",
+    ayetVariantBoth: "As duas juntas",
+    ayetVariantHint:
+      "A versão define a tipografia do card e o tamanho mínimo dele: a escrita árabe pede mais espaço, e mostrar as duas pede o máximo.",
+    ayetSearchLabel: "Buscar versículos",
+    ayetSearchPlaceholder: "Bakara 255 ou uma palavra",
+    ayetSearchHint:
+      "Escreva o nome da surata e o número do versículo (“Bakara 255”, “2:255”) ou busque uma palavra na tradução para o turco.",
+    ayetSearching: "Buscando versículos…",
+    ayetNoResults: (query: string) => `Nenhum versículo encontrado para “${query}”.`,
+    ayetFailed: "Não foi possível acessar a fonte dos versículos — verifique sua conexão.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} adicionado`,
+    ayetSourceNote: (translator: string) =>
+      `O texto árabe está em escrita uthmani (Hafs); a tradução para o turco é de ${translator} e aparece como crédito no rodapé do card.`,
     fixIssue: "Corrigir",
     removeBlock: "Remover",
     editedElsewhere: "A página foi editada em outro lugar.",
@@ -328,6 +346,11 @@ export const ptBR = {
 
     locationQueryTooLong: (max: number) => `A busca pode ter no máximo ${max} caracteres`,
     locationUnavailable: "O serviço de localização não respondeu. Tente de novo em instantes.",
+    ayetUnavailable: "A fonte dos versículos não respondeu agora. Tente de novo daqui a pouco.",
+    ayetSurahUnknown: "Não existe essa surata. Escreva um número de 1 a 114 ou o nome de uma surata.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `A surata ${surahName} tem ${count} versículos; não há versículo com esse número.`,
+    ayetQueryTooShort: (min: number) => `Escreva pelo menos ${min} letras para buscar.`,
 
     uploadOnlyJpegPng: "Você só pode enviar JPEG ou PNG",
     uploadTooLarge: "A foto pode ter no máximo 5 MB",

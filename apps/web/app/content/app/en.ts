@@ -33,6 +33,7 @@ export const en = {
     spotify: "Spotify",
     document: "Document",
     location: "Location",
+    ayet: "Qur'an verse",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -48,6 +49,7 @@ export const en = {
     spotify_url: "Enter a Spotify link",
     document_missing: "Upload a document",
     location_missing: "Search for and pick your place",
+    ayet_verse: "Choose a verse",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -170,6 +172,22 @@ export const en = {
       "Search is limited to city/district level and the coordinate is rounded to about 1 km before it is saved. Your page shows the place name, country, an approximate location and the local time there — not your exact address.",
     locationTimeZone: (zone: string) => `Time zone: ${zone}`,
     locationNoTimeZone: "No time zone found for this place; the card will not show a clock.",
+    ayetVariantLegend: "Card version",
+    ayetVariantArabic: "Arabic only",
+    ayetVariantMeal: "Translation only",
+    ayetVariantBoth: "Both together",
+    ayetVariantHint:
+      "The version sets the card's typography and its smallest size: Arabic script needs more room, and showing both needs the most.",
+    ayetSearchLabel: "Search verses",
+    ayetSearchPlaceholder: "Bakara 255 or a keyword",
+    ayetSearchHint:
+      "Type a surah name and verse number (“Bakara 255”, “2:255”), or search for a word in the Turkish translation.",
+    ayetSearching: "Searching verses…",
+    ayetNoResults: (query: string) => `No verse found for “${query}”.`,
+    ayetFailed: "The verse source could not be reached — check your connection.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} added`,
+    ayetSourceNote: (translator: string) =>
+      `The Arabic text is in Uthmani script (Hafs); the Turkish translation is by ${translator} and is credited at the foot of the card.`,
     fixIssue: "Fix",
     removeBlock: "Remove",
     editedElsewhere: "The page was edited somewhere else.",
@@ -326,6 +344,11 @@ export const en = {
 
     locationQueryTooLong: (max: number) => `Search can be at most ${max} characters`,
     locationUnavailable: "The location service did not respond. Please try again shortly.",
+    ayetUnavailable: "The verse source didn't respond just now. Try again in a moment.",
+    ayetSurahUnknown: "There is no such surah. Enter a number between 1 and 114, or a surah name.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `Surah ${surahName} has ${count} verses; there is no verse with that number.`,
+    ayetQueryTooShort: (min: number) => `Type at least ${min} letters to search.`,
 
     uploadOnlyJpegPng: "You can only upload JPEG or PNG",
     uploadTooLarge: "The photo can be at most 5 MB",

@@ -11,6 +11,7 @@ import {
   Megaphone,
   MusicDoubleNote,
   Page,
+  OpenBook,
   Search,
   Text,
   Xmark,
@@ -51,6 +52,7 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   spotify: { icon: MusicDoubleNote, enabled: true },
   document: { icon: Page, enabled: true },
   location: { icon: MapPin, enabled: true },
+  ayet: { icon: OpenBook, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */

@@ -14,6 +14,7 @@ import { layoutApi } from "./layout-api";
 import { locationApi } from "./location-api";
 import { mapFrameApi } from "./map-frame";
 import { ogApi } from "./og";
+import { quranApi } from "./quran-api";
 import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
 import { seoRoutes } from "./seo";
@@ -55,6 +56,11 @@ honoApp.route("/api/konum", locationApi);
 // çeker ve birinci taraftan servis eder; ziyaretçi harita sunucusuna hiç
 // bağlanmaz. İmzalı; anahtar/sır tanımsızsa tamamen kapalı.
 honoApp.route("/api/harita", mapFrameApi);
+// Editörün ayet arama/çözümleme ucu: GET /api/ayet?q=… ve /api/ayet/sec.
+// Kur'an metni pakete GÖMÜLMEZ (2,7 MB); yalnız burada, oturumlu kullanıcı
+// için çözülür ve seçilen ayet bloğun verisine yazılır — ziyaretçi sayfası
+// hiçbir dış kaynağa gitmez (R58).
+honoApp.route("/api/ayet", quranApi);
 // Uzak önizleme görselleri birinci taraftan servis edilir (backlog #6):
 // ziyaretçinin IP/UA'sı uzak host'a gitmez, üçüncü taraf çerezi yazılamaz.
 honoApp.route("/api/gorsel", imageProxyApi);

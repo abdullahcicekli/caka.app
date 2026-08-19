@@ -203,6 +203,9 @@ function blockUrl(block: ProfileBlock): string {
     // Konum kartı bir GÖRÜNTÜ; hiçbir yere gitmez (harita sağlayıcısına
     // bağlantı vermek ziyaretçiyi üçüncü tarafa yollamak olurdu).
     case "location":
+    // Ayet kartı bir bağlantı DEĞİL: metin kayıtta duruyor, tıklanacak bir
+    // hedef yok (R58 — ziyaretçi hiçbir dış kaynağa gitmiyor).
+    case "ayet":
       return "";
     default: {
       const exhaustive: never = block;
@@ -233,6 +236,7 @@ function blockLabel(block: ProfileBlock): string {
     case "text":
     case "gallery":
     case "location":
+    case "ayet":
       return "";
     default: {
       const exhaustive: never = block;
