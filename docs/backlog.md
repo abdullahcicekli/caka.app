@@ -134,6 +134,12 @@ lisans koşullarının okunması, `woff2` alt kümelerinin üretilmesi ve
 kullanıcı sorunu da yok. Yapıldığında `docs/legal/vendor-register.md` §A'dan
 Fontshare satırı ve `/gizlilik` §6'daki karşılığı kalkar.
 
+Deseni artık depoda duruyor: Kur'an hattı (Amiri Quran) bu yolla kendi
+sunucumuzdan servis ediliyor — `apps/web/app/fonts/`, `app.css`'teki
+`@font-face`, `docs/legal/vendor-register.md` §F. Oradaki ölçüm bir uyarı da
+taşıyor: **unicode subset'i şekillendirmeyi sessizce bozabiliyor**, o yüzden
+subset alınacaksa öncesi/sonrası HarfBuzz'la karşılaştırılmalı.
+
 ## 8. Self-servis silme ve dışa aktarma
 
 Bugün ne self-servis hesap silme ne de **veri dışa aktarma** var; KVKK m.11
