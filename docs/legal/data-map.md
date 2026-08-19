@@ -45,8 +45,29 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
 - **Hukuki sebep:** KVKK m.5/2-c — sözleşmenin kurulması/ifası.
 - **Nerede:** D1 `caka-db` (Cloudflare).
 - **Süre:** hesap yaşadığı sürece. Hesap silmede `user` silinir; FK'ler
-  `onDelete: cascade` olduğu için `profile`, `session`, `account`, `asset`
-  satırları da düşer. Silme sonrası yedek saklama süresi **bilinmiyor**.
+  `onDelete: cascade` olduğu için `profile`, `session`, `account`, `asset`,
+  `username_redirect`, `profile_view_daily` ve `link_click_daily` satırları da
+  düşer. Silme sonrası yedek saklama süresi **bilinmiyor**.
+
+> ### ⚠️ Hesap silme **kodda yok** — süreç elle işliyor (2026-08-19'da eklendi)
+> Yukarıdaki cascade tarifi doğrudur ama bir **koşula** bağlıdır: birinin
+> `user` satırını silmesi. Depoda hesap silme ucu, rotası, düğmesi veya Better
+> Auth `deleteUser` eklentisi **yoktur** — arandı, bulunamadı. Ürün bunu
+> kullanıcıya da olduğu gibi söylüyor (`kullanim-kosullari.ts` §13: "hesap
+> silme düğmesi henüz yok", `content/ayarlar/*.ts`), talep `hello@caka.app`'e
+> e-posta ile geliyor ve silme **elle** yapılıyor.
+>
+> Bunun iki sonucu bu haritayı bağlar:
+>
+> 1. **Cascade R2'ye uzanmaz.** `asset` satırı silinse bile R2 nesnesi yerinde
+>    kalır; depoda `BUCKET.delete` çağrısı yalnız iki yerde var ve ikisi de
+>    D1 yazımı başarısız olduğunda yapılan geri alma
+>    (`onboarding-api.ts`, `document-api.ts`). Elle silme yapan kişi R2
+>    anahtarlarını da tek tek silmek zorundadır.
+> 2. **`github_calendar` cascade dışıdır** (FK'si yok, anahtarı GitHub
+>    handle'ı). Hesap silinse de satır kalır.
+>
+> `/gizlilik` §7 bu iki gerçeği artık açıkça yazıyor.
 
 ### `session` — oturum verisi ⚠️ işaretli
 
@@ -96,7 +117,10 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
     türevli bir anahtarla) ya da token'ları hiç saklamama. Ticarileşmeden veya
     ek OAuth kapsamı istenmeden önce yeniden değerlendirilmeli.
 - **Amaç:** kimlik doğrulama; **Hukuki sebep:** m.5/2-c.
-- **Süre:** hesap yaşadığı sürece (cascade ile silinir).
+- **Süre:** hesap yaşadığı sürece (cascade ile silinir). **Çıkış yapmak bu
+  satırı silmez** — `signOut` yalnız `session` satırını düşürür. `/gizlilik`
+  §7 daha önce "çıkış yaptığında geçersiz kılınır; ayrıca saklanmaz" diyordu;
+  **yanlıştı ve 2026-08-19'da düzeltildi.**
 
 ### `verification` — OAuth akış durumu
 
@@ -205,7 +229,41 @@ veya `null` = negatif önbellek), `fetched_at`.
   temizlik tek bir sorgudan (`asset.user_id`) yürüdüğü için yeni bir dosya
   türü eklemek ikinci bir temizlik yolu doğurmuyor.
 - **Süre:** hesap yaşadığı sürece. Silme yalnızca hesap silmede; blok
-  kaldırıldığında diff/silme yapılmaz (bilinçli — Değişmez #9).
+  kaldırıldığında diff/silme yapılmaz (bilinçli — Değişmez #9). **Sonucu
+  yazalım:** blok kaldırıldıktan sonra da `/i/<uuid>` ve `/b/<uuid>` adresleri
+  **çalışmaya devam eder** ve kimlik doğrulaması istemez; koruma yalnız
+  UUID'nin tahmin edilemezliğidir. `/gizlilik` §7 ve `kullanim-kosullari` §4
+  bunu artık açıkça söylüyor.
+- **Kota:** kullanıcı başına **50 dosya / 100 MB** (`packages/shared/src/assets.ts`);
+  görsel ve PDF aynı havuzu paylaşır. Yükleme sınırları: görsel 5 MB
+  (JPEG/PNG), belge 10 MB (yalnız `application/pdf`, `%PDF-` sihirli baytı
+  doğrulanır).
+
+### `profile_view_daily` / `link_click_daily` — panel sayaçları (R48)
+
+`0006_panel-analitigi.sql` ile geldi; her ikisi de `profile`'a
+`onDelete: cascade` bağlı.
+
+| Tablo | Kolonlar | Ne YOK |
+|---|---|---|
+| `profile_view_daily` | `profile_id`, `day` (`YYYY-MM-DD`, sabit UTC+3), `country` (ISO-3166-1 alpha-2 veya `XX`), `views` | Olay zaman damgası, IP, IP türevi (hash/tuz), User Agent, yönlendiren, sayfa yolu, cihaz kimliği, tekil ziyaretçi |
+| `link_click_daily` | `profile_id`, `block_id`, `day`, `clicks` | Yukarıdakilerin tamamı **artı ülke** (bilerek tutulmuyor) |
+
+- **Ne okunuyor:** yalnız `request.cf.country`. Ham IP **hiçbir yerde
+  okunmuyor**; User Agent yalnız `isbot()` kararı için okunup atılıyor
+  (`server/analytics.ts`). Bot, prefetch/prerender ve profil sahibinin kendi
+  görüntülemeleri sayılmıyor.
+- **Tıklama bildirimi:** `navigator.sendBeacon` → `POST /api/olcum/tiklama`,
+  aynı origin şartı, gövde ≤1 KB, yanıt gövdesiz `204`. Cihaza yazma yok.
+- **Amaç:** profil sahibine kendi sayfasının istatistiğini göstermek.
+  **Sebep:** m.5/2-f.
+- **Süre: süresiz.** Budama işi yok; panelde yalnız son 30 gün gösterilir
+  (`OLCUM_PENCERE_GUN`) ama bu bir görüntüleme filtresidir, silme değil.
+  Satırlar kişiye geri götürülemediği için bir imha süresine bağlanmadı;
+  `/gizlilik` §7 gerekçesiyle birlikte böyle yazıyor.
+- **⚠️ Bu iki tablo 2026-08-19'a kadar bu haritada YOKTU** — yayındaki
+  `/gizlilik` §3 ve §7 onları zaten sayıyordu, yani harita metnin gerisinde
+  kalmıştı. Sıralama tersine dönmemeli: harita metnin kaynağıdır.
 
 ---
 
@@ -291,4 +349,20 @@ Hepsi bilerek burada duruyor; hiçbiri "sonra bakarız" diye kapatılmadı.
    hukuki sayfalar yayınlanmasa bile bugün mevcut olan bir açıktır: uygulama,
    veritabanı, dosya deposu ve loglar zaten Cloudflare'de.
 7. **Süresi geçmiş `session` ve `verification` satırlarının budandığı
-   doğrulanmadı.**
+   doğrulanmadı** — 2026-08-19'da netleşti: **budanmıyor.** Depoda cron,
+   `scheduled` handler veya bu tablolara yazılmış tek bir `DELETE` yok
+   (`wrangler.jsonc`'de `crons` anahtarı da yok). `/gizlilik` §7'deki 90
+   günlük süre bu yüzden otomatik bir garanti değil, **elle tutulan bir
+   taahhüt** olarak yazıldı. Aynı şey `username_redirect` ve
+   `github_calendar` için de geçerli: süre dolunca satır kullanılmaz olur,
+   silinmez.
+8. **Hesap silme akışı kodda yok** (yukarıdaki uyarı kutusu). Elle silme R2
+   nesnelerini ve `github_calendar` satırlarını kapsamıyor.
+9. **Yüklenen dosyaların adresi blok kaldırıldıktan sonra da açık kalıyor**
+   (`/i/<uuid>`, `/b/<uuid>`). Koruma yalnız UUID'nin tahmin edilemezliği;
+   kimlik doğrulaması yok.
+10. **Ayet bloğu KVKK m.6 kapsamında dinî inanç verisi doğuruyor.** Veriyi
+    kullanıcı kendi eliyle alenileştiriyor (m.6/3-a) ve blok tamamen isteğe
+    bağlı, ama ürün bu veri türünü **davet eden** bir kart sunuyor.
+    `/gizlilik` §3 bunu 2026-08-19'da ayrı bir paragrafla yazdı. Aynı bölüm
+    konum kartının yuvarlanmış koordinatını da ayrıca anlatıyor.

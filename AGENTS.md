@@ -28,9 +28,9 @@ yeni metin önce Türkçe yazılır, tip sözleşmesi ondan türer.
   (`L`/`LKD` kimlikleri oradan gelir).
 - Hukuki denetim kaydı: `docs/legal/` — `data-map.md` (hangi veri nerede, hangi
   sebeple), `cookie-inventory.md`, `vendor-register.md`, `trust-claims.md`
-  (footer iddialarının dayanağı), `placeholders.md` (yayın kapısı). Yayındaki
-  hukuki metinler bu dosyalardan yazıldı; çelişki görürsen **kod ve
-  `docs/legal/` kazanır**, metin düzeltilir.
+  (footer iddialarının dayanağı), `bilinen-aciklar.md` (kabul edilmiş uyum
+  açıkları). Yayındaki hukuki metinler bu dosyalardan yazıldı; çelişki
+  görürsen **kod ve `docs/legal/` kazanır**, metin düzeltilir.
 
 ## Değişmezler (bozma)
 

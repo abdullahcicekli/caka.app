@@ -202,9 +202,25 @@ export const gizlilikSections: LegalSection[] = [
                 "tanıtım yazısı, bağlantı blokları (başlık ve adres), sosyal " +
                 "hesap blokları (platform, kullanıcı adı, adres ve o " +
                 "bağlantının önizleme görselinin adresi), metin ve durum " +
-                "bloklarındaki zengin metin, görsel blokları. Ayrıca " +
-                "yayınlamadığın taslak düzenin ve ilk kurulumda verdiğin " +
-                "yanıtlar.",
+                "bloklarındaki zengin metin, galeri blokları. Kart türüne " +
+                "göre şunlar da düzenin içinde saklanır: ",
+              {
+                kind: "strong",
+                text: "belge kartında dosyanın adı, boyutu ve yüklenme zamanı",
+              },
+              "; ",
+              {
+                kind: "strong",
+                text: "konum kartında seçtiğin yerin adı, ülkesi, saat dilimi ve iki ondalığa yuvarlanmış (yaklaşık 1 km) enlem-boylamı",
+              },
+              "; YouTube ve Spotify kartlarında adres, içerik kimliği, " +
+                "başlık ve kapak görselinin adresi; ",
+              {
+                kind: "strong",
+                text: "ayet kartında seçtiğin sure ve ayet numarası ile ayetin Arapça metni ve Türkçe meali",
+              },
+              ". Ayrıca yayınlamadığın taslak düzenin ve ilk kurulumda " +
+                "verdiğin yanıtlar.",
             ],
             ["Doğrudan senin girdin."],
           ],
@@ -326,8 +342,38 @@ export const gizlilikSections: LegalSection[] = [
             "oluyor. Oraya yazdığın her şey — bir telefon numarası, bir " +
             "adres, sağlık veya inanç bilgisi — internetteki herkes " +
             "tarafından görülebilir. Caka senden özel nitelikli kişisel veri " +
-            "(KVKK m.6) istemez ve toplamaz; böyle bir bilgiyi profiline " +
-            "kendin yazarsan onu kendi isteğinle alenileştirmiş olursun.",
+            "(KVKK m.6) istemez; böyle bir bilgiyi profiline kendin yazarsan " +
+            "onu kendi isteğinle alenileştirmiş olursun.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Ayet kartı hakkında bunu ayrıca yazalım. " },
+          "Profiline bir Kur'an ayeti kartı koyabilirsin. Bu kartı " +
+            "koyduğunda seçtiğin ayetin metni profil düzeninin içine yazılır " +
+            "ve sayfanı gören herkese görünür. Dinî inanca ilişkin veri " +
+            "KVKK m.6 anlamında ",
+          { kind: "strong", text: "özel nitelikli kişisel veridir" },
+          " ve bu kartı koymak, o veriyi kendi elinle alenileştirmen " +
+            "anlamına gelir. Kart tamamen isteğe bağlıdır: koymazsan böyle " +
+            "bir veri hiç oluşmaz, kaldırdığında yayınladığın düzenden " +
+            "çıkar. Biz bu veriyi sana sormuyor, profilleme yapmıyor ve " +
+            "başka hiçbir amaçla kullanmıyoruz — yalnızca senin " +
+            "yayınlamayı seçtiğin sayfayı yayınlıyoruz.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Konum kartı hakkında da: " },
+          "kartın taşıdığı koordinat, editörde arayıp seçtiğin yerin " +
+            "koordinatıdır — cihazının konum servisi hiçbir zaman " +
+            "kullanılmaz ve senden anlık konum istenmez. Koordinat, " +
+            "kaydedilirken iki ondalığa yuvarlanır (yaklaşık 1 km); daha " +
+            "keskin bir konum veritabanımıza hiç girmez. Buna rağmen kart, " +
+            "hangi şehirde ya da semtte olduğunu herkese açık biçimde " +
+            "duyurur; bunu bilerek koy.",
         ],
       },
     ],
@@ -898,42 +944,70 @@ export const gizlilikSections: LegalSection[] = [
               "Sen silene kadar. Hesabını kapattığında ya da silme talep " +
                 "ettiğinde en geç ",
               { kind: "strong", text: "3 ay" },
-              " içinde silinir.",
+              " içinde silinir. Bir bloğu profilinden kaldırmak, o bloğa " +
+                "yüklediğin dosyayı silmez: dosya deposunda kalır ve " +
+                "doğrudan adresini bilen biri erişmeye devam edebilir. " +
+                "Dosyalar yalnızca hesap silinirken temizlenir.",
             ],
           ],
           [
             ["Oturum kayıtları (IP adresi ve User Agent)"],
             [
-              "Oturumun kendi ömrü 7 gündür. Kayıt, oturum sona erdikten " +
-                "sonra kısa bir pencere boyunca kalır ve ",
+              "Oturumun kendi ömrü 7 gündür; süre dolduğunda kayıt " +
+                "geçersizleşir ve giriş için kullanılamaz. Süresi geçmiş " +
+                "satırları veritabanından ",
+              {
+                kind: "strong",
+                text: "otomatik olarak temizleyen bir iş henüz yok",
+              },
+              "; bunu elle yapıyoruz ve taahhüdümüz oturum sona erdikten " +
+                "sonra ",
               { kind: "strong", text: "en geç 90 gün" },
-              " içinde silinir.",
+              ". Otomatik temizlik yazıldığında bu satır değişir.",
             ],
           ],
           [
             ["Kimlik sağlayıcı token'ları (erişim ve yenileme token'ları)"],
             [
-              "Çıkış yaptığında veya hesabın silindiğinde geçersiz kılınır; " +
-                "ayrıca saklanmaz.",
+              "Bunlar hesabınla birlikte veritabanımızda ",
+              { kind: "strong", text: "saklanır" },
+              " — çıkış yapmak oturumunu bitirir ama token kaydını silmez. " +
+                "Kayıt hesabın silinmesiyle birlikte silinir. Token'lar " +
+                "bugün veritabanında ",
+              { kind: "strong", text: "şifrelenmeden" },
+              " duruyor; bunu bir eksik olarak biliyoruz ve saklamamak ya " +
+                "da şifrelemek arasında karar veriyoruz. İstenen izin " +
+                "kapsamı yalnızca giriş yapmakla sınırlıdır: bu token'larla " +
+                "e-postanı okuyamaz, dosyalarına erişemeyiz.",
             ],
           ],
           [
             ["Eski kullanıcı adı kaydı (username_redirect)"],
             [
-              "30 gün. Süre dolduğunda kayıt kalıcı olarak silinir; " +
-                "arşivlenmez.",
+              "30 gün. Süre dolduğunda kayıt ",
+              { kind: "strong", text: "kullanılmaz hâle gelir" },
+              ": yönlendirme durur ve ad başkasına serbest kalır. Satırın " +
+                "kendisi bu anda veritabanından silinmez — hesap silinene " +
+                "kadar ölü bir kayıt olarak kalabilir. İçinde yalnız eski " +
+                "kullanıcı adı, hangi profile ait olduğu ve tarihler var.",
             ],
           ],
           [
             ["GitHub katkı grafiği önbelleği (github_calendar)"],
             [
-              "Başarılı kayıt 6 saat, olumsuz sonuç 24 saat taze sayılır; " +
-                "grafik profilden kaldırıldığında veri yeniden çekilmez ve " +
-                "kayıt ",
-              { kind: "strong", text: "ay değil gün ölçeğinde" },
-              " tasfiye edilir. Listenin en zayıf halkası budur: verinin " +
-                "sahibi olan kişinin Caka ile hiçbir ilişkisi yok, bu yüzden " +
-                "pencereyi bilerek kısa tutuyoruz.",
+              "Başarılı kayıt 6 saat, olumsuz sonuç 24 saat ",
+              { kind: "strong", text: "taze" },
+              " sayılır; süre dolunca veri GitHub'dan yeniden çekilir. " +
+                "Dikkat: bunlar tazelik eşikleridir, ",
+              { kind: "strong", text: "silme süresi değildir" },
+              " — satır tabloda kalmaya devam eder. Grafik profilden " +
+                "kaldırıldığında veri yeniden çekilmez ama eski kayıt da " +
+                "otomatik silinmez. Listenin en zayıf halkası budur, çünkü " +
+                "verinin sahibi olan kişinin Caka ile hiçbir ilişkisi " +
+                "olmayabilir. Bu satırın silinmesini ",
+              { kind: "strong", text: "hello@caka.app" },
+              " adresinden isteyebilirsin; otomatik tasfiyeyi de yapılacaklar " +
+                "listemizde tutuyoruz.",
             ],
           ],
           [

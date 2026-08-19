@@ -102,6 +102,14 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/gizlilik",
     title: "Gizlilik ve Aydınlatma Metni",
     navLabel: "Gizlilik ve Aydınlatma",
+    // 0.6: saklama tablosundaki dört satır koda göre YANLIŞTI ve
+    // düzeltildi — sağlayıcı token'ları "ayrıca saklanmaz" diyordu ama
+    // hesapla birlikte şifrelenmeden duruyor; `username_redirect` ve
+    // `github_calendar` satırları "silinir/tasfiye edilir" diyordu ama
+    // kodda hiçbir silme yok (tazelik eşiği ≠ silme); oturum satırındaki
+    // 90 gün otomatik değil, elle. Ayrıca §3'e konum/ayet/medya/belge
+    // kartlarının taşıdığı veriler ve ayet kartının m.6 (dinî inanç)
+    // sonucu yazıldı, dosyanın blok kaldırılınca silinmediği söylendi.
     // 0.5: konum kartının haritası artık ziyaretçinin tarayıcısından
     // DOĞRUDAN Mapbox'a gidiyor (sağlayıcının şartları proxy'lemeyi
     // yasaklıyor) — §6 tablosuna Mapbox satırı eklendi. Yeni bir üçüncü
@@ -109,7 +117,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     // 0.4: belge (PDF) yükleme eklendi — "yüklenen dosyalar" satırı artık
     // görselin yanında belgeyi de sayıyor. Metin değişip damga sabit
     // kalsaydı yayındaki "son güncelleme" tarihi yalan söylerdi.
-    version: "0.5",
+    version: "0.6",
     updatedAt: "2026-08-19",
   },
   "kullanim-kosullari": {
@@ -117,18 +125,30 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/kullanim-kosullari",
     title: "Kullanım Koşulları",
     navLabel: "Kullanım Koşulları",
-    version: "0.3",
-    updatedAt: "2026-08-18",
+    // 0.4: §4'ün içerik listesi ürünün bugünkü kartlarını saymıyordu
+    // (belge, konum, YouTube/Spotify, ayet, galeri) ve yüklenen dosyanın
+    // blok kaldırılınca depoda kaldığı hiç yazmıyordu — ikisi de eklendi.
+    // §6'ya ürün içindeki üçüncü taraf atıfları (Mapbox/OSM, meal
+    // çevirmeni) girdi ve "kaynak kodu bize aittir" cümlesi MIT lisansını
+    // gizliyordu, düzeltildi. §10'a Mapbox eklendi: konum kartı taşıyan
+    // sayfada ziyaretçi doğrudan Mapbox'a bağlanıyor.
+    version: "0.4",
+    updatedAt: "2026-08-19",
   },
   "cerez-politikasi": {
     id: "cerez-politikasi",
     path: "/cerez-politikasi",
     title: "Çerez Politikası",
     navLabel: "Çerez Politikası",
+    // 0.5: §1'deki "localStorage hiçbir yerde kullanılmaz" cümlesi
+    // doğrulanmış olandan fazlasını söylüyordu. Ölçülen: oturumsuz
+    // gezinmede girdi yok (ana sayfa, /login, bir profil). Ölçülmeyen:
+    // giriş kütüphanesinin sekmeler arası senkronizasyon yolu. Cümle
+    // ölçülene daraltıldı, çekince açıkça yazıldı (KTD31).
     // 0.4: §6'ya harita isteği (Mapbox) eklendi. Çerez YAZMIYOR — ölçüldü,
     // yanıtta çerez başlığı yok — ama IP ve User Agent gidiyor, yani
     // "cihaza yazmayan üçüncü taraf istekleri" listesine girmesi şart.
-    version: "0.4",
+    version: "0.5",
     updatedAt: "2026-08-19",
   },
 };

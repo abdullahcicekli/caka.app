@@ -78,9 +78,16 @@ export const cerezPolitikasiSections: LegalSection[] = [
           "Caka çerezleri yalnızca giriş ile kayıt akışını çalıştırmak için " +
             "kullanır. Tarayıcının sunduğu diğer depolama yollarından ",
           { kind: "strong", text: "localStorage" },
-          " Caka'nın hiçbir yerinde kullanılmaz: uygulamanın kaynağında bu " +
-            "API'ye yapılmış tek bir çağrı yoktur ve tarayıcında Caka adına " +
-            "hiçbir kalıcı depolama girdisi oluşmaz.",
+          "'a kendi kodumuzda tek bir çağrı yoktur; giriş yapmadan " +
+            "gezinirken tarayıcında Caka adına hiçbir kalıcı depolama " +
+            "girdisi oluşmaz — bunu iddia olarak bırakmadık, temiz bir " +
+            "tarayıcıda ana sayfa, giriş sayfası ve bir profil sayfası " +
+            "açılıp bakıldı. Tek çekincemiz şu: kullandığımız giriş " +
+            "kütüphanesi, sekmeler arası oturum senkronizasyonu için bu " +
+            "API'yi kullanabiliyor. Giriş ve çıkış akışında bir girdi " +
+            "oluşup oluşmadığını henüz ölçmedik; ölçtüğümüzde oluşuyorsa " +
+            "aşağıdaki tabloya girer ve bu cümle değişir. Olmayan bir " +
+            "kesinliği yazmamayı tercih ediyoruz.",
         ],
       },
       {

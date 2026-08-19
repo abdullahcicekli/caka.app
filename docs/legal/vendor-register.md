@@ -54,7 +54,7 @@ tedarikçiye ulaşır. Aydınlatma yükümlülüğü buradan doğar.
 |---|---|---|---|---|---|---|
 | **Cloudflare, Inc.** — CDN / Workers | Sitenin sunulduğu ağ ve çalışma ortamı | Her isteğin tamamı: IP, User Agent, adres, başlıklar, gövde | Veri işleyen | ABD merkezli; anycast küresel ağ. **Kova/veritabanı bölgesi doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Cloudflare, Inc.** — Web Analytics beacon | Çerezsiz ziyaret ölçümü; `static.cloudflareinsights.com` | Sayfa adresi, yönlendiren, ülke, tarayıcı/cihaz sınıfı + beacon isteğiyle IP ve User Agent. **Cihaza yazma yok** | Veri işleyen | Aynı | **Evet** | ⬚ *(boş — OQ2a)* |
-| **Indian Type Foundry (Fontshare)** | Yazı tipleri; `api.fontshare.com` (CSS) + `cdn.fontshare.com` (font dosyaları) | **Her sayfa yüklemesinde** IP adresi ve User Agent. Cihaza yazma yok | Fiilen ayrı veri sorumlusu (kendi altyapısı, bizim talimatımız yok) | Hindistan merkezli firma; **CDN sunucu konumu doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
+| **Indian Type Foundry (Fontshare)** | İki aile: **Satoshi** (gövde) ve **Clash Display** (yalnız Ufuk teması başlıkları). `api.fontshare.com` (CSS) + `cdn.fontshare.com` (font dosyaları); `root.tsx` her ikisine `preconnect` de yapar | **Her sayfa yüklemesinde** IP adresi ve User Agent. Cihaza yazma yok (2026-08-19'da gerçek tarayıcıda tekrar ölçüldü) | Fiilen ayrı veri sorumlusu (kendi altyapısı, bizim talimatımız yok) | Hindistan merkezli firma; **CDN sunucu konumu doğrulanmadı** | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Google LLC** — Sign in with Google | Kimlik doğrulama yönlendirmesi | Kullanıcı girişi **başlattığında** Google'a yönlendirilir; istek ve dönüşte bize iletilen hesap bilgisi Google'ın kendi politikasıyla işlenir | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Apple Inc.** — Sign in with Apple | Kimlik doğrulama yönlendirmesi | Aynı akış | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 | **Google LLC — YouTube gömülü oynatıcı** ⚠️ *(yalnız tıklamayla)* | Profildeki YouTube kartında videonun yerinde oynatılması; `youtube-nocookie.com/embed` | **Ziyaretçi oynata basarsa**: IP, User Agent, gömme adresi. Oynatma başlayınca **çerez yazabilir** | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(uygulanamaz — sözleşme tarafı yok; aktarım ziyaretçinin kendi eylemiyle)* |
@@ -236,6 +236,35 @@ kümeyi "in a textual description near the image" istiyor. Harita verisi
 
 ---
 
+### 🔤 Fontshare — §A'da kalan **tek** kaçınılabilir satır (karar bekliyor)
+
+§A'daki altı satırın beşi ya teknik zorunluluk (Cloudflare), ya ziyaretçinin
+kendi eylemi (YouTube/Spotify, Google/Apple girişi), ya da sözleşmeyle
+dayatılmış (Mapbox — proxy'lemek yasak). **Fontshare bunların hiçbiri
+değil:** kaçınmanın önünde ne teknik ne hukuki bir engel var.
+
+- **Bedeli ne:** ziyaretçi hiçbir şey yapmadan, her sayfa yüklemesinde IP'si
+  ve User Agent'ı Hindistan merkezli bir firmaya ulaşıyor. Ana sayfada da,
+  başkasının profilinde de. Bu, ürünün "reklam ve analitik çerezi
+  kullanmıyoruz" duruşunu bozmuyor (çerez yazılmıyor) ama "hiçbir üçüncü
+  taraf isteği yok" demeyi imkânsız kılıyor.
+- **Kaçış yolu hazır duruyor:** Satoshi'nin TTF dosyaları **zaten depoda**
+  (`apps/web/app/assets/fonts/Satoshi-{Regular,Bold}.ttf`); bugün yalnız
+  sunucu tarafı OG görseli üretmek için okunuyorlar
+  (`server/og-render.ts`). Aynı aileyi `@font-face` ile birinci taraftan
+  servis etmek §A'dan bir satır silerdi.
+- **Bakılması gereken iki şey:** (1) Fontshare'in lisansı (ITF Free Font
+  License) self-host'a izin veriyor mu — indirilen paketin şartları
+  okunmalı, varsayılmamalı; (2) Clash Display'in de aynı yoldan gelmesi
+  gerekir, yoksa host yalnız yarı yarıya kalkar.
+- **Karar kimin:** bu bir mühendislik değil, öncelik kararıdır ve
+  işletmecinindir. Kayıt bu satırı "kaçınılabilir ama henüz kaçınılmamış"
+  olarak tutuyor; `/cerez-politikasi` §6 de okuyucuya aynı şeyi söylüyor
+  ("yazı tiplerini kendi sunucumuza taşıyıp bu isteği tamamen kaldırmak iş
+  listemizde duruyor").
+
+---
+
 ## B. Yalnızca **sunucudan** çağrılan tedarikçiler
 
 Bu grupta ziyaretçinin tarayıcısı tedarikçiye hiç istek atmaz; çağrıyı Worker
@@ -285,11 +314,37 @@ parça değil.
   e-posta pazarlama aracı yok.**
 - **CAPTCHA/bot koruma script'i yok.**
 - **Ödeme sağlayıcısı yok** (ticarileşme henüz yok).
+- **Playwright bir çalışma zamanı tedarikçisi DEĞİL** — ve bugün bir bağımlılık
+  bile değil: kök, `apps/web` ve `packages/*` içindeki hiçbir `package.json`'da
+  geçmiyor. Tarayıcı sürücüsü olarak yalnız geliştirme sırasında, ajan
+  araçlarıyla kullanılıyor; ziyaretçiye giden tek bir bayt üretmiyor. Bu
+  yüzden kayda **girmez** ve girmesi bir hata olur.
 
 - **Etkileşimli harita / kutucuk sunucusu yok.** Konum kartı iki statik
   `<img>` kullanıyor: harita JS'i, kutucuk akışı ve etkileşim yok. **Ama
   ziyaretçi artık `api.mapbox.com`'a doğrudan bağlanıyor** — bu satır "üçüncü
   taraf teması yok" demek DEĞİLDİR; bkz. §A'daki Mapbox satırı ve konum notu.
+
+- **İkinci bir yazı tipi host'u yok — Arapça hat için web fontu alınmadı.**
+  Ayet kartının Arapça metni **hiçbir font servisinden çekilmiyor**;
+  `apps/web/app/app.css`'teki `--font-arabic` yalnızca **işletim sisteminin
+  kendi nesih yüzlerini** sırayla deneyen bir yedek zinciridir
+  (`SF Arabic`, `Geeza Pro`, `Noto Naskh Arabic`, … `Amiri`, `serif`).
+  `@font-face` kuralı yok, `apps/web/public/` altında font dosyası yok:
+  bu adlar ziyaretçinin cihazında zaten kuruluysa kullanılır, değilse
+  `serif`e düşülür. **Ne uzak bir CDN'den çekiliyor ne de kendi
+  sunucumuzdan servis ediliyor** — yani ne yeni bir tedarikçi ne de yeni bir
+  istek doğuyor. Gerekçe kodun kendi başlığında yazılı: Satoshi zaten
+  Fontshare'den geliyor ve §A'da bir satırı var; dekoratif bir kart için
+  ziyaretçiyi ikinci bir font host'una tanıtmak istenmedi (R58). Bedeli
+  kabul edildi: hat yüzü cihazdan cihaza değişiyor.
+  *(2026-08-19'da açıkça kaydedildi, çünkü "Amiri Quran artık kendi
+  sunucumuzdan servis ediliyor" şeklinde bir varsayım dolaşıyordu; kodda
+  böyle bir servis **yok**. Doğrulama: `grep -rn "@font-face" apps/web/app`
+  boş döner, `apps/web/public/` altında yalnız ikon ve manifest dosyaları
+  vardır. Bir gün self-host edilirse bu madde silinir ve durum §D'den
+  çıkar — birinci taraf servis üçüncü taraf isteği doğurmaz, ama SIL OFL'in
+  atıf ve lisans-birlikte-dağıtım koşulu o gün doğar.)*
 
 Bu liste boş kaldığı sürece footer'daki çerez iddiası ayakta kalır. Buraya bir
 satır eklendiği gün `cookie-inventory.md` ve `trust-claims.md` de aynı commit'te

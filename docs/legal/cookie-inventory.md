@@ -150,6 +150,17 @@ oluşuyorsa `cookies.ts`'e eklenecek ve `/cerez-politikasi` §1'deki
 "`localStorage` Caka'nın hiçbir yerinde kullanılmaz" cümlesi düzeltilecek.
 `docs/backlog.md` §13'e kaydedildi.
 
+**2026-08-19 kısmi ölçüm.** Prod'da gerçek tarayıcıyla `caka.app/abdullah`
+ve `caka.app/en/login` açıldı: her ikisinde de `localStorage` **boş**,
+profil sayfasında `sessionStorage` boş, giriş sayfasında yalnız
+`react-router-scroll-positions` var (envanterde). Yani **oturumsuz** yolda
+girdi oluşmuyor — bu kadarı artık ölçülmüş durumda. **Oturum açma ve kapama
+akışı hâlâ ölçülmedi** (Google/Apple kimlik bilgisi gerektiriyor); açık uç
+bu yüzden kapanmadı. Yayındaki `/cerez-politikasi` §1 bu ayrımı 0.5
+sürümünde metne taşıdı: cümle artık "hiçbir yerde kullanılmaz" demiyor,
+"kendi kodumuzda çağrı yok + oturumsuz gezinmede girdi oluşmadığı ölçüldü +
+giriş akışı henüz ölçülmedi" diyor.
+
 ## 6. Envanteri neyin geçersiz kılacağı
 
 Aşağıdakilerden biri olursa bu dosya ve `cookies.ts` **aynı commit'te**

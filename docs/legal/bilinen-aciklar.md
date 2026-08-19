@@ -99,7 +99,7 @@ sadeleştirme.** Parasal tavan yok (EK-1(1)(a) maddi zararı da kapsayacak
 
 ---
 
-## 5. Ayet bloğunun meali — sadeleştirmenin telif durumu belirsiz
+## 5. Ayet bloğu — meal telifi belirsiz, ayrıca m.6 verisi doğuruyor
 
 **Durum:** kabul edildi, kaynak ve gerekçe `vendor-register.md` §F'de yazılı.
 
@@ -127,6 +127,71 @@ almak.
 **Kapsam dışı:** Diyanet İşleri meali. Güncel eser, telifi Diyanet'te ve
 Tanzil kopyası "yalnız ticari olmayan kullanım" kaydıyla dağıtılıyor — bilerek
 alınmadı.
+
+### İkinci yüz: bu blok KVKK m.6 verisi doğuruyor
+
+Telif tarafından bağımsız bir konu, ama aynı blokta. Ayet kartını koyan
+kullanıcının profiline **dinî inanca ilişkin veri** yazılmış olur ve bu,
+KVKK m.6 anlamında **özel nitelikli kişisel veridir**. Ayet metni bloğun
+verisinde saklanıyor (`layout` JSON'u, `arabic` + `meal` alanları), yani
+veri gerçekten bizim veritabanımızda duruyor — yalnız ekranda gösterilen
+bir şey değil.
+
+**Neden yine de bir "açık" değil, bir kayıt:** işleme m.6/3-(a)'ya
+dayanıyor — ilgili kişinin veriyi **kendisi alenileştirmesi**. Blok tamamen
+isteğe bağlı, veriyi kullanıcı arayıp seçiyor, kaldırdığında düzenden
+çıkıyor ve biz onu profilleme, hedefleme veya başka bir amaçla
+kullanmıyoruz. Yine de ürünün bu veri türünü **davet eden** bir kart
+sunduğu gerçeği kayda geçmeli: `/gizlilik` §3 bunu 0.6 sürümünde ayrı bir
+paragrafla, aleniyet sonucunu açıkça söyleyerek yazdı.
+
+**Neyi tetikler:** blok bir gün varsayılan şablonlara girerse ya da
+onboarding'de önerilirse, "kullanıcının kendi seçimi" savunması zayıflar ve
+bu madde yeniden okunmalıdır. Aynı şey ikinci bir inanç/ideoloji temalı
+kart eklenirse de geçerli.
+
+---
+
+## 6. İmha otomatik değil — süresi geçen satırlar kendiliğinden silinmiyor
+
+**Durum:** kabul edildi, metinde açıkça yazılı (`gizlilik.ts` §7, 0.6).
+
+Depoda **hiçbir** budama işi yok: `wrangler.jsonc`'de `crons` anahtarı,
+`scheduled` handler'ı ve bu tablolara yazılmış tek bir `DELETE` bulunmuyor.
+Sonuç, süresi dolduğunda **kullanılmaz olan ama silinmeyen** dört kayıt:
+
+| Kayıt | Süre dolunca ne oluyor | Ne olmuyor |
+|---|---|---|
+| `session` (**IP + User Agent taşıyor**) | 7 günde geçersizleşir, girişe yaramaz | Satır silinmez |
+| `verification` (OAuth `state`, PKCE) | `expires_at` geçer | Satır silinmez |
+| `username_redirect` | Yönlendirme durur, ad serbest kalır | Satır silinmez |
+| `github_calendar` | Tazelik eşiği dolar, veri yeniden çekilir | Satır silinmez |
+
+**Neden bir açık.** Silme Yönetmeliği m.11/3, silme yükümlülüğünün doğduğu
+tarihten itibaren **üç ay** içinde imhayı emrediyor (VERBİS'ten muaf
+olduğumuz için altı aylık periyodik döngüden yararlanamıyoruz — bkz.
+`data-map.md`). Bir kaydın "kullanılmaz" hâle gelmesi imha değildir. En
+keskin satır `session`: içinde **ham IP adresi ve User Agent** var, amacı
+(oturumun sürdürülmesi) 7. günde ortadan kalkıyor ve veri buna rağmen
+duruyor.
+
+**Bugünkü duruş.** Metin bunu gizlemiyor: `/gizlilik` §7 oturum satırı için
+"otomatik olarak temizleyen bir iş henüz yok; bunu elle yapıyoruz ve
+taahhüdümüz en geç 90 gün" diyor, `username_redirect` ve `github_calendar`
+satırları için de "kullanılmaz olur, silinmez" diyor. Yani yükümlülük elle
+tutulan bir söze bağlanmış durumda — **sözün tutulduğunu gösteren bir kayıt
+yok**, çünkü elle silme yapıldığına dair bir iz de tutulmuyor.
+
+**Nasıl kapanır.** Bir `scheduled` handler (Cloudflare Cron Trigger) yazılıp
+dört tabloyu da süresine göre budaması. Küçük bir iş; açık, işin
+büyüklüğünden değil yazılmamış olmasından doğuyor. Yazıldığı gün
+`gizlilik.ts` §7'deki dört satır ve `data-map.md` §6 birlikte güncellenir.
+
+**Bağlı ikinci açık — hesap silme kodda yok.** Silme talebi e-postayla
+geliyor ve elle işleniyor (`kullanim-kosullari.ts` §13 bunu açıkça yazıyor).
+Elle silen kişinin **cascade'in kapsamadığı ikisini** de temizlemesi şart:
+R2 nesneleri (`asset.id` = R2 anahtarı) ve `github_calendar` satırları.
+Unutulursa `/gizlilik` §7'deki üç aylık taahhüt tutulmamış olur.
 
 ---
 

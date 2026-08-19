@@ -219,6 +219,8 @@ export const kullanimKosullariSections: LegalSection[] = [
           "Profilindeki her şeyi sen koyarsın: profil kartındaki ad ve kısa " +
             "tanıtım yazısı, bağlantı blokları, sosyal hesap blokları, metin " +
             "ve durum bloklarındaki yazılar, yüklediğin görseller ve " +
+            "galeriler, yüklediğin belgeler (bugün yalnız PDF — ör. bir CV), " +
+            "konum kartı, YouTube ve Spotify kartları, Kur'an ayeti kartı ve " +
             "gösterdiğin GitHub katkı grafiği. Caka bu içeriği ne yazar ne " +
             "de seçer; barındırır ve yayınlar.",
         ],
@@ -272,6 +274,37 @@ export const kullanimKosullariSections: LegalSection[] = [
               "toplanabilir. Bunu bizden gizli bir alan sanma; herkese açık " +
               "bir sayfaya yazmış olursun.",
           ],
+          [
+            {
+              kind: "strong",
+              text: "Yüklediğin belgenin içindekileri bilerek yayınlarsın. ",
+            },
+            "Belge kartına koyduğun PDF herkese açıktır: ziyaretçi dosyayı " +
+              "indirebilir ve kartta dosyanın adı da görünür. Bir CV " +
+              "yüklüyorsan içindeki adres, telefon, doğum tarihi ve referans " +
+              "kişilerinin bilgileri de yayınlanmış olur — dosyayı " +
+              "yüklemeden önce gerekmeyen bilgileri çıkarmanı öneririz. " +
+              "Başkasına ait bir belge yüklüyorsan bunun için iznin olmalı.",
+          ],
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Yüklediğin dosyanın adresi kalıcıdır. " },
+          "Yüklediğin her görsel ve belge, tahmin edilemeyecek uzunlukta " +
+            "rastgele bir adresle saklanır. Bir bloğu profilinden " +
+            "kaldırdığında blok sayfandan gider, ama ",
+          {
+            kind: "strong",
+            text: "dosyanın kendisi depoda kalır ve o doğrudan adres çalışmaya devam eder",
+          },
+          ". Belgeler için arama motorlarına dizine almamalarını söylüyoruz, " +
+            "ama bu yalnız arama sonuçlarını engeller: adresi bir kez " +
+            "paylaşılmış bir dosya erişilebilir kalır. Dosyalar hesabın " +
+            "kapatılmasıyla silinir; daha önce silinmesini istiyorsan ",
+          { kind: "strong", text: "hello@caka.app" },
+          " adresine yaz.",
         ],
       },
       {
@@ -453,16 +486,41 @@ export const kullanimKosullariSections: LegalSection[] = [
           ". İçeriğini reklamda kullanmayız, üçüncü kişilere satmayız, " +
             "lisanslamayız ve başka bir ürüne dâhil etmeyiz. Bir içeriği " +
             "profilinden kaldırdığında ya da hesabını kapattığında bu hak da " +
-            "sona erer; teknik yedeklerdeki kopyalar olağan yedek döngüsü " +
-            "içinde tasfiye olur.",
+            "sona erer. Bir uyarı: içeriği kaldırmak, o içeriğe yüklediğin " +
+            "dosyayı depodan silmez ve dosyanın doğrudan adresi çalışmaya " +
+            "devam eder; bunu ",
+          {
+            kind: "link",
+            text: "4. bölümde",
+            href: "#kullanici-icerigi",
+          },
+          " ayrıntısıyla yazdık.",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Caka'nın kendi adı, logosu, arayüzü, tema tasarımları ve kaynak " +
-            "kodu ise bize aittir; bu koşullar sana bunlar üzerinde bir hak " +
-            "vermez.",
+          { kind: "strong", text: "Ürünün içindeki üçüncü taraf içerikleri. " },
+          "Bazı kartlar bizim de üretmediğimiz içerikleri gösterir ve o " +
+            "içeriklerin kendi atıf koşulları vardır. Konum kartındaki " +
+            "harita görüntüsü Mapbox'a, harita verisi OpenStreetMap " +
+            "katkıcılarına aittir (ODbL) ve kart bu atıfları kendi " +
+            "üzerinde basar. Ayet kartındaki Türkçe meal Elmalılı Hamdi " +
+            "Yazır'a ait kamu malı bir eserdir ve çevirmenin adı kartta " +
+            "gösterilir. Bu atıfları kaldırmaya çalışma: kartların " +
+            "yayınlanabilir olması onlara bağlı.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Caka'nın kendi adı, logosu, marka kimliği ve tema tasarımları " +
+            "bize aittir; bu koşullar sana bunlar üzerinde bir hak vermez. " +
+            "Kaynak kodu da bize aittir, ama ",
+          { kind: "strong", text: "MIT lisansıyla açık kaynak olarak yayımlanmıştır" },
+          ": kod üzerindeki hakların bu koşullardan değil, o lisanstan " +
+            "doğar. Lisans kodu kapsar; Caka adını, logosunu ve marka " +
+            "kimliğini kapsamaz.",
         ],
       },
     ],
@@ -772,14 +830,20 @@ export const kullanimKosullariSections: LegalSection[] = [
           { kind: "strong", text: "Sayfanın kendiliğinden konuştuğu servisler. " },
           "Caka'yı çalıştırmak için kullandığımız üçüncü taraf servisleri de " +
             "vardır: girişte Google ve Apple, yazı tipleri için bir font " +
-            "servisi, katkı grafiği için GitHub ve barındırma için " +
-            "Cloudflare. Profillerdeki bağlantı önizleme görselleri ise " +
-            "uzak siteden bizim sunucumuz tarafından çekilir; tarayıcın o " +
-            "siteye istek atmaz. Bunların dışında bir de yalnızca senin " +
-            "başlattığın bağlantılar var: bir YouTube ya da Spotify kartında " +
-            "oynat düğmesine basarsan oynatıcı o anda yüklenir ve tarayıcın " +
-            "doğrudan o platforma bağlanır. Bu isteklerde hangi verinin " +
-            "kime ulaştığını ",
+            "servisi (Fontshare), katkı grafiği için GitHub, barındırma ve " +
+            "ziyaret ölçümü için Cloudflare. Bir profilde ",
+          { kind: "strong", text: "konum kartı" },
+          " varsa, kartın harita görüntüsünü ziyaretçinin tarayıcısı " +
+            "doğrudan ",
+          { kind: "strong", text: "Mapbox" },
+          "'tan çeker; bu görseli kendi sunucumuzdan geçiremiyoruz çünkü " +
+            "Mapbox'ın şartları bunu yasaklıyor. Profillerdeki bağlantı " +
+            "önizleme görselleri ise uzak siteden bizim sunucumuz " +
+            "tarafından çekilir; tarayıcın o siteye istek atmaz. Bunların " +
+            "dışında bir de yalnızca senin başlattığın bağlantılar var: bir " +
+            "YouTube ya da Spotify kartında oynat düğmesine basarsan " +
+            "oynatıcı o anda yüklenir ve tarayıcın doğrudan o platforma " +
+            "bağlanır. Bu isteklerde hangi verinin kime ulaştığını ",
           {
             kind: "link",
             text: "Aktarım ve tedarikçiler",

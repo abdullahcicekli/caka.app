@@ -5,8 +5,9 @@ Footer'daki her güven ifadesinin dayanağı, dayanağın nasıl doğrulandığ�
 iddia genellikle yanlış yazıldığı için değil, **doğru yazılıp sonra sessizce
 bayatladığı için** güvenilmez hâle gelir.
 
-**İfadelerin tanımlandığı yer:** `apps/web/app/content/landing.ts` → `trust`
-(Değişmez #5: metin bileşene gömülmez). **Tarih:** 2026-08-19.
+**İfadelerin tanımlandığı yer:** `apps/web/app/content/landing/<dil>.ts` →
+`trust` (Değişmez #5: metin bileşene gömülmez; Türkçe dosya kanonik).
+**Tarih:** 2026-08-19.
 
 > **2026-08-19 kontrolü — footer'da "sıfır üçüncü taraf isteği" vaadi YOK.**
 > Konum kartı Mapbox'a doğrudan bağlanmaya başlayınca footer metni yeniden
@@ -38,9 +39,14 @@ mantığının "doğrulanabilir" kılığına girmiş hâlidir.
 ### Dayanak
 
 1. **Envanter.** `packages/shared/src/cookies.ts`'te tanımlı tek kategori
-   `zorunlu`. Dört girdinin dördü de birinci taraf ve işlevsel: iki Better Auth
-   çerezi, `caka_claim`, bir `sessionStorage` kaydırma girdisi. Reklam veya
-   analitik amaçlı tek bir girdi yok. Ayrıntı: `cookie-inventory.md`.
+   `zorunlu`. **Altı girdinin altısı da** birinci taraf ve işlevsel: iki
+   Better Auth çerezi (`session_token`, `state`), `caka_claim`, `caka_dil` ve
+   iki `sessionStorage` girdisi (`react-router-scroll-positions`,
+   `react-router-manifest-version`). Reklam veya analitik amaçlı tek bir girdi
+   yok. Ayrıntı: `cookie-inventory.md`. *(Bu madde 2026-08-19'a kadar "dört
+   girdi" diyordu ve envanter dörtken yazılmıştı; `caka_dil` ile manifest
+   girdisi eklendiğinde burası güncellenmemişti — bayatlamanın kendisi bu
+   dosyanın uyardığı şey.)*
 2. **Ölçüm aracı cihaza dokunmuyor.** Ziyaret ölçümü Cloudflare Web Analytics
    ile yapılıyor; yapı gereği çerezsiz.
 3. **Reklam/analitik tedarikçisi yok.** GA4 alınmadı (KD4); reklam ağı,
@@ -70,6 +76,37 @@ tarafın kendi amaçları için kullanılmıyor, çıktı toplu istatistik), dol
 rıza yükümlülüğü doğmaz. **Rıza gerekmemesi aydınlatma yükümlülüğünü
 kaldırmaz** (KD2): işleme m.5/2-f meşru menfaate dayanır ve `/gizlilik` §4'te
 bu sebeple yazılıdır.
+
+#### Tekrar ölçüm — 2026-08-19, prod, gerçek tarayıcı
+
+Belge güncellemesi öncesinde ölçüm yenilendi. Ölçülen sayfalar:
+`https://caka.app/abdullah` (public profil) ve `https://caka.app/en/login`.
+Yöntem: sayfa yüklendikten sonra `performance.getEntriesByType("resource")`
+üzerinden host dökümü, ardından `document.cookie`, `localStorage` ve
+`sessionStorage` okuması.
+
+| Ölçüm | Profil sayfası | Giriş sayfası |
+|---|---|---|
+| Üçüncü taraf host | `api.fontshare.com`, `static.cloudflareinsights.com` | `api.fontshare.com`, `cdn.fontshare.com`, `static.cloudflareinsights.com` |
+| Çerez | **0** | **0** |
+| `localStorage` | **0** | **0** |
+| `sessionStorage` | **0** | `react-router-scroll-positions` (envanterde) |
+
+Üç şeyi teyit ediyor: (1) ölçüm beacon'ı gerçekten her sayfada çalışıyor ve
+cihaza hâlâ hiçbir şey yazmıyor; (2) Fontshare'in **iki** host'u da
+gerçekten kullanılıyor — CSS `api`, font dosyaları `cdn` (kaydın §A satırıyla
+uyumlu); (3) profildeki tüm uzak görseller birinci taraf `/api/gorsel`
+proxy'sinden geliyor — ölçülen profilde YouTube kartı, GitHub avatarı ve dört
+ayrı sitenin favicon'u vardı ve **hiçbiri** kendi host'una istek doğurmadı.
+
+**Ölçülemeyen:** Mapbox isteği (prod'da konum kartı taşıyan public profil
+bulunamadı) ve giriş/çıkış akışındaki `localStorage` davranışı (oturum
+açılamadı). İkisi de iddia olarak değil, eksik olarak kayıtlı.
+
+> **Not — `curl` bu ölçümü yapamaz.** Aynı sayfaların HTML'i `curl` ile
+> çekildiğinde beacon script'i **görünmüyor**; Cloudflare enjeksiyonu
+> yalnız gerçek tarayıcı isteklerinde gerçekleşiyor. Beacon'ın varlığını
+> `curl` çıktısına bakarak "yok" diye kaydetmek bu yüzden hata olurdu.
 
 ### İfadenin sınırları — bilerek dar yazıldı
 

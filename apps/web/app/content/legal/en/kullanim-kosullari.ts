@@ -196,9 +196,11 @@ export const kullanimKosullariSectionsEn: LegalSection[] = [
         text: [
           "You put everything on your profile: the name and short bio on the " +
             "profile card, link blocks, social account blocks, the text in text " +
-            "and status blocks, the images you upload and the GitHub " +
-            "contribution graph you display. Caka neither writes nor chooses " +
-            "this content; it hosts and publishes it.",
+            "and status blocks, the images and galleries you upload, the " +
+            "documents you upload (PDF only for now — a CV, for example), the " +
+            "location card, YouTube and Spotify cards, the Qur'an verse card " +
+            "and the GitHub contribution graph you display. Caka neither " +
+            "writes nor chooses this content; it hosts and publishes it.",
         ],
       },
       {
@@ -256,6 +258,38 @@ export const kullanimKosullariSectionsEn: LegalSection[] = [
               "automated tools. Do not treat it as a field hidden from us; you " +
               "have written it on a public page.",
           ],
+          [
+            {
+              kind: "strong",
+              text: "You publish the contents of the document you upload knowingly. ",
+            },
+            "The PDF you put on a document card is public: a visitor can " +
+              "download the file, and the file's name is shown on the card " +
+              "too. If you upload a CV, the address, phone number, date of " +
+              "birth and referees inside it are published as well — we " +
+              "suggest stripping out what is not needed before uploading. If " +
+              "the document belongs to someone else, you must have their " +
+              "permission.",
+          ],
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "The address of a file you upload is permanent. " },
+          "Every image and document you upload is stored under a random " +
+            "address long enough not to be guessable. When you remove a block " +
+            "from your profile the block leaves your page, but ",
+          {
+            kind: "strong",
+            text: "the file itself stays in storage and that direct address keeps working",
+          },
+          ". For documents we ask search engines not to index them, but that " +
+            "only keeps them out of search results: a file whose address has " +
+            "been shared once stays reachable. Files are deleted when your " +
+            "account is closed; if you want one deleted sooner, write to ",
+          { kind: "strong", text: "hello@caka.app" },
+          ".",
         ],
       },
       {
@@ -431,16 +465,44 @@ export const kullanimKosullariSectionsEn: LegalSection[] = [
           ". We do not use your content in advertising, do not sell or license " +
             "it to third parties and do not include it in another product. When " +
             "you remove a piece of content from your profile or close your " +
-            "account, this right ends too; copies in technical backups are " +
-            "cleared within the ordinary backup cycle.",
+            "account, this right ends too. One caveat: removing content does " +
+            "not delete the file you uploaded for it from storage, and the " +
+            "file's direct address keeps working; we wrote this out in ",
+          {
+            kind: "link",
+            text: "section 4",
+            href: "#kullanici-icerigi",
+          },
+          ".",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Caka's own name, logo, interface, theme designs and source code, on " +
-            "the other hand, belong to us; these terms give you no right over " +
-            "them.",
+          { kind: "strong", text: "Third-party content inside the product. " },
+          "Some cards show content we did not produce either, and that " +
+            "content carries its own attribution requirements. The map image " +
+            "on the location card belongs to Mapbox and the map data to the " +
+            "OpenStreetMap contributors (ODbL); the card prints those " +
+            "attributions on itself. The Turkish translation on the Qur'an " +
+            "verse card is a public-domain work by Elmalılı Hamdi Yazır and " +
+            "the translator's name is shown on the card. Do not try to strip " +
+            "these attributions: the cards may only be published with them.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          "Caka's own name, logo, brand identity and theme designs, on the " +
+            "other hand, belong to us; these terms give you no right over " +
+            "them. The source code belongs to us too, but it is ",
+          {
+            kind: "strong",
+            text: "published as open source under the MIT licence",
+          },
+          ": your rights over the code come from that licence, not from these " +
+            "terms. The licence covers the code; it does not cover the Caka " +
+            "name, logo or brand identity.",
         ],
       },
     ],
@@ -739,8 +801,15 @@ export const kullanimKosullariSectionsEn: LegalSection[] = [
         text: [
           { kind: "strong", text: "Services the page talks to by itself. " },
           "There are also third-party services we use to run Caka: Google and " +
-            "Apple for sign-in, a font service for typefaces, GitHub for the " +
-            "contribution graph and Cloudflare for hosting. The link preview " +
+            "Apple for sign-in, a font service (Fontshare) for typefaces, " +
+            "GitHub for the contribution graph, and Cloudflare for hosting " +
+            "and visit measurement. If a profile has a ",
+          { kind: "strong", text: "location card" },
+          ", the visitor's browser fetches the card's map image directly " +
+            "from ",
+          { kind: "strong", text: "Mapbox" },
+          "; we cannot route that image through our own server because " +
+            "Mapbox's terms forbid it. The link preview " +
             "images on profiles are fetched from the remote site by our server; " +
             "your browser makes no request to that site. Beyond these there are " +
             "connections only you initiate: if you press the play button on a " +

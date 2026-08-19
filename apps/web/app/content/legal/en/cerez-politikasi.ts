@@ -39,11 +39,18 @@ export const cerezPolitikasiSectionsEn: LegalSection[] = [
         kind: "paragraph",
         text: [
           "Caka uses cookies only to make sign-in and sign-up work. Of the " +
-            "other storage the browser offers, ",
+            "other storage the browser offers, there is not a single call to ",
           { kind: "strong", text: "localStorage" },
-          " is not used anywhere in Caka: there is not a single call to that " +
-            "API in the application's source, and no persistent storage entry " +
-            "is created in your browser on Caka's behalf.",
+          " in our own code, and while you browse without signing in no " +
+            "persistent storage entry is created in your browser on Caka's " +
+            "behalf — we did not leave that as a claim; we opened the home " +
+            "page, the sign-in page and a profile page in a clean browser " +
+            "and looked. One caveat: the sign-in library we use can employ " +
+            "that API to keep sessions in sync across tabs. We have not yet " +
+            "measured whether an entry appears during the sign-in and " +
+            "sign-out flows; when we do, if one appears it goes into the " +
+            "table below and this sentence changes. We would rather not " +
+            "write a certainty we do not have.",
         ],
       },
       {

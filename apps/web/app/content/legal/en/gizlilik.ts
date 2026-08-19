@@ -186,8 +186,25 @@ export const gizlilikSectionsEn: LegalSection[] = [
                 "bio on the profile card, link blocks (title and address), " +
                 "social account blocks (platform, username, address and the " +
                 "address of that link's preview image), the rich text in text " +
-                "and status blocks, and image blocks. Also your unpublished " +
-                "draft layout and the answers you gave during initial setup.",
+                "and status blocks, and gallery blocks. Depending on the card " +
+                "type, the layout also stores: ",
+              {
+                kind: "strong",
+                text: "on a document card, the file's name, size and upload time",
+              },
+              "; ",
+              {
+                kind: "strong",
+                text: "on a location card, the name of the place you picked, its country, its time zone and its latitude/longitude rounded to two decimals (about 1 km)",
+              },
+              "; on YouTube and Spotify cards, the address, content id, title " +
+                "and cover image address; ",
+              {
+                kind: "strong",
+                text: "on a Qur'an verse card, the surah and verse number you picked together with the Arabic text of the verse and its Turkish translation",
+              },
+              ". Also your unpublished draft layout and the answers you gave " +
+                "during initial setup.",
             ],
             ["Entered directly by you."],
           ],
@@ -304,10 +321,44 @@ export const gizlilikSectionsEn: LegalSection[] = [
           "You write the profile content yourself, and once you publish it, it " +
             "is public. Everything you put there — a phone number, an address, " +
             "health or belief information — can be seen by anyone on the " +
-            "internet. Caka does not ask for and does not collect special " +
-            "categories of personal data (KVKK art. 6); if you write such " +
-            "information on your profile yourself, you have made it public of " +
-            "your own accord.",
+            "internet. Caka does not ask you for special categories of " +
+            "personal data (KVKK art. 6); if you write such information on " +
+            "your profile yourself, you have made it public of your own " +
+            "accord.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          {
+            kind: "strong",
+            text: "About the Qur'an verse card, said plainly. ",
+          },
+          "You can put a Qur'an verse card on your profile. When you do, the " +
+            "text of the verse you picked is written into your profile " +
+            "layout and is visible to everyone who sees your page. Data " +
+            "concerning religious belief is a ",
+          { kind: "strong", text: "special category of personal data" },
+          " under KVKK art. 6, and adding this card means you are making " +
+            "such data public yourself. The card is entirely optional: if " +
+            "you do not add it, no such data comes into existence, and " +
+            "removing it takes the data out of your published layout. We do " +
+            "not ask you about this, do not profile you on it and do not use " +
+            "it for any other purpose — we only publish the page you chose " +
+            "to publish.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "And about the location card: " },
+          "the coordinate the card carries is the coordinate of the place " +
+            "you searched for and picked in the editor — your device's " +
+            "location service is never used and you are never asked for your " +
+            "live location. The coordinate is rounded to two decimals (about " +
+            "1 km) when it is saved; a sharper location never enters our " +
+            "database at all. Even so, the card announces publicly which " +
+            "city or district you are in; add it knowing that.",
         ],
       },
     ],
@@ -867,42 +918,74 @@ export const gizlilikSectionsEn: LegalSection[] = [
               "Until you delete them. When you close your account or request " +
                 "deletion, they are deleted within ",
               { kind: "strong", text: "3 months" },
-              " at the latest.",
+              " at the latest. Removing a block from your profile does not " +
+                "delete the file you uploaded to it: the file stays in " +
+                "storage and anyone who knows its direct address can still " +
+                "reach it. Files are cleared only when the account is deleted.",
             ],
           ],
           [
             ["Session records (IP address and User Agent)"],
             [
-              "The session itself lives for 7 days. The record stays for a " +
-                "short window after the session ends and is deleted within ",
+              "The session itself lives for 7 days; once it expires the " +
+                "record becomes invalid and can no longer be used to sign " +
+                "in. There is ",
+              {
+                kind: "strong",
+                text: "no automated job clearing expired rows",
+              },
+              " from the database yet; we do it by hand, and our commitment " +
+                "is ",
               { kind: "strong", text: "90 days at the latest" },
-              ".",
+              " after the session ends. This line will change once the " +
+                "automated cleanup is written.",
             ],
           ],
           [
             ["Identity provider tokens (access and refresh tokens)"],
             [
-              "Invalidated when you sign out or when your account is deleted; " +
-                "they are not retained separately.",
+              "These are ",
+              { kind: "strong", text: "stored" },
+              " in our database together with your account — signing out " +
+                "ends your session but does not delete the token record. " +
+                "The record is deleted when your account is deleted. The " +
+                "tokens are currently stored ",
+              { kind: "strong", text: "unencrypted" },
+              "; we know this is a shortcoming and are deciding between not " +
+                "storing them at all and encrypting them. The scope we " +
+                "request is limited to signing you in: these tokens cannot " +
+                "be used to read your email or reach your files.",
             ],
           ],
           [
             ["Old username record (username_redirect)"],
             [
-              "30 days. When the period ends the record is permanently deleted; " +
-                "it is not archived.",
+              "30 days. When the period ends the record ",
+              { kind: "strong", text: "stops being used" },
+              ": the redirect stops and the name is released for someone " +
+                "else. The row itself is not deleted from the database at " +
+                "that moment — it can remain as a dead record until the " +
+                "account is deleted. It contains only the old username, " +
+                "which profile it belonged to, and dates.",
             ],
           ],
           [
             ["GitHub contribution graph cache (github_calendar)"],
             [
-              "A successful record is fresh for 6 hours, a negative result for " +
-                "24 hours; when the graph is removed from a profile the data is " +
-                "not fetched again and the record is cleared on a scale of ",
-              { kind: "strong", text: "days, not months" },
-              ". This is the weakest link in the list: the person the data " +
-                "belongs to has no relationship with Caka at all, which is why " +
-                "we keep the window deliberately short.",
+              "A successful record is considered ",
+              { kind: "strong", text: "fresh" },
+              " for 6 hours, a negative result for 24 hours; once that " +
+                "passes the data is fetched from GitHub again. Note: these " +
+                "are freshness thresholds, ",
+              { kind: "strong", text: "not deletion periods" },
+              " — the row stays in the table. When the graph is removed " +
+                "from a profile the data is not fetched again, but the old " +
+                "record is not deleted automatically either. This is the " +
+                "weakest link in the list, because the person the data " +
+                "belongs to may have no relationship with Caka at all. You " +
+                "can ask us to delete such a row at ",
+              { kind: "strong", text: "hello@caka.app" },
+              "; automatic clearing is on our to-do list.",
             ],
           ],
           [
