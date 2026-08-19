@@ -500,6 +500,7 @@ export const LANDING_PERSONAS: Persona[] = [
             photos: [
               { assetId: FOTO(31), alt: "Sahne ışıkları" },
               { assetId: FOTO(32), alt: "Kayıt stüdyosu" },
+              { assetId: FOTO(33), alt: "Plak çalar" },
             ],
             layout: "grid",
             url: "",

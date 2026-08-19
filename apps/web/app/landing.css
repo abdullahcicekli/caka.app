@@ -740,6 +740,47 @@ html[data-landing]::-webkit-scrollbar {
   object-fit: contain;
 }
 
+/* ----------------------------------------------------------------
+ * Karakter şeridi
+ *
+ * Aynı `lp-track` kabını kullanır (bkz. yukarısı); farkı kartın kendisi:
+ * burada kart bir MOCKUP'tır ve tam kanar — beyaz bir kutunun içinde
+ * durmaz. Altyazı kartın DIŞINDA, şeridin tipografisinde.
+ * ---------------------------------------------------------------- */
+
+.lp-kisi {
+  display: flex;
+  width: min(84vw, 470px);
+  flex: none;
+  flex-direction: column;
+  scroll-snap-align: start;
+}
+@media (min-width: 1024px) { .lp-kisi { width: 470px; } }
+
+.lp-kisi-media {
+  overflow: hidden;
+  border-radius: var(--lp-radius);
+  /* 4:3 — mockup'ın kendi oranı; kutu görselden önce yerini alsın diye
+     aspect-ratio ile sabit (yükleme sırasında düzen kaymaz). */
+  aspect-ratio: 4 / 3;
+}
+.lp-kisi-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lp-kisi-ad {
+  margin-top: 14px;
+  padding-inline: 2px;
+  font-size: 17px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+.lp-kisi-ad strong { font-weight: 600; }
+.lp-kisi-ad span { color: color-mix(in srgb, var(--color-murekkep) 58%, transparent); }
+
 /* Segment kontrolü */
 .lp-segments {
   display: inline-flex;

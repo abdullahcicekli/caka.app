@@ -47,6 +47,7 @@
 import { useSearchParams } from "react-router";
 
 import { ProfileCanvas } from "~/components/profile-block";
+import kaanSonVideo from "~/assets/landing/lab/kart/kaan-son-video.jpg";
 import { LANDING_PERSONAS, type Persona } from "~/content/landing/personas";
 // Altyazı metni katalogdan (Değişmez #5). Laboratuvar tek dilde çalışır —
 // mockup'lar dilsizdir, şerit altyazısını landing kendi diliyle basar.
@@ -92,7 +93,9 @@ const YOUTUBE_AKISLARI: YoutubeFeedMap = {
     videoId: "8xR2mNqPd1A",
     title: "İstanbul'da 24 saat: sadece toplu taşımayla",
     url: "https://www.youtube.com/watch?v=8xR2mNqPd1A",
-    thumbnail: "",
+    // Video kartındaki kareyle AYNI OLMAMALI: kanal kartı "son video"yu
+    // gösterir, video kartı sabitlenmiş başka bir videoyu.
+    thumbnail: kaanSonVideo,
     short: false,
     published: "4 gün önce",
     views: "182 B görüntülenme",

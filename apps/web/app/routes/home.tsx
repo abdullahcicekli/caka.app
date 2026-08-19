@@ -6,6 +6,7 @@ import { CtaSection } from "~/components/landing/cta-section";
 import { EditorialSection } from "~/components/landing/editorial-section";
 import { FaqSection } from "~/components/landing/faq-section";
 import { Hero } from "~/components/landing/hero";
+import { KarakterlerSection } from "~/components/landing/karakterler-section";
 import { MinutesSection } from "~/components/landing/minutes-section";
 import { Navbar } from "~/components/landing/navbar";
 import { OutroSection } from "~/components/landing/outro-section";
@@ -115,7 +116,7 @@ export async function loader({ request }: Route.LoaderArgs) {
  * Kaydirma gostergesinin izledigi bolumler. Gosterge dekoratif; ayni
  * capalarin gercek baglantilari menu katmaninda ve footer'da.
  */
-const SECTION_IDS = ["hero", "urun", "vitrin", "sss", "kapanis"] as const;
+const SECTION_IDS = ["hero", "urun", "karakterler", "vitrin", "sss", "kapanis"] as const;
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const landing = useCatalog(landingCatalog);
@@ -128,6 +129,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <MinutesSection minutes={landing.minutes} />
         <ShareSection share={landing.share} />
         <AudienceSection audience={landing.audience} />
+        <KarakterlerSection karakterler={landing.karakterler} />
         <ShowcaseSection showcase={landing.showcase} />
         <FaqSection
           faq={landing.faq}

@@ -43,6 +43,7 @@ const FOTOGRAFLAR = [
   [foto(23), "serkan-galeri-3.jpg"],
   [foto(31), "ozan-galeri-1.jpg"],
   [foto(32), "ozan-galeri-2.jpg"],
+  [foto(33), "ozan-galeri-3.jpg"],
   [foto(41), "busra-galeri-1.jpg"],
   [foto(42), "busra-galeri-2.jpg"],
   [foto(43), "busra-galeri-3.jpg"],
