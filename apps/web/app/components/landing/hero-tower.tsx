@@ -39,24 +39,36 @@ const REPEAT = 3;
  * olduğundan komşu iki kart hiçbir yerde aynı temayı taşımıyor; döngü sarma
  * noktasında da taşımıyor.
  *
- * DÖRT TEMA, ALTI DEĞİL. `light` ve `lavanta` şeritte YOK — süs kararı değil,
- * ölçüm kararı: ikincil kart metni (link kartındaki alan adı, sosyal karttaki
- * handle) o iki temada 4,19 ve 3,98 kontrastta kalıyor, 12-13px metin için
- * AA eşiği 4,5 (`docs/backlog.md` #15). Şerit ürünün vitrini; AA'yı geçmeyen
- * bir kombinasyonu vitrine koymuyoruz. Şeritte ölçülen en düşük metin oranı
- * artık 5,03:1 (canlı sayfa, alfa kompozisyonu ve degrade durakları dâhil).
- * Ayrıca beyaz kart fıstık yeşili zeminde 1,38:1 kalıyordu — kart kenarı
- * neredeyse görünmüyordu; dört koyu kart zemine 9,25-13,26 ile oturuyor.
+ * ZEMİN ARTIK KIRIK BEYAZ (`--color-tebesir`, #efebe1), fıstık yeşili değil.
+ * Aşağıdaki bütün oranlar o zemine göre YENİDEN ölçüldü.
  *
- * BİLİNEN SINIR: durum kartı kart yüzeyini değil VURGU rengini kullanıyor
- * (`--profile-gradient`) ve hiçbir tema vurgusu fıstık yeşiline 3:1 ile
- * oturmuyor — ufuk 2,24 · neon 2,31 · zumrut 1,44 · dark 1,00. Sonuncusu
- * çünkü `dark`ın vurgusu `--color-kirec`, yani şerit zemininin TA KENDİSİ.
- * Tek zeminle bunu çözmek matematiksel olarak mümkün değil: koyu kart
- * yüzeylerinin 3:1'i için zemin luminansı ≥0,125, açık vurguların 3:1'i için
- * ≤0,126 olmalı ve mor/turuncu vurgular o pencerede de geçmiyor. Üründe bu
- * kartlar kendi tema zeminlerinin üstünde duruyor ve sorun yok; burada
- * çözüm ancak şerit zemininin değişmesi olurdu.
+ * DÖRT TEMA, ALTI DEĞİL — karışım değişmedi, gerekçesi ikiye katlandı:
+ *
+ *   1. Kart İÇİ metin. `light` ve `lavanta`nın ikincil metni (link kartındaki
+ *      alan adı, sosyal karttaki handle) 4,22 ve 3,99 kontrastta kalıyor;
+ *      12-13px metin için AA eşiği 4,5 (`docs/backlog.md` #15). Bu ölçüm kart
+ *      yüzeyine göredir, yani şerit zemininden BAĞIMSIZ — zemin değişince
+ *      geçersizleşmedi. Kalan dördü: metin 11,16-15,00 · ikincil 5,34-5,97.
+ *   2. Kart yüzeyi ↔ zemin. `light`/`lavanta`nın beyaz kartı kırık beyaza
+ *      1,19 ile oturuyor (fıstık yeşilinde 1,38 idi) — açık zeminde beyaz
+ *      kart daha da kayboluyor, ikinci eleme sebebi. Dört koyu tema ise
+ *      İYİLEŞTİ: dark 12,49 · ufuk 10,75 · neon 14,04 · zumrut 13,91
+ *      (yeşil zeminde 10,74 / 9,25 / 12,08 / 11,97 idi).
+ *
+ * `dark`ın vurgusu `--color-kirec`'ti, yani ESKİ zeminin ta kendisi: durum
+ * kartı zemine 1,00 ile oturuyor, hiç görünmüyordu. Zemin çekilince o kart
+ * şeridin tek kireç lekesi oldu — kaybolan bir kart değil, bir vurgu.
+ *
+ * BİLİNEN SINIR (ÇÖZÜLDÜ, gerekçesi burada duruyor): durum kartı kart
+ * yüzeyini değil VURGU degradesini basıyor ve hiçbir vurgu durağı kırık
+ * beyaza 3:1 ile oturmuyor — dark 1,16/1,53 · zumrut 1,67/1,09 ·
+ * neon 2,69/2,17/1,53 · ufuk 2,60/3,32. Her değer yeşil zemindekinden İYİ
+ * ama çoğu hâlâ eşiğin altında. Tek zeminle renkle çözmek matematiksel
+ * olarak mümkün değil: koyu kart yüzeylerinin 3:1'i açık, açık vurguların
+ * 3:1'i koyu bir zemin ister. Bu yüzden kartın kenarı RENKLE değil ışıkla
+ * çiziliyor: şerit kartlarına yalnız landing'de bir gölge veriliyor
+ * (`.lp-tower .profile-block`, landing.css). Üründe gerek yok, orada kart
+ * kendi tema zemininin üstünde duruyor.
  *
  * Eşleşmeler personanın kendi görsel dünyasını yankılar:
  *   Kerem  müzisyen, "Gece Yolu" (gece yolu, indigo-kömür)  → dark

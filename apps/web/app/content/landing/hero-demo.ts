@@ -194,7 +194,10 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
   // gösteriyor ("S", "K") — şeritte yer tutucu harf bırakmamak için iki
   // kişisel sitenin favicon'u sahibinin portresi. (Kişisel sitelerde
   // gerçekten de sık rastlanan bir seçim.)
-  // Kişi TAŞIMAYAN detay kırpmaları: sosyal kartın og önizlemesi.
+  // Kişi TAŞIMAYAN yakın planlar: sosyal kartın og önizlemesi. `detailElif`
+  // bir dönem karanlık bir ahşap lata duvarının önündeki vazoydu — ne
+  // anlattığı belli değildi; yerine Elif'in işini gösteren bir kare üretildi
+  // (dalga formu açık kurgu ekranı + kulaklık). Dosya adı korundu.
   "demo-selin-threads": sceneSelinTools,
   "demo-elif-linkedin": detailElif,
   "demo-naz-link": detailNaz,

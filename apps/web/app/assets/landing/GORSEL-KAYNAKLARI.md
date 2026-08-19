@@ -87,6 +87,7 @@ Hepsi laboratuvardan üretildi; elle çizilmiş varlık yok. Yeniden üretmek i�
 | `telefon-busra.webp` | `/login` sağ paneli ve `/onboarding` |
 | `../thumb-podcast.webp` | Hero şeridi, Elif'in "kamera arkası" video kapağı. fal `flux-pro/v1.1-ultra`, 16:9, kişisiz podcast stüdyosu. 1000×562 |
 | `../og-konser.webp` | Hero şeridi, Kerem'in konser bağlantısı og'u. fal `flux-pro/v1.1-ultra`, 21:9, kişisiz sahne. 900×378 |
+| `../detail-elif.webp` | Hero şeridi, Elif'in LinkedIn kartının og'u. fal `flux-pro/v1.1-ultra`, 16:9 (2752×1536) → 1,91:1'e kırpılıp 560×293. Kişisiz: dalga formu açık ses kurgu ekranı, kulaklık, kupa, defter; yulaf/adaçayı paleti. **Öncesi:** karanlık ahşap lata duvarının önünde bir vazo (560×293) — kartın konusuyla ilgisizdi, silindi. |
 
 Karakter şeridi HAREKETSİZDİR: bir kartta denenen animasyonlu webp döngüsü
 (`emre-dongu.webp`) kaldırıldı, dosyası silindi.

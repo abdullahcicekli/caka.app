@@ -475,7 +475,12 @@ html[data-landing]::-webkit-scrollbar {
   z-index: 1;
   overflow: hidden;
   border-radius: var(--lp-radius);
-  background: var(--color-kirec);
+  /* KIRIK BEYAZ, fıstık yeşili değil. Şerit ürünün vitrini; zemin kartların
+     önüne geçmemeli. Panelin kenarını `--color-tebesir`in sayfa zeminine olan
+     1,10'luk farkı ile 1px'lik iç halka birlikte çiziyor — halka `box-shadow`
+     çünkü `border` yüksekliği 600/768'den kaydırırdı (CLS). */
+  background: var(--color-tebesir);
+  box-shadow: inset 0 0 0 1px var(--color-sinir);
   /* Yükseklik SABİT ve satırların toplamına eşit: oranla tahmin etmek
      yerine içerikten türer, kartlar yüklenirken sayfa kaymaz (CLS = 0).
      iki satır: 324 + 12 + 240 + 24 dolgu = 600; üç satır: + 156 + 12 = 768. */
@@ -601,6 +606,25 @@ html[data-landing]::-webkit-scrollbar {
   );
 }
 
+/* Kartın kaldırılması — YALNIZ ŞERİTTE, ürünün kartına dokunmadan.
+ *
+ * Neden gerekli: koyu kart yüzeyleri kırık beyaz zemine 10,75-14,04 ile
+ * oturuyor, ama DURUM kartı yüzeyi değil VURGU degradesini basıyor ve o
+ * degradelerin bazı durakları (kireç 1,16 · nane 1,09 · şeftali 1,53) zeminle
+ * neredeyse aynı luminansta. Tek bir zeminle bunu renkle çözmek mümkün değil
+ * (koyu kartların 3:1'i açık bir zemin, açık vurguların 3:1'i koyu bir zemin
+ * ister). Gölge kenarı RENKTEN BAĞIMSIZ çiziyor: hangi tema, hangi vurgu
+ * olursa olsun kartın sınırı görünür.
+ *
+ * Üründe yok, çünkü orada kart kendi tema zemininin üstünde durur ve sorun
+ * yok; burası vitrinin kendi ışığı.
+ */
+.lp-tower .profile-block {
+  box-shadow:
+    0 1px 2px rgb(20 20 26 / 0.08),
+    0 10px 24px -12px rgb(20 20 26 / 0.22);
+}
+
 /* Medyanın üstüne binen hap: tek parça bir kabuk (beyaz), içinde adres
    alanı ve koyu gönder düğmesi. Dar ekranda alt alta iner. */
 /*
@@ -688,12 +712,16 @@ html[data-landing]::-webkit-scrollbar {
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-murekkep) 52%, transparent);
+  /* Değerler ZEMİNLE BİRLİKTE yeniden ölçüldü. Eski %52 + 0,72 opaklık
+     fıstık yeşilinde beyaz metne 3,10 veriyordu; kırık beyazda 2,76'ya
+     düşüyordu — düğme boş zemine denk geldiğinde 12px metin okunmuyordu.
+     Bu ikili 5,97 veriyor (WCAG 2.2.2 kontrolü, AA eşiği 4,5). */
+  background: color-mix(in srgb, var(--color-murekkep) 72%, transparent);
   padding-inline: 10px;
   color: white;
   font-size: 12px;
   font-weight: 500;
-  opacity: 0.72;
+  opacity: 0.9;
   transition: background-color 150ms var(--lp-ease), opacity 150ms var(--lp-ease);
 }
 .lp-strip-toggle:hover,
