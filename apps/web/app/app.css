@@ -892,7 +892,12 @@
 
 .profile-block-profile { align-items: flex-start; justify-content: center; padding: 18px; flex-direction: column; }
 .profile-block-profile strong { margin-top: 10px; font-size: 18px; }
-.profile-block-profile p { margin-top: 3px; color: var(--profile-muted); font-size: 13px; }
+/* Izgaradaki profil kartı KART zemininde durur, sayfa zemininde değil: ikincil
+   metin `--profile-card-muted`i okumalı. Ufuk temasında sayfa mürekkebi
+   lacivert ve kart da lacivert; `--profile-muted` orada laciverdi laciverdin
+   üstüne yazıyordu (ölçüldü: 1,01:1). Diğer kart tipleri bu geri düşüşü zaten
+   kullanıyor (`.profile-block-social small` vb.), profil kartı atlanmıştı. */
+.profile-block-profile p { margin-top: 3px; color: var(--profile-card-muted, var(--profile-muted)); font-size: 13px; }
 .profile-identity .profile-block-profile {
   height: auto;
   justify-content: flex-start;
@@ -916,6 +921,9 @@
 .profile-identity .profile-block-profile p {
   margin-top: 14px;
   max-width: 30ch;
+  /* Kimlik bloğu kart DEĞİL (zemini saydam, bkz. yukarısı) — sayfa
+     mürekkebinin soluğu doğru olan burada. */
+  color: var(--profile-muted);
   font-size: 16px;
   line-height: 1.55;
   white-space: pre-wrap;
