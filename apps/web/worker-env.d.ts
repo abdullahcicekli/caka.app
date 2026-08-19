@@ -9,6 +9,12 @@ interface CakaSecretEnv {
   APPLE_PRIVATE_KEY: string;
   /** `/api/gorsel` imzası (HMAC-SHA256). Yoksa proxy tamamen kapalıdır. */
   IMAGE_PROXY_SECRET: string;
+  /**
+   * Stadia Maps API anahtarı — konum kartının statik harita karesi
+   * (`/api/harita`). Yalnız Worker kullanır; ziyaretçiye hiç ulaşmaz.
+   * Yoksa harita kareleri kapalıdır ve kart haritasız tasarımına düşer.
+   */
+  STADIA_API_KEY: string;
 }
 
 interface Env extends CakaSecretEnv {}

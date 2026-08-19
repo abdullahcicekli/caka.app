@@ -1,7 +1,7 @@
 import type { SpotifyKind } from "@caka/shared";
 
 import type { WidgetContent } from "./index";
-import { type NumberFormat, relativeTime, shortNumber } from "./shared";
+import { type NumberFormat, clock24, relativeTime, shortNumber } from "./shared";
 
 const numbers: NumberFormat = { decimal: ",", thousand: "mil", million: "mi", billion: "bi" };
 
@@ -64,6 +64,12 @@ export const ptBR = {
           return "Programa";
       }
     },
+  },
+
+  location: {
+    fallbackLabel: "Localização",
+    cardLabel: (label: string) => `Localização: ${label}`,
+    clock: (hour: number, minute: number) => clock24(hour, minute),
   },
 
   github: {

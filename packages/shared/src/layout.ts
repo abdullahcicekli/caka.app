@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidTimeZone, roundCoordinate } from "./location";
+
 export const PROFILE_NAME_MAX = 60;
 export const PROFILE_BIO_MAX = 160;
 
@@ -394,6 +396,65 @@ const youtubeBlockSchema = z.object({
 export type YoutubeBlockData = z.infer<typeof youtubeBlockSchema>["data"];
 export type YoutubeKind = YoutubeBlockData["kind"];
 
+/**
+ * Konum bloğu — profil sahibinin bulunduğu yeri gösteren harita kartı.
+ *
+ * KAYITTA YALNIZ ÇÖZÜLMÜŞ SONUÇ DURUR (YouTube/Spotify'daki KTD34 deseni):
+ * arama editörde, oturumlu kullanıcı için bir kez yapılır; render ne coğrafi
+ * kodlamaya ne de saat dilimi servisine çıkar.
+ *
+ * KOORDİNAT YUVARLANMIŞ GELİR (`roundCoordinate`, 2 ondalık ≈ 1,1 km). Şema
+ * bunu ayrıca ZORLAR: blok verisi editörden de gelse, elle yazılmış bir
+ * JSON'dan da gelse ev adresi çözünürlüğünde bir koordinat kaydedilemez.
+ *
+ * `lat`/`lon` NULL OLABİLİR: blok boş doğar (kullanıcı henüz arama yapmadı)
+ * ve 0,0 gerçek bir koordinat olduğu için "boş" anlamına gelemezdi.
+ */
+const locationBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("location"),
+  data: z.object({
+    /** Kartta görünen yer adı: "Kadıköy, İstanbul". */
+    label: z.string().trim().max(80).default(""),
+    /** Ülke adı; kart yer olan boyutlarda ikinci satırda gösterir. */
+    country: z.string().trim().max(80).default(""),
+    /** ISO 3166-1 alpha-2 (büyük harf) ya da boş. */
+    countryCode: z
+      .string()
+      .trim()
+      .max(2)
+      .regex(/^([A-Z]{2})?$/, "Geçersiz ülke kodu")
+      .default(""),
+    lat: z
+      .number()
+      .min(-90)
+      .max(90)
+      .nullable()
+      .default(null)
+      .transform((value) => (value === null ? null : roundCoordinate(value))),
+    lon: z
+      .number()
+      .min(-180)
+      .max(180)
+      .nullable()
+      .default(null)
+      .transform((value) => (value === null ? null : roundCoordinate(value))),
+    /**
+     * IANA saat dilimi ("Europe/Istanbul"). Kayıtta saklanır çünkü kartın
+     * saati KONUMUN dilimine göre işler, ziyaretçininkine göre değil.
+     * Sağlayıcı vermezse boş kalır ve kart saat pilini hiç basmaz.
+     */
+    timeZone: z
+      .string()
+      .trim()
+      .max(64)
+      .refine((value) => value === "" || isValidTimeZone(value), "Geçersiz saat dilimi")
+      .default(""),
+  }),
+});
+
+export type LocationBlockData = z.infer<typeof locationBlockSchema>["data"];
+
 export const profileBlockSchema = z.discriminatedUnion("type", [
   profileCardSchema,
   socialBlockSchema,
@@ -404,6 +465,7 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   galleryBlockSchema,
   youtubeBlockSchema,
   spotifyBlockSchema,
+  locationBlockSchema,
 ]);
 
 /**
@@ -573,6 +635,7 @@ export const BLOCK_ISSUE_IDS = [
   "youtube_video_url",
   "youtube_channel_url",
   "spotify_url",
+  "location_missing",
 ] as const;
 
 export type BlockIssueId = (typeof BLOCK_ISSUE_IDS)[number];
@@ -618,6 +681,12 @@ export function blockIssue(block: ProfileBlock): BlockIssueId | null {
       // YouTube'la aynı gerekçe: kimlik kayıt anında çözülür, boşsa gömülecek
       // bir şey yok.
       return block.data.entityId ? null : "spotify_url";
+    case "location":
+      // Koordinat kayıt anında aramadan gelir; yoksa çizilecek harita yok.
+      // `label` koordinatla birlikte yazıldığı için ayrıca aranmaz.
+      return block.data.lat !== null && block.data.lon !== null
+        ? null
+        : "location_missing";
   }
 }
 
@@ -664,6 +733,12 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   // 2: 181px'lik bir oynatıcıda kontroller sığmıyor. Albüm/liste/sanatçı
   // gömmesi 352px istediği için onların varsayılanı 2x2 (kayıt anında seçilir).
   spotify: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
+  // Harita kartı bir GÖRÜNTÜDÜR: dar bir şeritte ne etiketler ne de saat pili
+  // okunur. Taban 4x4 (masaüstünde 368x324) — kareye yakın bu kutuda 512x384
+  // kare `cover` ile çok az kırpılıyor ve şehir adları okunuyor. 4x3 (240px)
+  // denendi: pil harita etiketlerinin üstüne biniyor. Tavan 8x6, yani tam
+  // genişlikte üç satırlık bir "kapak" haritası da mümkün.
+  location: { minW: 4, minH: 4, maxW: 8, maxH: 6 },
 };
 
 /** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa bloğun sınırları. */

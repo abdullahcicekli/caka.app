@@ -29,6 +29,7 @@ export const es = {
     gallery: "Galería de fotos",
     youtube: "YouTube",
     spotify: "Spotify",
+    location: "Ubicación",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -43,6 +44,7 @@ export const es = {
     youtube_video_url: "Escribe un enlace de vídeo de YouTube",
     youtube_channel_url: "Escribe un enlace de canal de YouTube",
     spotify_url: "Escribe un enlace de Spotify",
+    location_missing: "Busca y elige tu lugar",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -135,6 +137,16 @@ export const es = {
     spotifyLinkLabel: "Enlace de Spotify",
     spotifyHint:
       "Se pueden añadir canciones, álbumes, listas, artistas, pódcast y episodios: añadimos lo que pegues.",
+    locationSearchLabel: "Dónde estás",
+    locationSearchPlaceholder: "Busca una ciudad o distrito…",
+    locationSearching: "Buscando…",
+    locationNoResults: (query: string) => `No se encontró ningún lugar para «${query}».`,
+    locationSelected: (label: string) => `${label} seleccionado`,
+    locationClear: "Quitar ubicación",
+    locationPrivacyHint:
+      "La búsqueda se limita al nivel de ciudad o distrito y la coordenada se redondea a aproximadamente 1 km antes de guardarse. En tu página se ven el nombre del lugar, el país, una posición aproximada y la hora local de allí, no tu dirección exacta.",
+    locationTimeZone: (zone: string) => `Zona horaria: ${zone}`,
+    locationNoTimeZone: "No se encontró zona horaria para este lugar; la tarjeta no mostrará la hora.",
     fixIssue: "Corregir",
     removeBlock: "Quitar",
     editedElsewhere: "La página se ha editado en otro sitio.",
@@ -281,6 +293,9 @@ export const es = {
       "No se ha encontrado este canal. Comprueba la dirección o prueba con la dirección /channel/UC… del canal.",
     youtubeVideoNotFound:
       "No se ha encontrado el vídeo. Puede que se haya eliminado o sea privado, o que el enlace se haya copiado incompleto.",
+
+    locationQueryTooLong: (max: number) => `La búsqueda puede tener como máximo ${max} caracteres`,
+    locationUnavailable: "El servicio de ubicación no respondió. Vuelve a intentarlo en un momento.",
 
     uploadOnlyJpegPng: "Solo puedes subir JPEG o PNG",
     uploadTooLarge: "La foto puede pesar como máximo 5 MB",

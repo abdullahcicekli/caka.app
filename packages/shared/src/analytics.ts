@@ -188,6 +188,9 @@ function blockUrl(block: ProfileBlock): string {
     // Galeri tek bir dış adrese gitmez (fotoğraflar birinci taraf asset);
     // ölçülecek bir tıklama hedefi yok.
     case "gallery":
+    // Konum kartı bir GÖRÜNTÜ; hiçbir yere gitmez (harita sağlayıcısına
+    // bağlantı vermek ziyaretçiyi üçüncü tarafa yollamak olurdu).
+    case "location":
       return "";
     default: {
       const exhaustive: never = block;
@@ -215,6 +218,7 @@ function blockLabel(block: ProfileBlock): string {
     case "profile":
     case "text":
     case "gallery":
+    case "location":
       return "";
     default: {
       const exhaustive: never = block;

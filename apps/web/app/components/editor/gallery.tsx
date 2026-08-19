@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import {
   Link as LinkIcon,
+  MapPin,
   MediaImage,
   MediaImageList,
   MediaVideo,
@@ -47,6 +48,7 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   gallery: { icon: MediaImageList, enabled: true },
   youtube: { icon: MediaVideo, enabled: true },
   spotify: { icon: MusicDoubleNote, enabled: true },
+  location: { icon: MapPin, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */

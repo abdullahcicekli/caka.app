@@ -3,9 +3,10 @@
 Caka'nın kişisel veriye dokunan tüm üçüncü tarafları. `/gizlilik` §6 tablosu bu
 kayıttan türetildi.
 
-**Tarih:** 2026-08-17 · **Kaynaklar:** `apps/web/wrangler.jsonc`,
+**Tarih:** 2026-08-19 · **Kaynaklar:** `apps/web/wrangler.jsonc`,
 `apps/web/app/root.tsx`, `apps/web/server/auth.ts`, `server/github.ts`,
-`server/og.ts`, `server/avatar.ts`, Cloudflare paneli (binding ve ayar teyidi).
+`server/og.ts`, `server/avatar.ts`, `server/map-frame.ts`, `server/location.ts`,
+Cloudflare paneli (binding ve ayar teyidi).
 
 > ### Mekanizma sütunu bilerek boş
 > "Yurt dışı aktarım mekanizması" sütunundaki her hücre **boştur** ve boş
@@ -104,6 +105,68 @@ Tedarikçi satırı bu nedenle **A bölümünden B bölümüne taşındı**.
 
 ---
 
+### 🗺️ Konum kartı — harita ziyaretçiye birinci taraftan gelir
+
+Konum bloğu, bu kaydın en dikkat isteyen yeni yüzeyi: bir harita kartı normalde
+ziyaretçinin tarayıcısını doğrudan bir kutucuk sunucusuna bağlar. Burada
+bağlamıyor.
+
+- **Ziyaretçi hiçbir harita sunucusuna istek atmaz.** Kart iki `<img>`'den
+  ibaret ve ikisi de `/api/harita` yolundan geliyor; kareyi Worker çekiyor,
+  Cache API'de 30 gün tutuyor ve yanıtı **sıfırdan** kuruyor (sağlayıcının
+  `Set-Cookie` dâhil hiçbir başlığı geçmiyor). Etkileşimli harita (MapLibre +
+  kutucuk sunucusu) bilinçli olarak SEÇİLMEDİ: her ziyaretçiyi üçüncü tarafa
+  tanıtır ve ~200 KB JS ekler.
+- **API anahtarı ziyaretçiye ulaşmaz.** Sağlayıcı adresini yalnız Worker
+  kuruyor; ziyaretçinin gördüğü adres yalnız koordinat + kademe + HMAC imzası
+  taşıyor. (Bu yüzden `/api/gorsel` yeniden kullanılmadı: o uç hedef adresi
+  sorgu dizesinde gösterir.)
+- **Uç imzalı.** İmzasız bırakılsaydı herkesin kullanabileceği bedava bir
+  harita CDN'i olurdu. Anahtar ya da imza sırrı tanımsızsa uç **tamamen
+  kapalıdır** ve kart haritasız tasarımına düşer (fail-closed).
+- **Koordinat yuvarlanmış.** Kayda iki ondalık (≈1,1 km) giriyor ve uç, gelen
+  koordinatı yeniden yuvarlıyor — elle yazılmış tam çözünürlüklü bir istek
+  bile sokak düzeyinde harita çekemez.
+- **Konum arama ziyaretçinin eylemi değil.** `/api/konum` oturum ister; profil
+  sayfası açıldığında hiç çağrılmaz.
+- **Saat dilimi hiçbir tedarikçiye sorulmaz:** koordinattan çevrimdışı
+  hesaplanıyor (`@photostructure/tz-lookup`, CC0).
+
+#### Sağlayıcı seçimi neden Stadia Maps — ve neden ücretli
+
+Mimarinin şartı şuydu: kareyi **sunucuda önbelleğe alıp kendi alan adımızdan
+servis edebilmek**. Karşılaştırılan sağlayıcılarda durum:
+
+| Sağlayıcı | Sunucuda önbellekleyip yeniden sunmak |
+|---|---|
+| **Stadia Maps** (`static_cacheable`) | ✅ Şartlarda **açıkça** izinli — "images may be saved, cached, modified, embedded… and redistributed by your… systems or your… infrastructure", **ücretli abonelik sürdüğü sürece** |
+| MapTiler | ❌ Açıkça yasak ("prohibited to store, save, and/or redistribute any map content from a server-side cache") |
+| Thunderforest | ❌ Açıkça yasak ("caching proxies… are not permitted") |
+| CARTO basemaps | ❌ Ücretsiz genel kullanıma kapalı (yalnız kurumsal müşteriler) |
+| `tile.openstreetmap.org` | ❌ Toplu indirme/proxy yasak; ayrıca koyu stili yok |
+| Mapbox / Geoapify | ⚠️ Şartlar **sessiz** — sessizlik izin değildir |
+| OpenFreeMap / Protomaps | — Yalnız vektör; Worker içinde raster üretecek bir yol yok (Canvas/WebGL yok) |
+
+Yani ücretsiz seçeneklerin hiçbiri bu mimariye sözleşmeyle izin vermiyor.
+Ücretsiz kalmanın tek yolu **etkileşimli haritaya geçip ziyaretçiyi kutucuk
+sunucusuna bağlamaktı** — bu kaydın A bölümüne yeni bir satır, her profil
+görüntülemesinde bir üçüncü taraf ve ~200 KB JS demek. Bedel karşılaştırması
+bu yüzden "para mı, gizlilik mi" oldu ve para seçildi: **Stadia Maps Starter,
+20 USD/ay.**
+
+Anahtar (`STADIA_API_KEY`) tanımlanana kadar özellik kapalı; kart haritasız
+hâliyle çalışır. Yani bu satır, anahtar tanımlandığı gün canlıya girer.
+
+#### Atıf yükümlülüğü — kartta görünür
+
+Kare `manual_attribution=true` ile filigransız isteniyor; yükümlülük bize
+geçiyor ve kart sağ alt köşesinde **`© Stadia Maps © OpenMapTiles ©
+OpenStreetMap`** yazıyor (`components/location-card.tsx`). Arama sonuçlarının
+atfı (`© OpenStreetMap contributors — Photon (Komoot)`) editör panelinde
+görünür. Harita verisi ODbL, stil ve kutucuklar sağlayıcının.
+
+---
+
 ## B. Yalnızca **sunucudan** çağrılan tedarikçiler
 
 Bu grupta ziyaretçinin tarayıcısı tedarikçiye hiç istek atmaz; çağrıyı Worker
@@ -117,6 +180,8 @@ yapar, dolayısıyla ziyaretçinin IP adresi tedarikçiye ulaşmaz.
 | **GitHub, Inc.** | Katkı grafiği verisinin alınması (public HTML parçası `/users/<login>/contributions`, `server/github.ts`; kimlik doğrulaması yok) | Yalnızca gösterilecek **GitHub kullanıcı adı**. Ziyaretçinin IP'si GitHub'a ulaşmaz | Veri kaynağı / ayrı veri sorumlusu | ABD | **Evet** (giden handle bakımından) | ⬚ *(boş — OQ2a)* |
 | **og:image kazıması** — hedef siteler (`server/og.ts`) | Bağlantının önizleme görselinin bulunması | Profil sahibinin girdiği **URL**; isteği Worker atar, gövde akış hâlinde ve en fazla 1 MB okunur | Bizim tedarikçimiz değil | Belirsiz — URL'i profil sahibi girer | Duruma göre | ⬚ *(uygulanamaz)* |
 | **Önizleme görseli proxy'si** — hedef host'lar (`server/image-proxy.ts`) | Uzak önizleme görselinin birinci taraftan servis edilmesi | Yalnızca görselin **adresi**; isteği Worker atar, ziyaretçinin IP'si ve User Agent'ı uzak host'a ulaşmaz | Bizim tedarikçimiz değil; host'u profil sahibi seçer | Belirsiz | Duruma göre | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
+| **Stadia Maps** (Fiveonefour Labs / Stadia Maps, ABD) — statik harita karesi (`server/map-frame.ts`) | Konum kartının koyu harita görüntüsü. Kareyi **Worker** çeker, Cache API'de tutar ve `caka.app`'ten servis eder; ziyaretçinin tarayıcısı Stadia'ya **hiç bağlanmaz** | Profil sahibinin seçtiği yerin **yuvarlanmış** koordinatı (≈1,1 km) ve yakınlaşma kademesi. Ziyaretçinin IP'si ve User Agent'ı Stadia'ya ulaşmaz | Bizim tedarikçimiz (harita verisi sağlayıcısı) | ABD merkezli; sunum ağı küresel | **Evet** (giden koordinat bakımından) | ⬚ *(boş — OQ2a)* |
+| **Photon (Komoot GmbH, Almanya)** — yer arama (`server/location.ts`) | Editörde yazdıkça yer arama; anahtarsız açık uç. **Yalnız oturumlu kullanıcı** tetikler, ziyaretçi asla | Düzenleyenin yazdığı **arama metni** ("kadıköy") ve arayüz dili. İsteği Worker atar; kullanıcının IP'si Komoot'a ulaşmaz | Veri kaynağı / ayrı veri sorumlusu | Almanya / AB | **Hayır** (AB içi; yine de yurt dışı) | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
 | **YouTube (Google LLC)** — oEmbed, kanal sayfası, RSS akışı (`server/youtube.ts`) | Video/kanal bilgisinin ve en son videonun alınması | Profil sahibinin girdiği **video/kanal adresi**; istek Worker'dan gider, ziyaretçinin IP'si YouTube'a ulaşmaz | Ayrı veri sorumlusu | ABD | **Evet** (giden adres bakımından) | ⬚ *(boş — OQ2a)* |
 | **Google (googleusercontent.com)** — avatar kopyası (`server/avatar.ts`) | Google profil fotoğrafının R2'ye kopyalanması | Yalnızca görsel URL'i; istek Worker'dan gider | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 
@@ -151,6 +216,10 @@ parça değil.
   e-posta pazarlama aracı yok.**
 - **CAPTCHA/bot koruma script'i yok.**
 - **Ödeme sağlayıcısı yok** (ticarileşme henüz yok).
+
+- **Etkileşimli harita / kutucuk sunucusu yok.** Konum kartı statik kare
+  kullanıyor; ziyaretçi hiçbir harita sunucusuna bağlanmıyor (bkz. §A üstündeki
+  konum notu).
 
 Bu liste boş kaldığı sürece footer'daki çerez iddiası ayakta kalır. Buraya bir
 satır eklendiği gün `cookie-inventory.md` ve `trust-claims.md` de aynı commit'te
