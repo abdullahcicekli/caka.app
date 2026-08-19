@@ -400,7 +400,9 @@ aynı klasörde duruyor.
 ile şekillendirilip karşılaştırıldığında 5285 ayet **farklı sayıda glif**
 üretti (ligatür kaybı). Ölçüm `app.css`'teki `@font-face` başlığında ve
 `apps/web/tests/quran-font.test.ts`'te kayıtlı; test glif sayısını da sınıyor,
-yani ileride biri subset uygularsa CI düşer.
+yani ileride biri subset uygularsa test düşer. **Testi çalıştıran bir CI YOK**
+(depoda `.github/workflows` bulunmuyor): koruma `pnpm test`'i çalıştırmaya
+bağlı, otomatik değil.
 
 ### Ziyaretçi tarafı
 

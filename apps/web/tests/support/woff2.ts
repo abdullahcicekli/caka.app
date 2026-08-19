@@ -152,6 +152,10 @@ function readCmapSubtable(cmap: Buffer, base: number, out: Set<number>): void {
       const at = base + 16 + g * 12;
       const start = cmap.readUInt32BE(at);
       const end = cmap.readUInt32BE(at + 4);
+      // `startGlyphID` 0 ise grup .notdef'e eşliyor demektir; format 4 dalıyla
+      // aynı ölçüt uygulanır, yoksa kapsama FAZLA raporlanırdı.
+      const startGid = cmap.readUInt32BE(at + 8);
+      if (startGid === 0) continue;
       for (let cp = start; cp <= end; cp += 1) out.add(cp);
     }
     return;

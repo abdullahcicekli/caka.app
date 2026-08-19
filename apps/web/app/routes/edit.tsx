@@ -468,6 +468,12 @@ function Inspector({
   // açtığını söyler. Seçim yoksa alan zaten açıktır (aşağıda `ayetPicking`).
   const [ayetSearchOpen, setAyetSearchOpen] = useState(false);
   const ayetInputRef = useRef<HTMLInputElement | null>(null);
+  const ayetChangeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const ayetPickedLegendId = useId();
+  // Seçim duyurusu GEÇİCİDİR: yalnız seçim yapıldığı anda dolar. Blok
+  // verisinden türetilseydi, liste Escape ile kapandığında canlı bölge hiçbir
+  // şey olmamışken eski seçimi yeniden okurdu (hakem bulgusu).
+  const [ayetAnnounce, setAyetAnnounce] = useState("");
   // Sosyal blokta tek bağlantı alanı: kullanıcı ne yazdıysa o görünür;
   // platform/handle/url bloğa çözümlenmiş halleriyle yazılır.
   const [socialLink, setSocialLink] = useState(() =>
@@ -494,6 +500,7 @@ function Inspector({
     setAyetOpen(false);
     setAyetActive(-1);
     setAyetSearchOpen(false);
+    setAyetAnnounce("");
     setUploadError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız blok değişince
   }, [block.id]);
@@ -905,6 +912,12 @@ function Inspector({
       setAyetQuery("");
       setAyetSearchOpen(false);
       ayetAttemptedRef.current = "";
+      setAyetAnnounce(app.editor.ayetSelected(result.surahName, result.verse));
+      // ODAK ELDEN BIRAKILMAZ: seçim alanı DOM'dan kaldırıyor ve odak
+      // `<body>`ye düşerdi — klavye kullanıcısı panelin yerini kaybeder,
+      // sonraki Tab belgenin başından başlardı. Odak seçim kutusunun ilk
+      // düğmesine geçer; kutu bir sonraki kareye doğuyor.
+      requestAnimationFrame(() => ayetChangeButtonRef.current?.focus());
     } catch {
       if (ayetTicketRef.current !== ticket) return;
       setAyetError(app.editor.ayetFailed);
@@ -936,13 +949,26 @@ function Inspector({
     setAyetHits([]);
     setAyetEmpty(false);
     setAyetError(null);
+    setAyetBusy(false);
     setAyetOpen(false);
     setAyetActive(-1);
     setAyetSearchOpen(false);
+    setAyetAnnounce("");
   }
 
   /** Arama alanını açıp odağı oraya taşır (seçim kutusundaki "değiştir"). */
   function openAyetSearch() {
+    // Alan boş açılır: kapatılırken kalan sorgu geri gelseydi, `ayetAttemptedRef`
+    // onu "zaten arandı" sayıp yeniden aramaz ve kullanıcı dolu bir alanla boş
+    // bir liste görürdü.
+    setAyetQuery("");
+    ayetAttemptedRef.current = "";
+    setAyetHits([]);
+    setAyetEmpty(false);
+    setAyetError(null);
+    setAyetOpen(false);
+    setAyetActive(-1);
+    setAyetAnnounce("");
     setAyetSearchOpen(true);
     // Alan bu render'da doğuyor; odak bir sonraki kareye bırakılır.
     requestAnimationFrame(() => ayetInputRef.current?.focus());
@@ -1007,12 +1033,9 @@ function Inspector({
         ? app.editor.ayetNoResults(ayetQuery.trim())
         : ayetListOpen
           ? app.editor.ayetResultCount(ayetHits.length)
-          : // Liste kapandığında ve seçili bir ayet varsa son söz "hangi ayet
-            // seçildi" olur: gören kullanıcı seçim kutusunu görüyor, ekran
-            // okuyucu kullanan onu duymalı.
-            block.type === "ayet" && block.data.surahName
-            ? app.editor.ayetSelected(block.data.surahName, block.data.verse)
-            : "";
+          : // Seçim yapıldığı ANDA doldurulan geçici duyuru. Gören kullanıcı
+            // seçim kutusunu görüyor, ekran okuyucu kullanan onu duymalı.
+            ayetAnnounce;
 
   // Klavyeyle gezilen satır listenin kaydırma penceresine girsin: liste 232
   // pikselde tavana vurup kayıyor, yoksa ok tuşu görünmeyen bir satırı
@@ -1648,8 +1671,10 @@ function Inspector({
                 kaldır — bir arada gösterir. Görsel dil arama sonucu
                 satırlarının (`.ayet-result`) aynısıdır, yeni bir dil değil. */}
             {picked ? (
-              <section className="ayet-picked" aria-label={app.editor.ayetPickedLegend}>
-                <p className="ayet-picked-legend">{app.editor.ayetPickedLegend}</p>
+              <section className="ayet-picked" aria-labelledby={ayetPickedLegendId}>
+                <p className="ayet-picked-legend" id={ayetPickedLegendId}>
+                  {app.editor.ayetPickedLegend}
+                </p>
                 <strong>{widget.ayet.reference(data.surahName, data.verse)}</strong>
                 {data.variant !== "meal" && data.arabic ? (
                   <p className="ayet-picked-arabic" lang="ar" dir="rtl">
@@ -1664,10 +1689,14 @@ function Inspector({
                   </p>
                 ) : null}
                 <div className="ayet-picked-actions">
+                  {/* Durum düğmenin ETİKETİNDE taşınıyor ("Başka ayet seç" ↔
+                      "Aramayı kapat"), `aria-expanded` ile değil: alanı saran
+                      bir kutu yok, dolayısıyla `aria-controls` verecek bir id
+                      de yok; hedefsiz bir `aria-expanded` yalnız gürültü. */}
                   <button
+                    ref={ayetChangeButtonRef}
                     type="button"
                     className="inspector-secondary"
-                    aria-expanded={searchOpen}
                     onClick={() =>
                       searchOpen ? setAyetSearchOpen(false) : openAyetSearch()
                     }
@@ -1693,82 +1722,82 @@ function Inspector({
                 kalırdı. */}
             {searchOpen ? (
               <>
-            <label>
-              {app.editor.ayetSearchLabel}
-              <input
-                ref={ayetInputRef}
-                type="search"
-                value={ayetQuery}
-                placeholder={app.editor.ayetSearchPlaceholder}
-                autoComplete="off"
-                // Combobox deseni: alan hem yazı alanı hem listenin sahibidir.
-                // Liste kapalıyken de `aria-controls` hedefi DOM'da durur
-                // (aşağıdaki <ul> her zaman basılır), yoksa kırık bir başvuru
-                // kalırdı.
-                role="combobox"
-                aria-autocomplete="list"
-                aria-expanded={ayetListOpen}
-                aria-controls={ayetListboxId}
-                aria-activedescendant={
-                  ayetListOpen && ayetActive >= 0 ? `${ayetListboxId}-${ayetActive}` : undefined
-                }
-                onChange={(event) => {
-                  setAyetQuery(event.target.value);
-                  // Yazmak listeyi geri açar (Escape'ten sonra da) ve
-                  // vurguyu sıfırlar: eski satır yeni sorguya ait değil.
-                  setAyetOpen(true);
-                  setAyetActive(-1);
-                }}
-                onKeyDown={onAyetKeyDown}
-                onBlur={() => {
-                  setAyetOpen(false);
-                  setAyetActive(-1);
-                }}
-              />
-              <small className="inspector-hint">{app.editor.ayetSearchHint}</small>
-            </label>
-            {ayetBusy ? <p className="inspector-hint">{app.editor.ayetSearching}</p> : null}
-            {ayetError ? (
-              <p className="inspector-error" role="alert">
-                {ayetError}
-              </p>
-            ) : null}
-            {!ayetBusy && !ayetError && ayetEmpty ? (
-              <p className="inspector-hint">{app.editor.ayetNoResults(ayetQuery.trim())}</p>
-            ) : null}
-            {/* Liste HER ZAMAN basılır (kapalıyken boş): `aria-controls`
-                hedefi kaybolmasın. Açılır kutu DEĞİL, akış içinde duran bir
-                liste — panel dar ve kaydırmalı, üstüne binen bir katman
-                kırpılma ve odak tuzağı sorunları getirirdi. */}
-            <ul
-              id={ayetListboxId}
-              ref={ayetListRef}
-              className="ayet-results"
-              role="listbox"
-              aria-label={app.editor.ayetSuggestionsLabel}
-            >
-              {ayetListOpen
-                ? ayetHits.map((hit, index) => (
-                    <li
-                      key={`${hit.surah}:${hit.verse}`}
-                      id={`${ayetListboxId}-${index}`}
-                      ref={index === ayetActive ? ayetActiveOptionRef : null}
-                      role="option"
-                      aria-selected={index === ayetActive}
-                      className={`ayet-result${index === ayetActive ? " is-active" : ""}`}
-                      // Fare basışı alanın odağını ALMAZ: odak alanda kalınca
-                      // `aria-activedescendant` sözleşmesi bozulmuyor ve
-                      // onBlur listeyi tıklama gerçekleşmeden kapatmıyor.
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => setAyetActive(index)}
-                      onClick={() => void pickAyet(hit.surah, hit.verse)}
-                    >
-                      <strong>{widget.ayet.reference(hit.surahName, hit.verse)}</strong>
-                      <small lang="tr">{hit.snippet}</small>
-                    </li>
-                  ))
-                : null}
-            </ul>
+              <label>
+                {app.editor.ayetSearchLabel}
+                <input
+                  ref={ayetInputRef}
+                  type="search"
+                  value={ayetQuery}
+                  placeholder={app.editor.ayetSearchPlaceholder}
+                  autoComplete="off"
+                  // Combobox deseni: alan hem yazı alanı hem listenin sahibidir.
+                  // Liste kapalıyken de `aria-controls` hedefi DOM'da durur
+                  // (aşağıdaki <ul> her zaman basılır), yoksa kırık bir başvuru
+                  // kalırdı.
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={ayetListOpen}
+                  aria-controls={ayetListboxId}
+                  aria-activedescendant={
+                    ayetListOpen && ayetActive >= 0 ? `${ayetListboxId}-${ayetActive}` : undefined
+                  }
+                  onChange={(event) => {
+                    setAyetQuery(event.target.value);
+                    // Yazmak listeyi geri açar (Escape'ten sonra da) ve
+                    // vurguyu sıfırlar: eski satır yeni sorguya ait değil.
+                    setAyetOpen(true);
+                    setAyetActive(-1);
+                  }}
+                  onKeyDown={onAyetKeyDown}
+                  onBlur={() => {
+                    setAyetOpen(false);
+                    setAyetActive(-1);
+                  }}
+                />
+                <small className="inspector-hint">{app.editor.ayetSearchHint}</small>
+              </label>
+              {ayetBusy ? <p className="inspector-hint">{app.editor.ayetSearching}</p> : null}
+              {ayetError ? (
+                <p className="inspector-error" role="alert">
+                  {ayetError}
+                </p>
+              ) : null}
+              {!ayetBusy && !ayetError && ayetEmpty ? (
+                <p className="inspector-hint">{app.editor.ayetNoResults(ayetQuery.trim())}</p>
+              ) : null}
+              {/* Liste HER ZAMAN basılır (kapalıyken boş): `aria-controls`
+                  hedefi kaybolmasın. Açılır kutu DEĞİL, akış içinde duran bir
+                  liste — panel dar ve kaydırmalı, üstüne binen bir katman
+                  kırpılma ve odak tuzağı sorunları getirirdi. */}
+              <ul
+                id={ayetListboxId}
+                ref={ayetListRef}
+                className="ayet-results"
+                role="listbox"
+                aria-label={app.editor.ayetSuggestionsLabel}
+              >
+                {ayetListOpen
+                  ? ayetHits.map((hit, index) => (
+                      <li
+                        key={`${hit.surah}:${hit.verse}`}
+                        id={`${ayetListboxId}-${index}`}
+                        ref={index === ayetActive ? ayetActiveOptionRef : null}
+                        role="option"
+                        aria-selected={index === ayetActive}
+                        className={`ayet-result${index === ayetActive ? " is-active" : ""}`}
+                        // Fare basışı alanın odağını ALMAZ: odak alanda kalınca
+                        // `aria-activedescendant` sözleşmesi bozulmuyor ve
+                        // onBlur listeyi tıklama gerçekleşmeden kapatmıyor.
+                        onMouseDown={(event) => event.preventDefault()}
+                        onMouseEnter={() => setAyetActive(index)}
+                        onClick={() => void pickAyet(hit.surah, hit.verse)}
+                      >
+                        <strong>{widget.ayet.reference(hit.surahName, hit.verse)}</strong>
+                        <small lang="tr">{hit.snippet}</small>
+                      </li>
+                    ))
+                  : null}
+              </ul>
               </>
             ) : null}
             {data.mealTranslator ? (
