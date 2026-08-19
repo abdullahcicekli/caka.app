@@ -31,6 +31,7 @@ export const tr = {
     gallery: "Fotoğraf galerisi",
     youtube: "YouTube",
     spotify: "Spotify",
+    ayet: "Kur'an ayeti",
   } satisfies Record<ProfileBlock["type"], string>,
 
   /** Yayını engelleyen blok sorunlarının kullanıcıya görünen karşılığı. */
@@ -46,6 +47,7 @@ export const tr = {
     youtube_video_url: "YouTube video bağlantısı gir",
     youtube_channel_url: "YouTube kanal bağlantısı gir",
     spotify_url: "Spotify bağlantısı gir",
+    ayet_verse: "Ayet seç",
   } satisfies Record<BlockIssueId, string>,
 
   /** Izgara sınırı aşıldığında gösterilen mesaj. */
@@ -138,6 +140,22 @@ export const tr = {
     spotifyLinkLabel: "Spotify bağlantısı",
     spotifyHint:
       "Parça, albüm, çalma listesi, sanatçı, podcast ve bölüm eklenebilir — ne yapıştırdıysan onu ekleriz.",
+    ayetVariantLegend: "Kart sürümü",
+    ayetVariantArabic: "Yalnız Arapça",
+    ayetVariantMeal: "Yalnız meal",
+    ayetVariantBoth: "İkisi birlikte",
+    ayetVariantHint:
+      "Sürüm kartın tipografisini ve en küçük ölçüsünü belirler: Arapça hat daha çok yer ister, ikisi birlikte olan sürüm en çoğunu.",
+    ayetSearchLabel: "Ayet ara",
+    ayetSearchPlaceholder: "Bakara 255 ya da bir kelime",
+    ayetSearchHint:
+      "Sure adı ve ayet numarası yazabilir (“Bakara 255”, “2:255”) ya da mealde geçen bir kelime arayabilirsin.",
+    ayetSearching: "Ayetler aranıyor…",
+    ayetNoResults: (query: string) => `“${query}” için ayet bulunamadı.`,
+    ayetFailed: "Ayet kaynağına ulaşılamadı — bağlantını kontrol et.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} eklendi`,
+    ayetSourceNote: (translator: string) =>
+      `Arapça metin Osmanî hattadır (Hafs); meal ${translator} mealidir ve kartın altında kaynak olarak görünür.`,
     fixIssue: "Düzelt",
     removeBlock: "Kaldır",
     editedElsewhere: "Sayfa başka bir yerde düzenlendi.",
@@ -285,6 +303,12 @@ export const tr = {
       "Bu kanal bulunamadı. Adresi kontrol et ya da kanalın /channel/UC… adresini dene.",
     youtubeVideoNotFound:
       "Video bulunamadı. Video silinmiş, gizli olabilir ya da bağlantı eksik kopyalanmış.",
+
+    ayetUnavailable: "Ayet kaynağı şu anda yanıt vermedi. Birazdan tekrar dene.",
+    ayetSurahUnknown: "Böyle bir sure yok. 1 ile 114 arasında bir numara ya da sure adı yaz.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `${surahName} suresi ${count} ayettir; bu numarada bir ayet yok.`,
+    ayetQueryTooShort: (min: number) => `Arama için en az ${min} harf yaz.`,
 
     uploadOnlyJpegPng: "Yalnızca JPEG veya PNG yükleyebilirsin",
     uploadTooLarge: "Fotoğraf en fazla 5 MB olabilir",

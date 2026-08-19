@@ -17,6 +17,20 @@
   --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
+  /**
+   * Arapça hat (ayet kartı). WEB FONTU YOK, BİLİNÇLİ: Satoshi zaten
+   * Fontshare'den geliyor ve tedarikçi kaydında "her sayfa yüklemesinde IP +
+   * User Agent" satırıyla duruyor (`docs/legal/vendor-register.md`). İkinci
+   * bir font host'u eklemek ziyaretçiyi bir üçüncü tarafa daha tanıtırdı
+   * (R58) ve çerez/tedarikçi envanterine yeni bir girdi açardı — bir kart
+   * için ödenecek bedel değil. Zincir işletim sistemlerinin kendi nesih
+   * yüzlerini sırayla dener; hiçbiri yoksa `serif`e düşer ve metin yine
+   * doğru okunur (Arapça harf birleşmesi yazı tipine değil, metin motoruna
+   * bağlı). Bedeli: hat yüzü cihazdan cihaza değişir.
+   */
+  --font-arabic: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic",
+    "Segoe UI", "Traditional Arabic", "Al Bayan", "Amiri", serif;
+
   --color-zemin: #f7f6f2;
   --color-murekkep: #14141a;
   --color-kirec: #cbe84a;
@@ -1197,6 +1211,103 @@
 .profile-block-status .rich-text,
 .rich-editor-inline.profile-block-status .tiptap { font-weight: 400; }
 .rich-editor-inline.profile-block-status { cursor: text; }
+/* ---------------------------------------------------------------- *
+ * Kur'an ayeti kartı — üç sürüm, üç tipografi.
+ *
+ * Ölçüler masaüstü ızgarasında ölçüldü (4 kolon, 156px satır, 12px boşluk;
+ * 2 track = 374px kutu, 18px padding ile 336px iç genişlik). Sürüm başına
+ * ızgara tabanı `AYET_GRID_LIMITS`'tedir ve buradaki punto/satır aralığıyla
+ * birlikte belirlendi — biri değişirse öteki de gözden geçirilmeli.
+ * ---------------------------------------------------------------- */
+.profile-block-ayet {
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+}
+/* Gövde KAYDIRILIR, kısaltılmaz: kutsal metnin ortasından "…" ile kesmek
+   anlamı değiştirirdi. En uzun ayet (Bakara 282) hiçbir tile'a sığmıyor;
+   kart kırılmak yerine içeriğini kaydırıyor. `overscroll-behavior` sayfanın
+   birlikte kaymasını engeller — mobilde kart içinde kalmak gerek. */
+.ayet-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.ayet-arabic {
+  margin: 0;
+  font-family: var(--font-arabic);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.95;
+  /* Arapça satırlarda kelime araları esnetilmez: `justify` nesih hattı
+     çirkin biçimde açar, kelime kesme (hyphenation) zaten yok. */
+  text-align: start;
+}
+.ayet-meal {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+/* Yalnız Arapça sürümünde hat kartın kendisidir: en büyük punto ve en geniş
+   satır aralığı burada. */
+.profile-block-ayet.is-arabic .ayet-arabic { font-size: 30px; line-height: 2; }
+/* Yalnız meal sürümünde metin tek başına duruyor; bir tık büyür ki kart
+   boşluğa değil yazıya benzesin. */
+.profile-block-ayet.is-meal .ayet-meal { font-size: 16px; line-height: 1.6; }
+/* İkisi birlikte: Arapça DİPNOTA İNDİRGENMEZ — hâlâ ayetin kendisi, meal onun
+   okunuşu. Hat 26px'te kalır, meal ince bir çizgiyle ayrılır. Kartın en
+   yüksek tabanı (2×3) bu yüzden: iki metin bloğu üst üste duruyor. */
+.profile-block-ayet.is-both .ayet-arabic { font-size: 26px; line-height: 2; }
+.profile-block-ayet.is-both .ayet-meal {
+  border-top: 1px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 9%, transparent);
+  padding-top: 12px;
+  line-height: 1.6;
+}
+/* Kaynak satırı: sure/ayet solda, çevirmen atfı sağda. Atıf hukuki bir
+   gereklilik (bkz. `docs/legal/vendor-register.md`), dekor değil — bu yüzden
+   her boyutta basılır ve gövdeyle birlikte kaymaz. */
+.ayet-source {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  border-top: 1px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 10%, transparent);
+  padding-top: 8px;
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 11px;
+  line-height: 1.35;
+}
+.ayet-source small { font-size: 10.5px; }
+/* Dar tile: ızgara sınırı 2 track diyor ama mobilde (2 kolon, 138px satır)
+   kart 342px'e ve satır yüksekliği 138px'e düşüyor — ölçüldü. Punto orada
+   bir kademe iner, yoksa mobil taban ölçüsü masaüstündekinden daha çok
+   satır yerdi. Eşik 360px: masaüstü 2 track (374px) etkilenmez. */
+@container (max-width: 360px) {
+  .profile-block-ayet { padding: 14px; }
+  .profile-block-ayet .ayet-arabic { font-size: 21px; line-height: 1.85; }
+  .profile-block-ayet.is-arabic .ayet-arabic { font-size: 25px; }
+  .profile-block-ayet.is-both .ayet-arabic { font-size: 22px; }
+  .profile-block-ayet .ayet-meal { font-size: 14px; }
+  .profile-block-ayet.is-meal .ayet-meal { font-size: 15px; }
+  .profile-block-ayet.is-both .ayet-meal { padding-top: 10px; }
+}
+/* Geniş tile (4 track): satır uzunluğu okunabilirlik sınırını aşıyor, punto
+   büyür ve metin ortalanmaz — sola dayalı blok daha rahat okunuyor. */
+@container (min-width: 600px) {
+  .profile-block-ayet { padding: 22px 26px; }
+  .profile-block-ayet .ayet-arabic { font-size: 27px; }
+  .profile-block-ayet.is-arabic .ayet-arabic { font-size: 34px; }
+  .profile-block-ayet .ayet-meal { font-size: 16px; }
+}
+
 .profile-block-image img { width: 100%; height: 100%; object-fit: cover; }
 .profile-image-placeholder {
   display: grid;
@@ -2849,6 +2960,39 @@ a.profile-block:focus-visible {
 .inspector-upload { position: relative; display: flex; min-height: 88px; align-items: center; justify-content: center; border: 1px dashed var(--color-sinir); border-radius: var(--radius-lg); flex-direction: column; gap: 6px; color: color-mix(in srgb, var(--color-murekkep) 56%, transparent); font-size: 11px; font-weight: 400; overflow: hidden; }
 .inspector-upload input { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
 .inspector-fields input:focus, .inspector-fields textarea:focus, .inspector-fields select:focus { border-color: var(--color-murekkep); }
+/* Sürüm seçici (ayet kartı): üç seçenek yan yana. `select` DEĞİL, çünkü
+   seçim kartın ölçüsünü de değiştiriyor — sonucu görünür bir düğmeye
+   bağlamak açılır listeden dürüst. */
+.inspector-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.inspector-choices legend { width: 100%; margin-bottom: 8px; font-size: 12px; font-weight: 500; }
+.inspector-choices > button {
+  min-height: 34px;
+  flex: 1 1 auto;
+  border: 1px solid var(--color-sinir);
+  border-radius: var(--radius-lg);
+  padding: 0 10px;
+  background: white;
+  font-size: 12px;
+  font-weight: 500;
+}
+.inspector-choices > button.is-active { border-color: var(--color-murekkep); background: var(--color-murekkep); color: white; }
+.inspector-choices > .inspector-hint { flex: 1 0 100%; }
+/* Ayet arama sonuçları: her satır bir eylem. Liste yüksekliği sınırlı ki
+   panelin geri kalanı (sürüm seçici, kaynak notu) ekrandan düşmesin. */
+.ayet-results { display: flex; max-height: 232px; flex-direction: column; gap: 6px; overflow-y: auto; overscroll-behavior: contain; }
+.ayet-result {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid var(--color-sinir);
+  border-radius: var(--radius-lg);
+  padding: 9px 11px;
+  background: white;
+  text-align: left;
+}
+.ayet-result:hover { border-color: var(--color-murekkep); }
+.ayet-result strong { font-size: 12px; font-weight: 600; }
+.ayet-result small { color: color-mix(in srgb, var(--color-murekkep) 60%, transparent); font-size: 11.5px; font-weight: 400; line-height: 1.4; }
 .editor-inspector > footer { display: flex; margin-top: auto; gap: 8px; border-top: 1px solid var(--color-sinir); padding: 14px; }
 .editor-inspector > footer > * { display: flex; min-height: 42px; flex: 1; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--color-sinir); border-radius: var(--radius-lg); font-size: 13px; }
 .editor-inspector > footer > button:last-child { border-color: var(--color-murekkep); background: var(--color-murekkep); color: white; }

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { AYET_ARABIC_MAX, AYET_MEAL_MAX, SURAHS, verseRefIssue } from "./quran";
+
 export const PROFILE_NAME_MAX = 60;
 export const PROFILE_BIO_MAX = 160;
 
@@ -394,6 +396,45 @@ const youtubeBlockSchema = z.object({
 export type YoutubeBlockData = z.infer<typeof youtubeBlockSchema>["data"];
 export type YoutubeKind = YoutubeBlockData["kind"];
 
+/**
+ * Ayet kartının üç sürümü. Sürüm yalnız görünümü değil, kartın ÖLÇÜ TABANINI
+ * da belirler (bkz. `AYET_GRID_LIMITS`): Arapça hat daha büyük punto ve daha
+ * geniş satır aralığı ister, ikisi birlikte olan sürüm de iki metin bloğunu
+ * üst üste taşır.
+ */
+export const ayetVariantSchema = z.enum(["arabic", "meal", "both"]);
+export type AyetVariant = z.infer<typeof ayetVariantSchema>;
+
+/**
+ * Kur'an ayeti bloğu. Metin KAYITTA durur (R58): ayet editörde, oturumlu
+ * kullanıcı için bir kez çözülür (`server/quran.ts`) ve seçilen sonucun
+ * kendisi buraya yazılır; ziyaretçi sayfası hiçbir dış kaynağa gitmez.
+ *
+ * `mealEdition`/`mealTranslator` kayıtta duruyor ki ileride İKİNCİ BİR MEAL
+ * (başka bir çevirmen ya da başka bir dil) eklenebilsin: mevcut bloklar hangi
+ * mealle yazıldıklarını kendileri söyler, sonradan gelen bir varsayılan onları
+ * sessizce yanlış çevirmene atfetmez. Atıf zorunluluğu da bu alandan karşılanır.
+ */
+const ayetBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("ayet"),
+  data: z.object({
+    variant: ayetVariantSchema.default("both"),
+    /** 1-114. Üst sınır dizinden okunur ki iki kaynak ayrışmasın. */
+    surah: z.number().int().min(1).max(SURAHS.length).default(1),
+    /** Sure içindeki ayet numarası; sure başına gerçek tavan `verseRefIssue`. */
+    verse: z.number().int().min(1).max(286).default(1),
+    /** Çözümlenmiş sure adı (Türkçe okunuş). Kartın kaynak satırı bunu basar. */
+    surahName: z.string().trim().max(40).default(""),
+    arabic: z.string().trim().max(AYET_ARABIC_MAX).default(""),
+    meal: z.string().trim().max(AYET_MEAL_MAX).default(""),
+    /** Meal sürümünün kimliği (ör. `tur-elmalilihamdiya`). */
+    mealEdition: z.string().trim().max(48).default(""),
+    /** Kartta gösterilen çevirmen adı — atıf yükümlülüğü buradan karşılanır. */
+    mealTranslator: z.string().trim().max(80).default(""),
+  }),
+});
+
 export const profileBlockSchema = z.discriminatedUnion("type", [
   profileCardSchema,
   socialBlockSchema,
@@ -404,7 +445,10 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   galleryBlockSchema,
   youtubeBlockSchema,
   spotifyBlockSchema,
+  ayetBlockSchema,
 ]);
+
+export type AyetBlockData = z.infer<typeof ayetBlockSchema>["data"];
 
 /**
  * Favicon'un imzalı proxy yolu, og görselinin yanında AYNI eşlemede taşınır.
@@ -573,6 +617,7 @@ export const BLOCK_ISSUE_IDS = [
   "youtube_video_url",
   "youtube_channel_url",
   "spotify_url",
+  "ayet_verse",
 ] as const;
 
 export type BlockIssueId = (typeof BLOCK_ISSUE_IDS)[number];
@@ -618,7 +663,20 @@ export function blockIssue(block: ProfileBlock): BlockIssueId | null {
       // YouTube'la aynı gerekçe: kimlik kayıt anında çözülür, boşsa gömülecek
       // bir şey yok.
       return block.data.entityId ? null : "spotify_url";
+    case "ayet":
+      // Sürüm hangi metni gerektiriyorsa O aranır: yalnız Arapça gösteren bir
+      // kart meal boş diye eksik sayılmamalı. `both` ikisini de ister.
+      return ayetHasText(block.data) ? null : "ayet_verse";
   }
+}
+
+/** Sürümün gerektirdiği metinler dolu mu? */
+function ayetHasText(data: AyetBlockData): boolean {
+  const arabic = data.arabic.trim() !== "";
+  const meal = data.meal.trim() !== "";
+  if (data.variant === "arabic") return arabic;
+  if (data.variant === "meal") return meal;
+  return arabic && meal;
 }
 
 /** Yayın öncesi eksik blokların listesi; boşsa yayınlanabilir. */
@@ -664,12 +722,69 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   // 2: 181px'lik bir oynatıcıda kontroller sığmıyor. Albüm/liste/sanatçı
   // gömmesi 352px istediği için onların varsayılanı 2x2 (kayıt anında seçilir).
   spotify: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
+  // Ayet kartının tabanı SÜRÜME bağlı (bkz. `AYET_GRID_LIMITS`); buradaki
+  // kayıt tipin en GEVŞEK sürümüdür, yani "meal". Tek bir tip için üç farklı
+  // taban gerektiği hâlde ayrı üç blok tipi açılmadı: veri, editör alanları ve
+  // kart iskeleti üçünde de aynı, ayıran tek şey tipografi ve taban ölçü.
+  ayet: { minW: 4, minH: 3, maxW: 8, maxH: 8 },
 };
+
+/**
+ * Ayet kartının sürüm başına ızgara tabanı — ölçüler YARIM BİRİMDE.
+ *
+ * KURAL (tek ve aynı, üç sürüm için): **taban, 75. yüzdelik uzunluktaki bir
+ * ayetin kaydırma olmadan sığdığı en küçük ölçüdür.** Ortanca hedef alınsaydı
+ * ayetlerin yarısı varsayılan boyutta kırpılırdı; p90 alınsaydı kısa bir ayet
+ * için kocaman bir kart doğardı. Yarım birimli ızgara (GRID_UNIT) bu kuralı
+ * uygulanabilir kılan şey: eski tam hücrede üç sürüm de aynı basamağa
+ * yuvarlanıyordu, yarım basamakla üçü ayrışıyor.
+ *
+ * TARAYICIDA ÖLÇÜLDÜ (2026-08-19). Masaüstü: tuval 748px, 8 kolon, 72px satır,
+ * 12px boşluk → 4 birim genişlik = 368px. Mobil: 4 kolon, 63px satır → 342px.
+ * Örnek ayetler: kısa = İhlâs 1, ortanca (p50) = Ra'd 28, p75 = Bakara 14,
+ * uzun = Bakara 255 (Âyetü'l-Kürsî).
+ *
+ * Masaüstünde 4 birim genişlikte `.ayet-body`'nin verdiği yükseklik ve taşma:
+ *
+ * | sürüm  | h=2 (84px) | h=3 (168px) | h=4 (252px) | h=5 (336px) |
+ * |--------|------------|-------------|-------------|-------------|
+ * | meal   | p75 +18    | **p75 ✓**   | ✓           | ✓           |
+ * | arabic | p50 +96    | p50 +12     | **p75 ✓**   | ✓           |
+ * | both   | p50 +115   | p50 +31     | p75 +23     | **p75 ✓**   |
+ *
+ * Mobil aynı sonucu veriyor (4×3 / 4×4 / 4×5'te p75 taşmıyor), yani taban tek.
+ *
+ * GENİŞLİK TABANI 4 (= eski 2 hücre, 368px), üç sürümde de. 2 birim (178px
+ * kutu, 142px iç genişlik) ölçüldü ve kabul edilemez: ortanca ayetin Arapçası
+ * 2 satır yerine **4 satıra** çıkıyor, kaynak satırı 24px'ten **56px'e**
+ * sarıyor ve "ikisi birlikte" sürümü 2×6'da (492px!) bile p75'i sığdıramıyor.
+ *
+ * TAVAN 8×8: en uzun ayet (Bakara 282) hiçbir ölçüye tam sığmıyor ama isteyen
+ * kullanıcı kartı büyütebilmeli. Sığmayan metin KISALTILMAZ, kaydırılır
+ * (bkz. `.ayet-body`, app.css).
+ */
+export const AYET_GRID_LIMITS: Record<AyetVariant, BlockGridLimits> = {
+  meal: { minW: 4, minH: 3, maxW: 8, maxH: 8 },
+  arabic: { minW: 4, minH: 4, maxW: 8, maxH: 8 },
+  both: { minW: 4, minH: 5, maxW: 8, maxH: 8 },
+};
+
+/**
+ * Bloğun gerçek ızgara sınırları. Çoğu tipte bu `BLOCK_GRID_LIMITS[type]`
+ * ile aynıdır; ayet bloğunda sürüme göre değişir. Sınırı okuyan HER YER
+ * (editör gridstack'i, yazma şeması, `ensureLayoutPositions`) buradan
+ * okur ki üçü ayrışmasın.
+ */
+export function blockGridLimits(block: ProfileBlock): BlockGridLimits | null {
+  if (block.type === "profile") return null;
+  if (block.type === "ayet") return AYET_GRID_LIMITS[block.data.variant];
+  return BLOCK_GRID_LIMITS[block.type];
+}
 
 /** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa bloğun sınırları. */
 export function blockGridLimitIssue(block: ProfileBlock): BlockGridLimits | null {
-  if (block.type === "profile" || !block.pos) return null;
-  const limits = BLOCK_GRID_LIMITS[block.type];
+  const limits = blockGridLimits(block);
+  if (!limits || !block.pos) return null;
   // Hem masaüstü hem mobil konum aynı tavana uyar; mobil genişlik zaten
   // kolon sayısıyla (2) ayrıca sınırlı.
   for (const pos of [block.pos.lg, block.pos.sm]) {
@@ -760,6 +875,17 @@ export const profileLayoutWriteSchema = z.preprocess((raw) => {
           code: "custom",
           path: ["blocks", index, "pos"],
           message: `grid_limits:${block.type}`,
+        });
+      }
+      // Ayet adresi sure başına doğrulanır: şema tek başına yalnız 1-286
+      // aralığını biliyor, oysa İhlâs 4 ayettir. Kontrol YAZMA tarafında —
+      // okuma tarafına eklenirse eskiden yazılmış bozuk bir kayıt yüzünden
+      // yayındaki sayfa kararırdı (ızgara sınırıyla aynı gerekçe).
+      if (block.type === "ayet" && verseRefIssue(block.data)) {
+        context.addIssue({
+          code: "custom",
+          path: ["blocks", index, "data", "verse"],
+          message: "ayet_ref",
         });
       }
     });
@@ -876,7 +1002,10 @@ export function ensureLayoutPositions(layout: ProfileLayout): ProfileLayout {
     // (2 sütun) x=1,w=1 bir youtube bloğu w=2'ye çıkınca 3 ederdi ve
     // sonraki kayıt kalıcı 400 verirdi. Bu yüzden genişlerken `x` sola
     // çekilir; sonuç hem sınırlara hem ızgaraya uyar ve idempotenttir.
-    const limits = BLOCK_GRID_LIMITS[block.type];
+    //
+    // Ayet bloğunda sınır SÜRÜME bağlı; `blockGridLimits` bu yüzden bloğun
+    // kendisini alır, tipini değil.
+    const limits = blockGridLimits(block) ?? BLOCK_GRID_LIMITS[block.type];
     if (block.pos) {
       const clamp = (p: GridPosition, columns: number): GridPosition => {
         const w = Math.min(Math.max(p.w, limits.minW), Math.min(limits.maxW, columns));

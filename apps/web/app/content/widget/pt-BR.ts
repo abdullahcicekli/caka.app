@@ -66,6 +66,14 @@ export const ptBR = {
     },
   },
 
+  ayet: {
+    name: "Versículo do Alcorão",
+    empty: "Escolha um versículo",
+    reference: (surahName: string, verse: number) => `Surata ${surahName}, versículo ${verse}`,
+    label: (surahName: string, verse: number) => `Surata ${surahName}, versículo ${verse}`,
+    mealCredit: (translator: string) => `Tradução para o turco: ${translator}`,
+  },
+
   github: {
     heatmapLabel: (total: number) => `${total} contribuições no último ano`,
   },

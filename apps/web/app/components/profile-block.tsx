@@ -431,6 +431,66 @@ export function ProfileBlockCard({
       );
     }
 
+    /**
+     * Kur'an ayeti. Kartın TAMAMI kayıtlı veriden render edilir: Arapça metin,
+     * meal, sure adı ve çevirmen adı bloğun içinde durur, hiçbir dış istek
+     * atılmaz (R58). Ayeti çözen tek yer editördür (`server/quran.ts`).
+     *
+     * Üç sürüm aynı iskeleti paylaşır; ayıran şey hangi metnin basıldığı ve
+     * kartın tipografisi (bkz. `.profile-block-ayet`, app.css). Ölçü tabanı
+     * da sürüme bağlıdır (`AYET_GRID_LIMITS`).
+     */
+    case "ayet": {
+      const { variant, arabic, meal, surahName, verse, mealTranslator } = block.data;
+      const showArabic = variant !== "meal" && arabic !== "";
+      const showMeal = variant !== "arabic" && meal !== "";
+      // Taslak kart (henüz ayet seçilmemiş): "bozuk" değil "boş" görünür,
+      // görsel bloğundaki yer tutucuyla aynı desen.
+      if (!showArabic && !showMeal) {
+        return (
+          <article
+            className={`profile-block profile-block-ayet is-${variant}`}
+            aria-label={w.ayet.name}
+          >
+            <span className="profile-image-placeholder">{w.ayet.empty}</span>
+          </article>
+        );
+      }
+      return (
+        <article
+          className={`profile-block profile-block-ayet is-${variant}`}
+          aria-label={w.ayet.label(surahName, verse)}
+        >
+          {/* Gövde KAYDIRILIR, kısaltılmaz: kutsal metnin ortasından "…" ile
+              kesmek anlamı değiştiren bir müdahale olurdu. Sığmayan uzun
+              ayette kart kırılmaz, içeriği kayar (bkz. `.ayet-body`). */}
+          <div className="ayet-body">
+            {showArabic ? (
+              // dir/lang Arapça metnin İKİ İŞİNİ birden yapar: sağdan sola
+              // akış ve tarayıcının Arapça yazı tipi seçimi. Karışık içerikte
+              // (meal + Arapça) yalnız gövdeye vermek yetmez, bu yüzden
+              // öznitelikler paragrafın kendisindedir.
+              <p className="ayet-arabic" lang="ar" dir="rtl">
+                {arabic}
+              </p>
+            ) : null}
+            {/* Meal HER ARAYÜZ DİLİNDE Türkçedir; `lang="tr"` ekran
+                okuyucunun doğru sesletimi seçmesi için şart. */}
+            {showMeal ? (
+              <p className="ayet-meal" lang="tr">
+                {meal}
+              </p>
+            ) : null}
+          </div>
+          <footer className="ayet-source">
+            <span>{w.ayet.reference(surahName, verse)}</span>
+            {/* Atıf: meal gösteriliyorsa çevirmen adı kartta görünür. */}
+            {showMeal && mealTranslator ? <small>{w.ayet.mealCredit(mealTranslator)}</small> : null}
+          </footer>
+        </article>
+      );
+    }
+
     // Spotify: YouTube videosuyla aynı facade → iframe deseni. Kart, çalacak
     // şeyi kapak + tür rozeti + başlıkla anlatır; oynatıcı ancak tıklamayla
     // doğar (bkz. `components/media-embed.tsx`).

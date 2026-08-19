@@ -29,6 +29,7 @@ export const es = {
     gallery: "Galería de fotos",
     youtube: "YouTube",
     spotify: "Spotify",
+    ayet: "Versículo del Corán",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -43,6 +44,7 @@ export const es = {
     youtube_video_url: "Escribe un enlace de vídeo de YouTube",
     youtube_channel_url: "Escribe un enlace de canal de YouTube",
     spotify_url: "Escribe un enlace de Spotify",
+    ayet_verse: "Elige un versículo",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -135,6 +137,22 @@ export const es = {
     spotifyLinkLabel: "Enlace de Spotify",
     spotifyHint:
       "Se pueden añadir canciones, álbumes, listas, artistas, pódcast y episodios: añadimos lo que pegues.",
+    ayetVariantLegend: "Versión de la tarjeta",
+    ayetVariantArabic: "Solo árabe",
+    ayetVariantMeal: "Solo traducción",
+    ayetVariantBoth: "Las dos juntas",
+    ayetVariantHint:
+      "La versión define la tipografía de la tarjeta y su tamaño mínimo: la escritura árabe necesita más espacio y mostrar las dos necesita el máximo.",
+    ayetSearchLabel: "Buscar versículos",
+    ayetSearchPlaceholder: "Bakara 255 o una palabra",
+    ayetSearchHint:
+      "Escribe el nombre de la sura y el número de versículo («Bakara 255», «2:255») o busca una palabra en la traducción al turco.",
+    ayetSearching: "Buscando versículos…",
+    ayetNoResults: (query: string) => `No se encontró ningún versículo para «${query}».`,
+    ayetFailed: "No se pudo acceder a la fuente de versículos — revisa tu conexión.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} añadido`,
+    ayetSourceNote: (translator: string) =>
+      `El texto árabe está en escritura uthmani (Hafs); la traducción al turco es de ${translator} y se acredita al pie de la tarjeta.`,
     fixIssue: "Corregir",
     removeBlock: "Quitar",
     editedElsewhere: "La página se ha editado en otro sitio.",
@@ -281,6 +299,12 @@ export const es = {
       "No se ha encontrado este canal. Comprueba la dirección o prueba con la dirección /channel/UC… del canal.",
     youtubeVideoNotFound:
       "No se ha encontrado el vídeo. Puede que se haya eliminado o sea privado, o que el enlace se haya copiado incompleto.",
+
+    ayetUnavailable: "La fuente de versículos no ha respondido ahora mismo. Inténtalo en un momento.",
+    ayetSurahUnknown: "No existe esa sura. Escribe un número del 1 al 114 o el nombre de una sura.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `La sura ${surahName} tiene ${count} versículos; no hay ninguno con ese número.`,
+    ayetQueryTooShort: (min: number) => `Escribe al menos ${min} letras para buscar.`,
 
     uploadOnlyJpegPng: "Solo puedes subir JPEG o PNG",
     uploadTooLarge: "La foto puede pesar como máximo 5 MB",

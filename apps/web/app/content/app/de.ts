@@ -29,6 +29,7 @@ export const de = {
     gallery: "Fotogalerie",
     youtube: "YouTube",
     spotify: "Spotify",
+    ayet: "Koranvers",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -43,6 +44,7 @@ export const de = {
     youtube_video_url: "Gib einen YouTube-Videolink ein",
     youtube_channel_url: "Gib einen YouTube-Kanallink ein",
     spotify_url: "Gib einen Spotify-Link ein",
+    ayet_verse: "Wähle einen Vers",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -135,6 +137,22 @@ export const de = {
     spotifyLinkLabel: "Spotify-Link",
     spotifyHint:
       "Titel, Alben, Playlists, Künstler, Podcasts und Folgen lassen sich hinzufügen — wir fügen das ein, was du einfügst.",
+    ayetVariantLegend: "Kartenvariante",
+    ayetVariantArabic: "Nur Arabisch",
+    ayetVariantMeal: "Nur Übersetzung",
+    ayetVariantBoth: "Beides zusammen",
+    ayetVariantHint:
+      "Die Variante bestimmt Typografie und Mindestgröße der Karte: arabische Schrift braucht mehr Platz, beides zusammen am meisten.",
+    ayetSearchLabel: "Verse suchen",
+    ayetSearchPlaceholder: "Bakara 255 oder ein Stichwort",
+    ayetSearchHint:
+      "Gib Surenname und Versnummer ein („Bakara 255“, „2:255“) oder suche nach einem Wort in der türkischen Übersetzung.",
+    ayetSearching: "Verse werden gesucht…",
+    ayetNoResults: (query: string) => `Kein Vers für „${query}“ gefunden.`,
+    ayetFailed: "Die Versquelle war nicht erreichbar — prüf deine Verbindung.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} hinzugefügt`,
+    ayetSourceNote: (translator: string) =>
+      `Der arabische Text steht in Uthmani-Schrift (Hafs); die türkische Übersetzung stammt von ${translator} und wird unten auf der Karte genannt.`,
     fixIssue: "Beheben",
     removeBlock: "Entfernen",
     editedElsewhere: "Die Seite wurde an anderer Stelle bearbeitet.",
@@ -281,6 +299,12 @@ export const de = {
       "Dieser Kanal wurde nicht gefunden. Prüf die Adresse oder versuch die /channel/UC…-Adresse des Kanals.",
     youtubeVideoNotFound:
       "Das Video wurde nicht gefunden. Es wurde vielleicht gelöscht oder ist privat, oder der Link wurde unvollständig kopiert.",
+
+    ayetUnavailable: "Die Versquelle hat gerade nicht geantwortet. Versuch es gleich noch mal.",
+    ayetSurahUnknown: "Diese Sure gibt es nicht. Gib eine Zahl zwischen 1 und 114 oder einen Surennamen ein.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `Die Sure ${surahName} hat ${count} Verse; einen Vers mit dieser Nummer gibt es nicht.`,
+    ayetQueryTooShort: (min: number) => `Gib mindestens ${min} Buchstaben ein, um zu suchen.`,
 
     uploadOnlyJpegPng: "Du kannst nur JPEG oder PNG hochladen",
     uploadTooLarge: "Das Foto darf höchstens 5 MB groß sein",

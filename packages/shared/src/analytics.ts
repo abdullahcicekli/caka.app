@@ -188,6 +188,9 @@ function blockUrl(block: ProfileBlock): string {
     // Galeri tek bir dış adrese gitmez (fotoğraflar birinci taraf asset);
     // ölçülecek bir tıklama hedefi yok.
     case "gallery":
+    // Ayet kartı bir bağlantı DEĞİL: metin kayıtta duruyor, tıklanacak bir
+    // hedef yok (R58 — ziyaretçi hiçbir dış kaynağa gitmiyor).
+    case "ayet":
       return "";
     default: {
       const exhaustive: never = block;
@@ -215,6 +218,7 @@ function blockLabel(block: ProfileBlock): string {
     case "profile":
     case "text":
     case "gallery":
+    case "ayet":
       return "";
     default: {
       const exhaustive: never = block;

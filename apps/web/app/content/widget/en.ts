@@ -66,6 +66,15 @@ export const en = {
     },
   },
 
+  ayet: {
+    name: "Qur'an verse",
+    empty: "Choose a verse",
+    reference: (surahName: string, verse: number) => `Surah ${surahName}, verse ${verse}`,
+    label: (surahName: string, verse: number) => `Surah ${surahName}, verse ${verse}`,
+    /* The translation is Turkish in every interface language; the credit says so. */
+    mealCredit: (translator: string) => `Turkish translation: ${translator}`,
+  },
+
   github: {
     heatmapLabel: (total: number) => `${total} contributions in the last year`,
   },

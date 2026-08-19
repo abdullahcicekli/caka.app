@@ -29,6 +29,7 @@ export const en = {
     gallery: "Photo gallery",
     youtube: "YouTube",
     spotify: "Spotify",
+    ayet: "Qur'an verse",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -43,6 +44,7 @@ export const en = {
     youtube_video_url: "Enter a YouTube video link",
     youtube_channel_url: "Enter a YouTube channel link",
     spotify_url: "Enter a Spotify link",
+    ayet_verse: "Choose a verse",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -134,6 +136,22 @@ export const en = {
     spotifyLinkLabel: "Spotify link",
     spotifyHint:
       "Tracks, albums, playlists, artists, podcasts and episodes can be added — whatever you paste is what we add.",
+    ayetVariantLegend: "Card version",
+    ayetVariantArabic: "Arabic only",
+    ayetVariantMeal: "Translation only",
+    ayetVariantBoth: "Both together",
+    ayetVariantHint:
+      "The version sets the card's typography and its smallest size: Arabic script needs more room, and showing both needs the most.",
+    ayetSearchLabel: "Search verses",
+    ayetSearchPlaceholder: "Bakara 255 or a keyword",
+    ayetSearchHint:
+      "Type a surah name and verse number (“Bakara 255”, “2:255”), or search for a word in the Turkish translation.",
+    ayetSearching: "Searching verses…",
+    ayetNoResults: (query: string) => `No verse found for “${query}”.`,
+    ayetFailed: "The verse source could not be reached — check your connection.",
+    ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} added`,
+    ayetSourceNote: (translator: string) =>
+      `The Arabic text is in Uthmani script (Hafs); the Turkish translation is by ${translator} and is credited at the foot of the card.`,
     fixIssue: "Fix",
     removeBlock: "Remove",
     editedElsewhere: "The page was edited somewhere else.",
@@ -279,6 +297,12 @@ export const en = {
       "That channel couldn't be found. Check the address or try the channel's /channel/UC… address.",
     youtubeVideoNotFound:
       "The video couldn't be found. It may have been deleted or made private, or the link may have been copied incompletely.",
+
+    ayetUnavailable: "The verse source didn't respond just now. Try again in a moment.",
+    ayetSurahUnknown: "There is no such surah. Enter a number between 1 and 114, or a surah name.",
+    ayetVerseOutOfRange: (surahName: string, count: number) =>
+      `Surah ${surahName} has ${count} verses; there is no verse with that number.`,
+    ayetQueryTooShort: (min: number) => `Type at least ${min} letters to search.`,
 
     uploadOnlyJpegPng: "You can only upload JPEG or PNG",
     uploadTooLarge: "The photo can be at most 5 MB",

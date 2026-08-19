@@ -118,6 +118,7 @@ yapar, dolayısıyla ziyaretçinin IP adresi tedarikçiye ulaşmaz.
 | **og:image kazıması** — hedef siteler (`server/og.ts`) | Bağlantının önizleme görselinin bulunması | Profil sahibinin girdiği **URL**; isteği Worker atar, gövde akış hâlinde ve en fazla 1 MB okunur | Bizim tedarikçimiz değil | Belirsiz — URL'i profil sahibi girer | Duruma göre | ⬚ *(uygulanamaz)* |
 | **Önizleme görseli proxy'si** — hedef host'lar (`server/image-proxy.ts`) | Uzak önizleme görselinin birinci taraftan servis edilmesi | Yalnızca görselin **adresi**; isteği Worker atar, ziyaretçinin IP'si ve User Agent'ı uzak host'a ulaşmaz | Bizim tedarikçimiz değil; host'u profil sahibi seçer | Belirsiz | Duruma göre | ⬚ *(uygulanamaz — sözleşme tarafı yok)* |
 | **YouTube (Google LLC)** — oEmbed, kanal sayfası, RSS akışı (`server/youtube.ts`) | Video/kanal bilgisinin ve en son videonun alınması | Profil sahibinin girdiği **video/kanal adresi**; istek Worker'dan gider, ziyaretçinin IP'si YouTube'a ulaşmaz | Ayrı veri sorumlusu | ABD | **Evet** (giden adres bakımından) | ⬚ *(boş — OQ2a)* |
+| **jsDelivr (Prospect One)** — Kur'an metni CDN'i (`server/quran.ts`) | Ayet bloğunda gösterilecek Arapça metnin ve Türkçe mealin alınması; `cdn.jsdelivr.net/gh/fawazahmed0/quran-api` statik JSON | Yalnızca istenen **sure/ayet numarası** (arama sorgusu gönderilmez — arama Worker içinde yapılır). İstek **yalnız editörde**, oturumlu kullanıcı için atılır; ziyaretçinin IP'si CDN'e ulaşmaz | Bizim tedarikçimiz değil; açık kaynak dağıtım ağı | Polonya merkezli, anycast küresel ağ | **Evet** (giden ayet numarası bakımından) | ⬚ *(uygulanamaz — sözleşme tarafı yok, kişisel veri gitmiyor)* |
 | **Google (googleusercontent.com)** — avatar kopyası (`server/avatar.ts`) | Google profil fotoğrafının R2'ye kopyalanması | Yalnızca görsel URL'i; istek Worker'dan gider | Ayrı veri sorumlusu | ABD | **Evet** | ⬚ *(boş — OQ2a)* |
 
 ---
@@ -166,3 +167,67 @@ gözden geçirilir.
 4. Fontshare CDN'inin sunucu konumu.
 5. **Hiçbir tedarikçiyle imzalanmış veri işleme veya aktarım sözleşmesi yok**
    (OQ2a). Kayıttaki "rol" nitelemeleri fiilî akıştan çıkarılmıştır.
+
+---
+
+## F. Kur'an metninin kaynağı ve atıf yükümlülüğü
+
+Ayet bloğu (`server/quran.ts`, `packages/shared/src/quran.ts`) telifli metin
+taşıyor; kaynak seçimi bu yüzden hukuki bir karardır ve gerekçesi burada durur.
+
+**Denetim tarihi:** 2026-08-19.
+
+### Reddedilen kaynak — `github.com/diyanet-bid/Kuran`
+
+Depo Apache-2.0 lisanslı ama **veri deposu değil**: tek bir ayet içermiyor,
+Next.js uygulaması `DIB_KURAN_API_BASE_URL` + `DIB_KURAN_API_TOKEN` ile
+korunan kapalı bir Diyanet ucundan okuyor. Apache-2.0 yalnızca uygulama
+kodunu kapsıyor; **metnin kendisi için yayımlanmış bir kullanım izni yok** ve
+token başvuruya bağlı. Kullanılamadı.
+
+### Kullanılan kaynaklar
+
+| Katman | Edisyon | Sahibi / kaynağı | Durum |
+|---|---|---|---|
+| Arapça metin | `ara-quranuthmanihaf` (Osmanî hat, Hafs) | Kral Fahd Kur'an Basım Kompleksi (qurancomplex.gov.sa) | Kur'an'ın Arapça metni ~1400 yıllık, telifsiz bir metindir; korunabilir olan yalnız dijital edisyonun kendisidir ve kaynak burada gösterilir |
+| Türkçe meal | `tur-elmalilihamdiya` | Elmalılı Hamdi Yazır (ö. **27 Mayıs 1942**) | **Kamu malı.** FSEK m.27 koruma süresi (ölüm + 70 yıl) **31.12.2012**'de doldu |
+| Taşıyıcı | `fawazahmed0/quran-api` | Unlicense (kamu malına adama) | Anahtarsız statik JSON; jsDelivr CDN'inden servis edilir |
+
+### Bilinçli olarak KULLANILMAYAN meal
+
+**Diyanet İşleri meali** güncel bir eserdir, telifi Diyanet İşleri
+Başkanlığı'ndadır ve Tanzil üzerinden dağıtılan kopyası açıkça *"yalnız ticari
+olmayan amaçlarla"* kaydını taşır (tanzil.net/trans, 2026-08-19). Caka ticari
+bir üründür; bu meal alınmadı.
+
+Aynı sebeple **Tanzil'in çeviri koleksiyonu** bir bütün olarak kullanılmıyor.
+Tanzil'in *Arapça metin* lisansı (CC BY 3.0) ticari kullanıma açıktır; bugün
+Arapça metin başka bir edisyondan geldiği için Tanzil atfı gerekmiyor. Arapça
+edisyon Tanzil'e çevrilirse, "Tanzil Project" adı ve tanzil.net bağlantısı
+**zorunlu** hâle gelir.
+
+### Kalan risk (açık)
+
+`tur-elmalilihamdiya` edisyonunun metni, Elmalılı'nın 1935-1939 tarihli özgün
+mealinin **sadeleştirilmiş** bir hâli gibi okunuyor. Sadeleştirme ayrı bir
+işleme eser sayılırsa, sadeleştirenin telifi hâlâ sürüyor olabilir ve
+sadeleştireni adlandıran bir kayıt bulunamadı. Özgün eserin kamu malı olduğu
+kesin, sadeleştirmenin durumu **belirsizdir**. Bu, `bilinen-aciklar.md`'ye
+taşınacak bir açıktır; kapatmanın yolu, doğrudan Elmalılı'nın özgün metnine
+dayanan bir edisyona geçmek ya da izin almaktır.
+
+### Atıf nasıl karşılanıyor
+
+- **Kartta:** meal gösteren her sürüm çevirmenin adını basar
+  (`.ayet-source`, `widget.ayet.mealCredit`). Ad kayıtta saklanır
+  (`mealTranslator`), varsayılandan türetilmez — ileride ikinci bir meal
+  eklendiğinde eski bloklar yanlış çevirmene atfedilmesin.
+- **Kodda:** kaynak, lisans ve gerekçe `apps/web/server/quran.ts` başlığında.
+- **Burada:** yukarıdaki tablo.
+
+### Ziyaretçi tarafı
+
+Ayet metni bloğun verisinde saklanır. **Profil sayfası hiçbir dış kaynağa
+istek atmaz** (R58): CDN yalnızca editörde, oturumlu kullanıcı için ve
+yalnızca sure/ayet numarası göndererek çağrılır. Cihaza yazma yok, bu yüzden
+`cookie-inventory.md`'ye girdi eklenmedi.

@@ -9,8 +9,8 @@ import { Trash, WarningTriangle } from "iconoir-react";
 import type { GridItemHTMLElement, GridStack } from "gridstack";
 
 import {
-  BLOCK_GRID_LIMITS,
   GRID_COLUMNS,
+  blockGridLimits,
   type ProfileBlock,
 } from "@caka/shared";
 import { ProfileBlockCard } from "~/components/profile-block";
@@ -65,11 +65,17 @@ export function EditorGrid({
   editingRef.current = editingId;
 
   const posKey = device === "mobile" ? "sm" : "lg";
-  // Yapısal imza: id listesi veya konumlar değişince gridstack ile senkron ol.
+  // Yapısal imza: id listesi, konumlar VEYA SINIRLAR değişince gridstack ile
+  // senkron ol. Sınırlar imzada çünkü artık bloktan okunuyorlar: ayet kartının
+  // sürümü değişince (ör. "ikisi birlikte" → "yalnız meal") konum aynı kalsa
+  // bile `minH` düşüyor; imzada olmasaydı efekt koşmaz, gridstack eski tabanı
+  // tutar ve kullanıcı kartı küçültemezdi.
   const syncKey = blocks
     .map((block) => {
       const pos = block.pos?.[posKey];
-      return pos ? `${block.id}:${pos.x},${pos.y},${pos.w},${pos.h}` : block.id;
+      const limits = blockGridLimits(block);
+      const bounds = limits ? `${limits.minW}-${limits.minH}` : "";
+      return pos ? `${block.id}:${pos.x},${pos.y},${pos.w},${pos.h}:${bounds}` : block.id;
     })
     .join("|");
 
@@ -134,7 +140,10 @@ export function EditorGrid({
         const el = itemRefs.current.get(block.id);
         if (!el || block.type === "profile") continue;
         grid.makeWidget(el);
-        grid.update(el, BLOCK_GRID_LIMITS[block.type]);
+        // Sınır tipten DEĞİL bloktan okunur: ayet kartının tabanı sürüme
+        // bağlı (Arapça/meal/ikisi birlikte farklı taban ister).
+        const limits = blockGridLimits(block);
+        if (limits) grid.update(el, limits);
         // makeWidget sürüklemeyi sıfırlar; düzenlenen blok kilitli kalmalı.
         grid.movable(el, block.id !== editingRef.current);
       }

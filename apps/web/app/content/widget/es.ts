@@ -66,6 +66,14 @@ export const es = {
     },
   },
 
+  ayet: {
+    name: "Versículo del Corán",
+    empty: "Elige un versículo",
+    reference: (surahName: string, verse: number) => `Sura ${surahName}, versículo ${verse}`,
+    label: (surahName: string, verse: number) => `Sura ${surahName}, versículo ${verse}`,
+    mealCredit: (translator: string) => `Traducción al turco: ${translator}`,
+  },
+
   github: {
     heatmapLabel: (total: number) => `${total} contribuciones en el último año`,
   },

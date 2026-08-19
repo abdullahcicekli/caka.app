@@ -7,6 +7,7 @@ import { imageProxyApi } from "./image-proxy";
 import { isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
 import { ogApi } from "./og";
+import { quranApi } from "./quran-api";
 import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
 import { seoRoutes } from "./seo";
@@ -38,6 +39,11 @@ honoApp.route("/api/youtube", youtubeApi);
 // Editörün Spotify çözümleme ucu: GET /api/spotify?url=… — tür (parça/albüm/
 // liste/…) ve kimlik kayıt anında burada çözülür, render tekrarlamaz.
 honoApp.route("/api/spotify", spotifyApi);
+// Editörün ayet arama/çözümleme ucu: GET /api/ayet?q=… ve /api/ayet/sec.
+// Kur'an metni pakete GÖMÜLMEZ (2,7 MB); yalnız burada, oturumlu kullanıcı
+// için çözülür ve seçilen ayet bloğun verisine yazılır — ziyaretçi sayfası
+// hiçbir dış kaynağa gitmez (R58).
+honoApp.route("/api/ayet", quranApi);
 // Uzak önizleme görselleri birinci taraftan servis edilir (backlog #6):
 // ziyaretçinin IP/UA'sı uzak host'a gitmez, üçüncü taraf çerezi yazılamaz.
 honoApp.route("/api/gorsel", imageProxyApi);
