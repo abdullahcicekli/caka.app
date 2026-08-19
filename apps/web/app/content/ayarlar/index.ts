@@ -37,6 +37,13 @@ export type AddressErrorId =
   | "origin"
   | "unknown";
 
+/**
+ * Hesap silme için sunucudan dönebilecek hata kimlikleri. `account.deleteErrors`
+ * kataloğunun anahtarlarıyla birebir aynı olmalı — bu tip hem route'un yanıtını
+ * hem de kartın mesaj aramasını bağlar, ikisi ayrı ayrı kaymasın.
+ */
+export type DeleteErrorId = keyof AyarlarContent["account"]["deleteErrors"];
+
 export const ayarlarCatalog: Record<Locale, AyarlarContent> = {
   tr,
   en,

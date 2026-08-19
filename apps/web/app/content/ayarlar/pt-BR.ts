@@ -71,14 +71,38 @@ export const ptBR = {
     providerUnknown: "Desconhecida",
     emailLabel: "E-mail",
     emailVerified: "verificado",
-    dataTitle: "Seus dados e exclusão da conta",
+    dataTitle: "Seus dados",
     dataBody:
-      "Excluir sua conta ou pedir uma cópia dos seus dados ainda não é feito por você mesmo no painel. Se escrever para hello@caka.app, seu pedido pelo artigo 11 da lei turca de proteção de dados (KVKK) será processado.",
+      "Pedir uma cópia dos seus dados ainda não é feito por você mesmo no painel. Se escrever para hello@caka.app, seu pedido pelo artigo 11 da lei turca de proteção de dados (KVKK) será processado.",
     dataMailLabel: "hello@caka.app",
     dataMailHref: "mailto:hello@caka.app",
     privacyLinkLabel: "Política de Privacidade",
     privacyLinkHref: "/gizlilik",
     privacyLinkPrefix: "Detalhes:",
+
+    deleteTitle: "Excluir sua conta",
+    deleteBody:
+      "Você pode excluir sua conta aqui mesmo. A exclusão é imediata, não pode ser desfeita e o suporte também não consegue recuperá-la.",
+    deleteConsequencesTitle: "Antes de excluir, saiba disto",
+    deleteConsequences: [
+      "Sua página sai do ar na hora; seu layout, seus blocos e tudo o que você escreveu são apagados.",
+      "Todas as imagens e documentos que você enviou são apagados em definitivo.",
+      "Os contadores de visitas e cliques da sua página, suas sessões e seu vínculo de entrada são apagados.",
+      `Seu endereço fica bloqueado por ${USERNAME_REDIRECT_DAYS} dias: nesse período ninguém — nem você — pode pegá-lo, e o endereço responde 404. Assim os QR codes que você imprimiu não caem na página de um estranho.`,
+      "Você pode se cadastrar de novo com o mesmo e-mail, mas sua página antiga não volta e será preciso escolher outro endereço.",
+    ],
+    deleteFieldLabel: "Digite seu endereço para confirmar",
+    deleteFieldHint: (username: string) => `Digite ${username} no campo.`,
+    deleteConfirmLabel:
+      "Entendo que minha conta e todo o meu conteúdo serão apagados em definitivo e que isso não pode ser desfeito.",
+    deleteSubmit: "Excluir minha conta para sempre",
+    deleteSubmitting: "Excluindo…",
+    deleteErrors: {
+      mismatch: "O que você digitou não confere com seu endereço",
+      no_profile: "Seu perfil não foi encontrado",
+      origin: "Origem de requisição inválida",
+      unknown: "Não foi possível concluir a exclusão, tente de novo",
+    },
   },
 
   addressErrors: {

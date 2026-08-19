@@ -83,3 +83,25 @@ export function getAuth(env: Env): Auth {
 export async function getSession(env: Env, request: Request) {
   return getAuth(env).api.getSession({ headers: request.headers });
 }
+
+/**
+ * Oturumu kapatıp çerezi temizleyen `Set-Cookie` başlıklarını döndürür.
+ *
+ * Çerez adı ve bayrakları Better Auth'un kendi yapılandırmasından gelsin diye
+ * başlıklar elle kurulmaz; sürüm yükseltmesinde ad değişirse burası kendiliğinden
+ * doğru kalır. Hesap silmede kullanılır: silme yanıtı kullanıcıyı ölü bir
+ * çerezle bırakmamalı. Çıkış başarısız olursa boş dizi döner — çağıran akış
+ * yine de ilerler, çünkü oturum kaydı zaten silinecektir.
+ */
+export async function signOutSetCookies(env: Env, request: Request): Promise<string[]> {
+  try {
+    const response = await getAuth(env).api.signOut({
+      headers: request.headers,
+      asResponse: true,
+    });
+    return response.headers.getSetCookie();
+  } catch (error) {
+    console.error(JSON.stringify({ message: "sign out failed", error: String(error) }));
+    return [];
+  }
+}

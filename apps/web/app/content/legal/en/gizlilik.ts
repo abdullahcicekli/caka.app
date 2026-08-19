@@ -810,7 +810,11 @@ export const gizlilikSectionsEn: LegalSection[] = [
             "When you change your address, the old address redirects to the new " +
               "one for 30 days and is not given to anyone else during that " +
               "period; when the period ends the record becomes invalid and the " +
-              "name is released.",
+              "name is released. The same 30-day lock applies when you delete " +
+              "your account, but without the redirect: since there is no page " +
+              "left to redirect to, the address returns not found (404) for " +
+              "that period. The lock row holds only the username and an expiry " +
+              "date; it carries no other data from the deleted account.",
           ],
           [
             { kind: "strong", text: "GitHub contribution graph cache: " },
@@ -864,8 +868,12 @@ export const gizlilikSectionsEn: LegalSection[] = [
           [
             ["Account data, profile content and the files you upload"],
             [
-              "Until you delete them. When you close your account or request " +
-                "deletion, they are deleted within ",
+              "Until you delete them. When you delete your account under " +
+                "Settings → Account, your profile, your content, the files you " +
+                "uploaded and your session records are deleted ",
+              { kind: "strong", text: "at the same moment" },
+              "; there is no waiting period and no recovery window. If you " +
+                "request deletion by email instead, they are deleted within ",
               { kind: "strong", text: "3 months" },
               " at the latest.",
             ],
@@ -1034,16 +1042,28 @@ export const gizlilikSectionsEn: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          {
-            kind: "strong",
-            text: "Export and account deletion are not self-service today. ",
-          },
-          "There is not yet a button in the dashboard to download your data or " +
-            "delete your account with one click. We write this plainly because " +
-            "we don't want to describe a feature that doesn't exist as if it " +
-            "did. You can exercise both requests by writing to the address " +
-            "above; when we delete your account, your profile, the files you " +
-            "uploaded and your session records are deleted as well.",
+          { kind: "strong", text: "Account deletion is self-service. " },
+          "You don't need to write an application to exercise your right to " +
+            "erasure (art. 7 / art. 11-e): under ",
+          { kind: "strong", text: "Settings → Account" },
+          ", type your address, confirm, and your account and content are " +
+            "deleted right then. It cannot be undone; no copy stays with us " +
+            "that could bring it back. What is deleted: your profile and " +
+            "layout, the images and documents you uploaded, your page's view " +
+            "and click counters, your session records and your identity " +
+            "provider connection. Your address stays locked for 30 days " +
+            "(see §7). You can also request deletion at the address above " +
+            "instead.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Export is not self-service today. " },
+          "There is not yet a button in the dashboard to download your data " +
+            "with one click. We write this plainly because we don't want to " +
+            "describe a feature that doesn't exist as if it did. If you want a " +
+            "copy, writing to the address above is enough.",
         ],
       },
       {

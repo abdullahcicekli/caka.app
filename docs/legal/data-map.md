@@ -17,8 +17,9 @@ R2 `caka-assets`.
 **Saklama süreleri hakkında genel not.** Aşağıda "Süre" sütununda yalnızca
 koddan okunabilen teknik süreler yazılıdır. Kod dışındaki süreler artık
 `/gizlilik` §7'deki tabloda yazılıdır ve orası tek gerçek kaynaktır: hesap
-verisi, profil içeriği ve dosyalar kullanıcı silene kadar, silme talebinden
-sonra **en geç 3 ay**; oturum kayıtları oturum bittikten sonra **en çok 90
+verisi, profil içeriği ve dosyalar kullanıcı silene kadar (Ayarlar → Hesap'tan
+self-servis silmede **anında**), e-postayla gelen silme talebinden sonra
+**en geç 3 ay**; oturum kayıtları oturum bittikten sonra **en çok 90
 gün**; destek yazışmaları kapanıştan sonra **en geç 3 ay**; Workers Logs
 **en çok 30 gün** (süreyi Cloudflare belirler). Üç aylık süre Silme
 Yönetmeliği **m.11/3**'ten gelir: VERBİS'ten muaf olduğumuz için yazılı imha
@@ -44,9 +45,12 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
 - **Amaç:** hesabın açılması ve sürdürülmesi.
 - **Hukuki sebep:** KVKK m.5/2-c — sözleşmenin kurulması/ifası.
 - **Nerede:** D1 `caka-db` (Cloudflare).
-- **Süre:** hesap yaşadığı sürece. Hesap silmede `user` silinir; FK'ler
-  `onDelete: cascade` olduğu için `profile`, `session`, `account`, `asset`
-  satırları da düşer. Silme sonrası yedek saklama süresi **bilinmiyor**.
+- **Süre:** hesap yaşadığı sürece. Ayarlar → Hesap'tan silmede
+  `server/account.ts` tek D1 batch'inde `profile`, `session`, `account`,
+  `asset`, ölçüm sayaçları ve `user` satırlarını **açıkça** siler (FK
+  `cascade`'ine bel bağlanmaz), ardından R2 nesnelerini temizler. Tek istisna
+  `username_redirect`: kilit satırı `profile_id` NULL'a düşerek 30 gün yaşar.
+  Silme sonrası yedek saklama süresi **bilinmiyor**.
 
 ### `session` — oturum verisi ⚠️ işaretli
 
@@ -157,11 +161,16 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
   veri (m.6) yazarsa alenileştirmiş olur; `/gizlilik` §3 bunu söylüyor. Caka
   m.6 kapsamında veri **istemez**.
 
-### `username_redirect` — adres değişikliği kaydı
+### `username_redirect` — adres değişikliği kaydı ve silinmiş ad kilidi
 
-`old_username` (PK), `profile_id`, `expires_at`, `created_at`.
+`old_username` (PK), `profile_id` (**NULL olabilir**), `expires_at`, `created_at`.
 
 - **Amaç:** eski adresin kırılmaması. **Sebep:** m.5/2-f (meşru menfaat).
+- **`profile_id` NULL = hedefsiz kilit.** Hesap silindiğinde kullanıcının o anki
+  adresi için 30 günlük bir kilit satırı yazılır ve eski satırlarının
+  `profile_id`'si NULL'a düşer. Yönlendirilecek profil kalmadığı için adres 302
+  değil **404** verir; ad 30 gün kimseye verilmez. Satır yalnızca kullanıcı adı
+  ve bitiş tarihi taşır — silinen hesaptan geriye başka veri bırakmaz.
 - **Süre:** **30 gün** (Değişmez #10; `expires_at`). Süre dolunca kayıt lookup'ta
   yok sayılır ve ad serbest kalır. Satırın fiziksel silinmesi ayrı bir iş
   değildir — **ölü satır tabloda kalabilir**.
@@ -188,9 +197,10 @@ veya `null` = negatif önbellek), `fetched_at`.
 - **Amaç:** aynı veriyi her ziyarette yeniden istememek. **Sebep:** m.5/2-f.
 - **Süre:** başarılı kayıt **6 saat** taze (`FRESH_TTL_MS`), olumsuz sonuç
   **24 saat** (`NEGATIVE_TTL_MS`). Bunlar tazelik eşikleridir, **silme süresi
-  değildir**: satır tabloda kalır. Handle profilden çıkarıldığında satır
-  temizlenmez; hesap silmede de temizlenmez (`docs/backlog.md` §3).
-  **Bu, veri haritasındaki en somut saklama boşluğudur.**
+  değildir**: satır tabloda kalır. Hesap silmede kullanıcının layout'undaki
+  login'ler artık temizlenir (`server/account.ts`), ama handle profilden
+  çıkarıldığında satır hâlâ temizlenmez ve hiç sorgulanmayan satırlar için
+  budama yoktur (`docs/backlog.md` §3). **Kalan boşluk budur.**
 
 ### `asset` — yüklenen dosya envanteri
 
@@ -280,7 +290,8 @@ tutmaz; sebep m.5/2-f'tir ve `/gizlilik` §4 bunu böyle yazıyor.
 Hepsi bilerek burada duruyor; hiçbiri "sonra bakarız" diye kapatılmadı.
 
 1. **Hesap sonrası saklama ve yedek süreleri belirlenmedi** — `bilinen-aciklar.md` §1.
-2. **`github_calendar` satırları hiç silinmiyor** — hesap silmede de temizlenmiyor
+2. **`github_calendar` satırları hesap silme dışında hiç silinmiyor** — handle
+   profilden çıkarıldığında ve hiç sorgulanmayan satırlar için budama yok
    (`docs/backlog.md`).
 3. **`session.ip_address` / `session.user_agent` yazılıyor ama hiçbir yerde
    okunmuyor** — minimizasyon kararı bekliyor.

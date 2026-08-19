@@ -1,5 +1,6 @@
-// Ayarlar: üç bölüm — Adres (kullanıcı adı değişikliği), Paylaşım görseli
-// (og:image şablonu + fotoğraf kaynağı) ve Hesap (salt okunur).
+// Ayarlar: dört bölüm — Adres (kullanıcı adı değişikliği), Dil, Paylaşım
+// görseli (og:image şablonu + fotoğraf kaynağı) ve Hesap (salt okunur bilgi +
+// hesap silme).
 //
 // Paylaşım görseli önizlemeleri GERÇEK /og/u/... render'larıdır — hash'li
 // URL'ler loader'da üretilir; seçim kaydedilince revalidate ile taze hash'ler
@@ -21,6 +22,7 @@ import {
   ayarlarCatalog,
   type AddressErrorId,
   type AyarlarSectionId,
+  type DeleteErrorId,
 } from "~/content/ayarlar";
 import { LanguageCard } from "~/components/ayarlar/language-card";
 import { commonCatalog } from "~/content/common";
@@ -36,7 +38,8 @@ import {
   type OgTemplate,
   type ProfileBlock,
 } from "@caka/shared";
-import { getSession } from "../../server/auth";
+import { checkDeleteAccount, deleteAccount } from "../../server/account";
+import { getSession, signOutSetCookies } from "../../server/auth";
 import { ogImagePathForTemplate } from "../../server/og-image";
 import {
   changeUsername,
@@ -126,6 +129,12 @@ type AddressActionData =
   | { ok: false; error: AddressErrorId };
 
 /**
+ * Hesap silme yalnızca BAŞARISIZLIKTA gövde döndürür; başarı hâli bir
+ * yönlendirmedir (oturum artık yok, sayfada kalınacak bir yer de yok).
+ */
+type DeleteActionData = { ok: false; error: DeleteErrorId };
+
+/**
  * Adres değişikliği. Oturum zorunlu ve değişiklik yalnız oturum sahibinin
  * kendi profiline uygulanır (`changeUsername` profili `userId` ile bulur);
  * istek gövdesinde hedef kullanıcı taşınmaz.
@@ -141,7 +150,13 @@ export async function action({ request }: Route.ActionArgs) {
   if (!session) throw localizedRedirect(request, "/login");
 
   const form = await request.formData();
-  if (form.get("intent") !== "address") return fail("unknown", 400);
+  const intent = form.get("intent");
+
+  if (intent === "hesap-sil") {
+    return deleteAccountAction(request, session.user.id, String(form.get("confirm") ?? ""));
+  }
+
+  if (intent !== "address") return fail("unknown", 400);
 
   let result;
   try {
@@ -162,6 +177,41 @@ export async function action({ request }: Route.ActionArgs) {
     username: result.username,
     expiresOn: usernameWindowDayKey(result.redirectExpiresAt),
   } satisfies AddressActionData);
+}
+
+/**
+ * Hesap silme. Sıra bilinçlidir:
+ *
+ *  1. **Onay kontrolü** — kullanıcı kendi adresini birebir yazmadıysa hiçbir şey
+ *     olmaz ve oturum el değmemiş kalır (yazım hatası kimseyi çıkışa atmaz).
+ *  2. **Çıkış** — oturum kaydı ve çerez, silme başlamadan geçersiz kılınır.
+ *  3. **Silme** — D1 + R2. Burada patlarsa kullanıcı yalnızca çıkmış olur,
+ *     hesabı durur; tekrar girip yeniden deneyebilir (güvenli tarafa düşer).
+ */
+async function deleteAccountAction(request: Request, userId: string, confirmation: string) {
+  const checked = await checkDeleteAccount(env, userId, confirmation);
+  if (!checked.ok) {
+    return data({ ok: false, error: checked.error } satisfies DeleteActionData, { status: 400 });
+  }
+
+  const setCookies = await signOutSetCookies(env, request);
+
+  let result;
+  try {
+    result = await deleteAccount(env, userId, confirmation);
+  } catch (error) {
+    console.error(JSON.stringify({ message: "account delete failed", error: String(error) }));
+    return data({ ok: false, error: "unknown" } satisfies DeleteActionData, { status: 500 });
+  }
+  if (!result.ok) {
+    return data({ ok: false, error: result.error } satisfies DeleteActionData, { status: 400 });
+  }
+
+  const headers = new Headers();
+  for (const cookie of setCookies) headers.append("set-cookie", cookie);
+  // `?veda`: ana sayfa silmenin gerçekten olduğunu söyleyen bir şerit gösterir.
+  // Onsuz kullanıcı hiçbir açıklama olmadan pazarlama sayfasına düşerdi.
+  throw localizedRedirect(request, "/?veda=1", { headers });
 }
 
 /** Adresten gelen bölüm kimliği geçerli mi (kullanıcı elle yazmış olabilir). */
@@ -242,6 +292,7 @@ export default function Ayarlar({ loaderData }: Route.ComponentProps) {
 
           {active === "hesap" ? (
             <AccountCard
+              username={username}
               providers={accountInfo.providers}
               email={accountInfo.email}
               emailVerified={accountInfo.emailVerified}

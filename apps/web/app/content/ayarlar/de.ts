@@ -71,14 +71,38 @@ export const de = {
     providerUnknown: "Unbekannt",
     emailLabel: "E-Mail",
     emailVerified: "bestätigt",
-    dataTitle: "Deine Daten und Kontolöschung",
+    dataTitle: "Deine Daten",
     dataBody:
-      "Dein Konto zu löschen oder eine Kopie deiner Daten anzufordern, geht im Dashboard noch nicht selbstständig. Schreib an hello@caka.app, dann wird dein Anliegen nach Artikel 11 des türkischen Datenschutzgesetzes (KVKK) bearbeitet.",
+      "Eine Kopie deiner Daten anzufordern, geht im Dashboard noch nicht selbstständig. Schreib an hello@caka.app, dann wird dein Anliegen nach Artikel 11 des türkischen Datenschutzgesetzes (KVKK) bearbeitet.",
     dataMailLabel: "hello@caka.app",
     dataMailHref: "mailto:hello@caka.app",
     privacyLinkLabel: "Datenschutzerklärung",
     privacyLinkHref: "/gizlilik",
     privacyLinkPrefix: "Details:",
+
+    deleteTitle: "Konto löschen",
+    deleteBody:
+      "Du kannst dein Konto hier selbst löschen. Die Löschung passiert sofort, lässt sich nicht rückgängig machen, und auch der Support kann sie nicht zurückholen.",
+    deleteConsequencesTitle: "Das solltest du vorher wissen",
+    deleteConsequences: [
+      "Deine Seite geht sofort offline; dein Layout, deine Blöcke und alles, was du geschrieben hast, werden gelöscht.",
+      "Alle Bilder und Dokumente, die du hochgeladen hast, werden dauerhaft gelöscht.",
+      "Die Aufruf- und Klickzähler deiner Seite, deine Sitzungen und deine Anmeldeverknüpfung werden gelöscht.",
+      `Deine Adresse bleibt ${USERNAME_REDIRECT_DAYS} Tage gesperrt: In dieser Zeit kann sie niemand nehmen — auch du nicht — und die Adresse antwortet mit 404. So landen deine gedruckten QR-Codes nicht auf der Seite einer fremden Person.`,
+      "Du kannst dich mit derselben E-Mail neu anmelden, aber deine alte Seite kommt nicht zurück und du musst eine neue Adresse wählen.",
+    ],
+    deleteFieldLabel: "Tippe zur Bestätigung deine Adresse",
+    deleteFieldHint: (username: string) => `Tippe ${username} in das Feld.`,
+    deleteConfirmLabel:
+      "Mir ist klar, dass mein Konto und alle meine Inhalte dauerhaft gelöscht werden und dass das nicht rückgängig gemacht werden kann.",
+    deleteSubmit: "Mein Konto endgültig löschen",
+    deleteSubmitting: "Wird gelöscht…",
+    deleteErrors: {
+      mismatch: "Deine Eingabe stimmt nicht mit deiner Adresse überein",
+      no_profile: "Dein Profil wurde nicht gefunden",
+      origin: "Ungültiger Anfrage-Ursprung",
+      unknown: "Die Löschung konnte nicht abgeschlossen werden, bitte versuch es erneut",
+    },
   },
 
   addressErrors: {

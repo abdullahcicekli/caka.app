@@ -72,9 +72,9 @@ export const tr = {
     providerUnknown: "Bilinmiyor",
     emailLabel: "E-posta",
     emailVerified: "doğrulanmış",
-    dataTitle: "Verilerin ve hesap silme",
+    dataTitle: "Verilerin",
     dataBody:
-      "Hesabını silmek veya verilerinin bir kopyasını istemek şu an panelden kendi başına yapılmıyor. KVKK m.11 kapsamındaki taleplerini hello@caka.app adresine yazarsan işleme alınır.",
+      "Verilerinin bir kopyasını istemek şu an panelden kendi başına yapılmıyor. KVKK m.11 kapsamındaki taleplerini hello@caka.app adresine yazarsan işleme alınır.",
     dataMailLabel: "hello@caka.app",
     dataMailHref: "mailto:hello@caka.app",
     // Yalnızca belge yayındayken gösterilir (R33): yayında değilken /gizlilik
@@ -82,6 +82,33 @@ export const tr = {
     privacyLinkLabel: "Gizlilik Metni",
     privacyLinkHref: "/gizlilik",
     privacyLinkPrefix: "Ayrıntılar:",
+
+    // Hesap silme (KVKK m.7 / m.11-e). Sonuçlar gönderimden ÖNCE yazılıdır:
+    // işlem geri alınamıyor, dolayısıyla sürpriz bırakmaya hakkımız yok.
+    deleteTitle: "Hesabını sil",
+    deleteBody:
+      "Hesabını buradan kendin silebilirsin. Silme anında olur, geri alınamaz ve destek ekibi de geri getiremez.",
+    deleteConsequencesTitle: "Silmeden önce bunları bil",
+    deleteConsequences: [
+      "Sayfan anında yayından kalkar; düzenin, blokların ve yazdığın her şey silinir.",
+      "Yüklediğin bütün görseller ve belgeler kalıcı olarak silinir.",
+      "Sayfanın ziyaret ve tıklama sayaçları, oturumların ve giriş bağlantın silinir.",
+      `Adresin ${USERNAME_REDIRECT_DAYS} gün boyunca kilitli kalır: o süre boyunca kimse — sen de dâhil — o adresi alamaz ve adres 404 verir. Böylece bastırdığın QR kodları bir yabancının sayfasına düşmez.`,
+      "Aynı e-postayla yeniden kayıt olabilirsin, ama eski sayfan geri gelmez ve yeni bir adres seçmen gerekir.",
+    ],
+    deleteFieldLabel: "Onaylamak için adresini yaz",
+    deleteFieldHint: (username: string) => `Kutuya ${username} yaz.`,
+    deleteConfirmLabel:
+      "Hesabımın ve tüm içeriğimin kalıcı olarak silineceğini, bunun geri alınamayacağını anladım.",
+    deleteSubmit: "Hesabımı kalıcı olarak sil",
+    deleteSubmitting: "Siliniyor…",
+    /** Sunucudan dönen silme hatalarının karşılığı. */
+    deleteErrors: {
+      mismatch: "Yazdığın adres kendi adresinle eşleşmiyor",
+      no_profile: "Profilin bulunamadı",
+      origin: "Geçersiz istek kaynağı",
+      unknown: "Silme tamamlanamadı, lütfen tekrar dene",
+    },
   },
 
   /** Sunucudan dönen adres hatalarının karşılığı (biçim hataları hariç). */

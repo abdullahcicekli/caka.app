@@ -3333,6 +3333,11 @@ button.photo-cell:focus-visible {
 .ayarlar-submit { align-self: flex-start; border-radius: 999px; background: var(--color-murekkep); padding: 10px 22px; font-size: 14px; font-weight: 600; color: white; transition: opacity .15s ease; }
 .ayarlar-submit:hover:not(:disabled) { opacity: .85; }
 .ayarlar-submit:disabled { opacity: .35; cursor: not-allowed; }
+/* Hesap silme kutusu: kart tonu ve buton tehlike token'ına çekilir, böylece
+   geri alınamaz eylem diğer ayar kartlarıyla aynı görünmez. */
+.ayarlar-card-tehlike { border-color: color-mix(in srgb, var(--color-tehlike) 35%, var(--color-sinir)); }
+.ayarlar-card-tehlike h2 { color: var(--color-tehlike); }
+.ayarlar-submit-tehlike { background: var(--color-tehlike); }
 .ayarlar-kv { display: flex; flex-direction: column; gap: 10px; }
 .ayarlar-kv > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; border-bottom: 1px solid var(--color-sinir); padding-bottom: 10px; }
 .ayarlar-kv > div:last-child { border-bottom: 0; padding-bottom: 0; }

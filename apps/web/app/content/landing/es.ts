@@ -136,9 +136,19 @@ export const es = {
           "Sí. Puedes cambiarla en Ajustes → Dirección; tu dirección anterior redirige a la nueva durante 30 días y queda bloqueada ese tiempo. Después de un cambio tienes que esperar 30 días para volver a cambiarla.",
       },
       {
-        question: "¿Puedo exportar mi contenido o eliminar mi cuenta?",
+        question: "¿Puedo eliminar mi cuenta?",
         answer:
-          "Por ahora ninguna de las dos cosas se hace por tu cuenta desde el panel. Para pedir una copia de tus datos o solicitar la eliminación de tu cuenta, escribe a hello@caka.app: es tu derecho según el artículo 11 de la ley turca de protección de datos (KVKK).",
+          "Sí, puedes hacerlo tú mismo: entra en Ajustes → Cuenta, escribe tu dirección y confirma. La eliminación es inmediata y no se puede deshacer.",
+      },
+      {
+        question: "¿Qué pasa cuando elimino mi cuenta?",
+        answer:
+          "Tu página deja de estar publicada al instante; tu diseño, las imágenes y documentos que subiste, las estadísticas de tu página y tus sesiones se borran. Tu dirección queda bloqueada 30 días: nadie puede tomarla en ese tiempo, así los códigos QR que imprimiste no acaban en la página de un desconocido. Después el nombre vuelve a quedar libre.",
+      },
+      {
+        question: "¿Puedo exportar mi contenido?",
+        answer:
+          "La exportación todavía no está en el panel. Para pedir una copia de tus datos, escribe a hello@caka.app: es tu derecho según el artículo 11 de la ley turca de protección de datos (KVKK).",
         link: {
           label: "Política de Privacidad",
           href: "/gizlilik",
@@ -210,5 +220,9 @@ export const es = {
       },
     ],
     copyright: landingAssets.copyright,
+  },
+  farewell: {
+    title: "Tu cuenta ha sido eliminada",
+    body: "Tu página ya no está publicada y tus datos se han borrado. Puedes empezar de nuevo cuando quieras.",
   },
 } satisfies LandingContent;

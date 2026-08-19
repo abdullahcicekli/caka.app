@@ -136,9 +136,19 @@ export const ptBR = {
           "Pode. É em Configurações → Endereço; seu endereço antigo redireciona para o novo por 30 dias e fica bloqueado nesse período. Depois de uma troca, você precisa esperar 30 dias para trocar de novo.",
       },
       {
-        question: "Posso exportar meu conteúdo ou excluir minha conta?",
+        question: "Posso excluir minha conta?",
         answer:
-          "Por enquanto nenhuma das duas coisas é feita por você mesmo no painel. Para pedir uma cópia dos seus dados ou solicitar a exclusão da sua conta, escreva para hello@caka.app — é o seu direito pelo artigo 11 da lei turca de proteção de dados (KVKK).",
+          "Pode, você mesmo: em Configurações → Conta, digite seu endereço e confirme. A exclusão é imediata e não pode ser desfeita.",
+      },
+      {
+        question: "O que acontece quando eu excluo minha conta?",
+        answer:
+          "Sua página sai do ar na hora; seu layout, as imagens e documentos que você enviou, as estatísticas da página e suas sessões são apagados. Seu endereço fica bloqueado por 30 dias — ninguém pode pegá-lo nesse período, assim os QR codes que você imprimiu não caem na página de um estranho. Depois disso o nome fica livre de novo.",
+      },
+      {
+        question: "Posso exportar meu conteúdo?",
+        answer:
+          "A exportação ainda não está no painel. Para pedir uma cópia dos seus dados, escreva para hello@caka.app — é o seu direito pelo artigo 11 da lei turca de proteção de dados (KVKK).",
         link: {
           label: "Política de Privacidade",
           href: "/gizlilik",
@@ -210,5 +220,9 @@ export const ptBR = {
       },
     ],
     copyright: landingAssets.copyright,
+  },
+  farewell: {
+    title: "Sua conta foi excluída",
+    body: "Sua página saiu do ar e seus dados foram apagados. Você pode começar de novo quando quiser.",
   },
 } satisfies LandingContent;

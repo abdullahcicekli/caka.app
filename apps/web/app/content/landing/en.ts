@@ -133,9 +133,19 @@ export const en = {
           "Yes. You can change it under Settings → Address; your old address redirects to the new one for 30 days and stays locked for that period. After a change you need to wait 30 days before changing it again.",
       },
       {
-        question: "Can I export my content or delete my account?",
+        question: "Can I delete my account?",
         answer:
-          "Neither can be done from the dashboard on your own yet. To request a copy of your data or the deletion of your account, write to hello@caka.app — this is your right under article 11 of the Turkish data protection law (KVKK).",
+          "Yes, you can do it yourself: go to Settings → Account, type your address and confirm. Deletion happens immediately and cannot be undone.",
+      },
+      {
+        question: "What happens when I delete my account?",
+        answer:
+          "Your page goes offline immediately; your layout, the images and documents you uploaded, your page statistics and your sessions are deleted. Your address stays locked for 30 days — nobody can take it during that time, so the QR codes you printed don't land on a stranger's page. After that the name is free again.",
+      },
+      {
+        question: "Can I export my content?",
+        answer:
+          "Export isn't available from the dashboard yet. To request a copy of your data, write to hello@caka.app — this is your right under article 11 of the Turkish data protection law (KVKK).",
         link: {
           label: "Privacy Policy",
           href: "/gizlilik",
@@ -207,5 +217,9 @@ export const en = {
       },
     ],
     copyright: landingAssets.copyright,
+  },
+  farewell: {
+    title: "Your account is deleted",
+    body: "Your page is offline and your data is gone. You can start again whenever you want.",
   },
 } satisfies LandingContent;

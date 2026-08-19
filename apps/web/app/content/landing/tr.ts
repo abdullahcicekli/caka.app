@@ -164,9 +164,19 @@ export const tr = {
           "Evet. Ayarlar → Adres bölümünden değiştirebilirsin; eski adresin 30 gün boyunca yeni adresine yönlendirilir ve o süre boyunca kilitli kalır. Bir değişiklikten sonra yeniden değiştirmek için 30 gün beklemen gerekir.",
       },
       {
-        question: "İçeriğimi dışa aktarabilir veya hesabımı silebilir miyim?",
+        question: "Hesabımı silebilir miyim?",
         answer:
-          "İkisi de şu an panelden kendi başına yapılmıyor. Verilerinin bir kopyasını istemek veya hesabının silinmesini talep etmek için KVKK m.11 kapsamında hello@caka.app adresine yazman yeterli.",
+          "Evet, kendin silebilirsin: Ayarlar → Hesap bölümünde adresini yazıp onaylaman yeterli. Silme anında olur ve geri alınamaz.",
+      },
+      {
+        question: "Hesabımı silince ne oluyor?",
+        answer:
+          "Sayfan anında yayından kalkar; düzenin, yüklediğin görseller ve belgeler, sayfanın istatistikleri ve oturumların silinir. Adresin 30 gün boyunca kilitli kalır — bu süre boyunca kimse alamaz, böylece bastırdığın QR kodları bir yabancının sayfasına düşmez. Süre dolunca ad serbest kalır.",
+      },
+      {
+        question: "İçeriğimi dışa aktarabilir miyim?",
+        answer:
+          "Dışa aktarma henüz panelden yapılmıyor. Verilerinin bir kopyasını istemek için KVKK m.11 kapsamında hello@caka.app adresine yazman yeterli.",
         link: {
           label: "Gizlilik Metni",
           href: "/gizlilik",
@@ -256,5 +266,12 @@ export const tr = {
       },
     ],
     copyright: landingAssets.copyright,
+  },
+  // Hesap silindikten sonra ana sayfaya düşen ziyaretçiye gösterilen şerit
+  // (`/?veda=1`). Oturum artık yok, panelde gösterilecek bir yer de yok:
+  // açıklama olmadan pazarlama sayfasına düşmek "silindi mi?" bırakırdı.
+  farewell: {
+    title: "Hesabın silindi",
+    body: "Sayfan yayından kalktı, verilerin silindi. İstediğin zaman yeniden başlayabilirsin.",
   },
 };

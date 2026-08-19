@@ -71,14 +71,38 @@ export const en = {
     providerUnknown: "Unknown",
     emailLabel: "Email",
     emailVerified: "verified",
-    dataTitle: "Your data and account deletion",
+    dataTitle: "Your data",
     dataBody:
-      "Deleting your account or requesting a copy of your data can't be done from the dashboard on your own yet. Write to hello@caka.app and your request under article 11 of the Turkish data protection law (KVKK) will be processed.",
+      "Requesting a copy of your data can't be done from the dashboard on your own yet. Write to hello@caka.app and your request under article 11 of the Turkish data protection law (KVKK) will be processed.",
     dataMailLabel: "hello@caka.app",
     dataMailHref: "mailto:hello@caka.app",
     privacyLinkLabel: "Privacy Policy",
     privacyLinkHref: "/gizlilik",
     privacyLinkPrefix: "Details:",
+
+    deleteTitle: "Delete your account",
+    deleteBody:
+      "You can delete your account yourself, right here. Deletion happens immediately, cannot be undone, and support cannot bring it back.",
+    deleteConsequencesTitle: "Know this before you delete",
+    deleteConsequences: [
+      "Your page goes offline immediately; your layout, your blocks and everything you wrote are deleted.",
+      "Every image and document you uploaded is permanently deleted.",
+      "Your page's view and click counters, your sessions and your sign-in link are deleted.",
+      `Your address stays locked for ${USERNAME_REDIRECT_DAYS} days: during that time nobody — you included — can take it, and the address returns 404. That way the QR codes you printed don't land on a stranger's page.`,
+      "You can sign up again with the same email, but your old page will not come back and you'll need to pick a new address.",
+    ],
+    deleteFieldLabel: "Type your address to confirm",
+    deleteFieldHint: (username: string) => `Type ${username} in the box.`,
+    deleteConfirmLabel:
+      "I understand that my account and all my content will be permanently deleted and that this cannot be undone.",
+    deleteSubmit: "Permanently delete my account",
+    deleteSubmitting: "Deleting…",
+    deleteErrors: {
+      mismatch: "What you typed doesn't match your address",
+      no_profile: "Your profile could not be found",
+      origin: "Invalid request origin",
+      unknown: "Deletion could not be completed, please try again",
+    },
   },
 
   addressErrors: {

@@ -136,9 +136,19 @@ export const de = {
           "Ja. Unter Einstellungen → Adresse. Deine alte Adresse leitet 30 Tage lang auf die neue weiter und bleibt in dieser Zeit gesperrt. Nach einer Änderung musst du 30 Tage warten, bevor du sie erneut änderst.",
       },
       {
-        question: "Kann ich meine Inhalte exportieren oder mein Konto löschen?",
+        question: "Kann ich mein Konto löschen?",
         answer:
-          "Beides geht im Dashboard noch nicht selbstständig. Für eine Kopie deiner Daten oder die Löschung deines Kontos schreib an hello@caka.app — das ist dein Recht nach Artikel 11 des türkischen Datenschutzgesetzes (KVKK).",
+          "Ja, du kannst es selbst tun: unter Einstellungen → Konto deine Adresse eintippen und bestätigen. Die Löschung passiert sofort und lässt sich nicht rückgängig machen.",
+      },
+      {
+        question: "Was passiert, wenn ich mein Konto lösche?",
+        answer:
+          "Deine Seite geht sofort offline; dein Layout, die hochgeladenen Bilder und Dokumente, die Statistik deiner Seite und deine Sitzungen werden gelöscht. Deine Adresse bleibt 30 Tage gesperrt — in dieser Zeit kann sie niemand nehmen, damit deine gedruckten QR-Codes nicht auf der Seite einer fremden Person landen. Danach ist der Name wieder frei.",
+      },
+      {
+        question: "Kann ich meine Inhalte exportieren?",
+        answer:
+          "Ein Export ist im Dashboard noch nicht möglich. Für eine Kopie deiner Daten schreib an hello@caka.app — das ist dein Recht nach Artikel 11 des türkischen Datenschutzgesetzes (KVKK).",
         link: {
           label: "Datenschutzerklärung",
           href: "/gizlilik",
@@ -210,5 +220,9 @@ export const de = {
       },
     ],
     copyright: landingAssets.copyright,
+  },
+  farewell: {
+    title: "Dein Konto ist gelöscht",
+    body: "Deine Seite ist offline und deine Daten sind weg. Du kannst jederzeit neu anfangen.",
   },
 } satisfies LandingContent;

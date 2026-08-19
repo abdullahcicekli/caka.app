@@ -6,7 +6,8 @@
 // blok türleri profil şeması, dosya yükleme R2 (`asset`).
 //
 // Ürünün bugün yapmadığı hiçbir şey için koşul yazılmadı: ücretli plan, ödeme,
-// pazar yeri, self-servis hesap silme, dışa aktarma ve gömülü oynatıcı yok.
+// pazar yeri, veri dışa aktarma ve gömülü oynatıcı yok. Hesap silme ARTIK var
+// (Ayarlar → Hesap) ve §13 onu anlatır.
 //
 // Bu belgede doldurulmamış alan (`[...]`) kalmadı; R33 kapısı yalnız
 // İşletmecinin kimliği `gizlilik.ts` §1 üzerinden işler; orada ad soyad
@@ -968,17 +969,18 @@ export const kullanimKosullariSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "Hesabını istediğin zaman kapatabilirsin. ",
-          { kind: "strong", text: "Bugün bunu panelden tek tıkla yapamıyorsun" },
-          " — hesap silme düğmesi henüz yok. Bunu olduğu gibi yazıyoruz, " +
-            "çünkü olmayan bir özelliği varmış gibi anlatmak istemiyoruz.",
+          "Hesabını istediğin zaman kendin kapatabilirsin: ",
+          { kind: "strong", text: "Ayarlar → Hesap" },
+          " bölümünde adresini yazıp onaylaman yeterli. Bir talep yazmana ya " +
+            "da bizden yanıt beklemene gerek yok.",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "Kapatma talebini, hesabına kayıtlı e-posta adresinden yazarak " +
-            "iletirsin. Nereye yazacağın ve başvurunun nasıl işlediği ",
+          "Panele giremiyorsan kapatma talebini hesabına kayıtlı e-posta " +
+            "adresinden yazarak da iletebilirsin. Nereye yazacağın ve " +
+            "başvurunun nasıl işlediği ",
           {
             kind: "link",
             text: "İlgili kişi hakların ve başvuru yolu",
@@ -992,10 +994,18 @@ export const kullanimKosullariSections: LegalSection[] = [
         kind: "paragraph",
         text: [
           { kind: "strong", text: "Kapatınca ne olur. " },
-          "Public profilin yayından kalkar ve caka.app/kullaniciadi adresi " +
-            "çalışmaz. Hesap verin, profil içeriğin, yüklediğin dosyalar ve " +
-            "oturum kayıtların silinir. Silme işlemi geri alınamaz; aynı " +
-            "kullanıcı adını sonradan yeniden alabileceğinin garantisi yoktur.",
+          "Public profilin o anda yayından kalkar. Hesap verin, profil " +
+            "içeriğin, yüklediğin dosyalar, sayfanın ölçüm sayaçları ve " +
+            "oturum kayıtların silinir. ",
+          {
+            kind: "strong",
+            text: "Silme anında olur ve geri alınamaz",
+          },
+          " — bekleme süresi, geri alma penceresi ya da bizde duran bir kopya " +
+            "yoktur. Kullanıcı adın 30 gün boyunca kilitli kalır: o süre " +
+            "boyunca kimseye verilmez ve adres bulunamadı (404) yanıtı verir; " +
+            "süre dolunca ad serbest kalır. Aynı kullanıcı adını sonradan " +
+            "yeniden alabileceğinin garantisi yoktur.",
         ],
       },
       {

@@ -91,8 +91,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const locale = localeFromRequest(request);
   // Footer ve SSS yalnız yayındaki hukuki belgeleri reklam eder (R33).
   const publishedLegal = publishedLegalDocumentIds(locale);
+  // Hesap silme buraya yönlendirir (`/?veda=1`). Oturum artık yok; şerit
+  // olmasa kullanıcı hiçbir açıklama görmeden pazarlama sayfasına düşerdi.
+  const farewell = new URL(request.url).searchParams.has("veda");
   const session = await getSession(env, request);
-  if (!session) return { user: null, ogImage, publishedLegal, locale };
+  if (!session) return { user: null, ogImage, publishedLegal, locale, farewell };
 
   const profile = await getProfileByUserId(env, session.user.id);
   // Avatarsız kalmış eski kayıtları girişte kendiliğinden onarır.
@@ -108,7 +111,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       session.user.image ??
       null,
   };
-  return { user, ogImage, publishedLegal, locale };
+  return { user, ogImage, publishedLegal, locale, farewell };
 }
 
 /**
@@ -123,6 +126,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     <div className="lp">
       <Navbar nav={landing.nav} user={loaderData.user} />
       <main>
+        {loaderData.farewell && (
+          <div className="lp-shell lp-farewell-shell">
+            <p className="lp-farewell" role="status">
+              <strong>{landing.farewell.title}</strong> {landing.farewell.body}
+            </p>
+          </div>
+        )}
         <Hero hero={landing.hero} />
         <EditorialSection editorial={landing.editorial} />
         <MinutesSection minutes={landing.minutes} />

@@ -1,4 +1,4 @@
-import { and, eq, gt, ne, notExists, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, ne, notExists, or, sql } from "drizzle-orm";
 
 import { account, createDb, profile, usernameRedirect } from "@caka/db";
 import {
@@ -472,7 +472,12 @@ export async function changeUsername(
                   and(
                     eq(usernameRedirect.oldUsername, next),
                     gt(usernameRedirect.expiresAt, now),
-                    ne(usernameRedirect.profileId, row.id),
+                    // Hedefsiz kilit de (silinmiş hesap) engeller — findForeignLock
+                    // ile aynı gerekçe: NULL karşılaştırması `ne`'ye takılmaz.
+                    or(
+                      isNull(usernameRedirect.profileId),
+                      ne(usernameRedirect.profileId, row.id),
+                    ),
                   ),
                 ),
             ),
@@ -532,7 +537,10 @@ async function findForeignLock(
     where: and(
       eq(usernameRedirect.oldUsername, username),
       gt(usernameRedirect.expiresAt, now),
-      ne(usernameRedirect.profileId, profileId),
+      // `profileId` NULL = silinmiş hesabın hedefsiz kilidi. SQL'de
+      // `NULL <> 'x'` TRUE değil NULL'dur, yani `ne` tek başına bu satırı
+      // GÖRMEZ ve silinen bir hesabın adı serbestmiş gibi görünürdü.
+      or(isNull(usernameRedirect.profileId), ne(usernameRedirect.profileId, profileId)),
     ),
   });
 }
@@ -563,7 +571,9 @@ export async function resolveUsername(env: Env, username: string) {
       gt(usernameRedirect.expiresAt, new Date()),
     ),
   });
-  if (redirect) {
+  // `profileId` NULL ise kayıt hedefsiz bir kilittir (hesap silinmiş): ad
+  // kimseye verilmez ama yönlendirilecek bir sayfa da yoktur → 404.
+  if (redirect?.profileId) {
     const target = await db.query.profile.findFirst({
       where: eq(profile.id, redirect.profileId),
     });

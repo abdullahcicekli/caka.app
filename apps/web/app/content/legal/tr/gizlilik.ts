@@ -841,7 +841,12 @@ export const gizlilikSections: LegalSection[] = [
             { kind: "strong", text: "Eski kullanıcı adı: 30 gün. " },
             "Adresini değiştirdiğinde eski adres 30 gün boyunca yeni adrese " +
               "yönlendirilir ve bu süre boyunca başkasına verilmez; süre " +
-              "dolduğunda kayıt geçersiz olur ve ad serbest kalır.",
+              "dolduğunda kayıt geçersiz olur ve ad serbest kalır. Hesabını " +
+              "sildiğinde de aynı 30 günlük kilit uygulanır, ama yönlendirme " +
+              "olmaz: yönlendirilecek bir sayfa kalmadığı için adres bu süre " +
+              "boyunca bulunamadı (404) yanıtı verir. Kilit satırında yalnız " +
+              "kullanıcı adı ve bitiş tarihi durur; silinen hesaba ait başka " +
+              "hiçbir veri taşımaz.",
           ],
           [
             { kind: "strong", text: "GitHub katkı grafiği önbelleği: " },
@@ -895,8 +900,12 @@ export const gizlilikSections: LegalSection[] = [
           [
             ["Hesap verisi, profil içeriği ve yüklediğin dosyalar"],
             [
-              "Sen silene kadar. Hesabını kapattığında ya da silme talep " +
-                "ettiğinde en geç ",
+              "Sen silene kadar. Ayarlar → Hesap bölümünden hesabını " +
+                "sildiğinde profilin, içeriğin, yüklediğin dosyalar ve oturum " +
+                "kayıtların ",
+              { kind: "strong", text: "aynı anda" },
+              " silinir; bekleme süresi ya da geri alma penceresi yoktur. " +
+                "Bunun yerine e-postayla silme talep edersen en geç ",
               { kind: "strong", text: "3 ay" },
               " içinde silinir.",
             ],
@@ -1064,13 +1073,27 @@ export const gizlilikSections: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          { kind: "strong", text: "Dışa aktarma ve hesap silme bugün self-servis değil. " },
-          "Panelde verilerini indirebileceğin veya hesabını tek tıkla " +
-            "silebileceğin bir düğme henüz yok. Bunu açıkça yazıyoruz, çünkü " +
-            "olmayan bir özelliği varmış gibi anlatmak istemiyoruz. Her iki " +
-            "talebi de yukarıdaki adrese yazarak kullanabilirsin; hesabını " +
-            "sildiğimizde profilin, yüklediğin dosyalar ve oturum kayıtların " +
-            "da silinir.",
+          { kind: "strong", text: "Hesap silme self-servistir. " },
+          "Silme hakkını (m.7 / m.11-e) kullanmak için başvuru yazmana gerek " +
+            "yok: ",
+          { kind: "strong", text: "Ayarlar → Hesap" },
+          " bölümünde adresini yazıp onayladığında hesabın ve içeriğin o anda " +
+            "silinir. İşlem geri alınamaz; bizde geri getirilebilecek bir " +
+            "kopya kalmaz. Silinenler: profilin ve düzenin, yüklediğin " +
+            "görseller ve belgeler, sayfanın ziyaret ve tıklama sayaçları, " +
+            "oturum kayıtların ve kimlik sağlayıcı bağlantın. Adresin 30 gün " +
+            "kilitli kalır (bkz. §7). Dilersen bunun yerine yukarıdaki adrese " +
+            "yazarak da talep edebilirsin.",
+        ],
+      },
+      {
+        kind: "paragraph",
+        text: [
+          { kind: "strong", text: "Dışa aktarma bugün self-servis değil. " },
+          "Panelde verilerini tek tıkla indirebileceğin bir düğme henüz yok. " +
+            "Bunu açıkça yazıyoruz, çünkü olmayan bir özelliği varmış gibi " +
+            "anlatmak istemiyoruz. Bir kopya istiyorsan yukarıdaki adrese " +
+            "yazman yeterli.",
         ],
       },
       {

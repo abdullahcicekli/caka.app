@@ -51,14 +51,18 @@ export const profile = sqliteTable(
 /**
  * Adres değişikliği devri (R18, OQ1 kararı: 30 gün 302 + eski ad kilitli).
  * Süresi geçen kayıtlar lookup'ta yok sayılır ve ad serbest kalır.
+ *
+ * `profileId` NULL olabilir ve bu "hedefsiz kilit" demektir: hesap silindiğinde
+ * profil satırı gider ama adı 30 gün boyunca kimseye verilmez. Yönlendirilecek
+ * bir sayfa kalmadığı için o adres 302 değil 404 döner — bastırılmış QR/kartvizit
+ * bir yabancının sayfasına düşmez. Bu yüzden FK `cascade` değil `set null`:
+ * kilit, hedefinden daha uzun yaşar.
  */
 export const usernameRedirect = sqliteTable(
   "username_redirect",
   {
     oldUsername: text("old_username").primaryKey(),
-    profileId: text("profile_id")
-      .notNull()
-      .references(() => profile.id, { onDelete: "cascade" }),
+    profileId: text("profile_id").references(() => profile.id, { onDelete: "set null" }),
     expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
     createdAt: timestampMs("created_at"),
   },

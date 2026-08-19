@@ -928,22 +928,19 @@ export const kullanimKosullariSectionsEn: LegalSection[] = [
       {
         kind: "paragraph",
         text: [
-          "You can close your account whenever you want. ",
-          {
-            kind: "strong",
-            text: "Today you cannot do it from the dashboard in one click",
-          },
-          " — there is no delete-account button yet. We write this as it is, " +
-            "because we don't want to describe a feature that doesn't exist as " +
-            "if it did.",
+          "You can close your account yourself whenever you want: under ",
+          { kind: "strong", text: "Settings → Account" },
+          ", type your address and confirm. You don't need to write a request " +
+            "or wait for an answer from us.",
         ],
       },
       {
         kind: "paragraph",
         text: [
-          "You send the closure request by writing from the email address " +
-            "registered to your account. Where to write and how the application " +
-            "works is explained in ",
+          "If you can't get into the dashboard, you can also send the closure " +
+            "request by writing from the email address registered to your " +
+            "account. Where to write and how the application works is " +
+            "explained in ",
           {
             kind: "link",
             text: "Your rights as a data subject, and how to apply",
@@ -957,11 +954,18 @@ export const kullanimKosullariSectionsEn: LegalSection[] = [
         kind: "paragraph",
         text: [
           { kind: "strong", text: "What happens when you close it. " },
-          "Your public profile is unpublished and the caka.app/username address " +
-            "stops working. Your account data, profile content, uploaded files " +
-            "and session records are deleted. Deletion cannot be undone; there " +
-            "is no guarantee that you will be able to take the same username " +
-            "again later.",
+          "Your public profile is unpublished right away. Your account data, " +
+            "profile content, uploaded files, your page's counters and your " +
+            "session records are deleted. ",
+          {
+            kind: "strong",
+            text: "Deletion is immediate and cannot be undone",
+          },
+          " — there is no waiting period, no recovery window and no copy left " +
+            "with us. Your username stays locked for 30 days: it is given to " +
+            "nobody during that time and the address returns not found (404); " +
+            "when the period ends the name is released. There is no guarantee " +
+            "that you will be able to take the same username again later.",
         ],
       },
       {

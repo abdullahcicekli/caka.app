@@ -71,14 +71,38 @@ export const es = {
     providerUnknown: "Desconocido",
     emailLabel: "Correo electrónico",
     emailVerified: "verificado",
-    dataTitle: "Tus datos y la eliminación de la cuenta",
+    dataTitle: "Tus datos",
     dataBody:
-      "Eliminar tu cuenta o pedir una copia de tus datos todavía no se hace por tu cuenta desde el panel. Si escribes a hello@caka.app, tu solicitud según el artículo 11 de la ley turca de protección de datos (KVKK) se tramitará.",
+      "Pedir una copia de tus datos todavía no se hace por tu cuenta desde el panel. Si escribes a hello@caka.app, tu solicitud según el artículo 11 de la ley turca de protección de datos (KVKK) se tramitará.",
     dataMailLabel: "hello@caka.app",
     dataMailHref: "mailto:hello@caka.app",
     privacyLinkLabel: "Política de Privacidad",
     privacyLinkHref: "/gizlilik",
     privacyLinkPrefix: "Más información:",
+
+    deleteTitle: "Elimina tu cuenta",
+    deleteBody:
+      "Puedes eliminar tu cuenta tú mismo, aquí. La eliminación es inmediata, no se puede deshacer y el soporte tampoco puede recuperarla.",
+    deleteConsequencesTitle: "Antes de eliminar, ten esto en cuenta",
+    deleteConsequences: [
+      "Tu página deja de estar publicada al instante; tu diseño, tus bloques y todo lo que escribiste se borran.",
+      "Todas las imágenes y documentos que subiste se eliminan de forma permanente.",
+      "Los contadores de visitas y clics de tu página, tus sesiones y tu vínculo de acceso se eliminan.",
+      `Tu dirección queda bloqueada ${USERNAME_REDIRECT_DAYS} días: durante ese tiempo nadie —tú incluido— puede tomarla y la dirección devuelve 404. Así los códigos QR que imprimiste no acaban en la página de un desconocido.`,
+      "Puedes registrarte de nuevo con el mismo correo, pero tu página anterior no volverá y tendrás que elegir otra dirección.",
+    ],
+    deleteFieldLabel: "Escribe tu dirección para confirmar",
+    deleteFieldHint: (username: string) => `Escribe ${username} en el campo.`,
+    deleteConfirmLabel:
+      "Entiendo que mi cuenta y todo mi contenido se eliminarán de forma permanente y que esto no se puede deshacer.",
+    deleteSubmit: "Eliminar mi cuenta para siempre",
+    deleteSubmitting: "Eliminando…",
+    deleteErrors: {
+      mismatch: "Lo que escribiste no coincide con tu dirección",
+      no_profile: "No se encontró tu perfil",
+      origin: "Origen de la solicitud no válido",
+      unknown: "No se pudo completar la eliminación, inténtalo de nuevo",
+    },
   },
 
   addressErrors: {
