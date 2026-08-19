@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   BLOCK_GRID_LIMITS,
+  AYET_GRID_DEFAULTS,
   AYET_GRID_LIMITS,
   GRID_COLUMNS,
   GRID_UNIT,
@@ -506,47 +507,57 @@ describe("ayet bloğu", () => {
     }
   });
 
-  it("sürüm başına taban ölçüsü farklıdır ve `both` en yükseğidir", () => {
+  it("sürüm başına VARSAYILAN ölçü farklıdır ve `both` en yükseğidir", () => {
     // Ölçüler YARIM BİRİMDE: 3 = 240px, 4 = 324px, 5 = 408px (masaüstü).
-    expect(AYET_GRID_LIMITS.meal.minH).toBe(3);
-    expect(AYET_GRID_LIMITS.arabic.minH).toBe(4);
-    expect(AYET_GRID_LIMITS.both.minH).toBe(5);
-    expect(AYET_GRID_LIMITS.meal.minH).toBeLessThan(AYET_GRID_LIMITS.arabic.minH);
-    expect(AYET_GRID_LIMITS.arabic.minH).toBeLessThan(AYET_GRID_LIMITS.both.minH);
-    // Genişlik tabanı üçünde de 4 yarım birim (= eski 2 hücre, 368px).
-    expect(AYET_GRID_LIMITS.meal.minW).toBe(4);
-    expect(AYET_GRID_LIMITS.arabic.minW).toBe(4);
-    expect(AYET_GRID_LIMITS.both.minW).toBe(4);
+    expect(AYET_GRID_DEFAULTS.meal.h).toBe(3);
+    expect(AYET_GRID_DEFAULTS.arabic.h).toBe(4);
+    expect(AYET_GRID_DEFAULTS.both.h).toBe(5);
+    expect(AYET_GRID_DEFAULTS.meal.h).toBeLessThan(AYET_GRID_DEFAULTS.arabic.h);
+    expect(AYET_GRID_DEFAULTS.arabic.h).toBeLessThan(AYET_GRID_DEFAULTS.both.h);
+    // Varsayılan genişlik üçünde de 4 yarım birim (= eski 2 hücre, 368px).
+    expect(AYET_GRID_DEFAULTS.meal.w).toBe(4);
+    expect(AYET_GRID_DEFAULTS.arabic.w).toBe(4);
+    expect(AYET_GRID_DEFAULTS.both.w).toBe(4);
   });
 
-  it("blockGridLimits sınırı TİPTEN değil SÜRÜMDEN okur", () => {
-    expect(blockGridLimits(ayetBlock("meal"))).toEqual(AYET_GRID_LIMITS.meal);
-    expect(blockGridLimits(ayetBlock("arabic"))).toEqual(AYET_GRID_LIMITS.arabic);
-    expect(blockGridLimits(ayetBlock("both"))).toEqual(AYET_GRID_LIMITS.both);
+  it("SINIR sürümden bağımsızdır: her sürüm 2×2'ye kadar küçültülebilir", () => {
+    // Regresyon: sınır sürümün varsayılanına eşitken kullanıcı kartı hiç
+    // küçültemiyordu ("ikisi birlikte" mobilde 4 birim = tam genişlik).
+    for (const variant of ["meal", "arabic", "both"] as const) {
+      expect(blockGridLimits(ayetBlock(variant))).toEqual({
+        minW: 2,
+        minH: 2,
+        maxW: 8,
+        maxH: 8,
+      });
+      expect(blockGridLimitIssue(ayetBlock(variant, { w: 2, h: 2 }))).toBeNull();
+    }
   });
 
-  it("sürümün tabanının altındaki blok sınır ihlali sayılır", () => {
-    expect(blockGridLimitIssue(ayetBlock("meal", { h: 3 }))).toBeNull();
-    // Aynı ölçü, Arapça sürümünde ihlal.
-    expect(blockGridLimitIssue(ayetBlock("arabic", { h: 3 }))).not.toBeNull();
-    expect(blockGridLimitIssue(ayetBlock("arabic", { h: 4 }))).toBeNull();
-    expect(blockGridLimitIssue(ayetBlock("both", { h: 4 }))).not.toBeNull();
-    expect(blockGridLimitIssue(ayetBlock("both", { h: 5 }))).toBeNull();
-    // Genişlik tabanı da sürümden bağımsız uygulanır.
-    expect(blockGridLimitIssue(ayetBlock("meal", { w: 2 }))).not.toBeNull();
+  it("2×2'nin altı ve 8×8'in üstü sınır ihlali sayılır", () => {
+    expect(blockGridLimitIssue(ayetBlock("both", { h: 1 }))).not.toBeNull();
+    expect(blockGridLimitIssue(ayetBlock("both", { w: 1 }))).not.toBeNull();
+    expect(blockGridLimitIssue(ayetBlock("meal", { h: 9 }))).not.toBeNull();
   });
 
-  it("ensureLayoutPositions bloğu sürümünün tabanına büyütür", () => {
+  it("ensureLayoutPositions bloğu sınırın tabanına büyütür, varsayılana DEĞİL", () => {
     const fixed = ensureLayoutPositions({
       version: 1,
       grid: GRID_UNIT,
-      blocks: [profileBlock, ayetBlock("both", { h: 2, w: 2 })],
+      blocks: [profileBlock, ayetBlock("both", { h: 1, w: 1 })],
     });
     const block = fixed.blocks[1];
     expect(block.pos!.lg.h).toBe(AYET_GRID_LIMITS.both.minH);
     expect(block.pos!.lg.w).toBe(AYET_GRID_LIMITS.both.minW);
     expect(block.pos!.sm.h).toBe(AYET_GRID_LIMITS.both.minH);
     expect(ensureLayoutPositions(fixed)).toEqual(fixed);
+    // Kullanıcının elle küçülttüğü 2×2 kart AYNEN korunur.
+    const small = ensureLayoutPositions({
+      version: 1,
+      grid: GRID_UNIT,
+      blocks: [profileBlock, ayetBlock("both", { h: 2, w: 2 })],
+    });
+    expect(small.blocks[1].pos!.lg).toMatchObject({ w: 2, h: 2 });
   });
 
   it("eksik metin yalnız SÜRÜMÜN istediği alan boşsa yayını engeller", () => {

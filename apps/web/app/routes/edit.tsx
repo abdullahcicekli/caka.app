@@ -35,6 +35,7 @@ import { ProfileBlockCard } from "~/components/profile-block";
 import { linkHostLabel } from "~/lib/link-preview";
 import { noIndexMeta } from "~/lib/seo";
 import {
+  AYET_GRID_DEFAULTS,
   AYET_GRID_LIMITS,
   BLOCK_GRID_LIMITS,
   blockGridLimits,
@@ -214,8 +215,8 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
       };
     // Ayet bloğu BOŞ doğar: hangi ayet olduğu ancak arama sonucundan seçilince
     // belli olur. Varsayılan sürüm "ikisi birlikte" — kartın tam hâli budur ve
-    // kullanıcı istemediğini kapatır. Taban ölçü de o sürümün tabanıdır
-    // (`AYET_GRID_LIMITS.both` = 2×3); `size` sözlüğünde 3 satırlık bir etiket
+    // kullanıcı istemediğini kapatır. Başlangıç ölçüsü o sürümün varsayılanıdır
+    // (`AYET_GRID_DEFAULTS.both`); `size` sözlüğünde 3 satırlık bir etiket
     // olmadığı için en yakın etiket yazılır, gerçek yerleşim `pos`tan okunur.
     case "ayet":
       return {
@@ -1076,14 +1077,25 @@ function Inspector({
     );
   }
 
+  /**
+   * Sürüm değişince ölçü, YALNIZCA kullanıcı henüz kartı elle boyutlandırmamışsa
+   * yeni sürümün varsayılanına geçer (mevcut ölçü eski sürümün varsayılanına
+   * eşitse). Elle küçültülmüş bir kartı "ikisi birlikte"ye geçince büyütmek,
+   * kullanıcının kararını sessizce geri almak olurdu — sınır artık sürümden
+   * bağımsız olduğu için buna gerek de yok.
+   */
   function setAyetVariant(variant: AyetVariant) {
     if (block.type !== "ayet") return;
+    const previous = AYET_GRID_DEFAULTS[block.data.variant];
     update({ variant });
     const limits = AYET_GRID_LIMITS[variant];
+    const next = AYET_GRID_DEFAULTS[variant];
     const current = block.pos?.lg;
+    const untouched = !current || (current.w === previous.w && current.h === previous.h);
+    const target = untouched ? next : current;
     setDims(
-      Math.max(current?.w ?? limits.minW, limits.minW),
-      Math.max(current?.h ?? limits.minH, limits.minH),
+      Math.min(Math.max(target.w, limits.minW), limits.maxW),
+      Math.min(Math.max(target.h, limits.minH), limits.maxH),
     );
   }
 
@@ -2356,8 +2368,12 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       // (`profileLayoutWriteSchema`) 400 döner — kullanıcı sayfasını
       // kaydedemez hâle gelirdi.
       const limits = blockGridLimits(block);
-      const w = Math.min(Math.max(dims.w, limits?.minW ?? 1), limits?.maxW ?? GRID_COLUMNS.lg);
-      const h = Math.min(Math.max(dims.h, limits?.minH ?? 1), limits?.maxH ?? 4);
+      // Ayet kartının başlangıç ölçüsü sözlükten DEĞİL sürümün varsayılanından
+      // gelir: sınır artık 2×2'ye indi (kullanıcı küçültebilsin diye), o yüzden
+      // sınırdan türetilseydi blok minik doğardı.
+      const start = block.type === "ayet" ? AYET_GRID_DEFAULTS[block.data.variant] : dims;
+      const w = Math.min(Math.max(start.w, limits?.minW ?? 1), limits?.maxW ?? GRID_COLUMNS.lg);
+      const h = Math.min(Math.max(start.h, limits?.minH ?? 1), limits?.maxH ?? 4);
       const lg = placeNewBlock(current.blocks, w, h);
       const positioned = {
         ...block,

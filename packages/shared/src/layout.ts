@@ -528,10 +528,10 @@ const locationBlockSchema = z.object({
 export type LocationBlockData = z.infer<typeof locationBlockSchema>["data"];
 
 /**
- * Ayet kartının üç sürümü. Sürüm yalnız görünümü değil, kartın ÖLÇÜ TABANINI
- * da belirler (bkz. `AYET_GRID_LIMITS`): Arapça hat daha büyük punto ve daha
- * geniş satır aralığı ister, ikisi birlikte olan sürüm de iki metin bloğunu
- * üst üste taşır.
+ * Ayet kartının üç sürümü. Sürüm yalnız görünümü değil, kartın VARSAYILAN
+ * ÖLÇÜSÜNÜ de belirler (bkz. `AYET_GRID_DEFAULTS`): Arapça hat daha büyük
+ * punto ve daha geniş satır aralığı ister, ikisi birlikte olan sürüm de iki
+ * metin bloğunu üst üste taşır. Sınır (`AYET_GRID_LIMITS`) sürümden bağımsız.
  */
 export const ayetVariantSchema = z.enum(["arabic", "meal", "both"]);
 export type AyetVariant = z.infer<typeof ayetVariantSchema>;
@@ -947,18 +947,24 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   //
   // Tavan 8x6, yani tam genişlikte üç satırlık bir "kapak" haritası da mümkün.
   location: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
-  // Ayet kartının tabanı SÜRÜME bağlı (bkz. `AYET_GRID_LIMITS`); buradaki
-  // kayıt tipin en GEVŞEK sürümüdür, yani "meal". Tek bir tip için üç farklı
-  // taban gerektiği hâlde ayrı üç blok tipi açılmadı: veri, editör alanları ve
-  // kart iskeleti üçünde de aynı, ayıran tek şey tipografi ve taban ölçü.
-  ayet: { minW: 4, minH: 3, maxW: 8, maxH: 8 },
+  // Ayet kartının sınırı `AYET_GRID_LIMITS`ten okunur (üç sürümde de aynı);
+  // buradaki kayıt yalnız `blockGridLimits` dışından bakan kod için yedek.
+  ayet: { minW: 2, minH: 2, maxW: 8, maxH: 8 },
 };
 
 /**
- * Ayet kartının sürüm başına ızgara tabanı — ölçüler YARIM BİRİMDE.
+ * Ayet kartının sürüm başına VARSAYILAN ızgara ölçüsü — YARIM BİRİMDE.
  *
- * KURAL (tek ve aynı, üç sürüm için): **taban, 75. yüzdelik uzunluktaki bir
- * ayetin kaydırma olmadan sığdığı en küçük ölçüdür.** Ortanca hedef alınsaydı
+ * Bu ölçüler ZORUNLU TABAN DEĞİL, blok eklenirken (ve sürüm değişince) verilen
+ * başlangıç boyutudur. Taban olarak uygulandıklarında kullanıcı kartı hiç
+ * küçültemiyordu: "ikisi birlikte" sürümü mobilde 4 birim = TAM GENİŞLİK ve
+ * 5 satır demek, yani tutamaç hiç kıpırdamıyor. Kart zaten taşan metni
+ * kaydırıyor (bkz. `.ayet-body`), dolayısıyla küçük bir kartın bozulma riski
+ * yok — kısa bir ayeti küçük bir kutuda göstermek kullanıcının hakkı.
+ * Gerçek taban `AYET_GRID_LIMITS`tedir.
+ *
+ * KURAL (tek ve aynı, üç sürüm için): **varsayılan, 75. yüzdelik uzunluktaki
+ * bir ayetin kaydırma olmadan sığdığı en küçük ölçüdür.** Ortanca hedef alınsaydı
  * ayetlerin yarısı varsayılan boyutta kırpılırdı; p90 alınsaydı kısa bir ayet
  * için kocaman bir kart doğardı. Yarım birimli ızgara (GRID_UNIT) bu kuralı
  * uygulanabilir kılan şey: eski tam hücrede üç sürüm de aynı basamağa
@@ -979,14 +985,11 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
  *
  * Mobil aynı sonucu veriyor (4×3 / 4×4 / 4×5'te p75 taşmıyor), yani taban tek.
  *
- * GENİŞLİK TABANI 4 (= eski 2 hücre, 368px), üç sürümde de. 2 birim (178px
- * kutu, 142px iç genişlik) ölçüldü ve kabul edilemez: ortanca ayetin Arapçası
- * 2 satır yerine **4 satıra** çıkıyor, kaynak satırı 24px'ten **56px'e**
- * sarıyor ve "ikisi birlikte" sürümü 2×6'da (492px!) bile p75'i sığdıramıyor.
- *
- * TAVAN 8×8: en uzun ayet (Bakara 282) hiçbir ölçüye tam sığmıyor ama isteyen
- * kullanıcı kartı büyütebilmeli. Sığmayan metin KISALTILMAZ, kaydırılır
- * (bkz. `.ayet-body`, app.css).
+ * VARSAYILAN GENİŞLİK 4 (= eski 2 hücre, 368px), üç sürümde de. 2 birim
+ * (178px kutu, 142px iç genişlik) ölçüldü ve varsayılan olarak kabul edilemez:
+ * ortanca ayetin Arapçası 2 satır yerine **4 satıra** çıkıyor, kaynak satırı
+ * 24px'ten **56px'e** sarıyor. Kullanıcı bilerek oraya inebilir, ama blok
+ * oraya doğmaz.
  */
 /**
  * Bağlantı kartının sürüm başına ızgara sınırı.
@@ -1016,10 +1019,32 @@ export const LINK_GRID_LIMITS: Record<LinkVariant, BlockGridLimits> = {
  */
 export const LINK_IMAGE_DIMS = { w: 5, h: 3 } as const;
 
+export const AYET_GRID_DEFAULTS: Record<AyetVariant, { w: number; h: number }> = {
+  meal: { w: 4, h: 3 },
+  arabic: { w: 4, h: 4 },
+  both: { w: 4, h: 5 },
+};
+
+/**
+ * Ayet kartının gerçek ızgara sınırı — üç sürümde de aynı.
+ *
+ * TABAN 2×2 (178×156): kartın kaynak satırı (sure/ayet + çevirmen atfı) ve bir
+ * satırlık gövde bu kutuya sığar; h=1'de (72px) padding + kaynak satırından
+ * sonra gövdeye 2px kalıyor, o yüzden yükseklik tabanı 2. Bu, içerik
+ * bloklarının genel tabanıyla (`BLOCK_GRID_LIMITS.link` vb.) aynı.
+ *
+ * TAVAN 8×8: en uzun ayet (Bakara 282) hiçbir ölçüye tam sığmıyor ama isteyen
+ * kullanıcı kartı büyütebilmeli. Sığmayan metin KISALTILMAZ, kaydırılır
+ * (bkz. `.ayet-body`, app.css).
+ *
+ * Sınır SÜRÜMDEN BAĞIMSIZ: sürüme bağlı olsaydı "ikisi birlikte"ye geçen
+ * küçük bir kart kullanıcının haberi olmadan büyür, geri dönüşte de küçülmezdi.
+ * Sürüm artık yalnız VARSAYILANI belirliyor (`AYET_GRID_DEFAULTS`).
+ */
 export const AYET_GRID_LIMITS: Record<AyetVariant, BlockGridLimits> = {
-  meal: { minW: 4, minH: 3, maxW: 8, maxH: 8 },
-  arabic: { minW: 4, minH: 4, maxW: 8, maxH: 8 },
-  both: { minW: 4, minH: 5, maxW: 8, maxH: 8 },
+  meal: { minW: 2, minH: 2, maxW: 8, maxH: 8 },
+  arabic: { minW: 2, minH: 2, maxW: 8, maxH: 8 },
+  both: { minW: 2, minH: 2, maxW: 8, maxH: 8 },
 };
 
 /**
