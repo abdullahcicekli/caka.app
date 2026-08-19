@@ -24,6 +24,8 @@ import { Hono } from "hono";
 
 import {
   computeOgHash,
+  GRID_UNIT,
+  layoutPhotoAssets,
   normalizeOgTemplate,
   normalizeUsername,
   ogImagePath,
@@ -63,8 +65,10 @@ export function extractOgProfileData(
   const avatarAssetId =
     (profileBlock?.type === "profile" ? profileBlock.data.avatarAssetId : undefined) ??
     null;
-  const imageAssetIds = blocks.flatMap((block) =>
-    block.type === "image" && block.data.assetId ? [block.data.assetId] : [],
+  // `image` ve `gallery` tek blokta birleşti; aday listesi artık galerideki
+  // fotoğrafları da içeriyor (blok sırası korunur, ilk fotoğraf öncelikli).
+  const imageAssetIds = layoutPhotoAssets({ version: 1, grid: GRID_UNIT, blocks }).map(
+    (item) => item.assetId,
   );
   const linkTitles = blocks.flatMap((block) => {
     if (block.type === "link" && block.data.title) return [block.data.title];

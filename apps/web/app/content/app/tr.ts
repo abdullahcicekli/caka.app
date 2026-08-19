@@ -24,11 +24,10 @@ export const tr = {
     social: "Sosyal medya",
     link: "Bağlantı",
     text: "Metin",
-    image: "Görsel",
     status: "Duyuru",
-    // Editörde "Galeri" adı blok seçicinin adıyla ("Blok galerisi")
-    // çarpışıyor; fotoğraf bloğu bu yüzden burada tam adıyla görünür.
-    gallery: "Fotoğraf galerisi",
+    // Ayrımcı hâlâ "gallery" (depo uyumu), görünen ad "Fotoğraf": eski
+    // `image` bloğu bu tipte eridi, kullanıcı tek bir blok görüyor.
+    gallery: "Fotoğraf",
     youtube: "YouTube",
     spotify: "Spotify",
   } satisfies Record<ProfileBlock["type"], string>,
@@ -41,8 +40,7 @@ export const tr = {
     link_title: "Başlık gir",
     text_empty: "Metin yaz",
     status_empty: "Duyuru metni yaz",
-    image_missing: "Görsel yükle",
-    gallery_empty: "Galeriye fotoğraf ekle",
+    gallery_empty: "Fotoğraf ekle",
     youtube_video_url: "YouTube video bağlantısı gir",
     youtube_channel_url: "YouTube kanal bağlantısı gir",
     spotify_url: "Spotify bağlantısı gir",
@@ -52,15 +50,16 @@ export const tr = {
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
     `${blockLabel} bloğu en az ${limits.minW}×${limits.minH}, en fazla ${limits.maxW}×${limits.maxH} olabilir`,
 
-  galleryCountLimit: `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} galeri bloğu olabilir`,
+  galleryCountLimit: `Sayfanda en fazla ${MAX_GALLERY_BLOCKS} çok fotoğraflı blok olabilir`,
 
   editor: {
     layoutUnreadable: "Sayfa düzeni okunamadı",
     backToDashboard: "Panele dön",
     toolbarLabel: "Editör araçları",
     addLink: "Bağlantı ekle",
-    addImage: "Görsel ekle",
-    addGallery: "Fotoğraf galerisi ekle",
+    // Tek düğme: `image` ve `gallery` birleşti, araç çubuğunda da tek
+    // "Fotoğraf" düğmesi var.
+    addPhoto: "Fotoğraf ekle",
     mobilePreview: "Mobil önizleme",
     desktopPreview: "Masaüstü görünümü",
     pickTheme: "Tema seç",
@@ -84,8 +83,6 @@ export const tr = {
     fieldLink: "Bağlantı",
 
     imageUploading: "Yükleniyor…",
-    imageReplace: "Görseli değiştir",
-    imageDrop: "Sürükle veya seç",
     imageUploadFailed: "Görsel yüklenemedi",
 
     galleryEmpty: "Henüz fotoğraf yok.",
@@ -110,26 +107,42 @@ export const tr = {
     fieldSocialTarget: "Bağlantı ya da kullanıcı adı",
     socialHint:
       "Profil bağlantısını yapıştırabilir ya da sadece kullanıcı adını yazabilirsin — ikisini de anlıyoruz.",
-    fieldImage: "Görsel",
     fieldAnnouncement: "Duyuru",
     galleryTitleHint:
-      "Başlık yalnız iki satır yüksekliğindeki galerilerde görünür. Kısa galerilerde ekran okuyucular için kullanılır.",
+      "Başlık yalnız iki satırdan yüksek kartlarda görünür. Kısa kartlarda ekran okuyucular için kullanılır.",
     photosLegend: (count: number, max: number) => `Fotoğraflar (${count}/${max})`,
     galleryMaxPhotos: (max: number, room: number) =>
-      `Bir galeride en fazla ${max} fotoğraf olabilir; seçtiklerinin ilk ${room} tanesi eklendi.`,
+      `Bir blokta en fazla ${max} fotoğraf olabilir; seçtiklerinin ilk ${room} tanesi eklendi.`,
     photoAltAria: (index: number) => `${index}. fotoğrafın alt metni`,
     photoUpAria: (index: number) => `${index}. fotoğrafı yukarı taşı`,
     photoDownAria: (index: number) => `${index}. fotoğrafı aşağı taşı`,
     photoRemoveAria: (index: number) => `${index}. fotoğrafı kaldır`,
+
+    /** Yükleme yüzdesi. `fetch` gövde ilerlemesi vermiyor; sayı
+        `XMLHttpRequest.upload.onprogress`'ten geliyor. */
+    uploadPercent: (percent: number) => `Yükleniyor… %${percent}`,
+    uploadProgress: (done: number, total: number, percent: number) =>
+      `Yükleniyor… ${done}/${total} · %${percent}`,
+
+    /** Düzen seçimi; yalnız 2+ fotoğrafta görünür. */
+    photoLayoutLegend: "Düzen",
+    photoLayoutGrid: "Izgara",
+    photoLayoutSlider: "Kaydırmalı",
+    photoLayoutHint:
+      "Izgarada bütün fotoğraflar aynı anda görünür; kaydırmalıda 4 saniyede bir geçerler.",
+    photoLinkHint:
+      "Bağlantı yalnız tek fotoğraflı blokta çalışır; birden fazla fotoğrafta tıklama fotoğrafı büyütür.",
+    photoLimitHint: (max: number) =>
+      `Sayfanda en fazla ${max} çok fotoğraflı blok olabilir. Bu bloğa ikinci fotoğrafı eklemek için önce başka bir galeriden fotoğraf çıkar.`,
+
     pickerSocial: "Sosyal medya",
     pickerContent: "İçerik",
     pickerNoResults: (query: string) => `“${query}” için sonuç yok.`,
 
     galleryFullHint: (max: number) =>
-      `Bir galeride en fazla ${max} fotoğraf olabilir. Yeni fotoğraf eklemek için önce birini kaldır.`,
-    galleryUploadStep: (done: number, total: number) => `Yükleniyor… (${done}/${total})`,
+      `Bir blokta en fazla ${max} fotoğraf olabilir. Yeni fotoğraf eklemek için önce birini kaldır.`,
     galleryBlockLimit: (max: number) =>
-      `Sayfanda en fazla ${max} fotoğraf galerisi olabilir. Yenisini eklemek için önce birini kaldır.`,
+      `Sayfanda en fazla ${max} fotoğraf bloğu olabilir. Yenisini eklemek için önce birini kaldır.`,
     youtubeLinkLabel: "YouTube bağlantısı",
     youtubeHint:
       "Video ve kanal adresini ayırt ediyoruz — hangisini yapıştırdıysan onu ekleriz.",
@@ -247,7 +260,6 @@ export const tr = {
   profile: {
     menuLabel: "Caka menüsü",
     blocksLabel: "Bağlantılar ve içerikler",
-    addImage: "Görsel ekle",
     shareImageAlt: (name: string) => `${name} adlı Caka profilinin paylaşım görseli`,
     description: (name: string) =>
       `${name} adlı kişinin bağlantıları, projeleri ve ürettikleri.`,

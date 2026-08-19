@@ -6,6 +6,7 @@ import { createDb, profile } from "@caka/db";
 import {
   MAX_LAYOUT_BLOCKS,
   layoutIssues,
+  layoutPhotoAssets,
   ogTemplateSchema,
   parseProfileLayout,
   parseProfileLayoutDetailed,
@@ -142,9 +143,9 @@ layoutApi.put("/og", async (c) => {
         where: eq(profile.userId, session.user.id),
       });
       if (!row) return c.json({ error: "Profil bulunamadı" }, 404);
-      const blocks = parseProfileLayout(row.layout)?.blocks ?? [];
-      const inLayout = blocks.some(
-        (block) => block.type === "image" && block.data.assetId === body.data.ogPhotoAssetId,
+      const parsed = parseProfileLayout(row.layout);
+      const inLayout = (parsed ? layoutPhotoAssets(parsed) : []).some(
+        (item) => item.assetId === body.data.ogPhotoAssetId,
       );
       if (!inLayout) {
         return c.json({ error: "Seçilen görsel sayfanda bulunamadı" }, 400);

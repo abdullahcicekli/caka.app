@@ -268,7 +268,7 @@ describe("blockIssue", () => {
         { id: "blk_social", type: "social", data: { platform: "x", handle: "", url: "", label: "" } },
         { id: "blk_text", type: "text", data: { text: "" } },
         { id: "blk_status", type: "status", data: { text: "" } },
-        { id: "blk_image", type: "image", data: {} },
+        { id: "blk_photo", type: "gallery", data: {} },
       ],
     });
     const byId = new Map(parsed.blocks.map((block) => [block.id, block]));
@@ -278,7 +278,7 @@ describe("blockIssue", () => {
     expect(blockIssue(byId.get("blk_social")!)).toBe("social_target");
     expect(blockIssue(byId.get("blk_text")!)).toBe("text_empty");
     expect(blockIssue(byId.get("blk_status")!)).toBe("status_empty");
-    expect(blockIssue(byId.get("blk_image")!)).toBe("image_missing");
+    expect(blockIssue(byId.get("blk_photo")!)).toBe("gallery_empty");
     expect(blockIssue({ ...profileBlock })).toBeNull();
   });
 

@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import {
   Link as LinkIcon,
   MediaImage,
-  MediaImageList,
   MediaVideo,
   Megaphone,
   MusicDoubleNote,
@@ -42,9 +41,10 @@ type CatalogItem = { icon: typeof LinkIcon; enabled: boolean };
 const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   link: { icon: LinkIcon, enabled: true },
   text: { icon: Text, enabled: true },
-  image: { icon: MediaImage, enabled: true },
   status: { icon: Megaphone, enabled: true },
-  gallery: { icon: MediaImageList, enabled: true },
+  // Tek "Fotoğraf" girişi: `image` ve `gallery` birleşti, kullanıcı kaç
+  // fotoğraf koyacağını blok tipi seçerek değil fotoğraf ekleyerek söylüyor.
+  gallery: { icon: MediaImage, enabled: true },
   youtube: { icon: MediaVideo, enabled: true },
   spotify: { icon: MusicDoubleNote, enabled: true },
 };

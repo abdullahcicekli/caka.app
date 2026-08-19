@@ -24,9 +24,8 @@ export const es = {
     social: "Redes sociales",
     link: "Enlace",
     text: "Texto",
-    image: "Imagen",
     status: "Anuncio",
-    gallery: "Galería de fotos",
+    gallery: "Foto",
     youtube: "YouTube",
     spotify: "Spotify",
   } satisfies Record<ProfileBlock["type"], string>,
@@ -38,8 +37,7 @@ export const es = {
     link_title: "Escribe un título",
     text_empty: "Escribe un texto",
     status_empty: "Escribe el anuncio",
-    image_missing: "Sube una imagen",
-    gallery_empty: "Añade una foto a la galería",
+    gallery_empty: "Añade una foto",
     youtube_video_url: "Escribe un enlace de vídeo de YouTube",
     youtube_channel_url: "Escribe un enlace de canal de YouTube",
     spotify_url: "Escribe un enlace de Spotify",
@@ -48,15 +46,14 @@ export const es = {
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
     `Un bloque de ${blockLabel} puede ser como mínimo ${limits.minW}×${limits.minH} y como máximo ${limits.maxW}×${limits.maxH}`,
 
-  galleryCountLimit: `Tu página puede tener como máximo ${MAX_GALLERY_BLOCKS} bloques de galería`,
+  galleryCountLimit: `Tu página puede tener como máximo ${MAX_GALLERY_BLOCKS} bloques con varias fotos`,
 
   editor: {
     layoutUnreadable: "No se ha podido leer la composición de la página",
     backToDashboard: "Volver al panel",
     toolbarLabel: "Herramientas del editor",
     addLink: "Añadir un enlace",
-    addImage: "Añadir una imagen",
-    addGallery: "Añadir una galería de fotos",
+    addPhoto: "Añadir una foto",
     mobilePreview: "Vista móvil",
     desktopPreview: "Vista de escritorio",
     pickTheme: "Elegir tema",
@@ -81,8 +78,6 @@ export const es = {
     fieldLink: "Enlace",
 
     imageUploading: "Subiendo…",
-    imageReplace: "Cambiar la imagen",
-    imageDrop: "Arrastra o elige",
     imageUploadFailed: "No se ha podido subir la imagen",
 
     galleryEmpty: "Todavía no hay fotos.",
@@ -107,26 +102,39 @@ export const es = {
     fieldSocialTarget: "Enlace o nombre de usuario",
     socialHint:
       "Puedes pegar el enlace del perfil o escribir solo el nombre de usuario: entendemos las dos cosas.",
-    fieldImage: "Imagen",
     fieldAnnouncement: "Anuncio",
     galleryTitleHint:
-      "El título solo se ve en las galerías de dos filas de alto. En las galerías bajas se usa para los lectores de pantalla.",
+      "El título solo aparece en tarjetas de más de dos filas de alto. En tarjetas cortas se usa para lectores de pantalla.",
     photosLegend: (count: number, max: number) => `Fotos (${count}/${max})`,
     galleryMaxPhotos: (max: number, room: number) =>
-      `Una galería puede tener como máximo ${max} fotos; se han añadido las ${room} primeras de tu selección.`,
+      `Un bloque puede tener como máximo ${max} fotos; se añadieron las primeras ${room} de tu selección.`,
     photoAltAria: (index: number) => `Texto alternativo de la foto ${index}`,
     photoUpAria: (index: number) => `Subir la foto ${index}`,
     photoDownAria: (index: number) => `Bajar la foto ${index}`,
     photoRemoveAria: (index: number) => `Quitar la foto ${index}`,
+
+    uploadPercent: (percent: number) => `Subiendo… ${percent} %`,
+    uploadProgress: (done: number, total: number, percent: number) =>
+      `Subiendo… ${done}/${total} · ${percent} %`,
+
+    photoLayoutLegend: "Diseño",
+    photoLayoutGrid: "Cuadrícula",
+    photoLayoutSlider: "Carrusel",
+    photoLayoutHint:
+      "En la cuadrícula se ven todas las fotos a la vez; en el carrusel cambian cada 4 segundos.",
+    photoLinkHint:
+      "El enlace solo funciona en un bloque de una sola foto; con varias fotos, al hacer clic la foto se amplía.",
+    photoLimitHint: (max: number) =>
+      `Tu página puede tener como máximo ${max} bloques con varias fotos. Quita una foto de otra galería antes de añadir la segunda aquí.`,
+
     pickerSocial: "Redes sociales",
     pickerContent: "Contenido",
     pickerNoResults: (query: string) => `Sin resultados para “${query}”.`,
 
     galleryFullHint: (max: number) =>
-      `Una galería puede tener como máximo ${max} fotos. Quita una antes de añadir otra.`,
-    galleryUploadStep: (done: number, total: number) => `Subiendo… (${done}/${total})`,
+      `Un bloque puede tener como máximo ${max} fotos. Quita una antes de añadir otra.`,
     galleryBlockLimit: (max: number) =>
-      `Tu página puede tener como máximo ${max} galerías de fotos. Quita una antes de añadir otra.`,
+      `Tu página puede tener como máximo ${max} bloques de fotos. Quita uno antes de añadir otro.`,
     youtubeLinkLabel: "Enlace de YouTube",
     youtubeHint:
       "Distinguimos las direcciones de vídeo y de canal: añadimos lo que pegues.",
@@ -245,7 +253,6 @@ export const es = {
   profile: {
     menuLabel: "Menú de Caka",
     blocksLabel: "Enlaces y contenido",
-    addImage: "Añadir una imagen",
     shareImageAlt: (name: string) => `Imagen para compartir del perfil de ${name} en Caka`,
     description: (name: string) => `Los enlaces, los proyectos y el trabajo de ${name}.`,
     edit: "Editar",

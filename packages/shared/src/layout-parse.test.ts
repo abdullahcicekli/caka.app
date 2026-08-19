@@ -7,7 +7,11 @@ import {
   ensureLayoutPositions,
   blockGridLimitIssue,
   blockIssue,
+  galleryBlockCount,
   layoutGridLimitIssues,
+  layoutPhotoAssets,
+  migrateRawImageBlock,
+  photoBlockCount,
   parseProfileLayout,
   parseProfileLayoutDetailed,
   profileLayoutWriteSchema,
@@ -332,24 +336,39 @@ describe("galeri şeması (R62)", () => {
     expect(blockIssue(empty.blocks.find((item) => item.id === "blk_e")!)).toBe("gallery_empty");
   });
 
-  it(`hesap başına ${MAX_GALLERY_BLOCKS} galeri: ${MAX_GALLERY_BLOCKS + 1}. blok yazmada reddedilir`, () => {
-    const ok = doc([profileBlock, gallery("blk_g1", 1), gallery("blk_g2", 1)]);
+  it(`sayfa başına ${MAX_GALLERY_BLOCKS} galeri: ${MAX_GALLERY_BLOCKS + 1}. çok fotoğraflı blok yazmada reddedilir`, () => {
+    const ok = doc([profileBlock, gallery("blk_g1", 2), gallery("blk_g2", 2)]);
     expect(profileLayoutWriteSchema.safeParse(JSON.parse(ok)).success).toBe(true);
 
     const tooMany = doc([
       profileBlock,
-      gallery("blk_g1", 1),
-      gallery("blk_g2", 1),
-      gallery("blk_g3", 1),
+      gallery("blk_g1", 2),
+      gallery("blk_g2", 2),
+      gallery("blk_g3", 2),
     ]);
     const result = profileLayoutWriteSchema.safeParse(JSON.parse(tooMany));
     expect(result.success).toBe(false);
     expect(result.error?.issues.some((issue) => issue.message === "gallery_count")).toBe(true);
   });
 
+  // `image` bloğu birleşmeden önce SINIRSIZDI; hepsini saymak, üç görselli
+  // canlı bir sayfayı kaydedilemez hâle getirirdi.
+  it("tek fotoğraflı bloklar sayıya girmez — eski `image` sayfaları kaydedilebilir kalır", () => {
+    const many = doc([
+      profileBlock,
+      gallery("blk_g1", 1),
+      gallery("blk_g2", 1),
+      gallery("blk_g3", 1),
+      gallery("blk_g4", 1),
+    ]);
+    expect(profileLayoutWriteSchema.safeParse(JSON.parse(many)).success).toBe(true);
+    expect(galleryBlockCount(parseProfileLayout(many)!)).toBe(0);
+    expect(photoBlockCount(parseProfileLayout(many)!)).toBe(4);
+  });
+
   it("okuma şeması galeri sayısını sınırlamaz — eski kayıt sayfayı düşürmez", () => {
     const layout = parseProfileLayout(
-      doc([profileBlock, gallery("blk_g1", 1), gallery("blk_g2", 1), gallery("blk_g3", 1)]),
+      doc([profileBlock, gallery("blk_g1", 2), gallery("blk_g2", 2), gallery("blk_g3", 2)]),
     );
     expect(layout?.blocks).toHaveLength(4);
   });
@@ -451,16 +470,17 @@ describe("yeni tiplerin ızgara sınırları", () => {
     pos: { lg: { x: 0, y: 0, w, h }, sm: { x: 0, y: 0, w: Math.min(w, 2), h } },
   });
 
-  it("galeri 4x1 varsayılanını ve 4x2'yi kabul eder, 4x3'ü reddeder", () => {
+  // Fotoğraf bloğunun tavanı 8×6 yarım birim (748×492); eski hücre biriminde
+  // yazılmış belgede ölçüler ikiye katlandığı için 4×3 tam tavana oturur.
+  it("fotoğraf bloğu 4x3'e (748×492) kadar büyür, 4x4'ü reddeder", () => {
     const base = gallery("blk_g", 1);
+    for (const [w, h] of [[4, 1], [4, 2], [4, 3]] as const) {
+      expect(
+        profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, w, h)]))).success,
+      ).toBe(true);
+    }
     expect(
-      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 1)]))).success,
-    ).toBe(true);
-    expect(
-      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 2)]))).success,
-    ).toBe(true);
-    expect(
-      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 3)]))).success,
+      profileLayoutWriteSchema.safeParse(JSON.parse(doc([profileBlock, withPos(base, 4, 4)]))).success,
     ).toBe(false);
   });
 
@@ -538,5 +558,88 @@ describe("ensureLayoutPositions — tip tavanına kırpma", () => {
     const layout = parseProfileLayout(doc([profileBlock, linkBlock]))!;
     const once = ensureLayoutPositions(layout);
     expect(ensureLayoutPositions(once)).toEqual(once);
+  });
+});
+
+/* -------------------------------------------------------------------------
+ * `image` → fotoğraf bloğu göçü. Üretimde her iki tipte blok taşıyan canlı
+ * sayfalar var; `image` şemadan kalktığı için çevrilmeseydi tanınmaz sayılıp
+ * (unknownBlocks) sayfadan kaybolurdu.
+ * ---------------------------------------------------------------------- */
+describe("image → fotoğraf bloğu göçü", () => {
+  const legacyImage = {
+    id: "blk_img",
+    type: "image",
+    size: "2x1",
+    pos: { lg: { x: 0, y: 0, w: 4, h: 2 }, sm: { x: 0, y: 0, w: 4, h: 2 } },
+    data: {
+      assetId: "11111111-1111-4111-8111-111111111111",
+      title: "Atölye",
+      url: "https://caka.app/",
+    },
+  };
+
+  it("tek fotoğraflı bloğa çevrilir; başlık, adres ve konum korunur", () => {
+    const parsed = parseProfileLayoutDetailed(halfUnitDoc([profileBlock, legacyImage]))!;
+    expect(parsed.unknownBlocks).toEqual([]);
+    const block = parsed.layout.blocks.find((item) => item.id === "blk_img")!;
+    expect(block.type).toBe("gallery");
+    if (block.type !== "gallery") throw new Error("tip korunmadı");
+    expect(block.data.photos).toEqual([
+      { assetId: "11111111-1111-4111-8111-111111111111", alt: "Atölye" },
+    ]);
+    expect(block.data.title).toBe("Atölye");
+    expect(block.data.url).toBe("https://caka.app/");
+    // Varsayılan düzen ızgara: eski `image` kartı da tek fotoğrafı kartın
+    // tamamına yayıyordu.
+    expect(block.data.layout).toBe("grid");
+    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 4, h: 2 });
+  });
+
+  it("görseli yüklenmemiş (taslak) image bloğu fotoğrafsız doğar", () => {
+    const draft = { id: "blk_d", type: "image", size: "1x1", data: { title: "", url: "" } };
+    const parsed = parseProfileLayout(halfUnitDoc([profileBlock, draft]))!;
+    const block = parsed.blocks.find((item) => item.id === "blk_d")!;
+    expect(block.type === "gallery" && block.data.photos).toEqual([]);
+    expect(blockIssue(block)).toBe("gallery_empty");
+  });
+
+  it("eski BİRİM + eski TİP birlikte gelirse ikisi de çevrilir", () => {
+    // İşaretsiz belge (eski hücre birimi) içinde eski tip: ölçüler ikiye
+    // katlanır, tip çevrilir.
+    const layout = parseProfileLayout(
+      doc([
+        profileBlock,
+        { ...legacyImage, pos: { lg: { x: 0, y: 0, w: 2, h: 1 }, sm: { x: 0, y: 0, w: 2, h: 1 } } },
+      ]),
+    )!;
+    const block = layout.blocks.find((item) => item.id === "blk_img")!;
+    expect(block.pos?.lg).toEqual({ x: 0, y: 0, w: 4, h: 2 });
+    expect(block.type).toBe("gallery");
+  });
+
+  it("bayat sekmeden gelen image bloğu yazma şemasında da çevrilir", () => {
+    const result = profileLayoutWriteSchema.safeParse(
+      JSON.parse(halfUnitDoc([profileBlock, legacyImage])),
+    );
+    expect(result.success).toBe(true);
+    expect(result.data?.blocks.find((item) => item.id === "blk_img")?.type).toBe("gallery");
+  });
+
+  it("image olmayan bloklara dokunmaz", () => {
+    expect(migrateRawImageBlock(linkBlock)).toBe(linkBlock);
+    expect(migrateRawImageBlock(null)).toBeNull();
+    expect(migrateRawImageBlock("x")).toBe("x");
+  });
+
+  it("paylaşım görseli adayları artık galerideki fotoğrafları da görür", () => {
+    const layout = parseProfileLayout(
+      halfUnitDoc([profileBlock, legacyImage, gallery("blk_g", 2)]),
+    )!;
+    expect(layoutPhotoAssets(layout).map((item) => item.assetId)).toEqual([
+      "11111111-1111-4111-8111-111111111111",
+      photo(0).assetId,
+      photo(1).assetId,
+    ]);
   });
 });

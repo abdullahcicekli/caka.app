@@ -1197,7 +1197,6 @@
 .profile-block-status .rich-text,
 .rich-editor-inline.profile-block-status .tiptap { font-weight: 400; }
 .rich-editor-inline.profile-block-status { cursor: text; }
-.profile-block-image img { width: 100%; height: 100%; object-fit: cover; }
 .profile-image-placeholder {
   display: grid;
   width: 100%;
@@ -1289,51 +1288,136 @@ a.profile-block:focus-visible {
 }
 
 /* ---------------------------------------------------------------- *
- * Fotoğraf galerisi (U32; R63/R64, KTD37-KTD39).
+ * FOTOĞRAF BLOĞU (U32; R63/R64, KTD37-KTD39) — eski `image` + `gallery`.
  *
  * Fotoğraflar KIRPILARAK durur — letterbox yok — ve hücreler ızgaradan
  * türeyen sabit ölçülerdedir, yani görsel yüklenirken sayfa kaymaz.
  *
- * Düzeni İKİ girdi belirler: fotoğraf sayısı (`data-count`, bileşen yazar) ve
- * tile'ın gerçek ölçüsü (konteyner sorgusu okur). Sığmayan fotoğraflar DOM'da
- * kalır ama gizlenir; `+N` pili bandın kapasitesine karşılık gelen slottan
- * görünür (sayıyı CSS hesaplayamaz, bkz. GALLERY_BADGE_SLOTS).
+ * `+N` PİLİ KALKTI. Eskiden sığmayan fotoğraflar `display:none` ile
+ * gizleniyor, yerlerine "+2" pili basılıyordu: kullanıcı yüklediği fotoğrafı
+ * kendi kartında göremiyordu. Artık dizilim SAYIYA göre kuruluyor ve hepsi
+ * görünür — plan bileşenden CSS değişkeni olarak geliyor
+ * (`--photo-areas-*`, bkz. `photoGridPlan`, @caka/shared), bandını da
+ * konteynerin ORANI seçiyor. Sayıyı CSS hesaplayamaz; oranı JS ölçemez
+ * (hidrasyon kayması) — iş bu yüzden ikiye bölünmüş durumda.
  *
- * Ölçüler — iç ölçü = tile − 16px dolgu, hücre arası 4px:
- *   1×1  165×140 → 1-3 foto tek hero; 4-5 foto 2×2 mozaik (80,5×68 = 1,18)
- *   1×2  165×308 → 1 sütun × 2 satır (165×152)
- *   2×1  358×140 → 1 tam / 2'li (177×140) / 3'lü (116,7×140) + pil
- *   2×2  358×308 → 3 hero+2 istifli; 4 mozaik; 5 = 2 üst + 3 alt (pil yok)
- *   4×1  744×140 → 5'li, hücre 145,6×140 (KTD39 — varsayılan boyut)
- *   4×2  744×308 → 5 = hero-sol 370×308 (1,20) + 2×2 sağ 183×152 (1,20)
+ * Bant eşikleri ve ölçülen hücreler (iç ölçü = kart − 16px dolgu, ara 4px):
+ *   tall     r<0,85    178×324 → 5 foto: hero 162×100 + 4×(79×100)
+ *   square   0,85-1,70 368×324 → 5 foto: 2×(174×152) üst, 3×(115×152) alt
+ *   wide     1,70-3,20 748×324 → 5 foto: hero 364×308 + 4×(180×152)
+ *   panorama r≥3,20    748×156 → 5 foto: 5×(143×140)  (KTD39)
  * ---------------------------------------------------------------- */
-.profile-block-gallery {
+.profile-block-photo {
   position: relative;
-  display: grid;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  gap: 4px;
+  display: block;
   padding: 8px;
 }
-.profile-block-gallery img {
+.photo-grid,
+.photo-slider {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.photo-grid {
+  gap: 4px;
+  /* Varsayılan bant `square`; diğerleri aşağıdaki konteyner sorgularıyla
+     geçer. Satırlar plandan (`grid-template-areas`) doğar ve eşit bölünür. */
+  grid-template-columns: repeat(var(--photo-cols-square, 1), minmax(0, 1fr));
+  grid-template-areas: var(--photo-areas-square);
+  grid-auto-rows: minmax(0, 1fr);
+}
+@container (max-aspect-ratio: 17 / 20) {
+  .photo-grid {
+    grid-template-columns: repeat(var(--photo-cols-tall, 1), minmax(0, 1fr));
+    grid-template-areas: var(--photo-areas-tall);
+  }
+}
+@container (min-aspect-ratio: 17 / 10) {
+  .photo-grid {
+    grid-template-columns: repeat(var(--photo-cols-wide, 1), minmax(0, 1fr));
+    grid-template-areas: var(--photo-areas-wide);
+  }
+}
+@container (min-aspect-ratio: 16 / 5) {
+  .photo-grid {
+    grid-template-columns: repeat(var(--photo-cols-panorama, 1), minmax(0, 1fr));
+    grid-template-areas: var(--photo-areas-panorama);
+  }
+}
+
+/* Hücre bir düğme de olabilir (ışık kutusunu açar), bir `span` de (editör
+   tuvali ve panel önizlemesi); ikisi de aynı kutuyu kurar. */
+.photo-cell {
   display: block;
   width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
+  padding: 0;
   border-radius: var(--radius-lg);
+  background: none;
+  overflow: hidden;
+}
+.photo-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
-.profile-block-gallery .profile-image-placeholder { border-radius: var(--radius-lg); }
-/* Galeri başlığı yalnız DİKEY YER OLAN tile'larda görünür (2x2, 4x2).
-   Kısa tile'da (138-156px) hücrelerin üstüne binmeden sığmıyor; oradaki
-   görevini `aria-label` üstleniyor. Grid'e satır eklemek yerine bindirme
-   kullanıldı: mozaik düzenlerinin hiçbiri bozulmuyor. */
-.gallery-title { display: none; }
+button.photo-cell { cursor: zoom-in; }
+button.photo-cell:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--profile-text) 60%, transparent);
+  outline-offset: 2px;
+}
+.profile-block-photo .profile-image-placeholder { border-radius: var(--radius-lg); }
+
+/* --- Kaydırmalı düzen ------------------------------------------- *
+ * Slaytlar üst üste durur ve çapraz geçişle değişir; kaydırma yerine
+ * opaklık, çünkü kart `overflow: hidden` bir ızgara hücresi ve yatay
+ * kaydırma dokunmatikte sayfa kaydırmasıyla çakışıyor. Otomatik geçiş
+ * JS'te (4 sn) ve `prefers-reduced-motion: reduce` altında hiç kurulmaz. */
+.photo-slider { position: relative; }
+.photo-slides { position: absolute; inset: 0; }
+.photo-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 420ms ease;
+  pointer-events: none;
+}
+.photo-slide.is-active { opacity: 1; pointer-events: auto; }
+.photo-dots {
+  position: absolute;
+  right: 0;
+  bottom: 8px;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.photo-dots button {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 55%, transparent);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-murekkep) 35%, transparent);
+  transition: width 200ms ease, background 200ms ease;
+}
+.photo-dots button.is-active { width: 18px; background: white; }
+.photo-dots button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+
+/* Başlık yalnız DİKEY YER OLAN kartlarda görünür. Kısa kartta (156px)
+   hücrelerin üstüne binmeden sığmıyor; oradaki görevini `aria-label`
+   üstleniyor. Grid'e satır eklemek yerine bindirme: hiçbir plan bozulmuyor. */
+.photo-title { display: none; }
 
 @container (min-height: 200px) {
-  .gallery-title {
+  .photo-title {
     position: absolute;
+    z-index: 2;
     display: block;
     max-width: calc(100% - 24px);
     overflow: hidden;
@@ -1351,21 +1435,81 @@ a.profile-block:focus-visible {
   }
 }
 
-/* Pil son görünen hücrenin üstünde durur; o hücre her düzende sağ alttadır. */
-.gallery-more {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  display: none;
-  align-items: center;
-  border-radius: 999px;
-  background: rgb(17 17 22 / 0.72);
-  padding: 3px 10px;
+/* --- Işık kutusu ------------------------------------------------- *
+ * Radix Dialog: odak tuzağı, `aria-modal`, Escape ve dışarı tıklama
+ * ondan gelir. Perde form dialoglarının açık zeminini değil, fotoğrafı
+ * öne çıkaran koyu bir zemini kullanır. */
+/* Perde ve panel mürekkep token'ından türer; ışık kutusu bilinçli olarak
+   tema-dışıdır (her temada aynı koyu kabin), o yüzden kart token'ları değil
+   marka mürekkebi kullanılıyor. */
+.photo-lightbox-overlay { background: color-mix(in srgb, var(--color-murekkep) 82%, transparent); }
+.photo-lightbox {
+  display: grid;
+  width: min(96vw, 1100px);
+  max-width: min(96vw, 1100px);
+  gap: 10px;
+  border-radius: var(--radius-2xl);
+  background: color-mix(in srgb, var(--color-murekkep) 94%, transparent);
+  padding: 14px;
   color: white;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.5;
+  /* Form dialoglarının halkası (`ring-1`) fotoğrafın etrafında gereksiz. */
+  box-shadow: none;
 }
+.photo-lightbox-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 14%, transparent);
+  color: white;
+}
+.photo-lightbox-close:hover { background: color-mix(in srgb, white 26%, transparent); }
+.photo-lightbox-close:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.photo-lightbox-stage {
+  display: grid;
+  max-height: 78vh;
+  place-items: center;
+  min-height: 0;
+  /* Kaydırma jesti tarayıcının kendi yatay kaydırmasıyla yarışmasın. */
+  touch-action: pan-y;
+}
+.photo-lightbox-stage img {
+  max-width: 100%;
+  max-height: 78vh;
+  border-radius: var(--radius-lg);
+  object-fit: contain;
+}
+.photo-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 14%, transparent);
+  color: white;
+  translate: 0 -50%;
+  transition: background 160ms ease;
+}
+.photo-lightbox-nav:hover { background: color-mix(in srgb, white 26%, transparent); }
+.photo-lightbox-nav:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+.photo-lightbox-nav.is-prev { left: 10px; }
+.photo-lightbox-nav.is-next { right: 10px; }
+.photo-lightbox-foot {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  color: color-mix(in srgb, white 72%, transparent);
+  font-size: 12.5px;
+  text-align: center;
+}
+.photo-lightbox-alt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------------------------------------------------------------- *
  * YouTube (U33/U34). Kanal ve video AYNI kartın iki varyantı gibi
@@ -1570,27 +1714,6 @@ a.profile-block:focus-visible {
 
 /* --- DAR + KISA (1×1) ------------------------------------------- */
 @container (max-width: 199px) and (max-height: 199px) {
-  /* KTD38: yatay şerit ASLA render edilmez — 3'lü dizilim burada 52×140
-     (en-boy 0,37), yani bir kıymık. 1-3 fotoğrafta tek hero. */
-  .profile-block-gallery[data-count="1"],
-  .profile-block-gallery[data-count="2"],
-  .profile-block-gallery[data-count="3"] { grid-auto-flow: row; grid-template-columns: 1fr; }
-  .profile-block-gallery[data-count="2"] img:nth-child(n + 2),
-  .profile-block-gallery[data-count="3"] img:nth-child(n + 2) { display: none; }
-  .profile-block-gallery[data-count="2"] .gallery-more[data-slot="1"],
-  .profile-block-gallery[data-count="3"] .gallery-more[data-slot="1"] { display: flex; }
-
-  /* 4-5 fotoğrafta 2×2 mozaik: hücre 80,5×68 → 1,18; tile'ın kendi oranı 1,16. */
-  .profile-block-gallery[data-count="4"],
-  .profile-block-gallery[data-count="5"] {
-    grid-auto-flow: row;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-  }
-  .profile-block-gallery[data-count="5"] img:nth-child(n + 5) { display: none; }
-  .profile-block-gallery[data-count="5"] .gallery-more[data-slot="4"] { display: flex; }
-  .gallery-more { right: 12px; bottom: 12px; padding: 2px 8px; font-size: 11px; }
-
   /* Dar + kısa (178×156): kimlik satırı + 93px'lik önizleme kutusu yan yana
      da alt alta da sığmıyor. Kart sade hâline döner. */
   .profile-block-link.has-og .link-og,
@@ -1636,18 +1759,6 @@ a.profile-block:focus-visible {
 
 /* --- DAR + YÜKSEK (1×2) ----------------------------------------- */
 @container (max-width: 199px) and (min-height: 200px) {
-  /* clamp(floor(165/100),1,5) = 1 sütun; iki satır sığar. */
-  .profile-block-gallery {
-    grid-auto-flow: row;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
-  }
-  .profile-block-gallery[data-count="1"] { grid-template-rows: 1fr; }
-  .profile-block-gallery img:nth-child(n + 3) { display: none; }
-  .profile-block-gallery[data-count="3"] .gallery-more[data-slot="2"],
-  .profile-block-gallery[data-count="4"] .gallery-more[data-slot="2"],
-  .profile-block-gallery[data-count="5"] .gallery-more[data-slot="2"] { display: flex; }
-
   /* Önizleme bu darlıkta gizli; og'u olan kart da sade kartın nefesli
      tipografisini almalı — aşağıdaki YÜKSEK kuralları `:not(.has-og)` ile
      yazıldığı için onu atlıyor. */
@@ -1662,11 +1773,6 @@ a.profile-block:focus-visible {
 
 /* --- ORTA + KISA (2×1; mobilde 4×1 de buraya düşer) ------------- */
 @container (min-width: 200px) and (max-width: 499px) and (max-height: 199px) {
-  /* clamp(floor(358/100),1,5) = 3 sütun. */
-  .profile-block-gallery img:nth-child(n + 4) { display: none; }
-  .profile-block-gallery[data-count="4"] .gallery-more[data-slot="3"],
-  .profile-block-gallery[data-count="5"] .gallery-more[data-slot="3"] { display: flex; }
-
   /* KISA kartta önizleme ALTA sığmaz (kimlik satırından sonra ~68px kalıyor,
      1,91:1 görsel orada 4,9'luk bir şerit olurdu) ama YANA sığar: kutu
      genişliğin %45'iyle sınırlanır (368px'lik kartta 149×78), kimlik satırına
@@ -1769,34 +1875,6 @@ a.profile-block:focus-visible {
   .profile-block-link.has-og .link-body { flex: 1; }
 }
 
-/* --- ORTA + YÜKSEK (2×2) ---------------------------------------- */
-@container (min-width: 200px) and (max-width: 499px) and (min-height: 200px) {
-  .profile-block-gallery { grid-auto-flow: row; }
-  .profile-block-gallery[data-count="1"] { grid-template-columns: 1fr; }
-  /* 2: üst üste iki geniş kare (yan yana 177×308 dikey bir yarık olurdu). */
-  .profile-block-gallery[data-count="2"] { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
-  /* 3: hero solda, iki fotoğraf sağda istifli. */
-  .profile-block-gallery[data-count="3"] {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-  }
-  .profile-block-gallery[data-count="3"] img:nth-child(1) { grid-area: 1 / 1 / 3 / 2; }
-  .profile-block-gallery[data-count="4"] {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-  }
-  /* 5: 2 üst (177×152) + 3 alt (116,7×152) — pil gerekmez, hepsi görünür. */
-  .profile-block-gallery[data-count="5"] {
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: 1fr 1fr;
-  }
-  .profile-block-gallery[data-count="5"] img:nth-child(1) { grid-area: 1 / 1 / 2 / 4; }
-  .profile-block-gallery[data-count="5"] img:nth-child(2) { grid-area: 1 / 4 / 2 / 7; }
-  .profile-block-gallery[data-count="5"] img:nth-child(3) { grid-area: 2 / 1 / 3 / 3; }
-  .profile-block-gallery[data-count="5"] img:nth-child(4) { grid-area: 2 / 3 / 3 / 5; }
-  .profile-block-gallery[data-count="5"] img:nth-child(5) { grid-area: 2 / 5 / 3 / 7; }
-}
-
 /* --- GENİŞ + KISA (4×1) ----------------------------------------- */
 @container (min-width: 500px) and (max-height: 199px) {
   /* Burada ikisine birden yer var: 120px yüksekliğinde 1,91:1 kutu 229px
@@ -1813,10 +1891,6 @@ a.profile-block:focus-visible {
     max-width: 45%;
     flex: none;
   }
-
-  /* clamp(floor(744/100),1,5) = 5; beş fotoğraf 145,6×140 hücrelere düşer.
-     KTD39: bu ızgarada elde edilebilecek en iyi galeri konfigürasyonu. */
-  .profile-block-gallery img:nth-child(n + 6) { display: none; }
 }
 
 /* --- YÜKSEK (her genişlikte): kanal kartı büyük kapağa geçer ---- */
@@ -1890,27 +1964,6 @@ a.profile-block:focus-visible {
     flex: 1 1 0;
     align-self: center;
   }
-
-  /* 5: hero solda 370×308, sağda 2×2 → 183×152. İkisi de 1,20 en-boyda. */
-  .profile-block-gallery[data-count="5"] {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 1fr 1fr;
-  }
-  .profile-block-gallery[data-count="5"] img:nth-child(1) { grid-area: 1 / 1 / 3 / 3; }
-  .profile-block-gallery[data-count="5"] img:nth-child(2) { grid-area: 1 / 3 / 2 / 4; }
-  .profile-block-gallery[data-count="5"] img:nth-child(3) { grid-area: 1 / 4 / 2 / 5; }
-  .profile-block-gallery[data-count="5"] img:nth-child(4) { grid-area: 2 / 3 / 3 / 4; }
-  .profile-block-gallery[data-count="5"] img:nth-child(5) { grid-area: 2 / 4 / 3 / 5; }
-  .profile-block-gallery[data-count="4"],
-  .profile-block-gallery[data-count="2"] { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
-  .profile-block-gallery[data-count="4"] { grid-template-rows: 1fr 1fr; }
-  .profile-block-gallery[data-count="3"] {
-    grid-auto-flow: row;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-  }
-  .profile-block-gallery[data-count="3"] img:nth-child(1) { grid-area: 1 / 1 / 3 / 2; }
 
   /* Kanal: kimlik solda bir sütun, son video sağda büyük kapak. Bu genişlikte
      kapağı tam genişliğe yaymak 3,8 en-boyda bir şerit üretiyordu. */
@@ -2849,6 +2902,39 @@ a.profile-block:focus-visible {
 .inspector-upload { position: relative; display: flex; min-height: 88px; align-items: center; justify-content: center; border: 1px dashed var(--color-sinir); border-radius: var(--radius-lg); flex-direction: column; gap: 6px; color: color-mix(in srgb, var(--color-murekkep) 56%, transparent); font-size: 11px; font-weight: 400; overflow: hidden; }
 .inspector-upload input { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; }
 .inspector-fields input:focus, .inspector-fields textarea:focus, .inspector-fields select:focus { border-color: var(--color-murekkep); }
+/* Fotoğraf listesi KENDİ İÇİNDE kayar. Eskiden liste büyüdükçe "Fotoğraf
+   ekle" düğmesi panelin altına düşüyor ve görmek için kaydırmak gerekiyordu;
+   düğme artık listenin ÜSTÜNDE ve liste 3,5 satırda tavana vurup kayıyor. */
+.photo-list {
+  display: flex;
+  max-height: 216px;
+  padding: 0 2px 0 0;
+  list-style: none;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Iki seçenekli düzen anahtarı (ızgara / kaydırmalı). */
+.segmented {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  border: 1px solid var(--color-sinir);
+  border-radius: var(--radius-lg);
+  padding: 3px;
+  background: var(--color-zemin);
+}
+.segmented button {
+  min-height: 34px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.segmented button.is-active { background: var(--color-murekkep); color: white; }
+.segmented button:not(.is-active):hover { background: color-mix(in srgb, var(--color-murekkep) 8%, white); }
 .editor-inspector > footer { display: flex; margin-top: auto; gap: 8px; border-top: 1px solid var(--color-sinir); padding: 14px; }
 .editor-inspector > footer > * { display: flex; min-height: 42px; flex: 1; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--color-sinir); border-radius: var(--radius-lg); font-size: 13px; }
 .editor-inspector > footer > button:last-child { border-color: var(--color-murekkep); background: var(--color-murekkep); color: white; }

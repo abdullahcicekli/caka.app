@@ -24,9 +24,8 @@ export const en = {
     social: "Social media",
     link: "Link",
     text: "Text",
-    image: "Image",
     status: "Announcement",
-    gallery: "Photo gallery",
+    gallery: "Photo",
     youtube: "YouTube",
     spotify: "Spotify",
   } satisfies Record<ProfileBlock["type"], string>,
@@ -38,8 +37,7 @@ export const en = {
     link_title: "Enter a title",
     text_empty: "Write some text",
     status_empty: "Write the announcement",
-    image_missing: "Upload an image",
-    gallery_empty: "Add a photo to the gallery",
+    gallery_empty: "Add a photo",
     youtube_video_url: "Enter a YouTube video link",
     youtube_channel_url: "Enter a YouTube channel link",
     spotify_url: "Enter a Spotify link",
@@ -48,15 +46,14 @@ export const en = {
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
     `A ${blockLabel} block can be at least ${limits.minW}×${limits.minH} and at most ${limits.maxW}×${limits.maxH}`,
 
-  galleryCountLimit: `Your page can have at most ${MAX_GALLERY_BLOCKS} gallery blocks`,
+  galleryCountLimit: `Your page can have at most ${MAX_GALLERY_BLOCKS} multi-photo blocks`,
 
   editor: {
     layoutUnreadable: "The page layout could not be read",
     backToDashboard: "Back to dashboard",
     toolbarLabel: "Editor tools",
     addLink: "Add a link",
-    addImage: "Add an image",
-    addGallery: "Add a photo gallery",
+    addPhoto: "Add a photo",
     mobilePreview: "Mobile preview",
     desktopPreview: "Desktop view",
     pickTheme: "Pick a theme",
@@ -80,8 +77,6 @@ export const en = {
     fieldLink: "Link",
 
     imageUploading: "Uploading…",
-    imageReplace: "Replace image",
-    imageDrop: "Drag or choose",
     imageUploadFailed: "The image couldn't be uploaded",
 
     galleryEmpty: "No photos yet.",
@@ -106,26 +101,39 @@ export const en = {
     fieldSocialTarget: "Link or username",
     socialHint:
       "You can paste the profile link or just type the username — we understand both.",
-    fieldImage: "Image",
     fieldAnnouncement: "Announcement",
     galleryTitleHint:
-      "The title only shows on galleries two rows tall. On short galleries it is used for screen readers.",
+      "The title only shows on cards taller than two rows. On short cards it is used for screen readers.",
     photosLegend: (count: number, max: number) => `Photos (${count}/${max})`,
     galleryMaxPhotos: (max: number, room: number) =>
-      `A gallery can hold at most ${max} photos; the first ${room} of your selection were added.`,
+      `A block can hold at most ${max} photos; the first ${room} of your selection were added.`,
     photoAltAria: (index: number) => `Alt text for photo ${index}`,
     photoUpAria: (index: number) => `Move photo ${index} up`,
     photoDownAria: (index: number) => `Move photo ${index} down`,
     photoRemoveAria: (index: number) => `Remove photo ${index}`,
+
+    uploadPercent: (percent: number) => `Uploading… ${percent}%`,
+    uploadProgress: (done: number, total: number, percent: number) =>
+      `Uploading… ${done}/${total} · ${percent}%`,
+
+    photoLayoutLegend: "Layout",
+    photoLayoutGrid: "Grid",
+    photoLayoutSlider: "Slider",
+    photoLayoutHint:
+      "In a grid every photo is visible at once; in a slider they change every 4 seconds.",
+    photoLinkHint:
+      "The link only works on a single-photo block; with more photos a click enlarges the photo.",
+    photoLimitHint: (max: number) =>
+      `Your page can have at most ${max} multi-photo blocks. Remove a photo from another gallery before adding a second one here.`,
+
     pickerSocial: "Social media",
     pickerContent: "Content",
     pickerNoResults: (query: string) => `No results for “${query}”.`,
 
     galleryFullHint: (max: number) =>
-      `A gallery can hold at most ${max} photos. Remove one before adding a new photo.`,
-    galleryUploadStep: (done: number, total: number) => `Uploading… (${done}/${total})`,
+      `A block can hold at most ${max} photos. Remove one before adding a new photo.`,
     galleryBlockLimit: (max: number) =>
-      `Your page can have at most ${max} photo galleries. Remove one before adding another.`,
+      `Your page can have at most ${max} photo blocks. Remove one before adding another.`,
     youtubeLinkLabel: "YouTube link",
     youtubeHint:
       "We tell video and channel addresses apart — whichever you paste is what we add.",
@@ -243,7 +251,6 @@ export const en = {
   profile: {
     menuLabel: "Caka menu",
     blocksLabel: "Links and content",
-    addImage: "Add an image",
     shareImageAlt: (name: string) => `Share image of ${name}'s Caka profile`,
     description: (name: string) => `${name}'s links, projects and work.`,
     edit: "Edit",

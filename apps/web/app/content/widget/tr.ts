@@ -5,25 +5,31 @@ import { type NumberFormat, relativeTime, shortNumber } from "./shared";
 const numbers: NumberFormat = { decimal: ",", thousand: "B", million: "Mn", billion: "Mr" };
 
 /**
- * Widget'ın adı bilinçli olarak "Fotoğraf galerisi": editördeki blok seçici
- * zaten "Blok galerisi" adını taşıyor ve yalnız "galeri" demek ikisini
- * karıştırır.
+ * Widget'ın adı: `image` ve `gallery` blokları TEK blokta birleşti. Kullanıcı
+ * artık "Fotoğraf" ekliyor; kaç fotoğraf koyduğu düzeni belirliyor.
  */
-const galleryName = "Fotoğraf galerisi";
+const photoName = "Fotoğraf";
 
 const youtubeEmbedNotice = "Oynatınca YouTube'a bağlanılır";
 const spotifyEmbedNotice = "Oynatınca Spotify'a bağlanılır";
 
 export const tr = {
-  gallery: {
-    name: galleryName,
-    /** Boş galeri bloğunun (taslak) kart içi yer tutucusu. */
+  photo: {
+    name: photoName,
+    /** Fotoğrafsız blok (taslak) kart içi yer tutucusu. */
     empty: "Fotoğraf ekle",
     /** Kartın ekran okuyucu etiketi; kullanıcı başlık yazdıysa o kazanır. */
-    label: (title: string) => title.trim() || galleryName,
-    /** Sığmayan fotoğrafların pili: "+2". */
-    more: (count: number) => `+${count}`,
-    moreLabel: (count: number) => `${count} fotoğraf daha`,
+    label: (title: string) => title.trim() || photoName,
+    /** Işık kutusunu açan hücrenin etiketi. */
+    openLabel: (index: number, total: number) => `${index}. fotoğrafı büyüt (${index}/${total})`,
+    lightboxTitle: (title: string) => title.trim() || photoName,
+    close: "Kapat",
+    previous: "Önceki fotoğraf",
+    next: "Sonraki fotoğraf",
+    counter: (index: number, total: number) => `${index} / ${total}`,
+    /** Kaydırmalı düzenin nokta göstergeleri. */
+    dotsLabel: "Fotoğraf seç",
+    goTo: (index: number, total: number) => `${index}. fotoğrafa git (${index}/${total})`,
   },
 
   youtube: {

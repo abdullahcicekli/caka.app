@@ -28,6 +28,7 @@ import { useCatalog } from "~/lib/locale";
 import { publishedLegalDocumentIds } from "~/content/legal";
 import { noIndexMeta } from "~/lib/seo";
 import {
+  layoutPhotoAssets,
   normalizeOgTemplate,
   OG_TEMPLATE_OPTIONS,
   parseProfileLayout,
@@ -64,12 +65,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const card = layout.blocks.find(
     (block): block is Extract<ProfileBlock, { type: "profile" }> => block.type === "profile",
   );
-  // Fotoğraf kaynağı adayları: yayınlanmış layout'taki görsel blokları.
-  const imageBlocks = layout.blocks.flatMap((block) =>
-    block.type === "image" && block.data.assetId
-      ? [{ assetId: block.data.assetId, title: block.data.title }]
-      : [],
-  );
+  // Fotoğraf kaynağı adayları: yayınlanmış layout'taki fotoğraf blokları.
+  // `image` ve `gallery` birleştiği için aday listesi artık galerideki
+  // fotoğrafları da içeriyor — eskiden yalnız tek görselli bloklar görünüyor,
+  // galerisine beş fotoğraf koyan kullanıcı hiçbirini seçemiyordu.
+  const imageBlocks = layoutPhotoAssets(layout);
   // Kayıtlı seçim layout'tan silinmişse arayüz varsayılanı (avatar) gösterir —
   // sunucu tarafı da aynı kurala düşer (resolveOgPhotoAssetId).
   const ogPhotoAssetId =

@@ -5,18 +5,24 @@ import { type NumberFormat, relativeTime, shortNumber } from "./shared";
 
 const numbers: NumberFormat = { decimal: ",", thousand: "mil", million: "M", billion: "MM" };
 
-const galleryName = "Galería de fotos";
+const photoName = "Foto";
 
 const youtubeEmbedNotice = "Al reproducir se conecta con YouTube";
 const spotifyEmbedNotice = "Al reproducir se conecta con Spotify";
 
 export const es = {
-  gallery: {
-    name: galleryName,
+  photo: {
+    name: photoName,
     empty: "Añadir fotos",
-    label: (title: string) => title.trim() || galleryName,
-    more: (count: number) => `+${count}`,
-    moreLabel: (count: number) => `${count} foto${count === 1 ? "" : "s"} más`,
+    label: (title: string) => title.trim() || photoName,
+    openLabel: (index: number, total: number) => `Ampliar la foto ${index} (${index}/${total})`,
+    lightboxTitle: (title: string) => title.trim() || photoName,
+    close: "Cerrar",
+    previous: "Foto anterior",
+    next: "Foto siguiente",
+    counter: (index: number, total: number) => `${index} / ${total}`,
+    dotsLabel: "Elegir una foto",
+    goTo: (index: number, total: number) => `Ir a la foto ${index} (${index}/${total})`,
   },
 
   youtube: {
