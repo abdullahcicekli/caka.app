@@ -26,6 +26,7 @@ import {
   PURPOSE_IDS,
   TEMPLATE_ORDER,
 } from "~/content/onboarding/shared";
+import { prepareImageForUpload } from "~/lib/image-upload";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { parseSeedProfile } from "~/lib/profile-view";
 import { noIndexMeta } from "~/lib/seo";
@@ -327,10 +328,12 @@ function ProfileStep({
     setUploading(true);
     setUploadError("");
     try {
+      // Ham fotoğraf yola çıkmadan küçültülür (bkz. `lib/image-upload.ts`).
+      const prepared = await prepareImageForUpload(file);
       const response = await fetch("/api/onboarding/avatar", {
         method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
+        headers: { "Content-Type": prepared.type },
+        body: prepared,
       });
       const result = (await response.json()) as { id?: string; url?: string; error?: string };
       if (!response.ok || !result.id || !result.url) {
