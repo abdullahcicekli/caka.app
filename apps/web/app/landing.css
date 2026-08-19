@@ -365,17 +365,20 @@ html[data-landing]::-webkit-scrollbar {
 .lp-nav-avatar:hover { box-shadow: 0 0 0 4px var(--color-sinir); }
 .lp-nav-avatar:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
 
-.lp-menu-col { display: flex; flex-direction: column; gap: 12px; }
-
+/* Kendi KUTUSU: katmanın en üstünde, ızgaranın dışında, tam genişlikte.
+   Zemin rengi kutuyu kart ailesine bağlar; oturum kapalıyken bu blok hiç
+   basılmaz ve katman eski dengesine döner. */
 .lp-menu-account {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-bottom: 1px solid var(--color-sinir);
-  padding-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-2xl);
+  background: var(--color-zemin);
+  padding: 12px;
 }
 
-.lp-menu-account-head { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+.lp-menu-account-head { display: flex; align-items: center; gap: 10px; padding: 0 2px; }
 .lp-menu-account-id { display: grid; min-width: 0; }
 .lp-menu-account-id strong {
   overflow: hidden;
@@ -392,7 +395,12 @@ html[data-landing]::-webkit-scrollbar {
   white-space: nowrap;
 }
 
-.lp-menu-account-links { display: flex; flex-direction: column; gap: 1px; }
+.lp-menu-account-links { display: grid; gap: 1px; }
+/* Kutu genişken satırlar iki sütuna geçer: tek sütunda 500px'lik bir şeritte
+   ikonla metin arası kocaman bir boşluk kalır ve kutu gereksiz uzardı. */
+@media (min-width: 560px) {
+  .lp-menu-account-links { grid-template-columns: 1fr 1fr; column-gap: 8px; }
+}
 .lp-menu-account-links a,
 .lp-menu-account-links .lp-menu-account-soon,
 .lp-menu-account-links .lp-menu-account-out {
@@ -409,7 +417,7 @@ html[data-landing]::-webkit-scrollbar {
   transition: background-color 150ms var(--lp-ease);
 }
 .lp-menu-account-links a:hover,
-.lp-menu-account-links .lp-menu-account-out:hover { background: var(--color-zemin); }
+.lp-menu-account-links .lp-menu-account-out:hover { background: white; }
 .lp-menu-account-links a:focus-visible,
 .lp-menu-account-links .lp-menu-account-out:focus-visible {
   outline: 2px solid var(--color-murekkep);
@@ -421,7 +429,7 @@ html[data-landing]::-webkit-scrollbar {
 .lp-menu-account-soon em {
   margin-inline-start: auto;
   border-radius: var(--radius-full);
-  background: var(--color-zemin);
+  background: white;
   padding: 2px 8px;
   font-size: 10px;
   font-style: normal;

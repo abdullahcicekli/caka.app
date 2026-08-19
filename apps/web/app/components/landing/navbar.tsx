@@ -248,6 +248,11 @@ function MenuLayer({
         aria-label={menu.label}
         className="lp-menu"
       >
+        {/* Hesap kutusu ÜSTTE ve TAM GENİŞLİKTE, ızgaranın dışında. Sütunun
+            içinde olsaydı oturum açıkken sağ sütun kartın iki katı uzar,
+            ızgara dengesizleşirdi; burada oturum kapalıyken katman
+            hiç değişmeden eski hâline döner. */}
+        {user ? <MenuAccountSection user={user} onNavigate={onClose} /> : null}
         <div className="lp-menu-grid">
           {/* Dekoratif kart SOLDA ve DOM'da da önce: bağlantı taşımadığı
               için okuma sırasını görsel sıraya eşitlemek odak sırasını
@@ -258,18 +263,15 @@ function MenuLayer({
             <strong>{menu.card.title}</strong>
             <span>{menu.card.body}</span>
           </div>
-          <div className="lp-menu-col">
-            {user ? <MenuAccountSection user={user} onNavigate={onClose} /> : null}
-            <ul className="lp-menu-links">
-              {links.map((link) => (
-                <li key={link.href}>
-                  <Link to={localize(link.href)} onClick={onClose}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="lp-menu-links">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link to={localize(link.href)} onClick={onClose}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
         <p className="lp-menu-meta">
           {menu.meta.map((item) => (
