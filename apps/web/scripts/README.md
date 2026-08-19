@@ -11,10 +11,12 @@ girmezler.
 | `lab-cek.mjs` | Altı kartı 2x DPR ile çeker, `app/assets/landing/vitrin/<id>.webp` üretir. |
 | `lab-telefon.mjs` | Kişisiz, **saydam zeminli** tek telefon (`?tel=1` modu). Giriş ve kayıt sayfaları bunu kullanır: `telefon-<id>.webp`. |
 | `serit-olcum.mjs` | Landing'deki her `<img>` için `naturalWidth`i gerçek render kutusuyla karşılaştırır; DPR 2 kapısını (ölçek ≤ 0,5) geçmeyen görsel varsa 1 ile çıkar. Kapının gerekçesi `app/assets/landing/README.md` başında. |
+| `serit-denetim.mjs` | Hero şeridini **beş dilde** tarar: baş harf çipi, avatarsız/adsız/mesleksiz profil kartı, kutusundan taşan metin ve aynı kimliğin iki kez geçmesi. Bulgu varsa listeler ve 1 ile çıkar. `lab-denetim.mjs`in landing karşılığı. |
 
 Sıra: `lab-tohum.mjs` → `pnpm dev` → `lab-denetim.mjs` → `lab-cek.mjs`
-(+ gerekiyorsa `lab-telefon.mjs`). Landing görseli değişince `serit-olcum.mjs`
-ayrıca çalıştırılır — laboratuvar hattına bağlı değildir, `pnpm dev` yeter.
+(+ gerekiyorsa `lab-telefon.mjs`). Landing görseli veya şerit kadrosu
+değişince `serit-olcum.mjs` ve `serit-denetim.mjs` ayrıca çalıştırılır —
+laboratuvar hattına bağlı değillerdir, `pnpm dev` yeter.
 Ayrıntı ve gerekçeler `app/routes/lab.karakterler.tsx` başlığında.
 
 Çıktıların nereye gittiği:

@@ -5,34 +5,35 @@
 // ürettiğini görür ve landing'de gösterilenle üründe çıkan şey birbirinden
 // ayrışamaz — kartların görünümü değişirse şerit de değişir.
 //
-// DÖRT PERSONA, TEK KİMLİK: şerit eskiden tek bir ada ("Kerem Aydın")
-// bağlıydı ama kartların fotoğrafları dört ayrı kişiye aitti — kadın
-// fotoğrafı taşıyan bir kart "Kerem Aydın" diye etiketleniyordu. Artık dört
-// persona var ve her personanın ADI, KULLANICI ADI, ALAN ADI, MESLEĞİ ve
-// FOTOĞRAFI aynı kişiye ait:
+// HER KART AYRI BİR KİŞİ — 24 KART, 24 KİŞİ. Şerit önce tek bir ada
+// ("Kerem Aydın") bağlıydı, sonra dört personaya bölündü; ama 24 kutuyu dört
+// kişiyle doldurmak aynı adı sayfada altı kez gösteriyordu. `keremaydin`
+// GitHub'da, `kerem-aydin-basin-kiti.pdf` belgede, `elifkaya` LinkedIn'de,
+// `elifkaya.com` bağlantıda, "Elif Kaya" profil kartında — hepsi yan yana.
+// Şerit "dört kişiyle doldurulmuş" görünüyordu.
 //
-//   Kerem Aydın  @keremaydin  müzisyen     (avatar-kerem.webp)
-//   Selin Demir  @selindemir  seramik      (avatar-selin.webp)
-//   Elif Kaya    @elifkaya    podcast      (avatar-elif.webp)
-//   Naz Erdem    @nazerdem    seslendirme  (avatar-naz.webp)
+// Kadro `~/assets/landing/serit/kadro.json`: slug, ad, cinsiyet, meslek ve
+// portre betimlemesi. Her kişinin ADI, KULLANICI ADI, ALAN ADI, MESLEĞİ ve
+// AVATARI aynı kişiye ait ve şeritte YALNIZ BİR KART'a düşer. Bir kişiyi
+// ikinci bir karta koymak eski kusuru geri getirir.
 //
-// GÖRSEL HAVUZU: her görsel şeritte YALNIZ BİR KEZ geçer. Dört portreyle
-// on beş yer doldurmak (avatar + kart kapağı + önizleme aynı fotoğraftan)
-// gözle hemen yakalanıyordu.
+// GÖRSEL HAVUZU: her görsel şeritte YALNIZ BİR KEZ geçer.
 //
 // İş bölümü şu kurala göre:
-//   * YÜZ yalnız AVATARDA. Avatarlar dört portrenin kırpmasıdır — aynı
-//     personadan ikinci bir portre ÜRETMEK başka bir yüz getirir ve tam da
-//     düzeltilen kimlik kusurunu geri koyardı.
-//   * KART görselleri kişi TAŞIMAZ: personanın dünyasından bir sahne ya da
-//     nesne (stüdyo, atölye rafı, mikrofon, çömlekçi takımları, albüm
-//     kapağı). Kimlik iddiası taşımadıkları için hangi yüzün çıktığı sorun
-//     değil ve her personaya kendi görsel seti düşüyor.
-//     Görsel kartın KONUSUNU göstermeli. Bir dönem iki slot karakter
-//     çekimlerinden kırpılmıştı; kişiyi dışarıda bırakmak için fotoğrafın
-//     boş yarısı alınıyordu ve kartta düz bir fon duruyordu. Kural şu:
-//     kişi taşımasın AMA bir şey anlatsın.
+//   * YÜZ yalnız AVATARDA. Avatarlar `serit/<slug>.webp` (256×256) —
+//     profil kartının portresi ve kişisel alan adlarının favicon çipi.
+//   * KART görselleri kişi TAŞIMAZ: kişinin dünyasından bir sahne ya da
+//     nesne (stüdyo, atölye tezgâhı, mikrofon, albüm kapağı). Kimlik iddiası
+//     taşımadıkları için hangi yüzün çıktığı sorun değil.
+//     Görsel kartın KONUSUNU göstermeli — kişi taşımasın AMA bir şey anlatsın.
 // Kırpma geometrileri ve üretim prompt'ları `~/assets/landing/README.md`.
+//
+// BAŞ HARF ÇİPİ YOK. Bağlantı kartı favicon bulamazsa alan adının baş
+// harfini marka renkli bir kareye basar ("K", "O"); şeritte bu "görsel
+// yüklenmemiş" diye okunur. Kişisel alan adlarının favicon'u sahibinin
+// avatarıdır (kişisel sitelerde gerçekten sık rastlanan bir seçim), tanınmış
+// servisler kendi marka işaretini çizer. Denetim gözle değil ölçerek:
+// `node scripts/serit-denetim.mjs <port>` sıfır bulgu vermeli.
 //
 // ÇEVRİLMEYEN KISIM BURADA: adlar, kullanıcı adları, adresler, kimlikler,
 // görseller, sayılar, eser adları ("Gece Yolu", "Sade Hayat"). Çevrilen
@@ -53,10 +54,14 @@ import {
   type ProfileBlock,
 } from "@caka/shared";
 
-import avatarElif from "~/assets/landing/avatar-elif.webp";
-import avatarKerem from "~/assets/landing/avatar-kerem.webp";
-import avatarNaz from "~/assets/landing/avatar-naz.webp";
-import avatarSelin from "~/assets/landing/avatar-selin.webp";
+import avatarAhmet from "~/assets/landing/serit/ahmet.webp";
+import avatarDeniz from "~/assets/landing/serit/deniz.webp";
+import avatarEsra from "~/assets/landing/serit/esra.webp";
+import avatarFurkan from "~/assets/landing/serit/furkan.webp";
+import avatarKaan from "~/assets/landing/serit/kaan.webp";
+import avatarOzan from "~/assets/landing/serit/ozan.webp";
+import avatarSelin from "~/assets/landing/serit/selin.webp";
+import avatarSena from "~/assets/landing/serit/sena.webp";
 import coverGeceYolu from "~/assets/landing/cover-gece-yolu.webp";
 import coverSadeHayat from "~/assets/landing/cover-sade-hayat.webp";
 import detailElif from "~/assets/landing/detail-elif.webp";
@@ -69,12 +74,30 @@ import sceneSelin from "~/assets/landing/scene-selin.webp";
 import sceneSelinTools from "~/assets/landing/scene-selin-tools.webp";
 import { githubLoginKey, type GithubCalendar } from "~/lib/github-calendar";
 
-/** Personaların çevrilen kart metinleri; kimlikleri bu dosyada. */
+/**
+ * Kartların çevrilen metinleri; kimlikleri (ad, kullanıcı adı, alan adı) bu
+ * dosyada kalır. Anahtar = kişinin slug'ı, yani `kadro.json`daki kimliği.
+ * Yalnız METİN TAŞIYAN kartların sahipleri burada: sosyal kartlar
+ * (kullanıcı adı), Spotify (eser adı) ve GitHub (katkı grafiği) çevrilecek
+ * hiçbir şey göstermiyor.
+ */
 export interface HeroTowerCopy {
-  kerem: { bio: string; status: string; document: string; link: string };
-  selin: { bio: string; status: string; link: string; location: string; country: string };
-  elif: { bio: string; status: string; youtube: string; link: string };
-  naz: { bio: string; status: string; text: string; link: string };
+  elif: { youtube: string };
+  sena: { bio: string };
+  selin: { link: string };
+  ozan: { link: string };
+  onur: { location: string; country: string };
+  yusuf: { document: string };
+  serkan: { status: string };
+  rabia: { text: string };
+  can: { status: string };
+  furkan: { link: string };
+  kaan: { bio: string };
+  deniz: { bio: string };
+  tolga: { status: string };
+  volkan: { status: string };
+  ahmet: { bio: string };
+  esra: { link: string };
 }
 
 /**
@@ -112,7 +135,8 @@ export interface TowerRow {
   columns: TowerColumn[];
 }
 
-const GITHUB_HANDLE = "keremaydin";
+/** GitHub kartı Emre'nin (yazılım mühendisi) — kadroda o hattın tek kişisi. */
+const GITHUB_HANDLE = "emrekilic";
 
 /**
  * Örnek katkı grafiği. SABİT bir üreticiden: `Math.random()` sunucu ve
@@ -169,43 +193,36 @@ export const heroTowerCalendars = {
  */
 export const heroTowerImages: Readonly<Record<string, string>> = {
   // Manzara görseller (1,91:1 — `.link-og`, `.social-og`, video kapağı).
-  // Her biri BİR kez geçiyor: aynı görselin iki kartta çıkması şeridi
-  // "dört fotoğrafla on beş yer doldurulmuş" gibi gösteriyordu.
-  // KART GÖRSELİ KARTIN İÇERİĞİNİ ANLATIR, stüdyo fonunu değil. Bu iki slot
-  // bir süre persona çekimlerinden kırpılmıştı; kırpmalar kişiyi dışarıda
-  // bırakmak için fotoğrafın boş yarısını alıyordu ve kartta koca bir düz
-  // fon duruyordu — ne olduğu anlaşılmayan bir görüntü. Yerlerine kartın
-  // kendi konusu üretildi: Elif'in "kamera arkası" videosuna bir podcast
-  // stüdyosu, Kerem'in konser bağlantısına bir sahne. İkisinde de kişi yok,
-  // yani kart görselinin kimlik iddiası taşımaması kuralı korunuyor.
+  // Her biri BİR kez geçiyor ve kartın KONUSUNU anlatıyor: Elif'in "kamera
+  // arkası" videosuna bir podcast stüdyosu, Ozan'ın konser bağlantısına bir
+  // sahne, Halil'in atölye kartına tezgâh, Burak'ın kartına bir iç mekân
+  // detayı, Furkan'ın öyküsüne defter-dolmakalem natürmortu. Hiçbirinde
+  // kişi yok — kart görseli kimlik iddiası taşımaz.
   "demo-elif-youtube": thumbPodcast,
   "demo-naz-nsosyal": sceneNaz,
   "demo-selin-link": sceneSelin,
-  "demo-kerem-link": ogKonser,
+  "demo-ozan-link": ogKonser,
   // Kare kapaklar (`.sp-cover`).
   "demo-kerem-spotify": coverGeceYolu,
-  "demo-elif-spotify": coverSadeHayat,
-  // Yuvarlak portreler (profil avatarı).
-  "demo-kerem-profile": avatarKerem,
-  "demo-selin-profile": avatarSelin,
-  "demo-elif-profile": avatarElif,
-  "demo-naz-profile": avatarNaz,
-  // Bağlantı kartının marka çipi. Favicon YOKSA kart alan adının BAŞ HARFİNİ
-  // gösteriyor ("S", "K") — şeritte yer tutucu harf bırakmamak için iki
-  // kişisel sitenin favicon'u sahibinin portresi. (Kişisel sitelerde
-  // gerçekten de sık rastlanan bir seçim.)
-  // Kişi TAŞIMAYAN yakın planlar: sosyal kartın og önizlemesi. `detailElif`
-  // bir dönem karanlık bir ahşap lata duvarının önündeki vazoydu — ne
-  // anlattığı belli değildi; yerine Elif'in işini gösteren bir kare üretildi
-  // (dalga formu açık kurgu ekranı + kulaklık). Dosya adı korundu.
-  "demo-selin-threads": sceneSelinTools,
-  "demo-elif-linkedin": detailElif,
-  "demo-naz-link": detailNaz,
-  // Yalnız BAŞLIKLI iki bağlantı kartına: 368×156'lık kartlar tam kapak
-  // bandında ve marka çipini hiç basmıyor, oraya favicon vermek DOM'a
-  // görünmeyen bir görsel eklemek olurdu.
+  "demo-busra-spotify": coverSadeHayat,
+  // Yuvarlak portreler (profil avatarı) — kadronun kendi kareleri.
+  "demo-sena-profile": avatarSena,
+  "demo-kaan-profile": avatarKaan,
+  "demo-deniz-profile": avatarDeniz,
+  "demo-ahmet-profile": avatarAhmet,
+  // Kişi TAŞIMAYAN detay kırpmaları: sosyal kartın og önizlemesi.
+  "demo-halil-threads": sceneSelinTools,
+  "demo-burak-linkedin": detailElif,
+  "demo-furkan-link": detailNaz,
+  // Bağlantı kartının marka çipi. Favicon YOKSA kart alan adının BAŞ
+  // HARFİNİ gösteriyor ("S", "O") — şeritte yer tutucu harf bırakmamak için
+  // dört kişisel sitenin favicon'u sahibinin portresi. (Kişisel sitelerde
+  // gerçekten de sık rastlanan bir seçim.) Kapaklı iki kart da (368×156)
+  // çipi basıyor: kapak bandında da `.link-mark` DOM'da ve görünür.
   [faviconImageKey("demo-selin-link")]: avatarSelin,
-  [faviconImageKey("demo-elif-link")]: avatarElif,
+  [faviconImageKey("demo-ozan-link")]: avatarOzan,
+  [faviconImageKey("demo-furkan-link")]: avatarFurkan,
+  [faviconImageKey("demo-esra-link")]: avatarEsra,
   // Konum kartının harita karesi. ÜRETİLMİŞ, gerçek coğrafya DEĞİL — ve
   // bu bilinçli bir karar, eksiklik değil:
   //
@@ -229,7 +246,7 @@ export const heroTowerImages: Readonly<Record<string, string>> = {
 
 type DemoSocialPlatform = "x" | "tiktok" | "linkedin" | "instagram" | "threads" | "nsosyal";
 
-/** Sosyal kart kısayolu — kimlik personanın kullanıcı adından gelir. */
+/** Sosyal kart kısayolu — kimlik kişinin kendi kullanıcı adından gelir. */
 function social(
   id: string,
   platform: DemoSocialPlatform,
@@ -262,6 +279,27 @@ function status(id: string, text: string, size: BlockSize): ProfileBlock {
   return { id, type: "status", size, data: { text, url: "" } };
 }
 
+/** Kişisel siteye giden bağlantı kartı; favicon'u sahibinin avatarı. */
+function link(
+  id: string,
+  title: string,
+  url: string,
+  { og, favicon }: { og: boolean; favicon: boolean },
+): ProfileBlock {
+  const host = new URL(url).host;
+  return {
+    id,
+    type: "link",
+    size: og ? "2x1" : "1x1",
+    data: {
+      title,
+      url,
+      ogImage: og ? `https://${host}/og.jpg` : "",
+      favicon: favicon ? `https://${host}/favicon.ico` : "",
+    },
+  };
+}
+
 /**
  * Şeridin üç YATAY satırı; her satır kendi içinde bir BENTO MOZAİĞİ.
  *
@@ -290,14 +328,15 @@ function status(id: string, text: string, size: BlockSize): ProfileBlock {
  *   1. Bir sütunun kartlarının yükseklikleri satırı TAM doldurur (12px
  *      boşluklarla): h4 = 4 | 2+2 | 1+2+1 | 3+1, h3 = 3 | 2+1 | 1+2,
  *      h2 = 2 | 1+1.
- *   2. Yan yana (ve üst üste) gelen kartlar farklı personalara aittir;
- *      satırın SON sütunu ile İLK sütunu da komşudur — döngü orada sarar.
- *      Satır başlangıçları da kaydırılmıştır (Elif → Kerem → Naz).
+ *   2. Her kart AYRI bir kişinin; komşuluk da bu yüzden kendiliğinden
+ *      sağlanıyor. Tema komşuluğu ayrı bir mesele ve `hero-tower.tsx`teki
+ *      `PERSONA_THEMES` tablosu bu düzenin dört renkle boyanmasıdır —
+ *      kart taşırsan o tabloyu da yeniden boya.
  */
 export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
   return [
     // ---- Satır 0 (h4 = 324px): tabanı yüksek kartların satırı.
-    // Sıra: Elif · Kerem · Naz · Selin · Kerem · Selin
+    // Elif · (Sena + Zeynep) · Naz · Selin · (Kerem + Ozan) · Onur
     {
       h: 4,
       columns: [
@@ -327,8 +366,8 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
         {
           w: 2,
           cells: [
-            { h: 2, block: profile("demo-kerem-profile", "Kerem Aydın", copy.kerem.bio) },
-            { h: 2, block: social("demo-kerem-x", "x", "keremaydin") },
+            { h: 2, block: profile("demo-sena-profile", "Sena Korkmaz", copy.sena.bio) },
+            { h: 2, block: social("demo-zeynep-x", "x", "zeynepaydin") },
           ],
         },
         {
@@ -342,17 +381,10 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           cells: [
             {
               h: 4,
-              block: {
-                id: "demo-selin-link",
-                type: "link",
-                size: "2x2",
-                data: {
-                  title: copy.selin.link,
-                  url: "https://selindemir.com/koleksiyon",
-                  ogImage: "https://selindemir.com/og.jpg",
-                  favicon: "https://selindemir.com/favicon.ico",
-                },
-              },
+              block: link("demo-selin-link", copy.selin.link, "https://selindemir.com/koleksiyon", {
+                og: true,
+                favicon: true,
+              }),
             },
           ],
         },
@@ -378,17 +410,10 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
               h: 2,
               // 368×156: kart tam kapak bandına düşer, görsel kutuyu uçtan
               // uca doldurur. Aynı bloğun başlıklı hâli Selin'de (368×324).
-              block: {
-                id: "demo-kerem-link",
-                type: "link",
-                size: "2x1",
-                data: {
-                  title: copy.kerem.link,
-                  url: "https://keremaydin.com/konserler",
-                  ogImage: "https://keremaydin.com/og.jpg",
-                  favicon: "",
-                },
-              },
+              block: link("demo-ozan-link", copy.ozan.link, "https://ozansahin.com/konserler", {
+                og: true,
+                favicon: true,
+              }),
             },
           ],
         },
@@ -398,12 +423,12 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
             {
               h: 4,
               block: {
-                id: "demo-selin-location",
+                id: "demo-onur-location",
                 type: "location",
                 size: "2x2",
                 data: {
-                  label: copy.selin.location,
-                  country: copy.selin.country,
+                  label: copy.onur.location,
+                  country: copy.onur.country,
                   countryCode: "TR",
                   lat: 37.03,
                   lon: 27.43,
@@ -415,7 +440,8 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
         },
       ],
     },
-    // ---- Satır 1 (h3 = 240px). Sıra: Kerem · Selin · Elif · Naz · Kerem · Elif
+    // ---- Satır 1 (h3 = 240px).
+    // Yusuf · Halil · (Büşra + Serkan) · (Rabia + Can) · Emre · Burak
     {
       h: 3,
       columns: [
@@ -425,7 +451,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
             {
               h: 3,
               block: {
-                id: "demo-kerem-document",
+                id: "demo-yusuf-document",
                 type: "document",
                 size: "2x2",
                 data: {
@@ -433,8 +459,8 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
                   // boş durumuna düşer ve landing'de düzenleyici arayüzü
                   // sızardı. Şerit `inert`, indirme bağlantısı tıklanamaz.
                   assetId: "7d1c2f60-9a3e-4b18-8f52-0c6d5e14a9b3",
-                  title: copy.kerem.document,
-                  fileName: "kerem-aydin-basin-kiti.pdf",
+                  title: copy.yusuf.document,
+                  fileName: "yusuf-ates-menu.pdf",
                   bytes: 412_000,
                   // Sabit epoch (2026-02-18, UTC). Kart tarihi UTC getters
                   // ile biçimlendiriyor: sunucu ve istemci aynı günü yazar.
@@ -447,7 +473,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
         {
           w: 3,
           cells: [
-            { h: 3, block: social("demo-selin-threads", "threads", "selindemir", "2x2", true) },
+            { h: 3, block: social("demo-halil-threads", "threads", "halilbarut", "2x2", true) },
           ],
         },
         {
@@ -456,7 +482,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
             {
               h: 2,
               block: {
-                id: "demo-elif-spotify",
+                id: "demo-busra-spotify",
                 type: "spotify",
                 size: "2x1",
                 data: {
@@ -468,7 +494,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
                 },
               },
             },
-            { h: 1, block: status("demo-elif-status", copy.elif.status, "2x1") },
+            { h: 1, block: status("demo-serkan-status", copy.serkan.status, "2x1") },
           ],
         },
         {
@@ -480,13 +506,13 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
             {
               h: 2,
               block: {
-                id: "demo-naz-text",
+                id: "demo-rabia-text",
                 type: "text",
                 size: "2x1",
-                data: { text: copy.naz.text },
+                data: { text: copy.rabia.text },
               },
             },
-            { h: 1, block: status("demo-naz-status", copy.naz.status, "2x1") },
+            { h: 1, block: status("demo-can-status", copy.can.status, "2x1") },
           ],
         },
         {
@@ -495,7 +521,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
             {
               h: 3,
               block: {
-                id: "demo-kerem-github",
+                id: "demo-emre-github",
                 type: "social",
                 size: "2x2",
                 data: {
@@ -513,7 +539,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
         {
           w: 3,
           cells: [
-            { h: 3, block: social("demo-elif-linkedin", "linkedin", "elifkaya", "2x2", true) },
+            { h: 3, block: social("demo-burak-linkedin", "linkedin", "buraktunc", "2x2", true) },
           ],
         },
       ],
@@ -521,7 +547,7 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
     // ---- Satır 2 (h2 = 156px): küçük kartların ritmi. Profil kartları
     // burada yaşar — 178×156 onların TAM dolduğu tek ölçü ve h2 satırında
     // dar bir sütun o kartı tek başına taşıyabiliyor.
-    // Sıra: Naz · Selin · Elif · (Kerem+Selin) · Naz · Elif · Selin
+    // Furkan · Kaan · Deniz · (Tolga + Volkan) · Ahmet · Esra · Mert
     {
       h: 2,
       columns: [
@@ -530,27 +556,20 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           cells: [
             {
               h: 2,
-              block: {
-                id: "demo-naz-link",
-                type: "link",
-                size: "2x1",
-                data: {
-                  title: copy.naz.link,
-                  url: "https://nazerdem.com/hikayeler",
-                  ogImage: "https://nazerdem.com/og.jpg",
-                  favicon: "",
-                },
-              },
+              block: link("demo-furkan-link", copy.furkan.link, "https://furkanyalcin.com/oykuler", {
+                og: true,
+                favicon: true,
+              }),
             },
           ],
         },
         {
           w: 2,
-          cells: [{ h: 2, block: profile("demo-selin-profile", "Selin Demir", copy.selin.bio) }],
+          cells: [{ h: 2, block: profile("demo-kaan-profile", "Kaan Demirtaş", copy.kaan.bio) }],
         },
         {
           w: 2,
-          cells: [{ h: 2, block: profile("demo-elif-profile", "Elif Kaya", copy.elif.bio) }],
+          cells: [{ h: 2, block: profile("demo-deniz-profile", "Deniz Aksu", copy.deniz.bio) }],
         },
         {
           // Durum kartı 72px'e sığar ama TEK SATIRDA: 178px'lik bir kutuda
@@ -558,13 +577,13 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           // yüzden durum kartlarının en dar kutusu 273px.
           w: 3,
           cells: [
-            { h: 1, block: status("demo-kerem-status", copy.kerem.status, "2x1") },
-            { h: 1, block: status("demo-selin-status", copy.selin.status, "2x1") },
+            { h: 1, block: status("demo-tolga-status", copy.tolga.status, "2x1") },
+            { h: 1, block: status("demo-volkan-status", copy.volkan.status, "2x1") },
           ],
         },
         {
           w: 2,
-          cells: [{ h: 2, block: profile("demo-naz-profile", "Naz Erdem", copy.naz.bio) }],
+          cells: [{ h: 2, block: profile("demo-ahmet-profile", "Ahmet Duran", copy.ahmet.bio) }],
         },
         {
           w: 2,
@@ -574,23 +593,16 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
               // og YOK: 178×156'da bağlantı kartı marka çipi + başlık + alan
               // adı düzenine geçiyor ve kutuyu dolduruyor. Çipin baş harfini
               // favicon örtüyor.
-              block: {
-                id: "demo-elif-link",
-                type: "link",
-                size: "1x1",
-                data: {
-                  title: copy.elif.link,
-                  url: "https://elifkaya.com/bolumler",
-                  ogImage: "",
-                  favicon: "https://elifkaya.com/favicon.ico",
-                },
-              },
+              block: link("demo-esra-link", copy.esra.link, "https://esrapolat.com/siparis", {
+                og: false,
+                favicon: true,
+              }),
             },
           ],
         },
         {
           w: 2,
-          cells: [{ h: 2, block: social("demo-selin-instagram", "instagram", "selindemir") }],
+          cells: [{ h: 2, block: social("demo-mert-instagram", "instagram", "mertacar") }],
         },
       ],
     },

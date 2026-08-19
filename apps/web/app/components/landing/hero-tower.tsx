@@ -23,21 +23,19 @@ const ROW_SECONDS = [78, 64, 92];
 const REPEAT = 3;
 
 /**
- * PERSONA BAŞINA TEMA — sütun ya da hücre başına DEĞİL.
+ * KİŞİ BAŞINA TEMA — sütun ya da hücre başına DEĞİL.
  *
  * Tema profil düzeyinde bir özniteliktir: bir sayfanın tek teması olur. Şerit
- * dört personanın sayfa parçalarını akıtıyor ve aynı persona birden çok
- * sütunda geçiyor (Kerem üç kez, adı ve `@keremaydin` etiketiyle). Temayı
- * sütuna bağlasaydık aynı kişinin sayfası şeritte iki farklı temada görünür,
- * yani tam da bu şeritte bir kez düzeltilen kimlik tutarsızlığının (kadın
- * fotoğrafı taşıyan kartın "Kerem Aydın" diye etiketlenmesi) tema hâli
- * doğardı.
+ * yirmi dört kişinin birer kartını akıtıyor (bkz. `hero-demo.ts`); tema
+ * kişiye bağlı kalsın diye tablo slug'a yazılır, hücreye değil.
  *
- * RİTİM VERİDEN GELİR, rastgele değil: `hero-demo.ts` "yan yana ve üst üste
- * gelen kartlar farklı personalara aittir — satırın son sütunu ile ilk sütunu
- * da komşudur" kuralını zaten uyguluyor. Farklı persona ⇒ farklı tema
- * olduğundan komşu iki kart hiçbir yerde aynı temayı taşımıyor; döngü sarma
- * noktasında da taşımıyor.
+ * TABLO BİR DÖRT RENK BOYAMASIDIR, süs değil: yalnız dört tema
+ * kullanılabildiği için (aşağıya bkz.) 24 kişi 24 kutuya oturduğunda komşu
+ * iki kartın aynı temaya düşmemesi kendiliğinden olmuyor. Aşağıdaki eşleme
+ * şeridin komşuluk çizgesinin — aynı sütunda üst üste duran kartlar, yan
+ * yana sütunlar ve satırın son sütunu ile ilk sütunu (döngü orada sarar) —
+ * elle boyanmış hâlidir ve her temaya tam altı kişi düşer. KART TAŞIRSAN
+ * BU TABLOYU YENİDEN BOYA.
  *
  * ZEMİN ARTIK KIRIK BEYAZ (`--color-tebesir`, #efebe1), fıstık yeşili değil.
  * Aşağıdaki bütün oranlar o zemine göre YENİDEN ölçüldü.
@@ -70,17 +68,40 @@ const REPEAT = 3;
  * (`.lp-tower .profile-block`, landing.css). Üründe gerek yok, orada kart
  * kendi tema zemininin üstünde duruyor.
  *
- * Eşleşmeler personanın kendi görsel dünyasını yankılar:
+ * Görseli olan kartlarda tema o görselin paletini yankılar:
  *   Kerem  müzisyen, "Gece Yolu" (gece yolu, indigo-kömür)  → dark
  *   Selin  seramik  (toprak, kum, terracotta)               → ufuk
- *   Elif   podcast  "Sade Hayat" (adaçayı, okra, yulaf)     → zumrut
+ *   Büşra  "Sade Hayat" kapağı (adaçayı, okra, yulaf)       → zumrut
  *   Naz    seslendirme (koyu erik kabin, mor)               → neon
  */
 const PERSONA_THEMES: Record<string, ProfileTheme> = {
-  kerem: "dark",
-  selin: "ufuk",
+  // Satır 0: elif · (sena + zeynep) · naz · selin · (kerem + ozan) · onur
   elif: "zumrut",
+  sena: "dark",
+  zeynep: "ufuk",
   naz: "neon",
+  selin: "ufuk",
+  kerem: "dark",
+  ozan: "zumrut",
+  onur: "neon",
+  // Satır 1: yusuf · halil · (busra + serkan) · (rabia + can) · emre · burak
+  yusuf: "dark",
+  halil: "ufuk",
+  busra: "zumrut",
+  serkan: "neon",
+  rabia: "dark",
+  can: "ufuk",
+  emre: "zumrut",
+  burak: "neon",
+  // Satır 2: furkan · kaan · deniz · (tolga + volkan) · ahmet · esra · mert
+  furkan: "dark",
+  kaan: "zumrut",
+  deniz: "ufuk",
+  tolga: "neon",
+  volkan: "dark",
+  ahmet: "zumrut",
+  esra: "ufuk",
+  mert: "neon",
 };
 
 /**
