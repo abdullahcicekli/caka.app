@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { photoLayoutSchema } from "./photo";
+
 export const PROFILE_NAME_MAX = 60;
 export const PROFILE_BIO_MAX = 160;
 
@@ -252,16 +254,6 @@ const textBlockSchema = z.object({
   }),
 });
 
-const imageBlockSchema = z.object({
-  ...blockBase,
-  type: z.literal("image"),
-  data: z.object({
-    assetId: z.string().uuid().optional(),
-    title: z.string().trim().max(60).default(""),
-    url: optionalHttpUrlSchema.default(""),
-  }),
-});
-
 const statusBlockSchema = z.object({
   ...blockBase,
   type: z.literal("status"),
@@ -272,9 +264,14 @@ const statusBlockSchema = z.object({
   }),
 });
 
-/** R62: bir galeri bloğu en fazla bu kadar fotoğraf taşır. */
+/** R62: bir fotoğraf bloğu en fazla bu kadar fotoğraf taşır. */
 export const GALLERY_MAX_PHOTOS = 5;
-/** R62: bir hesapta en fazla bu kadar galeri bloğu olabilir. */
+/**
+ * R62: bir sayfada en fazla bu kadar fotoğraf bloğu olabilir. Editör bu
+ * sayıya ULAŞINCA yeni blok eklemeyi kapatır; sunucu tarafındaki karşılığı
+ * daha gevşektir (bkz. `galleryCountIssue`) çünkü kural, tek görselli
+ * blokları (eski `image`) sınırsız bırakan bir dünyadan geliyor.
+ */
 export const MAX_GALLERY_BLOCKS = 2;
 
 // Fotoğraf, `image` bloğuyla aynı deseni izler: R2 anahtarı düz UUID olan
@@ -286,15 +283,33 @@ const galleryPhotoSchema = z.object({
 });
 export type GalleryPhoto = z.infer<typeof galleryPhotoSchema>;
 
-// Her galeri kendi fotoğraflarını taşır: ortak bir havuz yok, blok silinince
-// referansı da gider. Beş fotoğraf sınırı şemada; iki galeri sınırı belge
-// düzeyinde (tek blok kendi başına kaç galeri olduğunu bilemez).
+// Her fotoğraf bloğu kendi fotoğraflarını taşır: ortak bir havuz yok, blok
+// silinince referansı da gider. Beş fotoğraf sınırı şemada; sayfa başına blok
+// sınırı belge düzeyinde (tek blok kendi başına kaç tane olduğunu bilemez).
+//
+// AYRIMCI HÂLÂ "gallery": `image` ve `gallery` tek bloğa birleşti ama depodaki
+// etiketi değiştirmek canlı sayfalardaki BÜTÜN galeri bloklarını göç
+// gerektiren hâle getirirdi. Bunun yerine az sayıdaki taraf (`image`) okuma
+// anında bu tipe çevriliyor — bkz. `migrateRawImageBlock`.
 const galleryBlockSchema = z.object({
   ...blockBase,
   type: z.literal("gallery"),
   data: z.object({
     title: z.string().trim().max(60).default(""),
     photos: z.array(galleryPhotoSchema).max(GALLERY_MAX_PHOTOS).default([]),
+    /**
+     * 2+ fotoğrafta düzen. Varsayılanlı: `layout` alanı olmayan (yani bu
+     * birleşmeden önce yazılmış) her galeri bloğu ızgara olarak okunur —
+     * eski davranışın ta kendisi.
+     */
+    layout: photoLayoutSchema.default("grid"),
+    /**
+     * Tek fotoğraflı blokta kartın gittiği adres. ESKİ `image` BLOĞUNDAN
+     * GELİYOR: orada kartın tamamı bir bağlantıydı ve o davranışı kaybetmek
+     * canlı sayfalarda tıklanan bir kartı sessizce tıklanmaz yapardı.
+     * 2+ fotoğrafta yok sayılır — orada tıklama ışık kutusunu açar.
+     */
+    url: optionalHttpUrlSchema.default(""),
   }),
 });
 
@@ -399,12 +414,49 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   socialBlockSchema,
   linkBlockSchema,
   textBlockSchema,
-  imageBlockSchema,
   statusBlockSchema,
   galleryBlockSchema,
   youtubeBlockSchema,
   spotifyBlockSchema,
 ]);
+
+/**
+ * ESKİ `image` BLOĞUNU FOTOĞRAF BLOĞUNA ÇEVİRİR (ham girdi üstünde).
+ *
+ * `image` tipi şemadan kalktı; çevrilmeseydi tanınmayan blok sayılıp
+ * `unknownBlocks`'a düşerdi — veri korunur ama kart sayfadan KAYBOLURDU.
+ * Çevrim bu yüzden doğrulamadan ÖNCE, hamda yapılıyor: girdi henüz
+ * doğrulanmadığı için hiçbir şekil varsayılmaz, dokunulan tek şey
+ * tanıyabildiğimiz alanlardır (aynı desen: `scaleRawBlockUnits`).
+ *
+ * Eşleme:
+ *   assetId → tek fotoğraf (`alt`, kartın eski `alt`'ı olan başlıktan gelir)
+ *   title   → blok başlığı (editörde ve panelde görünen ad orasıydı)
+ *   url     → blok adresi (tek fotoğraflı blok tıklanınca oraya gider)
+ * Asset'i olmayan `image` bloğu (taslak) fotoğrafsız bir bloğa dönüşür ve
+ * "fotoğraf ekle" uyarısını almaya devam eder.
+ */
+export function migrateRawImageBlock(block: unknown): unknown {
+  if (!block || typeof block !== "object") return block;
+  const value = block as { type?: unknown; data?: unknown };
+  if (value.type !== "image") return block;
+  const data = (value.data && typeof value.data === "object" ? value.data : {}) as {
+    assetId?: unknown;
+    title?: unknown;
+    url?: unknown;
+  };
+  const title = typeof data.title === "string" ? data.title : "";
+  return {
+    ...value,
+    type: "gallery",
+    data: {
+      title,
+      url: typeof data.url === "string" ? data.url : "",
+      layout: "grid",
+      photos: typeof data.assetId === "string" ? [{ assetId: data.assetId, alt: title }] : [],
+    },
+  };
+}
 
 /**
  * Favicon'un imzalı proxy yolu, og görselinin yanında AYNI eşlemede taşınır.
@@ -511,10 +563,14 @@ export function parseProfileLayoutDetailed(value: string): ParsedProfileLayout |
 
   const blocks: ProfileBlock[] = [];
   const unknownBlocks: unknown[] = [];
-  for (const candidate of envelope.data.blocks) {
-    const parsed = profileBlockSchema.safeParse(candidate);
+  for (const rawBlock of envelope.data.blocks) {
+    // Eski `image` bloğu doğrulamadan ÖNCE fotoğraf bloğuna çevrilir; yoksa
+    // tanınmaz sayılıp sayfadan düşerdi.
+    const parsed = profileBlockSchema.safeParse(migrateRawImageBlock(rawBlock));
     if (!parsed.success) {
-      unknownBlocks.push(candidate);
+      // Tanınmayan blok HAM hâliyle saklanır (çevrilmişi değil): eski bir
+      // deploy'a dönülürse kullanıcının verisi aynen geri gelmeli.
+      unknownBlocks.push(rawBlock);
       continue;
     }
     const block = parsed.data;
@@ -568,7 +624,7 @@ export const BLOCK_ISSUE_IDS = [
   "link_title",
   "text_empty",
   "status_empty",
-  "image_missing",
+  // Fotoğraf bloğu `image` ile birleşti; tek bir "fotoğraf yok" sorunu var.
   "gallery_empty",
   "youtube_video_url",
   "youtube_channel_url",
@@ -599,8 +655,6 @@ export function blockIssue(block: ProfileBlock): BlockIssueId | null {
       return block.data.text ? null : "text_empty";
     case "status":
       return block.data.text ? null : "status_empty";
-    case "image":
-      return block.data.assetId ? null : "image_missing";
     case "gallery":
       return block.data.photos.length ? null : "gallery_empty";
     case "youtube":
@@ -648,11 +702,20 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   link: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
   social: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
   text: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
-  image: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
   status: { minW: 2, minH: 1, maxW: 8, maxH: 2 },
-  // Galeri her tile boyutunda bir düzene sahip (KTD37/KTD38), 1×1 dahil;
-  // tavan sözlüğün en büyük biçimi olan 4×2.
-  gallery: { minW: 2, minH: 2, maxW: 8, maxH: 4 },
+  // FOTOĞRAF (eski `image` + `gallery`). Taban 2×2 = 178×156, yani birleşen
+  // iki tipin de bugünkü tabanı — yükseltmek canlı sayfalardaki tek görselli
+  // blokları ilk açılışta büyütürdü (`ensureLayoutPositions` sınırı
+  // büyütücü olarak da uyguluyor). 178×156 TEK fotoğrafın okunur tabanı;
+  // çok fotoğraflı blok kendi tabanını editörde alır (`photoRecommendedSize`
+  // eklendikçe bloğu büyütür), böylece sınır tablosu tek bir sayıya
+  // sıkışmak zorunda kalmıyor.
+  //
+  // Tavan 8×6 = 748×492: fotoğraf tek başına bir sayfa öğesi olabiliyor ve
+  // 4 satırda (324px) beş fotoğrafın hero'su hâlâ 1,2 en-boyda kalıyordu;
+  // 6 satır dikey fotoğraflara da yer açıyor. Tavan YÜKSELTMEK güvenli
+  // (daraltmak değil).
+  gallery: { minW: 2, minH: 2, maxW: 8, maxH: 6 },
   // YouTube kartı yerinde OYNATILIYOR, yani boyutu bir oynatıcı boyutudur.
   // Ölçüm: 2 track genişlikte (masaüstü 374px) 16:9 bir video 210px yükseklik
   // ister; 1 track yalnız 156px (mobilde 138px) veriyor, yani oynatıcı ya
@@ -699,13 +762,53 @@ export function layoutGridLimitIssues(layout: ProfileLayout): GridLimitIssue[] {
   });
 }
 
+/** Sayfadaki fotoğraf bloklarının sayısı (editördeki ekleme kapısı bunu okur). */
+export function photoBlockCount(layout: ProfileLayout): number {
+  return layout.blocks.filter((block) => block.type === "gallery").length;
+}
+
+/** Birden fazla fotoğraf taşıyan bloklar — yani "galeri" olanlar. */
+export function galleryBlockCount(layout: ProfileLayout): number {
+  return layout.blocks.filter(
+    (block) => block.type === "gallery" && block.data.photos.length > 1,
+  ).length;
+}
+
 /**
- * R62: hesap başına galeri sayısı sınırı. Tek blok kendi başına belgede kaç
- * galeri olduğunu bilemez, bu yüzden kural belge düzeyindedir.
+ * R62: sayfa başına galeri sayısı sınırı. Tek blok kendi başına belgede kaç
+ * tane olduğunu bilemez, bu yüzden kural belge düzeyindedir.
+ *
+ * NEDEN YALNIZ ÇOK FOTOĞRAFLI BLOKLAR SAYILIYOR: `image` bloğu bu birleşmeye
+ * kadar SINIRSIZDI. Birleşmeden sonra bütün fotoğraf blokları sayılsaydı,
+ * üç görsel bloğu olan CANLI bir sayfa ilk kaydında 400 alır ve kullanıcı
+ * kendi sayfasını —blok silmeden— bir daha kaydedemezdi; düzeltilen değil,
+ * üretilen bir kusur olurdu (aynı gerekçe `BLOCK_GRID_LIMITS` tavanlarının
+ * daraltılmamasında da geçerli). Sınırın koruduğu şey —beş asset taşıyan
+ * galeriler— aynen korunuyor. Editör ayrıca YENİ blok eklemeyi
+ * `MAX_GALLERY_BLOCKS`'ta kapatır, yani yeni sayfalarda kural tam sıkılıkta
+ * uygulanır.
  */
 export function galleryCountIssue(layout: ProfileLayout): boolean {
-  const count = layout.blocks.filter((block) => block.type === "gallery").length;
-  return count > MAX_GALLERY_BLOCKS;
+  return galleryBlockCount(layout) > MAX_GALLERY_BLOCKS;
+}
+
+/**
+ * Sayfadaki fotoğrafların asset kimlikleri, blok sırasıyla. Paylaşım görseli
+ * ayarları (`/ayarlar`), OG şablonu ve API doğrulaması aynı listeden okur —
+ * eskiden üçü de `block.type === "image"` diye ayrı ayrı yazıyordu ve
+ * galerideki fotoğraflar hiçbirinde görünmüyordu.
+ */
+export function layoutPhotoAssets(
+  layout: ProfileLayout,
+): { assetId: string; title: string }[] {
+  return layout.blocks.flatMap((block) =>
+    block.type === "gallery"
+      ? block.data.photos.map((photo) => ({
+          assetId: photo.assetId,
+          title: photo.alt || block.data.title,
+        }))
+      : [],
+  );
 }
 
 /**
@@ -747,8 +850,19 @@ function scaleRawBlockUnits(block: unknown): unknown {
 export const profileLayoutWriteSchema = z.preprocess((raw) => {
   if (!raw || typeof raw !== "object") return raw;
   const value = raw as { grid?: unknown; blocks?: unknown };
-  if (value.grid === GRID_UNIT || !Array.isArray(value.blocks)) return raw;
-  return { ...value, grid: GRID_UNIT, blocks: value.blocks.map(scaleRawBlockUnits) };
+  if (!Array.isArray(value.blocks)) return raw;
+  // Bayat sekme eski BİRİMİ de eski BLOK TİPİNİ de gönderebilir; ikisi de
+  // burada, doğrulamadan önce çevrilir. Birim çevrimi yalnız işaretsiz
+  // belgede çalışır, tip çevrimi her belgede (işaretli bir belgede `image`
+  // bloğu kalmış olabilir — kullanıcı onu hiç açmamıştır).
+  const legacyUnits = value.grid !== GRID_UNIT;
+  return {
+    ...value,
+    grid: GRID_UNIT,
+    blocks: value.blocks.map((block) =>
+      migrateRawImageBlock(legacyUnits ? scaleRawBlockUnits(block) : block),
+    ),
+  };
 }, profileLayoutSchema.superRefine(
   (layout, context) => {
     layout.blocks.forEach((block, index) => {

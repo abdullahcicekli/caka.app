@@ -21,6 +21,7 @@ import { useCatalog } from "~/lib/locale";
 import { githubLoginKey, type GithubCalendar, type GithubCalendarMap } from "~/lib/github-calendar";
 import { linkBrand, prettyLinkTarget } from "~/lib/link-preview";
 import type { YoutubeFeedCard, YoutubeFeedMap } from "~/lib/youtube-feed";
+import { PhotoBlockCard } from "./photo-block";
 import { ProfileAvatar } from "./profile-avatar";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { appCatalog } from "~/content/app";
@@ -59,14 +60,6 @@ function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
   );
 }
 
-/**
- * Galeri `+N` pilinin olası kapasiteleri. Bir bandın kapasitesi (o ölçüde kaç
- * fotoğraf görünür) yalnız CSS'te bilinir; bileşen her kapasite için bir pil
- * basar, CSS bandına uyanı gösterir. Beş fotoğraf tavanında (R62) 5'lik slota
- * hiç gerek olmaz — o bantta gizlenen fotoğraf kalmaz.
- */
-const GALLERY_BADGE_SLOTS = [1, 2, 3, 4] as const;
-
 export function ProfileBlockCard({
   block,
   githubCalendars,
@@ -91,7 +84,6 @@ export function ProfileBlockCard({
    */
   allowEmbeds?: boolean;
 }) {
-  const app = useCatalog(appCatalog);
   const onboarding = useOnboardingLists();
   const w = useCatalog(widgetCatalog);
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
@@ -283,19 +275,6 @@ export function ProfileBlockCard({
       </article>
     );
 
-    case "image": {
-    const content = block.data.assetId ? (
-      <img src={`/i/${block.data.assetId}`} alt={block.data.title} draggable={false} />
-    ) : (
-      <span className="profile-image-placeholder">{block.data.title || app.profile.addImage}</span>
-    );
-    return block.data.url ? (
-      <a className="profile-block profile-block-image" href={block.data.url} target="_blank" rel="noreferrer">{content}</a>
-    ) : (
-      <article className="profile-block profile-block-image">{content}</article>
-    );
-    }
-
     case "status": {
     const statusContent = block.data.doc ? <RichTextView doc={block.data.doc} /> : block.data.text;
     return block.data.url ? (
@@ -307,56 +286,19 @@ export function ProfileBlockCard({
   );
     }
 
-    // U32 / KTD37-KTD39. Düzeni İKİ bilgi belirler: fotoğraf sayısı (burada
-    // bilinir) ve tile'ın gerçek ölçüsü (yalnız CSS bilir). Bu yüzden sayı
-    // `data-count` ile DOM'a yazılır, ölçü kartın konteyner sorgularıyla
-    // okunur — JS ölçümü ve hidrasyon kayması yok.
-    //
-    // Sığmayan fotoğraflar DOM'da kalır ama CSS ile gizlenir; `+N` pili de
-    // olası her kapasite için ayrı bir slot olarak basılır ve bandın
-    // kapasitesine uyanı görünür. Sayıyı CSS hesaplayamadığı için tek yol bu.
-    case "gallery": {
-      const photos = block.data.photos;
-      const count = photos.length;
+    // U32 / KTD37-KTD39. FOTOĞRAF (eski `image` + `gallery`). Kart durum
+    // tutuyor (slider sırası, ışık kutusu) ve hook'lar bir `switch` dalının
+    // içinde yaşayamaz; bu yüzden ayrı bileşen.
+    case "gallery":
       return (
-        <article
-          className="profile-block profile-block-gallery"
-          data-count={count}
-          aria-label={w.gallery.label(block.data.title)}
-        >
-          {photos.map((photo) => (
-            // Yerel görseller R2'den gelir (Değişmez #9); proxy gerekmez.
-            <img
-              key={photo.assetId}
-              src={`/i/${photo.assetId}`}
-              alt={photo.alt}
-              loading="lazy"
-              draggable={false}
-            />
-          ))}
-          {count === 0 ? (
-            <span className="profile-image-placeholder">{w.gallery.empty}</span>
-          ) : null}
-          {/* Başlık her zaman basılır, GÖRÜNÜRLÜĞÜNE CSS karar verir: kısa
-              tile'larda (138-156px) hücrelerin üstüne bindirmeden sığmıyor.
-              Editörde başlık alanı var; hiçbir yerde göstermemek kullanıcının
-              yazdığı şeyi kaybetmek olurdu. */}
-          {block.data.title ? (
-            <span className="gallery-title">{block.data.title}</span>
-          ) : null}
-          {GALLERY_BADGE_SLOTS.filter((capacity) => count > capacity).map((capacity) => (
-            <span
-              key={capacity}
-              className="gallery-more"
-              data-slot={capacity}
-              aria-label={w.gallery.moreLabel(count - capacity)}
-            >
-              {w.gallery.more(count - capacity)}
-            </span>
-          ))}
-        </article>
+        <PhotoBlockCard
+          title={block.data.title}
+          photos={block.data.photos}
+          layout={block.data.layout}
+          url={block.data.url}
+          interactive={allowEmbeds}
+        />
       );
-    }
 
     // U33/U34. Video ve kanal AYNI kartın iki varyantı gibi görünmemeli:
     //  • Video → 16:9 (Short ise 9:16) kapak kartı domine eder, ortasında

@@ -4,7 +4,6 @@ import {
   Computer,
   Link as LinkIcon,
   MediaImage,
-  MediaImageList,
   MediaVideo,
   Megaphone,
   NavArrowDown,
@@ -37,14 +36,18 @@ import {
   GALLERY_MAX_PHOTOS,
   GRID_COLUMNS,
   MAX_GALLERY_BLOCKS,
+  PHOTO_LAYOUTS,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
+  galleryBlockCount,
   faviconImageKey,
   layoutIssues,
   ensureLayoutPositions,
   normalizeTheme,
   parseProfileLayout,
+  photoBlockCount,
+  photoRecommendedSize,
   placeNewBlock,
   sizeFromDims,
   sizeToDims,
@@ -119,14 +122,14 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
       return { id, type, size: "1x1", data: { platform: "instagram", handle: "", url: "", label: "Instagram", ogImage: "", favicon: "" } };
     case "text":
       return { id, type, size: "2x1", data: { text: "" } };
-    case "image":
-      return { id, type, size: "2x1", data: { title: "", url: "" } };
     case "status":
       return { id, type, size: "2x1", data: { text: "", url: "" } };
-    // KTD39: beş fotoğrafın 145,6×140'lık neredeyse kare hücrelere düştüğü
-    // tek konfigürasyon 4×1.
+    // Blok BOŞ doğar, yani tek fotoğrafın tabanıyla (1×1 = 178×156). Fotoğraf
+    // eklendikçe editör bloğu `photoRecommendedSize` ile büyütür; sabit bir
+    // 4×1 ile doğmak, tek fotoğraf koyan kullanıcıya tam genişlik bir şerit
+    // bırakıyordu.
     case "gallery":
-      return { id, type, size: "4x1", data: { title: "", photos: [] } };
+      return { id, type, size: "1x1", data: { title: "", url: "", layout: "grid", photos: [] } };
     // Varsayılan video: kanal bloğu aynı tipin `kind: "channel"` hâli ve
     // ayrım yapıştırılan adresten kayıt anında çözülür (KTD34).
     case "youtube":
@@ -172,11 +175,10 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   social: false,
   link: true,
   text: true,
-  image: true,
   status: true,
   // Panelde kısayolu yok; araç çubuğundan ya da blok galerisinden eklenir.
-  // Galeri ayrıca hesap başına 2 ile sınırlı (R62) — derin bağlantı bu
-  // sınırı atlatabilecek ikinci bir yol açmasın.
+  // Fotoğraf bloğu ayrıca sayfa başına 2 ile sınırlı (R62) — derin bağlantı
+  // bu sınırı atlatabilecek ikinci bir yol açmasın.
   gallery: false,
   youtube: false,
   spotify: false,
@@ -184,9 +186,8 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
 
 /**
  * Editörde gösterilecek blok adı. Katalogdaki `blockTypes` şemanın
- * adlandırmasının editör karşılığıdır: "Galeri" adı blok seçicinin adıyla
- * çarpıştığı için fotoğraf bloğu orada tam adıyla ("Fotoğraf galerisi")
- * durur.
+ * adlandırmasının editör karşılığıdır: depodaki ayrımcı `"gallery"` olarak
+ * kalsa da kullanıcı "Fotoğraf" görür (eski `image` bloğu bu tipte eridi).
  */
 function useBlockLabel(): (type: ProfileBlock["type"]) => string {
   const app = useCatalog(appCatalog);
@@ -234,14 +235,56 @@ type SpotifyResolveResponse =
     }
   | { error: string };
 
+/**
+ * Dosyayı R2'ye yükler ve ilerlemeyi YÜZDEYLE bildirir.
+ *
+ * NEDEN `fetch` DEĞİL: `fetch` gövdenin ne kadarının gittiğini söylemiyor
+ * (istek gövdesi için `ReadableStream` yükleme akışı hâlâ yaygın değil ve
+ * HTTP/2 olmadan çalışmıyor). `XMLHttpRequest.upload.onprogress` bu bilgiyi
+ * her tarayıcıda veriyor; uç nokta aynı kalıyor.
+ *
+ * Aynı köken POST'unda tarayıcı `Origin` başlığını gönderir, yani uçtaki
+ * `hasSameOrigin` kapısı XHR'de de sağlanır.
+ */
+function uploadPhotoFile(
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<{ id?: string; error?: string }> {
+  return new Promise((resolve) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", "/api/onboarding/avatar");
+    request.setRequestHeader("Content-Type", file.type);
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      // %100 dosya SUNUCUYA VARDI demek, "kaydedildi" demek değil; yanıt
+      // gelene kadar 99'da bekletiliyor ki gösterge yalan söylemesin.
+      onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    };
+    request.onload = () => {
+      let result: { id?: string; error?: string } = {};
+      try {
+        result = JSON.parse(request.responseText) as { id?: string; error?: string };
+      } catch {
+        result = {};
+      }
+      resolve(request.status >= 200 && request.status < 300 ? result : { error: result.error });
+    };
+    request.onerror = () => resolve({});
+    request.onabort = () => resolve({});
+    request.send(file);
+  });
+}
+
 function Inspector({
   block,
   update,
   setData,
   setSize,
+  setDims,
   remove,
   close,
   onSignedImage,
+  multiPhotoBlocked,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
@@ -253,19 +296,35 @@ function Inspector({
       biliniyor — kullanıcıyı elle boyutlandırmaya bırakmak, kırpılmış bir
       oynatıcıyı ona düzelttirmek olurdu. */
   setSize: (size: BlockSize) => void;
+  /** Bloğu YARIM BİRİM ölçüsüyle boyutlandırır. `setSize`in sözlüğü kaba
+      (genişlik 2/4/8, yükseklik 2/4); fotoğraf bloğu ara basamaklarda da
+      durabildiği için büyütme oradan geçemez. */
+  setDims: (w: number, h: number) => void;
   remove: () => void;
   close: () => void;
   /** Bloğun uzak görselinin imzalı yolu; editörün `signedImages` eşlemesine
       eklenir ki kullanıcı kaydetmeyi beklemeden önizlemeyi görsün. */
   onSignedImage: (path: string) => void;
+  /**
+   * Bu bloğa İKİNCİ fotoğrafı eklemek sayfa sınırını aşıyor mu? Aşıyorsa
+   * gerekçe. Sınır çok fotoğraflı blokları sayıyor (bkz. `galleryCountIssue`);
+   * kapı burada olmasa kullanıcı fotoğrafı yükler, sonra kaydederken 400
+   * alırdı.
+   */
+  multiPhotoBlocked?: string | null;
 }) {
   const app = useCatalog(appCatalog);
   const widget = useCatalog(widgetCatalog);
   const onboarding = useOnboardingLists();
   const [uploading, setUploading] = useState(false);
   // Çoklu seçimde tek bir "Yükleniyor…" beş fotoğraf boyunca donmuş görünür;
-  // kaçıncı dosyada olduğumuz yazılınca bekleme anlaşılır oluyor.
-  const [uploadStep, setUploadStep] = useState<{ done: number; total: number } | null>(null);
+  // kaçıncı dosyada olunduğu ve o dosyanın yüzdesi yazılınca bekleme
+  // anlaşılır oluyor ("3/5 · %62").
+  const [uploadStep, setUploadStep] = useState<{
+    done: number;
+    total: number;
+    percent: number;
+  } | null>(null);
   // Yükleme hatası (kota, tür, boyut) sessizce yutulmaz: sunucunun Türkçe
   // mesajı panelde gösterilir.
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -334,30 +393,41 @@ function Inspector({
    * "yükleyemedik" gibi bir örtü metin kullanıcıya kotasının dolduğunu
    * söylemezdi.
    */
-  async function uploadAsset(file: File): Promise<string | null> {
+  async function uploadAsset(
+    file: File,
+    step: { done: number; total: number },
+  ): Promise<string | null> {
     setUploading(true);
     setUploadError(null);
-    try {
-      const response = await fetch("/api/onboarding/avatar", {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      const result = (await response.json()) as { id?: string; error?: string };
-      if (response.ok && result.id) return result.id;
-      setUploadError(result.error ?? app.editor.imageUploadFailed);
-      return null;
-    } catch {
-      setUploadError(app.editor.imageUploadFailed);
-      return null;
-    } finally {
-      setUploading(false);
-    }
+    setUploadStep({ ...step, percent: 0 });
+    const result = await uploadPhotoFile(file, (percent) =>
+      setUploadStep({ ...step, percent }),
+    );
+    setUploading(false);
+    if (result.id) return result.id;
+    setUploadError(result.error ?? app.editor.imageUploadFailed);
+    return null;
   }
 
-  async function uploadImage(file: File) {
-    const id = await uploadAsset(file);
-    if (id) update({ assetId: id });
+  /**
+   * Bloğu önerilen ölçüye BÜYÜTÜR; zaten o kadar yer kaplıyorsa dokunmaz.
+   * Yalnız büyütmek şart: kullanıcının elle genişlettiği bir bloğu fotoğraf
+   * eklerken küçültmek, onun kararını geri almak olurdu.
+   *
+   * Karşılaştırma EKSEN EKSEN, alanla DEĞİL: 748×156 (alan 16) ile 368×324
+   * (alan 16) aynı alanı kaplıyor ama biri şerit biri kutu. Alanla
+   * bakıldığında ızgaradan kaydırmalıya geçen beş fotoğraflı bir blok
+   * 156px'lik şeritte kalıyor ve tam da `photoRecommendedSize`'ın kaçındığı
+   * kırpmaya düşüyordu.
+   */
+  function growTo(size: BlockSize) {
+    if (block.type === "profile") return;
+    const target = sizeToDims(size);
+    const current = block.pos?.lg ?? sizeToDims(block.size);
+    const w = Math.max(current.w, target.w);
+    const h = Math.max(current.h, target.h);
+    if (w === current.w && h === current.h) return;
+    setDims(w, h);
   }
 
   /**
@@ -371,21 +441,36 @@ function Inspector({
     if (block.type !== "gallery") return;
     // İkinci savunma hattı: arayüz zaten kapanıyor ama yarışan bir tıklama
     // sınırı aşmasın (şema 5'te reddediyor, kullanıcı hatayı kayıtta görürdü).
-    const room = GALLERY_MAX_PHOTOS - block.data.photos.length;
-    if (room <= 0) return;
+    const current = block.data.photos;
+    const room =
+      // Sayfa sınırı: bu blok tek fotoğraflıyken ikinciyi eklemek onu
+      // "galeri" yapar ve sayfadaki galeri sayısını artırır.
+      multiPhotoBlocked && current.length <= 1
+        ? Math.max(0, 1 - current.length)
+        : GALLERY_MAX_PHOTOS - current.length;
+    if (room <= 0) {
+      if (multiPhotoBlocked) setUploadError(multiPhotoBlocked);
+      return;
+    }
     const picked = files.slice(0, room);
     const added: { assetId: string; alt: string }[] = [];
-    setUploadStep({ done: 0, total: picked.length });
-    for (const file of picked) {
-      const id = await uploadAsset(file);
+    for (const [index, file] of picked.entries()) {
+      const id = await uploadAsset(file, { done: index, total: picked.length });
       // Bir dosya reddedildiyse (kota/tür/boyut) sıradakiler de aynı duvara
       // çarpar; sunucunun gerekçesi yazıldı, döngü orada durur.
       if (!id) break;
       added.push({ assetId: id, alt: "" });
-      setUploadStep({ done: added.length, total: picked.length });
     }
     setUploadStep(null);
-    if (added.length > 0) update({ photos: [...block.data.photos, ...added] });
+    if (added.length > 0) {
+      const photos = [...current, ...added];
+      update({ photos });
+      // Blok fotoğraf sayısına göre BÜYÜR (küçülmez): beş fotoğraf 178×156'lık
+      // bir kartta 60px'lik kıymıklara düşerdi. Aynı desen Spotify kartında
+      // (`spotifyDefaultSize`) da var: kullanıcıya kırpılmış bir kartı elle
+      // düzelttirmek yerine kayıt anında doğru boyut veriliyor.
+      growTo(photoRecommendedSize(photos.length, block.data.layout));
+    }
     // Sınırın üstünde seçim sessizce kırpılmaz; kaçının alındığı yazılır.
     // Yükleme hatası varsa o mesaj kalır — daha acil olan odur.
     if (added.length === picked.length && files.length > room) {
@@ -615,33 +700,6 @@ function Inspector({
             </label>
           </>
         );
-      case "image":
-        return (
-          <>
-            <label>{app.editor.fieldImage}
-              <span className="inspector-upload">
-                <MediaImage width={18} height={18} />
-                {uploading
-                  ? app.editor.imageUploading
-                  : block.data.assetId
-                    ? app.editor.imageReplace
-                    : app.editor.imageDrop}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  disabled={uploading}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void uploadImage(file);
-                  }}
-                />
-              </span>
-            </label>
-            {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
-            <label>{app.editor.fieldTitle}<input value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
-            <label>{app.editor.fieldLink}<input value={block.data.url} onChange={(event) => update({ url: event.target.value })} /></label>
-          </>
-        );
       case "status":
         return (
           <>
@@ -652,6 +710,20 @@ function Inspector({
       case "gallery": {
         const photos = block.data.photos;
         const full = photos.length >= GALLERY_MAX_PHOTOS;
+        // Sayfa sınırı: bu bloğu TEK fotoğraflıyken ikinciye çıkarmak onu
+        // "galeri" yapar ve sayfadaki galeri sayısını artırır. FOTOĞRAFSIZ
+        // blokta kapı kapanmaz — ilk fotoğrafı hiç ekleyemeyen blok
+        // `gallery_empty` verip yayını da kilitlerdi.
+        const limited = photos.length === 1 ? multiPhotoBlocked : null;
+        const uploadLabel = uploadStep
+          ? uploadStep.total > 1
+            ? app.editor.uploadProgress(
+                Math.min(uploadStep.done + 1, uploadStep.total),
+                uploadStep.total,
+                uploadStep.percent,
+              )
+            : app.editor.uploadPercent(uploadStep.percent)
+          : app.editor.imageUploading;
         // Sıra değiştirme: fotoğrafı bir yukarı/aşağı taşır. Sürükle-bırak
         // yerine düğme — dokunmatikte ızgara sürüklemesiyle çakışmıyor.
         const move = (index: number, delta: number) => {
@@ -664,27 +736,47 @@ function Inspector({
         };
         return (
           <>
-            <label>
-              {app.editor.fieldTitle}
-              <input
-                value={block.data.title}
-                onChange={(event) => update({ title: event.target.value })}
-              />
-            </label>
-            {/* Başlık kısa tile'da hücrelerin üstüne binmeden sığmıyor ve
-                gizleniyor. Kullanıcı yazdığı şeyi neden göremediğini bilmeli. */}
-            <p className="inspector-hint">
-              {app.editor.galleryTitleHint}
-            </p>
             <fieldset>
               <legend>{app.editor.photosLegend(photos.length, GALLERY_MAX_PHOTOS)}</legend>
+              {/* EKLEME DÜĞMESİ LİSTENİN ÜSTÜNDE ve liste kendi içinde kayar.
+                  Eskiden düğme listenin altındaydı: beşinci fotoğraftan sonra
+                  ekranın dışına düşüyor ve kullanıcı onu görmek için paneli
+                  kaydırmak zorunda kalıyordu. */}
+              {full ? (
+                <p className="inspector-hint">{app.editor.galleryFullHint(GALLERY_MAX_PHOTOS)}</p>
+              ) : limited ? (
+                <p className="inspector-hint">{limited}</p>
+              ) : (
+                <span className="inspector-upload">
+                  <MediaImage width={18} height={18} />
+                  {uploading ? uploadLabel : app.editor.galleryAdd}
+                  {uploading ? null : (
+                    <small className="opacity-70">{app.editor.galleryMultiHint}</small>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    // Toplu seçim: dosya seçicide birden fazla fotoğraf
+                    // işaretlenir, sıraya alınıp tek seferde eklenir.
+                    multiple
+                    disabled={uploading}
+                    onChange={(event) => {
+                      const files = Array.from(event.target.files ?? []);
+                      // Aynı dosya art arda seçilebilsin diye alan sıfırlanır.
+                      event.target.value = "";
+                      if (files.length > 0) void addGalleryPhotos(files);
+                    }}
+                  />
+                </span>
+              )}
+              {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
               {photos.length === 0 ? (
                 <p className="inspector-hint">{app.editor.galleryEmpty}</p>
               ) : (
-                <ul className="flex list-none flex-col gap-2 p-0">
+                <ul className="photo-list">
                   {photos.map((photo, index) => (
                     <li
-                      key={photo.assetId}
+                      key={`${photo.assetId}-${index}`}
                       className="flex items-center gap-2 rounded-lg border border-sinir p-2"
                     >
                       <img
@@ -740,41 +832,65 @@ function Inspector({
                   ))}
                 </ul>
               )}
-              {/* Sınıra ulaşınca ekleme kapanır ve NEDENİ yazar; sessizce
-                  reddedilen bir buton kullanıcıya sınırı öğretmez. */}
-              {full ? (
-                <p className="inspector-hint">
-                  {app.editor.galleryFullHint(GALLERY_MAX_PHOTOS)}
-                </p>
-              ) : (
-                <span className="inspector-upload">
-                  <MediaImage width={18} height={18} />
-                  {uploading
-                    ? uploadStep && uploadStep.total > 1
-                      ? app.editor.galleryUploadStep(Math.min(uploadStep.done + 1, uploadStep.total), uploadStep.total)
-                      : app.editor.imageUploading
-                    : app.editor.galleryAdd}
-                  {uploading ? null : (
-                    <small className="opacity-70">{app.editor.galleryMultiHint}</small>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    // Toplu seçim: dosya seçicide birden fazla fotoğraf
-                    // işaretlenir, sıraya alınıp tek seferde eklenir.
-                    multiple
-                    disabled={uploading}
-                    onChange={(event) => {
-                      const files = Array.from(event.target.files ?? []);
-                      // Aynı dosya art arda seçilebilsin diye alan sıfırlanır.
-                      event.target.value = "";
-                      if (files.length > 0) void addGalleryPhotos(files);
-                    }}
-                  />
-                </span>
-              )}
             </fieldset>
-            {uploadError ? <p className="inspector-error" role="alert">{uploadError}</p> : null}
+
+            {/* Düzen seçimi yalnız 2+ fotoğrafta: tek fotoğrafta ızgara da
+                kaydırmalı da aynı şeyi (kartı dolduran tek fotoğraf) gösterir
+                ve seçim boş bir soru olurdu. */}
+            {photos.length > 1 ? (
+              <fieldset>
+                <legend>{app.editor.photoLayoutLegend}</legend>
+                {/* `radiogroup` DEĞİL: o rol ok tuşuyla gezinme ve gezici
+                    `tabIndex` ister (WAI-ARIA radio group deseni). İki
+                    seçenekli bu anahtarda `aria-pressed`li düğmeler hem
+                    doğru hem klavyede olduğu gibi çalışıyor. */}
+                <div className="segmented" role="group" aria-label={app.editor.photoLayoutLegend}>
+                  {PHOTO_LAYOUTS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={block.data.layout === option}
+                      className={block.data.layout === option ? "is-active" : ""}
+                      onClick={() => {
+                        update({ layout: option });
+                        growTo(photoRecommendedSize(photos.length, option));
+                      }}
+                    >
+                      {option === "grid"
+                        ? app.editor.photoLayoutGrid
+                        : app.editor.photoLayoutSlider}
+                    </button>
+                  ))}
+                </div>
+                <p className="inspector-hint">{app.editor.photoLayoutHint}</p>
+              </fieldset>
+            ) : null}
+
+            <label>
+              {app.editor.fieldTitle}
+              <input
+                value={block.data.title}
+                onChange={(event) => update({ title: event.target.value })}
+              />
+            </label>
+            {/* Başlık kısa kartta hücrelerin üstüne binmeden sığmıyor ve
+                gizleniyor. Kullanıcı yazdığı şeyi neden göremediğini bilmeli. */}
+            <p className="inspector-hint">{app.editor.galleryTitleHint}</p>
+
+            {/* Bağlantı eski `image` bloğundan geliyor ve YALNIZ tek
+                fotoğraflı blokta çalışıyor; çok fotoğrafta tıklama ışık
+                kutusunu açar. Alan yine de gösteriliyor: kullanıcının
+                yazdığı adresi sessizce yutmak olmaz. */}
+            <label>
+              {app.editor.fieldLink}
+              <input
+                value={block.data.url}
+                onChange={(event) => update({ url: event.target.value })}
+              />
+            </label>
+            {photos.length > 1 && block.data.url ? (
+              <p className="inspector-hint">{app.editor.photoLinkHint}</p>
+            ) : null}
           </>
         );
       }
@@ -1003,6 +1119,16 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
    */
   function resizeBlock(blockId: string, size: BlockSize) {
     const { w, h } = sizeToDims(size);
+    resizeBlockDims(blockId, w, h);
+  }
+
+  /**
+   * Boyutlandırmanın ölçü tabanlı hâli. `size` etiketi de yeniden türetilir:
+   * o alan yalnız `pos`suz eski kayıtların akış sınıfı, ama bayat kalırsa
+   * blok başka bir deploy'da yanlış genişlikte akardı.
+   */
+  function resizeBlockDims(blockId: string, w: number, h: number) {
+    const size = sizeFromDims(w, h);
     setLayout((current) => ({
       ...current,
       blocks: withDerivedSmPositions(
@@ -1024,12 +1150,25 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     }));
   }
 
-  // R62: hesap başına galeri sınırı sunucuda (`profileLayoutWriteSchema`)
-  // uygulanıyor. Arayüz sınıra ULAŞMADAN kapanmalı — kullanıcı bloğu ekleyip
-  // kaydederken hata almamalı.
+  // R62: sayfa başına fotoğraf bloğu sınırı. Arayüz sınıra ULAŞMADAN
+  // kapanmalı — kullanıcı bloğu ekleyip kaydederken hata almamalı.
+  //
+  // BU KAPI SUNUCUDAN DAHA SIKI ve bilerek öyle: sunucu yalnız çok
+  // fotoğraflı blokları sayıyor (bkz. `galleryCountIssue` — üç görselli
+  // canlı bir sayfayı kaydedilemez hâle getirmemek için), kural ise "sayfada
+  // en fazla iki fotoğraf bloğu". Sınırın üstünde kalmış eski bir sayfada
+  // düğme kapalı görünür ve gerekçesini yazar; kullanıcı bir blok kaldırıp
+  // yenisini ekleyebilir. Kaydetmesi hiçbir zaman engellenmez.
   const galleryBlocked =
-    layout.blocks.filter((block) => block.type === "gallery").length >= MAX_GALLERY_BLOCKS
+    photoBlockCount(layout) >= MAX_GALLERY_BLOCKS
       ? app.editor.galleryBlockLimit(MAX_GALLERY_BLOCKS)
+      : null;
+  // Sunucudaki kural ÇOK FOTOĞRAFLI blokları sayıyor (bkz. galleryCountIssue);
+  // seçili blok tek fotoğraflıyken ikinciyi eklemek onu o kümeye sokar.
+  // Kapı burada olmasa kullanıcı fotoğrafı yükler, sonra 400 alırdı.
+  const multiPhotoBlocked =
+    galleryBlockCount(layout) >= MAX_GALLERY_BLOCKS
+      ? app.editor.photoLimitHint(MAX_GALLERY_BLOCKS)
       : null;
   const addBlockers: BlockAddBlockers = useMemo(
     () => (galleryBlocked ? { gallery: galleryBlocked } : {}),
@@ -1273,7 +1412,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     insertBlock(defaultBlock(type));
   }
 
-  // Dashboard kısayolları: /edit?add=link|social|text|image|status bloğu
+  // Dashboard kısayolları: /edit?add=link|social|text|status bloğu
   // hemen ekler (social galeriyi açar); /edit?panel=theme|gallery paneli açar.
   // Parametreler işlendikten sonra URL'den temizlenir.
   useEffect(() => {
@@ -1282,6 +1421,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     if (!addParam && !panelParam) return;
     if (addParam && isDeepLinkAddable(addParam)) {
       add(addParam);
+    } else if (addParam === "image") {
+      // Eski kısayol: `image` bloğu fotoğraf bloğunda eridi, kayıtlı bir
+      // bağlantı sessizce hiçbir şey yapmasın.
+      add("gallery");
     } else if (addParam === "social") {
       setPanel("gallery");
     }
@@ -1543,21 +1686,18 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <button type="button" data-tooltip="Duyuru ekle" aria-label="Duyuru ekle" onClick={() => add("status")}>
           <Megaphone width={18} height={18} />
         </button>
-        <button type="button" data-tooltip={app.editor.addImage} aria-label={app.editor.addImage} onClick={() => add("image")}>
-          <MediaImage width={19} height={19} />
-        </button>
-        {/* "Fotoğraf galerisi": bu çubuktaki son düğme zaten "Blok galerisi"
-            adını taşıyor; ikisi aynı adı taşısaydı hangisinin ne yaptığı
-            arayüzde okunmazdı. */}
+        {/* TEK fotoğraf düğmesi: `image` ve `gallery` birleşti. Kullanıcı
+            kaç fotoğraf koyacağını blok tipi seçerek değil, bloğa fotoğraf
+            ekleyerek söylüyor. */}
         <button
           type="button"
-          data-tooltip={galleryBlocked ?? app.editor.addGallery}
-          aria-label={galleryBlocked ?? app.editor.addGallery}
+          data-tooltip={galleryBlocked ?? app.editor.addPhoto}
+          aria-label={galleryBlocked ?? app.editor.addPhoto}
           disabled={Boolean(galleryBlocked)}
           className={galleryBlocked ? "cursor-not-allowed opacity-40" : ""}
           onClick={() => add("gallery")}
         >
-          <MediaImageList width={19} height={19} />
+          <MediaImage width={19} height={19} />
         </button>
         <button type="button" data-tooltip="YouTube ekle" aria-label="YouTube ekle" onClick={() => add("youtube")}>
           <MediaVideo width={19} height={19} />
@@ -1615,7 +1755,9 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
             }))
           }
           setSize={(size) => resizeBlock(selected.id, size)}
+          setDims={(w, h) => resizeBlockDims(selected.id, w, h)}
           onSignedImage={(path) => rememberSignedImage(selected.id, path)}
+          multiPhotoBlocked={multiPhotoBlocked}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));

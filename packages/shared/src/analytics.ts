@@ -175,9 +175,13 @@ function blockUrl(block: ProfileBlock): string {
   switch (block.type) {
     case "social":
     case "link":
-    case "image":
     case "status":
       return block.data.url;
+    // Fotoğraf bloğu YALNIZ tek fotoğraflıyken bir bağlantı taşır (eski
+    // `image` bloğunun davranışı). Çok fotoğraflı blokta tıklama ışık
+    // kutusunu açar, dışarı çıkmaz — ölçülecek hedef yok.
+    case "gallery":
+      return block.data.photos.length <= 1 ? block.data.url : "";
     case "youtube":
     // Spotify kartı yerinde oynatılıyor ama "Spotify'da aç" bağlantısı da
     // taşıyor; ölçülecek hedef odur.
@@ -185,9 +189,6 @@ function blockUrl(block: ProfileBlock): string {
       return block.data.url;
     case "profile":
     case "text":
-    // Galeri tek bir dış adrese gitmez (fotoğraflar birinci taraf asset);
-    // ölçülecek bir tıklama hedefi yok.
-    case "gallery":
       return "";
     default: {
       const exhaustive: never = block;
@@ -202,7 +203,7 @@ function blockLabel(block: ProfileBlock): string {
     case "social":
       return block.data.label || block.data.handle;
     case "link":
-    case "image":
+    case "gallery":
       return block.data.title;
     case "status":
       return block.data.text;
@@ -214,7 +215,6 @@ function blockLabel(block: ProfileBlock): string {
       return block.data.title;
     case "profile":
     case "text":
-    case "gallery":
       return "";
     default: {
       const exhaustive: never = block;
