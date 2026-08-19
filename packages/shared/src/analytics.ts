@@ -197,9 +197,6 @@ function blockUrl(block: ProfileBlock): string {
       return block.data.assetId ? `/b/${block.data.assetId}` : "";
     case "profile":
     case "text":
-    // Galeri tek bir dış adrese gitmez (fotoğraflar birinci taraf asset);
-    // ölçülecek bir tıklama hedefi yok.
-    case "gallery":
     // Konum kartı bir GÖRÜNTÜ; hiçbir yere gitmez (harita sağlayıcısına
     // bağlantı vermek ziyaretçiyi üçüncü tarafa yollamak olurdu).
     case "location":
@@ -234,7 +231,6 @@ function blockLabel(block: ProfileBlock): string {
       return block.data.title || block.data.fileName;
     case "profile":
     case "text":
-    case "gallery":
     case "location":
     case "ayet":
       return "";
