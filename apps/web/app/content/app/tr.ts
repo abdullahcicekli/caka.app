@@ -193,6 +193,11 @@ export const tr = {
     ayetSearchHint:
       "Sure adı ve ayet numarası yazabilir (“Bakara 255”, “2:255”) ya da mealde geçen bir kelime arayabilirsin.",
     ayetSearching: "Ayetler aranıyor…",
+    /** Öneri listesinin (listbox) adı; ekranda görünmez, seslendirmede duyulur. */
+    ayetSuggestionsLabel: "Ayet önerileri",
+    /** Sonuç sayısı yalnız ekran okuyucuya söylenir; gören kullanıcı listeyi görüyor. */
+    ayetResultCount: (count: number) =>
+      `${count} ayet listelendi. Ok tuşlarıyla gez, Enter ile seç.`,
     ayetNoResults: (query: string) => `“${query}” için ayet bulunamadı.`,
     ayetFailed: "Ayet kaynağına ulaşılamadı — bağlantını kontrol et.",
     ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} eklendi`,
