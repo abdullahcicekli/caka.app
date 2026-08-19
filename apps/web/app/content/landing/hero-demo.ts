@@ -14,7 +14,7 @@
 //   Kerem Aydın  @keremaydin  müzisyen     (creator-kerem.webp — gitar, stüdyo)
 //   Selin Demir  @selindemir  seramik      (creator-selin.webp — çark, atölye)
 //   Elif Kaya    @elifkaya    podcast      (creator-elif.webp  — mikrofon, masa)
-//   Naz Erdem    @nazerdem    seslendirme  (creator-naz.webp   — mikrofon, kayıt)
+//   Naz Erdem    @nazerdem    seslendirme  (creator-naz.webp   — kayıt kabini)
 //
 // GÖRSEL HAVUZU: her görsel şeritte YALNIZ BİR KEZ geçer. Dört portreyle
 // on beş yer doldurmak (avatar + kart kapağı + önizleme aynı fotoğraftan)

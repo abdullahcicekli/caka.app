@@ -24,9 +24,24 @@ yakalanıyordu. İş bölümü:
 ## 1. Kaynak portreler
 
 `creator-kerem.webp` · `creator-selin.webp` · `creator-elif.webp` ·
-`creator-naz.webp` — 940×1224, yapay üretim, daha önce eklendi. Bugün iki
-yerde kullanılıyorlar: vitrin karuseli (tam boy) ve şeridin avatarları
-(kırpma).
+`creator-naz.webp` — 940×1224, yapay üretim. Bugün iki yerde kullanılıyorlar:
+vitrin karuseli (tam boy) ve şeridin avatarları (kırpma).
+
+`creator-naz.webp` **yenilendi**: eski karede saçı açık bir kadın vardı,
+setin geri kalanı (Selin, Elif) tesettürlüydü. Yarısı örtülü yarısı açık bir
+set kimlik dilini bölüyordu; yeni kare de fal ile üretildi ve Naz'ın bütün
+görselleri (avatar, masa detayı) ondan türedi.
+
+> Photorealistic portrait photograph of a Turkish woman in her early thirties
+> wearing a deep plum coloured hijab and a simple charcoal turtleneck,
+> standing in a dark professional voice recording booth, a chrome condenser
+> microphone with a round pop filter in front of her, holding a printed script
+> in one hand, warm single source lamp light from the side, dark acoustic wood
+> panelling behind her, a green glass vase and stacked books blurred in the
+> background, deep charcoal plum and gold palette, low key cinematic 35mm film
+> photograph, shallow depth of field, modest everyday clothing, calm confident
+> expression looking at the camera, natural hands, no text, no lettering, no
+> writing
 
 | Persona | Kullanıcı adı | Meslek | Kaynak portre |
 |---|---|---|---|
@@ -43,15 +58,26 @@ Avatarlar (256×256, yuvarlak maskeyle gösterilir):
 magick creator-kerem.webp -crop 320x320+78+126  +repage -resize 256x256 -quality 80 avatar-kerem.webp
 magick creator-selin.webp -crop 380x380+215+118 +repage -resize 256x256 -quality 80 avatar-selin.webp
 magick creator-elif.webp  -crop 340x340+180+240 +repage -resize 256x256 -quality 80 avatar-elif.webp
-magick creator-naz.webp   -crop 340x340+150+215 +repage -resize 256x256 -quality 80 avatar-naz.webp
+magick creator-naz.webp   -crop 420x420+390+110 +repage -resize 256x256 -quality 80 avatar-naz.webp
 ```
 
 Portrelerin ortamından iki **yüzsüz** detay (1,91:1 — `.social-og` oranı):
 
 ```sh
 magick creator-elif.webp -crop 470x246+0+60  +repage -resize 560x -quality 78 detail-elif.webp   # duvar rafı, cam vazo
-magick creator-naz.webp  -crop 542x284+60+930 +repage -resize 560x -quality 78 detail-naz.webp   # yeşil defter, kalem
 ```
+
+`detail-naz.webp` kırpma DEĞİL, üretim (560×293) — Naz'ın yeni karesinde
+kişisiz bir detay yoktu:
+
+> Close up still life on a dark walnut desk in a dim studio: a closed dark
+> green leather notebook with a brass corner, a black fountain pen resting on
+> top of it, a deep green ceramic mug of tea beside it, a brass desk lamp
+> casting a warm pool of light from the left, a pair of black over ear
+> headphones folded at the edge of the frame, dark plum and gold palette,
+> moody cinematic photorealistic 35mm photograph, shallow depth of field, no
+> paper, no pages, no book cover design, no people, no hands, no text, no
+> lettering, no writing, no letters, no numbers
 
 ## 3. Üretilen görseller (fal.ai, `fal-ai/flux-pro/v1.1-ultra`)
 
