@@ -533,9 +533,22 @@ html[data-landing]::-webkit-scrollbar {
 
 /* Medyanın üstüne binen hap: tek parça bir kabuk (beyaz), içinde adres
    alanı ve koyu gönder düğmesi. Dar ekranda alt alta iner. */
+/*
+ * YAPIŞKAN, çünkü sayfanın TEK dönüşüm noktası ilk ekranda görünmüyordu.
+ * Ölçüm (1440×802): hap katlamanın 469px altındaydı — ziyaretçi kaydırmadan
+ * göremiyordu. Hero'yu katlamaya sığdırmak bir seçenek değildi: şerit
+ * kartların GERÇEK ızgara adımlarından türüyor (en kısa satır 156px) ve
+ * başlığı okunmaz bir puntoya indirmek gerekirdi.
+ *
+ * Bunun yerine hap hero boyunca ekranın altına yapışıyor: ilk boyamada
+ * görünür, şeridin üstünde yüzer, hero biterken kendi yerine oturur.
+ * Kapsayıcı `.lp-hero` olduğu için bölüm bitince yapışma da biter —
+ * sayfanın geri kalanını takip etmez.
+ */
 .lp-hero-cta {
-  position: relative;
-  z-index: 2;
+  position: sticky;
+  z-index: 3;
+  bottom: clamp(14px, 2.4vh, 26px);
   display: flex;
   justify-content: center;
   margin-top: -28px;
@@ -549,9 +562,14 @@ html[data-landing]::-webkit-scrollbar {
   border-radius: 999px;
   background: white;
   padding: 6px 6px 6px 20px;
+  /* Hareketli ve rengârenk bir şeridin üstünde yüzüyor: `0 1px 2px` orada
+     kayboluyordu. Yükselti üç katmanla veriliyor — ince bir çeper, yakın bir
+     temas gölgesi ve geniş bir yayılım. Renk DEĞİŞMEDİ: kireç şeridin
+     üstünde beyaz hap + siyah düğme en yüksek kontrastı veriyor. */
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--color-murekkep) 10%, transparent),
-    0 10px 30px color-mix(in srgb, var(--color-murekkep) 12%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--color-murekkep) 6%, transparent),
+    0 2px 6px color-mix(in srgb, var(--color-murekkep) 14%, transparent),
+    0 18px 44px color-mix(in srgb, var(--color-murekkep) 26%, transparent);
 }
 .lp-claim-field {
   display: flex;
@@ -586,24 +604,30 @@ html[data-landing]::-webkit-scrollbar {
   .lp-claim-submit { width: 100%; }
 }
 
+/* Duraklatma bir YARDIMCI kontrol. Eskiden CTA hapıyla neredeyse aynı
+   hizada, aynı koyulukta duruyor ve dikkati bölüyordu; küçüldü, soluklaştı
+   ve köşeye çekildi. Odaklanınca ve üzerine gelince tam kontrasta çıkar —
+   WCAG 2.2.2'nin istediği "bulunabilir durdurma" bundan zarar görmez. */
 .lp-strip-toggle {
   position: absolute;
   z-index: 2;
   display: inline-flex;
-  right: 12px;
-  bottom: 12px;
-  height: 34px;
+  right: 10px;
+  bottom: 10px;
+  height: 28px;
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-murekkep) 74%, transparent);
-  padding-inline: 12px;
+  background: color-mix(in srgb, var(--color-murekkep) 52%, transparent);
+  padding-inline: 10px;
   color: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  transition: background-color 150ms var(--lp-ease);
+  opacity: 0.72;
+  transition: background-color 150ms var(--lp-ease), opacity 150ms var(--lp-ease);
 }
-.lp-strip-toggle:hover { background: var(--color-murekkep); }
+.lp-strip-toggle:hover,
+.lp-strip-toggle:focus-visible { background: var(--color-murekkep); opacity: 1; }
 .lp-strip-toggle:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 /* Hareket azaltmada serit zaten akmiyor; durdurma dugmesi de gorunmez.
    Karar CSS'te, JS'te DEGIL: React ile gizlense dugme once basilip sonra
