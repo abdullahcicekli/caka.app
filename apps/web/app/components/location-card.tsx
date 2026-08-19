@@ -46,10 +46,15 @@ const CLOCK_TICK_MS = 30_000;
 export function LocationCard({
   data,
   frames,
+  eagerImages = false,
 }: {
   data: LocationBlockData;
   /** Koordinata göre çözülmüş, jetonu taşıyan sağlayıcı adresleri. */
   frames: { far: string; near: string };
+  /** Kareler hemen mi insin? Yalnız landing şeridi true geçer — orada
+      kartlar CSS `transform` ile kaydırılıyor ve tarayıcı tembel görselleri
+      dönüşümle görünür alana giren öğeler için yeniden değerlendirmiyor. */
+  eagerImages?: boolean;
 }) {
   const w = useCatalog(widgetCatalog);
   // Tek bayrak iki işi birden yapıyor: saat basılır ve yakınlaşma başlar.
@@ -105,7 +110,7 @@ export function LocationCard({
             className="loc-frame is-far"
             src={frames.far}
             alt=""
-            loading="lazy"
+            loading={eagerImages ? "eager" : "lazy"}
             referrerPolicy="strict-origin-when-cross-origin"
             draggable={false}
           />
@@ -115,7 +120,7 @@ export function LocationCard({
             className="loc-frame is-near"
             src={frames.near}
             alt=""
-            loading="lazy"
+            loading={eagerImages ? "eager" : "lazy"}
             referrerPolicy="strict-origin-when-cross-origin"
             draggable={false}
           />

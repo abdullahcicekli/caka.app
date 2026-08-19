@@ -71,6 +71,7 @@ export function ProfileBlockCard({
   signedImages,
   youtubeFeeds,
   allowEmbeds = false,
+  eagerImages = false,
 }: {
   block: ProfileBlock;
   githubCalendars?: GithubCalendarMap;
@@ -88,7 +89,17 @@ export function ProfileBlockCard({
    * tıklama oynatmaz.
    */
   allowEmbeds?: boolean;
+  /**
+   * Kart GÖRSELLERİ hemen mi insin? Varsayılan tembel ve profil sayfasında
+   * doğrusu o. Yalnız landing şeridi true geçer: orada kartlar CSS
+   * `transform` ile kaydırılıyor ve tarayıcı tembel görselleri dönüşümle
+   * görünür alana giren öğeler için YENİDEN DEĞERLENDİRMİYOR — kart kayıp
+   * gelse de boş kalıyordu (ölçüldü: görünür alandaki üç kart hiç yüklenmedi,
+   * `loading` eager yapılınca anında indi).
+   */
+  eagerImages?: boolean;
 }) {
+  const imgLoading = eagerImages ? "eager" : "lazy";
   const onboarding = useOnboardingLists();
   const w = useCatalog(widgetCatalog);
   // Bloğun uzak görselinin birinci taraf adresi. Eşlemede yoksa (imza sırrı
@@ -151,6 +162,7 @@ export function ProfileBlockCard({
           }}
           thumbnail={signedImage}
           allowEmbeds={allowEmbeds}
+          eagerImages={eagerImages}
         />
       );
     }
@@ -164,7 +176,7 @@ export function ProfileBlockCard({
     // og görseli her boyutta saklanır; yalnız 1x1'den büyük kartlarda gösterilir.
     // Katkı grafiği varken de DOM'a basılır ama CSS'te gizlidir: grafiğin hiç
     // sığmadığı en kısa kartta (dashboard önizlemesi) kart çıplak bir etikete
-    // düşmesin diye o bantta og'a geri çekilir. display:none + loading="lazy"
+    // düşmesin diye o bantta og'a geri çekilir. display:none + loading={imgLoading}
     // olduğundan grafik görünürken tarayıcı görseli indirmez.
     // Uzak host'a doğrudan gidilmez: görsel birinci taraf proxy'sinden
     // servis edilir (ziyaretçi IP/UA sızıntısı ve üçüncü taraf çerezi).
@@ -187,7 +199,7 @@ export function ProfileBlockCard({
         <span className={`platform-mark ${platform.tone}`}>
           <SocialIcon platform={platform.id} width={18} height={18} strokeWidth={2.2} />
           {showFavicon ? (
-            <img className="mark-favicon" src={signedFavicon} alt="" loading="lazy" draggable={false} />
+            <img className="mark-favicon" src={signedFavicon} alt="" loading={imgLoading} draggable={false} />
           ) : null}
         </span>
         <span>
@@ -201,13 +213,13 @@ export function ProfileBlockCard({
         <span className="social-head">{head}</span>
         <GithubHeatmap calendar={calendar} />
         {ogImage ? (
-          <img className="social-og" src={ogImage} alt="" loading="lazy" draggable={false} />
+          <img className="social-og" src={ogImage} alt="" loading={imgLoading} draggable={false} />
         ) : null}
       </>
     ) : ogImage ? (
       <>
         <span className="social-head">{head}</span>
-        <img className="social-og" src={ogImage} alt="" loading="lazy" draggable={false} />
+        <img className="social-og" src={ogImage} alt="" loading={imgLoading} draggable={false} />
       </>
     ) : (
       head
@@ -250,7 +262,7 @@ export function ProfileBlockCard({
           rel="noreferrer"
         >
           {preview ? (
-            <img className="link-og" src={preview} alt="" loading="lazy" draggable={false} />
+            <img className="link-og" src={preview} alt="" loading={imgLoading} draggable={false} />
           ) : null}
           <span className="link-body">
             <span className={`platform-mark link-mark ${brand.tone}`} aria-hidden>
@@ -259,7 +271,7 @@ export function ProfileBlockCard({
                   (bkz. `.mark-favicon`, app.css). Uzak host'a gidilmez —
                   adres imzalı birinci taraf proxy'sinden geçer (R58). */}
               {signedFavicon ? (
-                <img className="mark-favicon" src={signedFavicon} alt="" loading="lazy" draggable={false} />
+                <img className="mark-favicon" src={signedFavicon} alt="" loading={imgLoading} draggable={false} />
               ) : null}
             </span>
             <span className="link-lines">
@@ -328,7 +340,12 @@ export function ProfileBlockCard({
       // yaşayamaz (blok tipi değişince çağrı sırası bozulurdu).
       if (data.kind === "video") {
         return (
-          <YoutubeVideoCard data={data} thumbnail={thumbnail} allowEmbeds={allowEmbeds} />
+          <YoutubeVideoCard
+            data={data}
+            thumbnail={thumbnail}
+            allowEmbeds={allowEmbeds}
+            eagerImages={eagerImages}
+          />
         );
       }
 
@@ -340,7 +357,7 @@ export function ProfileBlockCard({
         <>
           <span className="yt-channel-head">
             {thumbnail ? (
-              <img className="yt-avatar" src={thumbnail} alt="" loading="lazy" draggable={false} />
+              <img className="yt-avatar" src={thumbnail} alt="" loading={imgLoading} draggable={false} />
             ) : (
               // Avatar çözülemediyse baş harf çipi; kart yarım görünmez.
               <span className="yt-avatar yt-avatar-empty" aria-hidden>
@@ -359,7 +376,7 @@ export function ProfileBlockCard({
             <span className={`yt-latest${latest.short ? " is-shorts" : ""}`}>
               <span className="yt-latest-media">
                 {latest.thumbnail ? (
-                  <img src={latest.thumbnail} alt="" loading="lazy" draggable={false} />
+                  <img src={latest.thumbnail} alt="" loading={imgLoading} draggable={false} />
                 ) : (
                   <span className="yt-thumb-empty" aria-hidden />
                 )}
@@ -449,7 +466,12 @@ export function ProfileBlockCard({
     // doğar (bkz. `components/media-embed.tsx`).
     case "spotify":
       return (
-        <SpotifyCard data={block.data} thumbnail={signedImage} allowEmbeds={allowEmbeds} />
+        <SpotifyCard
+          data={block.data}
+          thumbnail={signedImage}
+          allowEmbeds={allowEmbeds}
+          eagerImages={eagerImages}
+        />
       );
 
     /**
@@ -572,6 +594,7 @@ export function ProfileBlockCard({
                     ] ?? "",
                 }
           }
+          eagerImages={eagerImages}
         />
       );
 

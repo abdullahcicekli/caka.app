@@ -99,11 +99,18 @@ export function YoutubeVideoCard({
   data,
   thumbnail,
   allowEmbeds,
+  eagerImages = false,
 }: {
   data: YoutubeVideoData;
   /** İmzalı birinci taraf kapak adresi; yoksa kart sade yüzeye düşer. */
   thumbnail: string;
   allowEmbeds: boolean;
+  /** Kapak GÖRSELİ hemen insin mi? Yalnız landing şeridi true geçer —
+      orada kartlar CSS `transform` ile kaydırılıyor ve tarayıcı tembel
+      görselleri dönüşümle görünür alana giren öğeler için yeniden
+      değerlendirmiyor: kart kayıp gelse de boş kalıyordu. `<iframe>`
+      tembel KALIR, o bir bağlantı kurar. */
+  eagerImages?: boolean;
 }) {
   const w = useCatalog(widgetCatalog);
   const [playing, setPlaying] = useState(false);
@@ -157,7 +164,13 @@ export function YoutubeVideoCard({
   const media = (
     <span className="yt-media">
       {thumbnail ? (
-        <img className="youtube-thumb" src={thumbnail} alt="" loading="lazy" draggable={false} />
+        <img
+          className="youtube-thumb"
+          src={thumbnail}
+          alt=""
+          loading={eagerImages ? "eager" : "lazy"}
+          draggable={false}
+        />
       ) : (
         <span className="youtube-thumb yt-thumb-empty" aria-hidden />
       )}
@@ -174,13 +187,17 @@ export function YoutubeVideoCard({
   // ne olacağını söylüyor. Bilgi kaybolmuyor: oynat tuşunun `aria-label` ve
   // `title`'ında duruyor, yani hem ekran okuyucuda hem imleç üstünde
   // (bkz. `MediaHit` — rıza metni orada tek kaynak).
-  const meta =
-    title || data.channelName ? (
-      <span className="youtube-meta">
-        {title ? <strong>{title}</strong> : null}
-        {data.channelName ? <small>{data.channelName}</small> : null}
-      </span>
-    ) : null;
+  // KANAL ADI TEK BAŞINA METİN BLOĞU AÇMAZ. Başlık yoksa (oEmbed başlığı
+  // boş döndü ya da hiç çözülmedi) kartta kalan tek satır "Muhammad Ali"
+  // gibi bağlamsız bir addı: videonun üstünde ne olduğunu söylemeyen bir
+  // satır için yer ayırıp kapağı aşağı itiyordu. Başlık yoksa kart yazısız
+  // durur ve oynatıcı kutunun tamamına yerleşir.
+  const meta = title ? (
+    <span className="youtube-meta">
+      <strong>{title}</strong>
+      {data.channelName ? <small>{data.channelName}</small> : null}
+    </span>
+  ) : null;
 
   if (canPlay) {
     return (
@@ -215,10 +232,17 @@ export function SpotifyCard({
   data,
   thumbnail,
   allowEmbeds,
+  eagerImages = false,
 }: {
   data: SpotifyData;
   thumbnail: string;
   allowEmbeds: boolean;
+  /** Kapak GÖRSELİ hemen insin mi? Yalnız landing şeridi true geçer —
+      orada kartlar CSS `transform` ile kaydırılıyor ve tarayıcı tembel
+      görselleri dönüşümle görünür alana giren öğeler için yeniden
+      değerlendirmiyor: kart kayıp gelse de boş kalıyordu. `<iframe>`
+      tembel KALIR, o bir bağlantı kurar. */
+  eagerImages?: boolean;
 }) {
   const w = useCatalog(widgetCatalog);
   const [playing, setPlaying] = useState(false);
@@ -256,7 +280,12 @@ export function SpotifyCard({
     <>
       <span className="sp-cover">
         {thumbnail ? (
-          <img src={thumbnail} alt="" loading="lazy" draggable={false} />
+          <img
+            src={thumbnail}
+            alt=""
+            loading={eagerImages ? "eager" : "lazy"}
+            draggable={false}
+          />
         ) : (
           // Kapak imzalanamadıysa (sır yok / uzak hata) kart kırık <img>
           // göstermez, sade bir yüzeye düşer.

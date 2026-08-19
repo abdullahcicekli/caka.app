@@ -120,10 +120,17 @@ function TowerRowView({
                 className="lp-tower-cell profile-grid-item"
                 style={{ "--lp-tower-ch": cell.h } as CSSProperties}
               >
+                {/* GÖRSELLER HEMEN İNER. Şerit CSS `transform` ile
+                    kaydırılıyor ve tarayıcı tembel görselleri dönüşümle
+                    görünür alana giren öğeler için yeniden değerlendirmiyor:
+                    kart kayıp gelse de boş kalıyordu (ölçüldü — görünür
+                    alandaki üç kart hiç yüklenmemişti). Şerit zaten
+                    katlamanın üstünde ve görülmek için var. */}
                 <ProfileBlockCard
                   block={cell.block}
                   githubCalendars={heroTowerCalendars}
                   signedImages={heroTowerImages}
+                  eagerImages
                 />
               </div>
             ))}
