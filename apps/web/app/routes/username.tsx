@@ -219,13 +219,13 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/dashboard">
-                <ViewGrid /> Panel
+                <ViewGrid /> {app.nav.dashboard}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Link to="/" aria-label="Caka — ana sayfa" className="brand-corner">
+        <Link to="/" aria-label={app.nav.homeAria} className="brand-corner">
           <img src={logoBlack} alt="Caka" />
         </Link>
       )}

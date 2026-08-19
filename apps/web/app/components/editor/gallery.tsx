@@ -92,18 +92,18 @@ export function BlockGallery({
   const showContent = category !== "social" && contentItems.length > 0;
 
   return (
-    <div className="block-gallery editor-popover" role="dialog" aria-label="Blok galerisi">
+    <div className="block-gallery editor-popover" role="dialog" aria-label={app.editor.blockPickerAria}>
         <label className="gallery-search">
           <Search width={19} height={19} aria-hidden />
           <input
             autoFocus
             type="search"
-            placeholder="Ara…"
+            placeholder={app.editor.searchPlaceholder}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <div className="gallery-chips" role="group" aria-label="Kategoriler">
+        <div className="gallery-chips" role="group" aria-label={app.editor.categoriesAria}>
           <button
             type="button"
             className={category === "social" ? "is-active" : ""}
@@ -119,7 +119,7 @@ export function BlockGallery({
             {app.editor.pickerContent}
           </button>
           {category !== null ? (
-            <button type="button" aria-label="Filtreyi temizle" onClick={() => setCategory(null)}>
+            <button type="button" aria-label={app.editor.clearFilterAria} onClick={() => setCategory(null)}>
               <Xmark width={16} height={16} />
             </button>
           ) : null}

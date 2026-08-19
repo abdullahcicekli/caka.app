@@ -11,6 +11,8 @@ import { checkProxyImageUrl, pickFaviconHref, type ProfileLayout } from "@caka/s
 import { getSession } from "./auth";
 import { isCrossOriginRequest } from "./request";
 import { fetchFollowingCheckedRedirects, signImageProxyPath } from "./image-proxy";
+import { appCatalog } from "../app/content/app";
+import { localeFromRequest } from "./locale";
 
 // Zaman aşımı ve yönlendirme sınırı ortak fetch yardımcısından gelir
 // (server/image-proxy.ts).
@@ -216,7 +218,7 @@ export const ogApi = new Hono<{ Bindings: Env }>();
 // `image` layout'a yazılacak ham adres, `proxied` ise doğrudan `<img src>`'e
 // konabilecek imzalı birinci taraf adrestir (imzasız adres proxy'den geçmez).
 ogApi.get("/", async (c) => {
-  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+  if (isCrossOriginRequest(c.req.raw)) return c.json({ error: appCatalog[localeFromRequest(c.req.raw)].api.origin }, 403);
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
   const { image, favicon } = await fetchLinkPreview(

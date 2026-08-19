@@ -207,6 +207,24 @@ export const tr = {
     removeBlock: "Kaldır",
     editedElsewhere: "Sayfa başka bir yerde düzenlendi.",
 
+    blockPickerAria: "Blok galerisi",
+    searchPlaceholder: "Ara…",
+    categoriesAria: "Kategoriler",
+    clearFilterAria: "Filtreyi temizle",
+    doneAria: "Bitti",
+    deleteAction: "Sil",
+    applyAction: "Uygula",
+    actionRequired: "Aksiyon gerekli",
+    refresh: "Yenile",
+    generalInfo: "Genel bilgi",
+    addBlock: "Blok ekle",
+    themeAria: "Tema",
+    addText: "Metin ekle",
+    addStatus: "Duyuru ekle",
+    addYoutube: "YouTube ekle",
+    youtubePlaceholder: "youtube.com/watch?v=… ya da youtube.com/@kanal",
+    spotifyPlaceholder: "open.spotify.com/track/… ya da spotify:album:…",
+
     richText: {
       placeholder: "Bir şeyler yaz…",
       linkUrl: "Bağlantı adresi",
@@ -267,6 +285,15 @@ export const tr = {
     termsNotice: "Kaydolarak kullanım şartlarını ve gizlilik politikasını kabul edersin.",
     gridSoon: "Grid editörü çok yakında — sayfan şimdiden yayında.",
 
+    goToPage: "Sayfana git",
+    back: "Geri",
+    addressPlaceholder: "adres",
+    handlePlaceholder: "sen",
+    continueAria: "Devam et",
+    checking: "kontrol ediliyor…",
+    claimCta: "Adresi al",
+    signUpGoogle: "Google ile kaydol",
+    signUpApple: "Apple ile kaydol",
     almostDone: "Neredeyse tamam",
     claimTitle: "Hoş geldin",
     claimBody: "Sayfan hangi adreste yayınlansın?",
@@ -298,6 +325,8 @@ export const tr = {
     pages: "Sayfalar",
     analytics: "Analitik",
     settings: "Ayarlar",
+    homeAria: "Ana sayfa",
+    dashboard: "Panel",
     viewProfile: "Profili gör",
     editProfile: "Profili düzenle",
     accountSettings: "Hesap ayarları",
@@ -311,6 +340,7 @@ export const tr = {
 
   profile: {
     menuLabel: "Caka menüsü",
+    profileInfoAria: "Profil bilgileri",
     blocksLabel: "Bağlantılar ve içerikler",
     shareImageAlt: (name: string) => `${name} adlı Caka profilinin paylaşım görseli`,
     description: (name: string) =>
@@ -339,6 +369,17 @@ export const tr = {
     layoutTooManyBlocks: (max: number) => `Sayfanda en fazla ${max} blok olabilir`,
     draftInvalid: "Taslak verisi geçersiz",
     blocksIncomplete: "Bazı bloklar tamamlanmamış",
+
+    layoutInvalid: "Sayfa verisi geçersiz",
+    profileNotFound: "Profil bulunamadı",
+    layoutConflict: "Sayfa başka bir yerde güncellendi",
+    layoutTooLarge: "Sayfa verisi çok büyük",
+    settingsInvalid: "Ayar verisi geçersiz",
+    settingsTooLarge: "Ayar verisi çok büyük",
+    imageNotOnPage: "Seçilen görsel sayfanda bulunamadı",
+    requestInvalid: "İstek verisi geçersiz",
+    requestTooLarge: "İstek verisi çok büyük",
+    publishFailed: "Sayfa yayınlanamadı",
 
     spotifyInvalid:
       "Bu bir bağlantı gibi görünmüyor. Spotify'da “Paylaş → Bağlantıyı kopyala” ile aldığın adresi yapıştır.",

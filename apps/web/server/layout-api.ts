@@ -50,7 +50,7 @@ export const layoutApi = new Hono<{ Bindings: Env }>();
 // `layout`/`theme` yalnızca /publish ile değişir.
 layoutApi.put("/layout", async (c) => {
   if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+    return c.json({ error: apiText(c.req.raw).origin }, 403);
   }
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
@@ -58,7 +58,7 @@ layoutApi.put("/layout", async (c) => {
   try {
     const body = saveSchema.safeParse(await readLimitedJson(c.req.raw, 128 * 1024));
     if (!body.success) {
-      return c.json({ error: "Sayfa verisi geçersiz", issues: body.error.issues }, 400);
+      return c.json({ error: apiText(c.req.raw).layoutInvalid, issues: body.error.issues }, 400);
     }
     const db = createDb(c.env.DB);
     // İleri/geri uyum: bu deploy'un tanımadığı bloklar istemciye hiç
@@ -70,7 +70,7 @@ layoutApi.put("/layout", async (c) => {
       columns: { draftLayout: true, layout: true },
       where: eq(profile.userId, session.user.id),
     });
-    if (!current) return c.json({ error: "Profil bulunamadı" }, 404);
+    if (!current) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
     // Editör hangi belgeyi açtıysa korunan bloklar da oradan gelir
     // (taslak ayrıştırılamıyorsa yayınlanmış hâl — loader ile aynı sıra).
     const source =
@@ -107,12 +107,12 @@ layoutApi.put("/layout", async (c) => {
       )
       .returning({ version: profile.version });
     if (!updated.length) {
-      return c.json({ error: "Sayfa başka bir yerde güncellendi" }, 409);
+      return c.json({ error: apiText(c.req.raw).layoutConflict }, 409);
     }
     return c.json({ version: updated[0]!.version });
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: "Sayfa verisi çok büyük" }, 413);
+      return c.json({ error: apiText(c.req.raw).layoutTooLarge }, 413);
     }
     return c.json({ error: "Sayfa kaydedilemedi" }, 400);
   }
@@ -123,7 +123,7 @@ layoutApi.put("/layout", async (c) => {
 // yalnızca oturum sahibinin kendi profil satırı güncellenir (where userId).
 layoutApi.put("/og", async (c) => {
   if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+    return c.json({ error: apiText(c.req.raw).origin }, 403);
   }
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
@@ -131,7 +131,7 @@ layoutApi.put("/og", async (c) => {
   try {
     const body = ogSettingsSchema.safeParse(await readLimitedJson(c.req.raw, 4 * 1024));
     if (!body.success) {
-      return c.json({ error: "Ayar verisi geçersiz", issues: body.error.issues }, 400);
+      return c.json({ error: apiText(c.req.raw).settingsInvalid, issues: body.error.issues }, 400);
     }
     const db = createDb(c.env.DB);
     // Fotoğraf kaynağı ancak kullanıcının KENDİ layout'undaki bir görsel
@@ -142,13 +142,13 @@ layoutApi.put("/og", async (c) => {
         columns: { layout: true },
         where: eq(profile.userId, session.user.id),
       });
-      if (!row) return c.json({ error: "Profil bulunamadı" }, 404);
+      if (!row) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
       const parsed = parseProfileLayout(row.layout);
       const inLayout = (parsed ? layoutPhotoAssets(parsed) : []).some(
         (item) => item.assetId === body.data.ogPhotoAssetId,
       );
       if (!inLayout) {
-        return c.json({ error: "Seçilen görsel sayfanda bulunamadı" }, 400);
+        return c.json({ error: apiText(c.req.raw).imageNotOnPage }, 400);
       }
     }
     const updated = await db
@@ -160,11 +160,11 @@ layoutApi.put("/og", async (c) => {
       })
       .where(eq(profile.userId, session.user.id))
       .returning({ id: profile.id });
-    if (!updated.length) return c.json({ error: "Profil bulunamadı" }, 404);
+    if (!updated.length) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
     return c.json({ ok: true });
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: "Ayar verisi çok büyük" }, 413);
+      return c.json({ error: apiText(c.req.raw).settingsTooLarge }, 413);
     }
     return c.json({ error: "Ayarlar kaydedilemedi" }, 400);
   }
@@ -174,7 +174,7 @@ layoutApi.put("/og", async (c) => {
 // layout/theme'i taslaktan kopyalayıp taslağı temizler.
 layoutApi.post("/publish", async (c) => {
   if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: "Geçersiz istek kaynağı" }, 403);
+    return c.json({ error: apiText(c.req.raw).origin }, 403);
   }
   const session = await getSession(c.env, c.req.raw);
   if (!session) return c.json({ error: "Oturum gerekli" }, 401);
@@ -182,13 +182,13 @@ layoutApi.post("/publish", async (c) => {
   try {
     const body = publishSchema.safeParse(await readLimitedJson(c.req.raw, 4 * 1024));
     if (!body.success) {
-      return c.json({ error: "İstek verisi geçersiz" }, 400);
+      return c.json({ error: apiText(c.req.raw).requestInvalid }, 400);
     }
     const db = createDb(c.env.DB);
     const row = await db.query.profile.findFirst({
       where: eq(profile.userId, session.user.id),
     });
-    if (!row) return c.json({ error: "Profil bulunamadı" }, 404);
+    if (!row) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
 
     // Bekleyen taslak yoksa yayınlanacak yeni bir şey de yok.
     if (row.draftLayout === null) {
@@ -199,7 +199,7 @@ layoutApi.post("/publish", async (c) => {
     // hâlleriyle yayınlanan belgeye taşınır.
     const parsed = parseProfileLayoutDetailed(row.draftLayout);
     if (!parsed) {
-      return c.json({ error: "Taslak verisi geçersiz" }, 400);
+      return c.json({ error: apiText(c.req.raw).draftInvalid }, 400);
     }
     const draft = profileLayoutWriteSchema.safeParse(parsed.layout);
     if (!draft.success) {
@@ -231,13 +231,13 @@ layoutApi.post("/publish", async (c) => {
       )
       .returning({ version: profile.version });
     if (!updated.length) {
-      return c.json({ error: "Sayfa başka bir yerde güncellendi" }, 409);
+      return c.json({ error: apiText(c.req.raw).layoutConflict }, 409);
     }
     return c.json({ version: updated[0]!.version, published: true });
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: "İstek verisi çok büyük" }, 413);
+      return c.json({ error: apiText(c.req.raw).requestTooLarge }, 413);
     }
-    return c.json({ error: "Sayfa yayınlanamadı" }, 400);
+    return c.json({ error: apiText(c.req.raw).publishFailed }, 400);
   }
 });

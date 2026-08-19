@@ -44,7 +44,8 @@ export function InlineTextEditor({
   onChange: (doc: unknown, plain: string) => void;
   onClose: () => void;
 }) {
-  const rt = useCatalog(appCatalog).editor.richText;
+  const app = useCatalog(appCatalog);
+  const rt = app.editor.richText;
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
@@ -122,7 +123,7 @@ export function InlineTextEditor({
           </button>
         ))}
         <span className="sep" aria-hidden />
-        <button type="button" aria-label="Bitti" data-tooltip="Bitti" onClick={onClose}>
+        <button type="button" aria-label={app.editor.doneAria} data-tooltip="Bitti" onClick={onClose}>
           <Check width={15} height={15} />
         </button>
       </div>

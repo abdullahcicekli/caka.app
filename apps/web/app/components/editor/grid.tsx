@@ -358,7 +358,7 @@ export function EditorGrid({
                 </span>
               ) : null}
               {selectedId === block.id && editingId !== block.id ? (
-                <span className="selected-label">{block.type}</span>
+                <span className="selected-label">{app.blockTypes[block.type]}</span>
               ) : null}
               {selectedId === block.id ? (
                 <button

@@ -155,7 +155,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder="sen"
+              placeholder={app.setup.handlePlaceholder}
               autoFocus
               autoComplete="off"
               autoCapitalize="none"
@@ -167,7 +167,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
             />
             <button
               type="submit"
-              aria-label="Devam et"
+              aria-label={app.setup.continueAria}
               disabled={!ready}
               className={`flex size-9 shrink-0 items-center justify-center rounded-full transition-opacity ${
                 ready ? "bg-murekkep text-white" : "opacity-0"
@@ -186,7 +186,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
           ) : availability.state === "unavailable" ? (
             <span className="text-destructive">⚠ {availability.message}</span>
           ) : availability.state === "checking" ? (
-            <span className="font-normal text-murekkep/40">kontrol ediliyor…</span>
+            <span className="font-normal text-murekkep/40">{app.setup.checking}</span>
           ) : null}
         </p>
 
@@ -210,7 +210,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
                 type="submit"
                 className="w-full rounded-full bg-murekkep py-3 font-medium text-white hover:bg-murekkep/85"
               >
-                Adresi al
+                {app.setup.claimCta}
               </button>
             </Form>
           ) : (
@@ -221,7 +221,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
                 className="flex w-full items-center justify-center gap-2 rounded-full border border-sinir bg-white py-3 font-medium hover:bg-zemin"
               >
                 <GoogleIcon />
-                Google ile kaydol
+                {app.setup.signUpGoogle}
               </button>
               <button
                 type="button"
@@ -229,7 +229,7 @@ export default function Onboarding({ loaderData, actionData }: Route.ComponentPr
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-murekkep py-3 font-medium text-white hover:bg-murekkep/85"
               >
                 <AppleIcon />
-                Apple ile kaydol
+                {app.setup.signUpApple}
               </button>
             </div>
           )}

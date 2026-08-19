@@ -607,7 +607,7 @@ export function ProfileCanvas({
   return (
     <div className={`profile-canvas ${compact ? "is-compact" : ""}`} data-profile-theme={theme}>
       <div className="profile-standard-layout">
-        <aside className="profile-identity" aria-label="Profil bilgileri">
+        <aside className="profile-identity" aria-label={app.profile.profileInfoAria}>
           {profileBlock ? <ProfileBlockCard block={profileBlock} /> : null}
         </aside>
         <section className="profile-grid" aria-label={app.profile.blocksLabel}>

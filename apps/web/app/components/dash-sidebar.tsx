@@ -43,7 +43,7 @@ export function DashSidebar({
   return (
     <aside className="dash-sidebar">
       <header className="dash-sidebar-header">
-        <Link to="/" aria-label="Ana sayfa">
+        <Link to="/" aria-label={nav.homeAria}>
           <img src={logoBlack} alt="Caka" />
         </Link>
         <span className="dash-logo-sep" aria-hidden />

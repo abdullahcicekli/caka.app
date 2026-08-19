@@ -1401,7 +1401,7 @@ function Inspector({
             <label>{app.editor.youtubeLinkLabel}
               <input
                 value={youtubeInput}
-                placeholder="youtube.com/watch?v=… ya da youtube.com/@kanal"
+                placeholder={app.editor.youtubePlaceholder}
                 onChange={(event) => setYoutubeInput(event.target.value)}
               />
               <small className="inspector-hint">
@@ -1446,7 +1446,7 @@ function Inspector({
             <label>{app.editor.spotifyLinkLabel}
               <input
                 value={spotifyInput}
-                placeholder="open.spotify.com/track/… ya da spotify:album:…"
+                placeholder={app.editor.spotifyPlaceholder}
                 onChange={(event) => setSpotifyInput(event.target.value)}
               />
               <small className="inspector-hint">
@@ -1703,8 +1703,8 @@ function Inspector({
         {fields()}
       </div>
       <footer>
-        {block.type !== "profile" ? <button type="button" onClick={remove}><Trash width={16} height={16} /> Sil</button> : <span />}
-        <button type="button" onClick={close}>Uygula</button>
+        {block.type !== "profile" ? <button type="button" onClick={remove}><Trash width={16} height={16} /> {app.editor.deleteAction}</button> : <span />}
+        <button type="button" onClick={close}>{app.editor.applyAction}</button>
       </footer>
     </aside>
   );
@@ -2279,7 +2279,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       {issues.length ? (
         <div className="editor-issue-panel" role="alert">
           <strong>
-            <WarningTriangle width={15} height={15} aria-hidden /> Aksiyon gerekli
+            <WarningTriangle width={15} height={15} aria-hidden /> {app.editor.actionRequired}
           </strong>
           <p>{app.editor.blockedTitle}</p>
           <ul>
@@ -2312,7 +2312,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           {saveState === "conflict" ? (
             <>
               {app.editor.editedElsewhere}
-              <button type="button" onClick={() => window.location.reload()}>Yenile</button>
+              <button type="button" onClick={() => window.location.reload()}>{app.editor.refresh}</button>
             </>
           ) : (
             app.editor.saveFailed
@@ -2337,7 +2337,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               }}
             >
               <ProfileBlockCard block={profileBlock} signedImages={signedImages} />
-              {selectedId === profileBlock.id ? <span className="selected-label">Genel bilgi</span> : null}
+              {selectedId === profileBlock.id ? <span className="selected-label">{app.editor.generalInfo}</span> : null}
             </div>
           ) : null}
           {/* Düzenleme modunda kart tıklaması bloğu seçer, bağlantıyı AÇMAZ:
@@ -2394,7 +2394,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               }
             />
             <button type="button" className="editor-add-tile" onClick={() => setPanel("gallery")}>
-              <Plus width={20} height={20} /> Blok ekle
+              <Plus width={20} height={20} /> {app.editor.addBlock}
             </button>
           </div>
         </div>
@@ -2404,7 +2404,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <button
           type="button"
           data-tooltip="Tema"
-          aria-label="Tema"
+          aria-label={app.editor.themeAria}
           className={panel === "theme" ? "is-active" : ""}
           onClick={() => setPanel(panel === "theme" ? null : "theme")}
         >
@@ -2414,10 +2414,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <button type="button" data-tooltip={app.editor.addLink} aria-label={app.editor.addLink} onClick={() => add("link")}>
           <LinkIcon width={19} height={19} />
         </button>
-        <button type="button" data-tooltip="Metin ekle" aria-label="Metin ekle" onClick={() => add("text")}>
+        <button type="button" data-tooltip="Metin ekle" aria-label={app.editor.addText} onClick={() => add("text")}>
           <Text width={19} height={19} />
         </button>
-        <button type="button" data-tooltip="Duyuru ekle" aria-label="Duyuru ekle" onClick={() => add("status")}>
+        <button type="button" data-tooltip="Duyuru ekle" aria-label={app.editor.addStatus} onClick={() => add("status")}>
           <Megaphone width={18} height={18} />
         </button>
         {/* TEK fotoğraf düğmesi: `image` ve `gallery` birleşti. Kullanıcı
@@ -2433,13 +2433,13 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         >
           <MediaImage width={19} height={19} />
         </button>
-        <button type="button" data-tooltip="YouTube ekle" aria-label="YouTube ekle" onClick={() => add("youtube")}>
+        <button type="button" data-tooltip="YouTube ekle" aria-label={app.editor.addYoutube} onClick={() => add("youtube")}>
           <MediaVideo width={19} height={19} />
         </button>
         <button
           type="button"
           data-tooltip="Blok galerisi"
-          aria-label="Blok galerisi"
+          aria-label={app.editor.blockPickerAria}
           className={panel === "gallery" ? "is-active" : ""}
           onClick={() => setPanel(panel === "gallery" ? null : "gallery")}
         >

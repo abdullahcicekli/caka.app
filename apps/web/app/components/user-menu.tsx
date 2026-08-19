@@ -71,7 +71,7 @@ function AccountMenuContent({
           {showDashboard ? (
             <DropdownMenuItem asChild>
               <Link to="/dashboard">
-                <ViewGrid /> Panel
+                <ViewGrid /> {app.nav.dashboard}
               </Link>
             </DropdownMenuItem>
           ) : null}
@@ -89,7 +89,7 @@ function AccountMenuContent({
       ) : (
         <DropdownMenuItem asChild>
           <Link to="/onboarding">
-            <OpenNewWindow /> Adresini al
+            <OpenNewWindow /> {app.auth.claimAddress}
           </Link>
         </DropdownMenuItem>
       )}

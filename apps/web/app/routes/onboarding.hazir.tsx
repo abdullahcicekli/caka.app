@@ -58,7 +58,7 @@ export default function OnboardingHazir({ loaderData }: Route.ComponentProps) {
         to={`/${username}`}
         className="mt-10 w-full max-w-sm rounded-full bg-murekkep py-3.5 font-medium text-white hover:bg-murekkep/85"
       >
-        Sayfana git
+        {app.setup.goToPage}
       </Link>
       <p className="mt-4 text-sm text-murekkep/50">
         {app.setup.gridSoon}

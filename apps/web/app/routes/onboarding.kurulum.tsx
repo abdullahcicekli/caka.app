@@ -634,7 +634,7 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
               <input
                 name="extraLink"
                 value={value}
-                placeholder="adres"
+                placeholder={app.setup.addressPlaceholder}
                 onChange={(event) =>
                   setExtras((items) => items.map((item, i) => (i === index ? event.target.value : item)))
                 }
@@ -748,7 +748,7 @@ export default function OnboardingSetup({ loaderData, actionData }: Route.Compon
           {back ? (
             <Link className="onboarding-back" to={stepPath(back)}>
               <NavArrowLeft width={17} height={17} strokeWidth={2} />
-              Geri
+              {app.setup.back}
             </Link>
           ) : <span className="onboarding-back-placeholder" aria-hidden />}
           <Progress step={step} />
