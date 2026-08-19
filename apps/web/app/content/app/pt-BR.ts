@@ -184,6 +184,9 @@ export const ptBR = {
     ayetSearchHint:
       "Escreva o nome da surata e o número do versículo (“Bakara 255”, “2:255”) ou busque uma palavra na tradução para o turco.",
     ayetSearching: "Buscando versículos…",
+    ayetSuggestionsLabel: "Sugestões de versículos",
+    ayetResultCount: (count: number) =>
+      `${count === 1 ? "1 versículo" : `${count} versículos`} na lista. Use as setas para navegar e Enter para selecionar.`,
     ayetNoResults: (query: string) => `Nenhum versículo encontrado para “${query}”.`,
     ayetFailed: "Não foi possível acessar a fonte dos versículos — verifique sua conexão.",
     ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} adicionado`,

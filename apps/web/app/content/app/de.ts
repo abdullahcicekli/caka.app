@@ -184,6 +184,9 @@ export const de = {
     ayetSearchHint:
       "Gib Surenname und Versnummer ein („Bakara 255“, „2:255“) oder suche nach einem Wort in der türkischen Übersetzung.",
     ayetSearching: "Verse werden gesucht…",
+    ayetSuggestionsLabel: "Versvorschläge",
+    ayetResultCount: (count: number) =>
+      `${count === 1 ? "1 Vers" : `${count} Verse`} aufgelistet. Mit den Pfeiltasten navigieren, mit der Eingabetaste auswählen.`,
     ayetNoResults: (query: string) => `Kein Vers für „${query}“ gefunden.`,
     ayetFailed: "Die Versquelle war nicht erreichbar — prüf deine Verbindung.",
     ayetSelected: (surahName: string, verse: number) => `${surahName} ${verse} hinzugefügt`,
