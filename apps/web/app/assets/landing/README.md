@@ -90,13 +90,14 @@ magick creator-elif.webp  -crop 340x340+180+240 +repage -resize 256x256 -quality
 magick creator-naz.webp   -crop 420x420+390+110 +repage -resize 256x256 -quality 80 avatar-naz.webp
 ```
 
-Portrelerin ortamından iki **yüzsüz** detay (1,91:1 — `.social-og` oranı):
+Portre ortamından yapılan **kırpmalar KALDIRILDI.** `detail-elif.webp`
+(`creator-elif.webp`ten kırpılan duvar rafı + cam vazo) kartın konusunu
+anlatmıyordu — kırpma kişiyi dışarıda bırakmak için karenin boş yarısını
+alıyordu ve geriye ne olduğu belirsiz bir köşe kalıyordu. Kural: **kart
+görseli kişi taşımasın AMA kartın konusunu anlatsın.** Yerine konuya göre
+üretilmiş kareler geldi (§3).
 
-```sh
-magick creator-elif.webp -crop 470x246+0+60  +repage -resize 560x -quality 78 detail-elif.webp   # duvar rafı, cam vazo
-```
-
-`detail-naz.webp` kırpma DEĞİL, üretim (760×398; üretim karesi 560×293 idi,
+`scene-yazi.webp` (eski adı `detail-naz.webp`) kırpma DEĞİL, üretim (760×398; üretim karesi 560×293 idi,
 bkz. §3'teki yeniden örnekleme notu) — Naz'ın yeni karesinde
 kişisiz bir detay yoktu:
 
@@ -117,7 +118,7 @@ webp'e indirildi; kare kapaklar 400×400.
 > **ÜRETİM KARELERİ DEPODA YOK.** Yalnız küçültülmüş webp'ler commit edildi;
 > fal çıktıları (ve `map-raw.jpg`, `menu-raw.jpg`) silinmiş durumda. Bu yüzden
 > çözünürlük kapısını (yukarı bkz.) kaçıran ÜÇ kare — `scene-naz`,
-> `detail-naz`, `map-town` — yeniden üretilemedi; kapıyı geçmeleri için
+> `scene-yazi`, `map-town` — yeniden üretilemedi; kapıyı geçmeleri için
 > mevcut piksellerden **yeniden örneklendiler** (1,20× / 1,36× / 1,34×,
 > Lanczos + hafif `-unsharp`). Yani doğal enleri kapıyı karşılıyor ama gerçek
 > detayları hâlâ kaynak dosyanın detayı kadar:
@@ -125,7 +126,7 @@ webp'e indirildi; kare kapaklar 400×400.
 > | Dosya | Şimdiki | Gerçek detay | Kutunun 2 katı |
 > |---|---|---|---|
 > | `scene-naz.webp`  | 880×461  | 735×385 | 850×445 |
-> | `detail-naz.webp` | 760×398  | 560×293 | 732×308 |
+> | `scene-yazi.webp` | 760×398  | 560×293 | 732×308 |
 > | `map-town.webp`   | 1020×765 | 760×570 | 996×696 |
 >
 > Üçü de alan derinliği sığ / düz grafik kareler, yani yüksek frekanslı
@@ -145,13 +146,33 @@ webp'e indirildi; kare kapaklar 400×400.
 > pale plaster wall, warm sand and clay palette, photorealistic editorial
 > photograph, 50mm, no people, no hands, no text, no lettering, no writing
 
-### `scene-selin-tools.webp` — Selin'in sosyal kartı (560×293)
+### `scene-marangoz.webp` — Halil'in (marangoz) Threads kartı (560×293)
 
-> Close up of a potter's worktable in warm daylight: wooden ribs, a wire clay
-> cutter, a small sponge and a metal loop tool laid out on a clay dusted
-> wooden surface, a shallow bowl of murky water beside them, dried clay
-> flakes, warm sand and grey palette, photorealistic macro editorial
-> photograph, 50mm, no people, no hands, no text, no lettering, no writing
+Kırpma: `-crop 2752x1440+0+0` (16:9 → 1,91:1, ortadan), `-resize 560x293`,
+`-quality 68`. Kutu 235×123, kapı 470×247 — 560×293 kapıyı 1,19× aşıyor.
+
+Eskiden bu kutuda `scene-selin-tools.webp` (çömlekçi tezgâhı) duruyordu; kart
+sahibi marangoz olunca konu tutmuyordu, dosya silindi.
+
+> Editorial photograph of a carpenter's workbench in a bright workshop. A hand
+> plane resting on a half-finished oak board, a row of sharp bevel-edge
+> chisels laid out on the bench, curls of fresh wood shavings scattered across
+> the surface, a folding rule and a marking gauge. Warm honey-toned wood, soft
+> daylight from a high window, shallow depth of field. No people, no hands, no
+> faces, no text, no logos, no watermark.
+
+### `scene-mimar.webp` — Burak'ın (mimar) LinkedIn kartı (560×293)
+
+Aynı kırpma ve ölçü. Eskiden bu kutuda `detail-elif.webp` duruyordu (önce
+duvar rafı + cam vazo kırpması, sonra bir ses kurgu masası); ikisi de mimarlık
+kartını anlatmıyordu, dosya silindi.
+
+> Editorial photograph of an architect's desk. A white cardboard scale model
+> of a small modern building in the foreground, rolled and unrolled technical
+> floor plan drawings beside it, a triangular scale ruler, a mechanical pencil
+> and a pair of dividers. Cool neutral greys and warm paper tones, soft even
+> studio daylight, shallow depth of field. No people, no hands, no faces, no
+> readable text, no logos, no watermark.
 
 ### `scene-naz.webp` — Naz'ın nsosyal kartı
 

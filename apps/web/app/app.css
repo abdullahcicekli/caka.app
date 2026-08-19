@@ -44,6 +44,18 @@
   --color-mor: #5b2aa5;
   --color-sinir: #e6e6e1;
 
+  /* Hero şeridinin zemini: sayfa zemininden bir tık derin KIRIK BEYAZ.
+     Neden ayrı bir token ve neden `--color-zemin` DEĞİL: şerit 16px yarıçaplı
+     bir panel ve panelin kendi kenarı olmalı — sayfa zeminiyle aynı değeri
+     verirsek panel kaybolur, kartlar zeminde havada durur. Neden `--color-kum`
+     DEĞİL: o ton belirgin biçimde bej/sarı (kum), istenen kırık beyaz nötr.
+     Değer ÖLÇÜMLE seçildi (bkz. `hero-tower.tsx` tema notu): şeritteki dört
+     koyu kart yüzeyi buna 10,75-14,04 ile oturuyor (eski fıstık yeşili
+     zeminde 9,25-12,08 idi) ve sayfa zeminine karşı 1,10 fark panelin kenarını
+     görünür kılıyor. Daha koyu bir kırık beyaz kart vurgularının zemine
+     ayrımını düşürüyordu, daha açığı paneli sayfaya karıştırıyordu. */
+  --color-tebesir: #efebe1;
+
   /* Editör uyarısı: yayına engel olan eksik blokların çerçevesi/rozeti */
   --color-uyari: #d97706;
 

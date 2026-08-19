@@ -86,7 +86,15 @@ Hepsi laboratuvardan üretildi; elle çizilmiş varlık yok. Yeniden üretmek i�
 | `emre / kaan / serkan / ozan / zeynep / busra.webp` | Landing karakter şeridi |
 | `telefon-busra.webp` | `/login` sağ paneli ve `/onboarding` |
 | `../thumb-podcast.webp` | Hero şeridi, Elif'in "kamera arkası" video kapağı. fal `flux-pro/v1.1-ultra`, 16:9, kişisiz podcast stüdyosu. 1000×562 |
-| `../og-konser.webp` | Hero şeridi, Kerem'in konser bağlantısı og'u. fal `flux-pro/v1.1-ultra`, 21:9, kişisiz sahne. 900×378 |
+| `../og-konser.webp` | Hero şeridi, Ozan'ın (gitarist) konser bağlantısı og'u. fal `flux-pro/v1.1-ultra`, 21:9, kişisiz sahne. 900×378 |
+| `../scene-marangoz.webp` | Hero şeridi, Halil'in (marangoz) Threads kartının og'u. fal `flux-pro/v1.1-ultra`, 16:9 (2752×1536) → 1,91:1'e kırpılıp **560×293**. Kişisiz: rende, keski, talaş olan meşe tezgâh. **Öncesi:** `scene-selin-tools.webp` (çömlekçi tezgâhı, 560×293) — Halil marangoz, kart konusuyla ilgisizdi; dosya artık kullanılmıyor ve silindi. |
+| `../scene-mimar.webp` | Hero şeridi, Burak'ın (mimar) LinkedIn kartının og'u. Aynı üretim, **560×293**. Kişisiz: beyaz karton maket, teknik çizimler, üçgen cetvel, pergel. **Öncesi:** `detail-elif.webp` — ilk hâli karanlık lata duvarı önünde bir vazoydu (kullanıcının bildirdiği kusur), aynı oturumda ses kurgu masası olarak yeniden üretildi ama kadro dağıtılınca sahibi mimar oldu; ikisi de kartı anlatmıyordu, dosya silindi. |
+| `../scene-yazi.webp` | Hero şeridi, Furkan'ın (yazar) bağlantı kartının og'u. **Yalnız yeniden adlandırıldı** (`detail-naz.webp` → `scene-yazi.webp`), görsel aynı: loş masada defter, dolmakalem, kupa. 760×398. Adı kişiye değil konuya bağlandı çünkü kare artık Naz'ın değil. |
+
+Kart görsellerinin dosya adları **kişiye değil KONUYA** göre verilir
+(`scene-marangoz`, `scene-mimar`, `scene-yazi`). Sebep ölçülmüş bir kusur:
+kadro yeniden dağıtıldığında kişi adı taşıyan dosya adı sessizce yanlışa
+düşüyor ve `heroTowerImages` eşlemesine bakan kişi uyumsuzluğu göremiyor.
 
 Karakter şeridi HAREKETSİZDİR: bir kartta denenen animasyonlu webp döngüsü
 (`emre-dongu.webp`) kaldırıldı, dosyası silindi.
