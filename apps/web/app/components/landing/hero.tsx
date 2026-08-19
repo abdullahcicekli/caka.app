@@ -1,12 +1,9 @@
-import { useState, type CSSProperties } from "react";
-
-import { PillLink } from "./pill-button";
-import type { Cta, LandingContent } from "~/content/landing";
-import { useHref } from "~/lib/locale";
+import { ClaimForm } from "./claim-form";
+import { HeroTower } from "./hero-tower";
+import type { LandingContent } from "~/content/landing";
 
 interface HeroProps {
   hero: LandingContent["hero"];
-  cta: Cta;
 }
 
 /**
@@ -15,9 +12,12 @@ interface HeroProps {
  * MEKANİK: başlık bloğu `position: sticky`, medya normal akışta ve daha
  * yüksek katmanda. Kaydırınca başlık yerinde durur, medya üstüne biner.
  * Tamamen CSS — bu etki için tek satır JS yok (bkz. `landing.css`).
+ *
+ * MEDYA: stok portre şeridi değil, ürünün KENDİ kartlarından kurulmuş akan
+ * sütunlar (`HeroTower`). Bir bio-link ürününün en güçlü kanıtı, ürettiği
+ * sayfanın kendisidir; portreler de artık o kartların içinde yaşıyor.
  */
-export function Hero({ hero, cta }: HeroProps) {
-  const localize = useHref();
+export function Hero({ hero }: HeroProps) {
   const [kickerTop, ...kickerRest] = hero.kicker.split("\n");
 
   return (
@@ -32,80 +32,14 @@ export function Hero({ hero, cta }: HeroProps) {
         <h1 className="lp-display lp-hero-title">{hero.title}</h1>
       </div>
 
-      <HeroStrip media={hero.media} marquee={hero.marquee} />
+      <HeroTower media={hero.media} tower={hero.tower} />
 
+      {/* Medyanın altına binen hap. Referansta burada düz bir CTA düğmesi
+          var; bir bio-link ürününde o hapın en değerli hâli adın orada talep
+          edilmesidir — biçim aynı, iş Caka'nın. */}
       <div className="lp-hero-cta">
-        <PillLink to={localize(cta.href)} variant="ink">
-          {cta.label}
-        </PillLink>
+        <ClaimForm claim={hero.claim} />
       </div>
     </section>
-  );
-}
-
-/**
- * Medya bloğu: kireç zeminde yatay akan portre şeridi.
- *
- * PERFORMANS: blok sabit orana oturur, yani görseller yüklenirken sayfa
- * kaymaz (CLS). İlk iki görsel hemen yüklenir; kalanlar `lazy` ve dar ekranda
- * `hidden` — gizli ve tembel görsel indirilmez, mobil transferi yarıya düşer.
- *
- * HAREKET: liste kesintisiz döngü için iki kez basılır. Akış
- * `prefers-reduced-motion: reduce` altında CSS'te hiç kurulmaz ve ziyaretçi
- * her hâlükârda bir düğmeyle durdurabilir (WCAG 2.2.2 — 5 saniyeden uzun
- * süren otomatik hareketin durdurulabilir olması gerekir).
- */
-function HeroStrip({
-  media,
-  marquee,
-}: {
-  media: LandingContent["hero"]["media"];
-  marquee: LandingContent["hero"]["marquee"];
-}) {
-  const [paused, setPaused] = useState(false);
-  const loop = [...marquee.items, ...marquee.items];
-
-  return (
-    <div className="lp-hero-media">
-      <div
-        className="lp-hero-strip"
-        style={
-          {
-            "--lp-strip-duration": `${marquee.durationSeconds}s`,
-            // Duraklatma `animation-play-state` ile: sınıfı kaldırmak
-            // animasyonu başa sardırır, şerit zıplardı.
-            "--lp-strip-state": paused ? "paused" : "running",
-          } as CSSProperties
-        }
-      >
-        {loop.map((item, index) => (
-          <img
-            key={`${item.image}-${index}`}
-            src={item.image}
-            alt=""
-            // İlk iki kare mobilde de görünür, o yüzden hemen yüklenir.
-            // Kalanlar mobilde `display: none` + `lazy`: tarayıcı gizli
-            // tembel görseli indirmez.
-            loading={index < 2 ? "eager" : "lazy"}
-            // Ilk kare olculen LCP ogesi; tarayici onu diger istekelerin
-            // onune alsin (istekler).
-            fetchPriority={index === 0 ? "high" : undefined}
-            decoding="async"
-            className={index < 2 ? undefined : "is-extra"}
-          />
-        ))}
-      </div>
-      {/* Şeridi durdurma düğmesi. Hareket azaltmada ve mobilde CSS ile
-          gizlenir (şerit orada zaten akmıyor) — React ile gizlemek düğmeyi
-          önce basıp sonra kaldırırdı. */}
-      <button
-        type="button"
-        className="lp-strip-toggle"
-        onClick={() => setPaused((value) => !value)}
-      >
-        {paused ? media.play : media.pause}
-      </button>
-      <span className="sr-only">{media.alt}</span>
-    </div>
   );
 }

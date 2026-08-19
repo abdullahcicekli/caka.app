@@ -336,68 +336,153 @@
   overflow: hidden;
   border-radius: var(--lp-radius);
   background: var(--color-kirec);
-  /* Oran SABİT: görseller yüklenirken sayfa kaymaz (CLS = 0). */
-  aspect-ratio: 4 / 5;
+  /* Yükseklik SABİT ve satırların toplamına eşit: oranla tahmin etmek
+     yerine içerikten türer, kartlar yüklenirken sayfa kaymaz (CLS = 0).
+     iki satır: 240 + 12 + 156 + 24 dolgu = 432; üç satır: + 240 + 12 = 684. */
+  height: 432px;
 }
-@media (min-width: 768px) { .lp-hero-media { aspect-ratio: 16 / 9; } }
+@media (min-width: 1280px) { .lp-hero-media { height: 684px; } }
 
-/* MOBIL: serit akmaz. Iki portre blogu doldurur, kalanlar gizli ve `lazy`
-   (gizli tembel gorsel indirilmez) — mobil transferi yariya iner.
-   MASAUSTU: liste iki kez basilir ve -%50'de basa sararak kesintisiz akar. */
-.lp-hero-strip {
+/* ---------------------------------------------------------------- *
+ * Hero bento şeridi
+ *
+ * Ürünün KENDİ kartları (`ProfileBlockCard`) YATAY akan satırlar hâlinde.
+ * Satırlar ters yönlerde akar; içerik iki kez basılır ve -%50'de başa sarar.
+ *
+ * ÖLÇÜ SÖZLEŞMESİ: kartlar container query ile bant seçiyor ve
+ * `.profile-grid-item` `container-type: size` taşıyor — bu, hücrenin KESİN
+ * genişlik VE yükseklik bilmesini şart koşar. O yüzden ölçüler yüzde değil,
+ * ızgaranın gerçek adımlarıdır: genişlik 178 / 368, yükseklik 156 / 240.
+ * Kart ne bir vitrine sıkıştırılır ne de ürünün kullanmadığı bir ene gerilir.
+ *
+ * YATAY KAYDIRMA ÇUBUĞU YOK: satırlar `overflow: hidden`, dış blok
+ * `overflow: hidden` ve `.lp` `overflow-x: clip`.
+ * ---------------------------------------------------------------- */
+
+.lp-tower {
   display: flex;
   width: 100%;
   height: 100%;
-  gap: 8px;
-  padding: 8px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding-block: 12px;
 }
-.lp-hero-strip img {
-  display: block;
-  min-width: 0;
-  flex: 1;
+
+.lp-tower-row {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  /* Kenarlarda yumuşak solma: kartlar birden kesilmiş gibi durmasın. */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 5%,
+    black 95%,
+    transparent 100%
+  );
+}
+.lp-tower-row[data-h="s"] { height: 156px; }
+.lp-tower-row[data-h="m"] { height: 240px; }
+
+/* Üçüncü satır yalnız geniş ekranda: dar ekranda blok iki satır boyunda. */
+.lp-tower-row[data-row="2"] { display: none; }
+@media (min-width: 1280px) { .lp-tower-row[data-row="2"] { display: block; } }
+
+.lp-tower-run {
+  display: flex;
+  width: max-content;
   height: 100%;
-  border-radius: var(--radius-xl);
-  object-fit: cover;
-}
-.lp-hero-strip img.is-extra { display: none; }
-
-@media (min-width: 768px) {
-  .lp-hero-strip { width: max-content; gap: 12px; padding: 12px; }
-  .lp-hero-strip img {
-    width: auto;
-    flex: none;
-    aspect-ratio: 3 / 4;
-  }
-  .lp-hero-strip img.is-extra { display: block; }
+  gap: 12px;
 }
 
-@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
-  .lp-hero-strip {
-    animation: lp-strip var(--lp-strip-duration, 48s) linear infinite;
+/* Tek sayılı satır ters yönde akar: şerit tek parça bir bant gibi
+   görünmesin, derinlik hissi olsun. */
+@media (prefers-reduced-motion: no-preference) {
+  .lp-tower-run {
+    animation: lp-tower-left var(--lp-tower-seconds, 60s) linear infinite;
     animation-play-state: var(--lp-strip-state, running);
   }
+  .lp-tower-row[data-row="1"] .lp-tower-run {
+    animation-name: lp-tower-right;
+  }
 }
-@keyframes lp-strip {
+
+@keyframes lp-tower-left {
   from { translate: 0 0; }
   to { translate: -50% 0; }
 }
+@keyframes lp-tower-right {
+  from { translate: -50% 0; }
+  to { translate: 0 0; }
+}
 
-/* Medyanın üstüne binen hap CTA. */
+/* Hücre: kartın kendi konteyneri. Ölçüler ızgaranın gerçek adımları. */
+.lp-tower-cell { height: 100%; flex: none; }
+.lp-tower-cell[data-w="n"] { width: 178px; }
+.lp-tower-cell[data-w="w"] { width: 368px; }
+
+/* Medyanın üstüne binen hap: tek parça bir kabuk (beyaz), içinde adres
+   alanı ve koyu gönder düğmesi. Dar ekranda alt alta iner. */
 .lp-hero-cta {
   position: relative;
   z-index: 2;
   display: flex;
   justify-content: center;
-  margin-top: -26px;
+  margin-top: -28px;
+}
+
+.lp-claim {
+  display: flex;
+  width: min(560px, 100%);
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: white;
+  padding: 6px 6px 6px 20px;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--color-murekkep) 10%, transparent),
+    0 10px 30px color-mix(in srgb, var(--color-murekkep) 12%, transparent);
+}
+.lp-claim-field {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 16px;
+}
+.lp-claim-field:focus-within {
+  outline: 2px solid var(--color-mavi);
+  outline-offset: 4px;
+}
+.lp-claim-domain { color: color-mix(in srgb, var(--color-murekkep) 62%, transparent); }
+.lp-claim-input {
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  color: var(--color-murekkep);
+  font-weight: 500;
+  outline: none;
+}
+.lp-claim-input::placeholder {
+  color: color-mix(in srgb, var(--color-murekkep) 45%, transparent);
+  font-weight: 500;
+}
+.lp-claim-submit { flex: none; padding-inline: 22px; padding-block: 11px; }
+
+@media (max-width: 420px) {
+  .lp-claim { flex-direction: column; align-items: stretch; padding: 12px; gap: 10px; }
+  .lp-claim-field { padding-inline: 8px; }
+  .lp-claim-submit { width: 100%; }
 }
 
 .lp-strip-toggle {
   position: absolute;
-  /* Mobilde serit akmiyor; durdurma dugmesi de anlamsiz. */
-  display: none;
+  z-index: 2;
+  display: inline-flex;
   right: 12px;
   bottom: 12px;
-  z-index: 2;
   height: 34px;
   align-items: center;
   gap: 6px;
@@ -411,7 +496,6 @@
 }
 .lp-strip-toggle:hover { background: var(--color-murekkep); }
 .lp-strip-toggle:focus-visible { outline: 2px solid white; outline-offset: 2px; }
-@media (min-width: 768px) { .lp-strip-toggle { display: inline-flex; } }
 /* Hareket azaltmada serit zaten akmiyor; durdurma dugmesi de gorunmez.
    Karar CSS'te, JS'te DEGIL: React ile gizlense dugme once basilip sonra
    kaldirilirdi (hidrasyondan sonra kucuk bir sicrama). */

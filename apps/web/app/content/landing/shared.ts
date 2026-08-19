@@ -9,14 +9,6 @@ import creatorSelin from "~/assets/landing/creator-selin.webp";
 import phone3d from "~/assets/landing/phone-3d.webp";
 import shareCards from "~/assets/landing/share-cards.webp";
 
-/**
- * Hero'daki akan vitrin kartı. Tamamen dekoratiftir; gerçek bir kullanıcıyı
- * temsil etmediği için görselin üzerinde isim/unvan yazısı taşımaz.
- */
-export interface MarqueeItem {
-  image: string;
-}
-
 export interface SocialLink {
   platform: "github";
   href: string;
@@ -46,15 +38,6 @@ export const showcaseSlides = [
 export type ShowcaseSlide = (typeof showcaseSlides)[number];
 
 export const landingAssets = {
-  marquee: {
-    durationSeconds: 48,
-    items: [
-      { image: creatorKerem },
-      { image: creatorSelin },
-      { image: creatorElif },
-      { image: creatorNaz },
-    ] satisfies MarqueeItem[],
-  },
   shareImage: shareCards,
   // Menü katmanındaki medya kartı.
   menuImage: creatorNaz,

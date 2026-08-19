@@ -36,7 +36,25 @@ export const en = {
       pause: "Pause the strip",
       play: "Play the strip",
     },
-    marquee: landingAssets.marquee,
+    tower: {
+      bio: "Musician · Istanbul",
+      link: "New single is out",
+      status: "In the studio this week",
+      document: "Press kit",
+      location: "Kadıköy, Istanbul",
+      country: "Türkiye",
+      youtube: "Studio diary — episode 3",
+      link2: "Tour dates",
+      text: "Open for new work — say hello.",
+    },
+    // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
+    // değerli hâli, adın orada talep edilmesidir.
+    claim: {
+      domain: "caka.app/",
+      placeholder: "yourname",
+      cta: "Start free",
+      action: "/onboarding",
+    },
   },
   editorial: {
     body: "One link for your Instagram, TikTok, YouTube and every other profile — bringing together everything you share, make and sell.",

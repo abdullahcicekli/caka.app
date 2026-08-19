@@ -34,8 +34,9 @@ export type AudienceSection = LandingContent["audience"];
 export type ShowcaseSection = LandingContent["showcase"];
 export type ShowcaseCard = ShowcaseSection["cards"][number];
 export type OutroSection = LandingContent["outro"];
+export type HeroTowerText = LandingContent["hero"]["tower"];
 
-export type { MarqueeItem, ShowcaseSlide, SocialLink } from "./shared";
+export type { ShowcaseSlide, SocialLink } from "./shared";
 export { showcaseSlides } from "./shared";
 
 export const landingCatalog: Record<Locale, LandingContent> = {

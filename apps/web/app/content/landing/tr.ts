@@ -49,7 +49,27 @@ export const tr = {
       pause: "Şeridi durdur",
       play: "Şeridi oynat",
     },
-    marquee: landingAssets.marquee,
+    // Hero şeridindeki örnek Caka sayfasının çevrilen metinleri. Şeridin
+    // çevrilmeyen kısmı (adlar, adresler, kimlikler, görseller) `hero-demo.ts`te.
+    tower: {
+      bio: "Müzisyen · İstanbul",
+      link: "Yeni single yayında",
+      status: "Bu hafta stüdyodayım",
+      document: "Basın kiti",
+      location: "Kadıköy, İstanbul",
+      country: "Türkiye",
+      youtube: "Stüdyo günlüğü — 3. bölüm",
+      link2: "Konser takvimi",
+      text: "Yeni işler için mesaj atabilirsin.",
+    },
+    // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
+    // değerli hâli, adın orada talep edilmesidir.
+    claim: {
+      domain: "caka.app/",
+      placeholder: "adin",
+      cta: "Ücretsiz başla",
+      action: "/onboarding",
+    },
   },
   // Medyadan sonra tek cümlelik editoryal blok: sayfanın vaadini büyük
   // puntoyla tekrarlar.

@@ -123,7 +123,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     <div className="lp">
       <Navbar nav={landing.nav} user={loaderData.user} />
       <main>
-        <Hero hero={landing.hero} cta={landing.nav.cta} />
+        <Hero hero={landing.hero} />
         <EditorialSection editorial={landing.editorial} />
         <MinutesSection minutes={landing.minutes} />
         <ShareSection share={landing.share} />

@@ -39,7 +39,25 @@ export const ptBR = {
       pause: "Pausar a faixa",
       play: "Reproduzir a faixa",
     },
-    marquee: landingAssets.marquee,
+    tower: {
+      bio: "Músico · Istambul",
+      link: "Novo single no ar",
+      status: "Esta semana no estúdio",
+      document: "Kit de imprensa",
+      location: "Kadıköy, Istambul",
+      country: "Turquia",
+      youtube: "Diário de estúdio — episódio 3",
+      link2: "Datas da turnê",
+      text: "Aberto a novos trabalhos — me chame.",
+    },
+    // Medyanın altına binen hap. Bir bio-link ürününde o hapın en
+    // değerli hâli, adın orada talep edilmesidir.
+    claim: {
+      domain: "caka.app/",
+      placeholder: "seunome",
+      cta: "Comece grátis",
+      action: "/onboarding",
+    },
   },
   editorial: {
     body: "Um único link para o seu Instagram, TikTok, YouTube e todos os outros perfis — reunindo tudo o que você compartilha, cria e vende.",
