@@ -9,7 +9,8 @@
     "deploy": "npm run build && CI=1 wrangler d1 migrations apply caka-db --remote && wrangler deploy",
     "preview": "npm run build && vite preview",
     "cf-typegen": "wrangler types",
-    "postinstall": "wrangler types"
+    "postinstall": "wrangler types",
+    "test": "vitest run"
   },
   "dependencies": {
     "@caka/db": "workspace:*",
@@ -53,6 +54,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^8.0.3",
+    "vitest": "^3.2.0",
     "wrangler": "^4.123.0"
   }
 }
