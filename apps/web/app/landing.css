@@ -227,8 +227,16 @@ html[data-landing]::-webkit-scrollbar {
 /* ---------------------------------------------------------------- *
  * Menü katmanı
  *
- * Hap navbarın altından açılan beyaz kart + arkasında perde. Kart,
- * navbarın kendisiyle aynı hizada durur (aynı oluk, aynı maks genişlik).
+ * HAMBURGERE BAĞLI bir katman: ortalanmış bir modal değil, düğmenin hemen
+ * altında ve sağa yaslı açılan bir kart. Açılış hareketi de o köşeden
+ * büyür (`transform-origin: 100% 0`).
+ *
+ * Sağ kenar navbar HAPININ sağ kenarına oturur. Hap ortalanmış ve maks
+ * 1440px olduğu için hizalama sabit bir sayıyla verilemez: `.lp-nav`ın
+ * kendi eni üzerinden hesaplanır (aşağıdaki `right`).
+ *
+ * Erişilebilirlik davranışı DEĞİŞMEDİ: `role="dialog"`, odak tuzağı,
+ * Escape, odağın hamburgere dönüşü ve gövde kaydırma kilidi yerinde.
  * ---------------------------------------------------------------- */
 
 .lp-menu-scrim {
@@ -245,36 +253,44 @@ html[data-landing]::-webkit-scrollbar {
   position: absolute;
   z-index: 3;
   top: calc(var(--lp-nav-h) + 8px);
-  right: var(--lp-gutter);
-  left: var(--lp-gutter);
-  overflow: hidden;
-  margin-inline: auto;
-  max-width: 720px;
+  /* Hapın sağ kenarıyla hizalanır: oluk + hapın ortalanmaktan doğan payı.
+     `100%` burada `.lp-nav`ın dolgu kutusu, yani görüntü alanı genişliği. */
+  right: calc(var(--lp-gutter) + max(0px, (100% - 2 * var(--lp-gutter) - 1440px) / 2));
+  left: auto;
+  overflow: hidden auto;
+  width: min(560px, calc(100% - 2 * var(--lp-gutter)));
+  /* Kısa ekranda katman görüntü alanını taşmaz, kendi içinde kayar. */
+  max-height: calc(100dvh - var(--lp-nav-h) - 32px);
   border-radius: var(--lp-radius);
   background: white;
-  padding: 20px;
+  padding: 18px;
   box-shadow: 0 24px 60px color-mix(in srgb, var(--color-murekkep) 18%, transparent);
-  animation: lp-menu-in 220ms var(--lp-ease) both;
+  /* Düğmenin köşesinden büyür. */
+  transform-origin: 100% 0;
+  animation: lp-menu-in 200ms var(--lp-ease) both;
 }
 
 @keyframes lp-menu-in {
-  from { opacity: 0; translate: 0 -8px; scale: 0.985; }
+  from { opacity: 0; translate: 0 -6px; scale: 0.92; }
 }
 
 .lp-menu-grid {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   grid-template-columns: 1fr;
 }
-@media (min-width: 640px) {
+@media (min-width: 560px) {
   .lp-menu-grid { grid-template-columns: 1fr 1fr; }
 }
 
 .lp-menu-links { display: flex; flex-direction: column; gap: 2px; }
 .lp-menu-links a {
+  display: block;
   border-radius: var(--radius-xl);
-  padding: 6px 8px;
-  font-size: clamp(22px, 3.4vw, 30px);
+  padding: 7px 10px;
+  /* Katman artık düğmeye bağlı ve dar: tipografi de o kutuya göre.
+     Eskiden 30px'e kadar çıkıyordu ve 560px'lik kartta satırlar sarıyordu. */
+  font-size: clamp(19px, 2.2vw, 23px);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--color-murekkep);
@@ -287,13 +303,16 @@ html[data-landing]::-webkit-scrollbar {
   position: relative;
   display: flex;
   overflow: hidden;
-  min-height: 168px;
+  min-height: 132px;
   flex-direction: column;
   justify-content: flex-end;
   border-radius: var(--radius-xl);
   background: var(--color-kirec);
-  padding: 16px;
+  padding: 14px;
   gap: 4px;
+}
+@media (min-width: 560px) {
+  .lp-menu-card { min-height: 178px; }
 }
 .lp-menu-card img {
   position: absolute;
@@ -325,7 +344,7 @@ html[data-landing]::-webkit-scrollbar {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
-  margin-top: 18px;
+  margin-top: 14px;
   border-top: 1px solid var(--color-sinir);
   padding-top: 12px;
   font-size: 13px;
