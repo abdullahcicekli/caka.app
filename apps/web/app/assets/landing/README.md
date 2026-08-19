@@ -21,11 +21,14 @@ yakalanıyordu. İş bölümü:
   verir. Nesne görselleri için lisans engeli yoktu ama tek bir üretim hattı
   (fal) şeridin ışık ve renk dilini bir arada tutuyor.
 
-## 1. Kaynak portreler
+## 1. Kaynak portreler — ARTIK DEPODA YOK
 
 `creator-kerem.webp` · `creator-selin.webp` · `creator-elif.webp` ·
-`creator-naz.webp` — 940×1224, yapay üretim. Bugün iki yerde kullanılıyorlar:
-vitrin karuseli (tam boy) ve şeridin avatarları (kırpma).
+`creator-naz.webp` — 940×1224, yapay üretim. Tek tüketicileri kaldırılan
+"Gerçek kullanım için tasarlandı" karuseliydi; kendileri silindi (~424 KB),
+onlardan kırpılmış avatarlar ve detaylar duruyor. Aşağıdaki kırpma komutları
+ve prompt'lar kayıt olarak bırakıldı: aynı estetik yeniden istenirse portre
+önce prompt'tan üretilir, sonra komut çalıştırılır.
 
 `creator-naz.webp` **yenilendi**: eski karede saçı açık bir kadın vardı,
 setin geri kalanı (Selin, Elif) tesettürlüydü. Yarısı örtülü yarısı açık bir
@@ -84,15 +87,6 @@ kişisiz bir detay yoktu:
 Hepsi 16:9 üretildi, 1,91:1'e kırpıldı (`-crop 2752x1441+0+48`) ve 736×385
 webp'e indirildi; kare kapaklar 400×400.
 
-### `scene-kerem.webp` — Kerem'in bağlantı kartı ("Konser takvimi")
-
-> Warm dimly lit home music studio at night: an acoustic guitar resting on a
-> wooden chair in the foreground, a vintage tube amplifier beside it, a floor
-> lamp casting amber light, a patterned Anatolian rug on the floor, a drum kit
-> softly blurred in the background, deep brown and ochre palette,
-> photorealistic 35mm film photograph, shallow depth of field, cozy, no
-> people, no hands, no text, no lettering, no writing
-
 ### `scene-selin.webp` — Selin'in bağlantı kartı ("Yeni koleksiyon: Toprak")
 
 > Bright airy ceramics workshop in soft daylight: a long wooden shelf lined
@@ -108,14 +102,6 @@ webp'e indirildi; kare kapaklar 400×400.
 > wooden surface, a shallow bowl of murky water beside them, dried clay
 > flakes, warm sand and grey palette, photorealistic macro editorial
 > photograph, 50mm, no people, no hands, no text, no lettering, no writing
-
-### `scene-elif.webp` — Elif'in YouTube kapağı
-
-> Calm still life in a Mediterranean room: morning light falling through an
-> arched window onto a linen curtain, a small olive tree in a terracotta pot,
-> a deep teal painted wall, an ochre ceramic bowl on a low wooden stool, soft
-> shadows, muted teal and mustard palette, photorealistic editorial
-> photograph, 35mm, no people, no hands, no text, no lettering, no writing
 
 ### `scene-naz.webp` — Naz'ın nsosyal kartı
 
@@ -184,7 +170,27 @@ Menü kartının cümlesini ("Bağlantı, fotoğraf, müzik, harita — hepsi te
 magick menu-raw.jpg -crop 1600x1250+550+300 +repage -resize 760x -quality 80 menu-desk.webp
 ```
 
-## 4. Diğerleri
+## 4. Karakter şeridinden kırpılan iki sahne (üretim yok)
 
-`phone-3d.webp`, `share-cards.webp` — vitrin ve paylaşım bölümünün görselleri,
-daha önce eklendi.
+`scene-kerem.webp` ve `scene-elif.webp` yerlerini karakter şeridinin kendi
+stüdyo karelerinden alınan **kişisiz** kırpmalara bıraktı. Böylece landing'in
+görselleri tek bir çekime dayanıyor ve şerit ile karakter bölümü aynı ışığı
+konuşuyor. Kadrajlar kişiyi DIŞARIDA bırakır — kart görseli kimlik iddiası
+taşımaz kuralı (yukarı bkz.) korunur.
+
+```sh
+magick vitrin/kaan.webp -crop 385x202+550+845 +repage -resize 735x385! \
+  -unsharp 0x0.7+0.6+0.02 -quality 80 scene-kaan.webp   # set ekipmanı, turuncu zemin
+magick vitrin/ozan.webp -crop 350x183+585+850 +repage -resize 735x385! \
+  -unsharp 0x0.7+0.6+0.02 -quality 80 scene-ozan.webp   # plak + amfi köşesi, mor zemin
+```
+
+| Dosya | Kart |
+|---|---|
+| `scene-kaan.webp` | Elif'in YouTube kapağı ("kamera arkası") |
+| `scene-ozan.webp` | Kerem'in bağlantı kartı ("Konser takvimi") |
+
+## 5. Diğerleri
+
+`share-cards.webp` — paylaşım bölümünün görseli, daha önce eklendi.
+`phone-3d.webp` kaldırılan karuselin tek görseliydi, silindi.

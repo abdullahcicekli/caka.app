@@ -17,7 +17,7 @@ export const ptBR = {
       close: "Fechar menu",
       links: [
         { label: "Como funciona", href: "/#urun" },
-        { label: "Vitrine", href: "/#vitrin" },
+        { label: "Vitrine", href: "/#karakterler" },
         { label: "Dúvidas", href: "/#sss" },
         { label: "Entrar", href: "/login" },
       ],
@@ -98,44 +98,6 @@ export const ptBR = {
     badges: ["Cliques", "Países"],
     pill: "Analytics",
   },
-  showcase: {
-    title: "Feito para o uso real",
-    body: "Três passos: monte sua página, compartilhe e meça.",
-    segments: [
-      { id: "kur", label: "Monte" },
-      { id: "paylas", label: "Compartilhe" },
-      { id: "olc", label: "Meça" },
-    ],
-    cards: [
-      {
-        title: "Grade de blocos",
-        body: "Arraste seus blocos, mude o tamanho e monte a página no seu próprio layout.",
-      },
-      {
-        title: "Temas prontos",
-        body: "Resolva cor e tipografia em uma escolha só e depois mude o que quiser.",
-      },
-      {
-        title: "Um endereço",
-        body: "caka.app/seunome — o único link que você põe nos perfis, nos vídeos e no cartão de visita.",
-      },
-      {
-        title: "Imagem ao compartilhar",
-        body: "Você escolhe o cartão que aparece quando seu link é compartilhado — modelo e foto são seus.",
-      },
-      {
-        title: "Resumo de cliques",
-        body: "Veja qual bloco chama atenção e reorganize sua página em torno dele.",
-      },
-      {
-        title: "Países",
-        body: "Veja de qual país vêm seus visitantes e saiba para quem você está falando.",
-      },
-    ],
-    prev: "Cartão anterior",
-    next: "Próximo cartão",
-    trackLabel: "Cartões da vitrine",
-  },
   karakterler: {
     title: "Cada página se parece com quem a fez",
     body: "Um mesmo produto, seis profissões. As telas desses celulares são páginas reais do Caka, não capturas.",
@@ -206,7 +168,7 @@ export const ptBR = {
         title: "Produto",
         links: [
           { label: "Como funciona", href: "/#urun" },
-          { label: "Vitrine", href: "/#vitrin" },
+          { label: "Vitrine", href: "/#karakterler" },
           { label: "Dúvidas", href: "/#sss" },
         ],
       },

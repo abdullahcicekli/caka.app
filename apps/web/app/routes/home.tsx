@@ -12,7 +12,6 @@ import { Navbar } from "~/components/landing/navbar";
 import { OutroSection } from "~/components/landing/outro-section";
 import { ScrollIndicator } from "~/components/landing/scroll-indicator";
 import { ShareSection } from "~/components/landing/share-section";
-import { ShowcaseSection } from "~/components/landing/showcase-section";
 import { SiteFooter } from "~/components/landing/site-footer";
 import type { SessionUser } from "~/components/user-menu";
 import { publishedLegalDocumentIds } from "~/content/legal";
@@ -116,7 +115,7 @@ export async function loader({ request }: Route.LoaderArgs) {
  * Kaydirma gostergesinin izledigi bolumler. Gosterge dekoratif; ayni
  * capalarin gercek baglantilari menu katmaninda ve footer'da.
  */
-const SECTION_IDS = ["hero", "urun", "karakterler", "vitrin", "sss", "kapanis"] as const;
+const SECTION_IDS = ["hero", "urun", "karakterler", "sss", "kapanis"] as const;
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const landing = useCatalog(landingCatalog);
@@ -130,7 +129,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <ShareSection share={landing.share} />
         <AudienceSection audience={landing.audience} />
         <KarakterlerSection karakterler={landing.karakterler} />
-        <ShowcaseSection showcase={landing.showcase} />
         <FaqSection
           faq={landing.faq}
           publishedLegal={loaderData.publishedLegal}

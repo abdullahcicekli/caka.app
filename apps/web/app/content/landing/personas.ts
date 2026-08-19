@@ -14,7 +14,7 @@
  * düzenler bir kullanıcının kendi sayfasıdır — çevrilmezler (Değişmez #5
  * anlamında "kullanıcıya görünen ürün metni" değil, örnek İÇERİKtir).
  * Vitrin şeridinin altyazısındaki MESLEK adı çevrilir ve beş dil
- * kataloğunda yaşar (`showcase`/`karakterler`); buradaki `job` alanı o
+ * kataloğunda yaşar (`karakterler`); buradaki `job` alanı o
  * katalogla eşleşen bir KİMLİKTİR.
  */
 

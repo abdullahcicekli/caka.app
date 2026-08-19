@@ -9,7 +9,6 @@ girmezler.
 | `lab-tohum.mjs` | Persona düzenlerinin galeri/avatar/belge varlıklarını **yerel** R2'ye yazar (`wrangler r2 object put --local`). Uzak kovaya dokunmaz. |
 | `lab-denetim.mjs` | `/__lab/karakterler` DOM'unu tarar; kartlarda **yer tutucu** (baş harf çipi, boş avatar) kalmışsa listeler ve 1 ile çıkar. Çekimden önce sıfır bulgu vermeli. |
 | `lab-cek.mjs` | Altı kartı 2x DPR ile çeker, `app/assets/landing/vitrin/<id>.webp` üretir. |
-| `lab-gif.mjs` | Tek personada kısa kaydırma döngüsü (animasyonlu webp + gif). |
 | `lab-telefon.mjs` | Kişisiz, **saydam zeminli** tek telefon (`?tel=1` modu). Giriş ve kayıt sayfaları bunu kullanır: `telefon-<id>.webp`. |
 
 Sıra: `lab-tohum.mjs` → `pnpm dev` → `lab-denetim.mjs` → `lab-cek.mjs`
@@ -21,13 +20,13 @@ Ayrıntı ve gerekçeler `app/routes/lab.karakterler.tsx` başlığında.
 | Varlık | Kullanan |
 | --- | --- |
 | `vitrin/<id>.webp` (6) | Landing karakter şeridi (`components/landing/karakterler-section.tsx`) |
-| `vitrin/emre-dongu.webp` | Aynı şerit; hareket tercihi açıksa |
+| `../assets/landing/scene-kaan.webp`, `scene-ozan.webp` | Hero şeridi; `kaan.webp`/`ozan.webp` karelerinden elle kırpma (`assets/landing/README.md` §4) |
 | `vitrin/telefon-busra.webp` | `routes/login.tsx` sağ panel + `routes/onboarding.tsx` |
 
 ## Neden `playwright` bir devDependency
 
 `playwright` **sadece** bu üç çekim/denetim betiği tarafından import edilir
-(`lab-cek.mjs`, `lab-gif.mjs`, `lab-denetim.mjs`); `app/` veya `server/`
+(`lab-cek.mjs`, `lab-telefon.mjs`, `lab-denetim.mjs`); `app/` veya `server/`
 altındaki hiçbir modül ona dokunmaz.
 
 - Bu yüzden `devDependencies`'te durur ve **üretim kurulumunu şişirmez**:

@@ -17,7 +17,7 @@ export const es = {
       close: "Cerrar menú",
       links: [
         { label: "Cómo funciona", href: "/#urun" },
-        { label: "Escaparate", href: "/#vitrin" },
+        { label: "Escaparate", href: "/#karakterler" },
         { label: "Preguntas", href: "/#sss" },
         { label: "Iniciar sesión", href: "/login" },
       ],
@@ -98,44 +98,6 @@ export const es = {
     badges: ["Clics", "Países"],
     pill: "Analíticas",
   },
-  showcase: {
-    title: "Diseñado para el uso real",
-    body: "Tres pasos: monta tu página, compártela y mídela.",
-    segments: [
-      { id: "kur", label: "Monta" },
-      { id: "paylas", label: "Comparte" },
-      { id: "olc", label: "Mide" },
-    ],
-    cards: [
-      {
-        title: "Cuadrícula de bloques",
-        body: "Arrastra tus bloques, cambia su tamaño y monta la página con tu propia composición.",
-      },
-      {
-        title: "Temas listos",
-        body: "Resuelve color y tipografía con una sola elección y cambia después lo que quieras.",
-      },
-      {
-        title: "Una dirección",
-        body: "caka.app/tunombre: el único enlace que pones en tus perfiles, vídeos y tarjeta de visita.",
-      },
-      {
-        title: "Imagen al compartir",
-        body: "Tú eliges la tarjeta que se ve al compartir tu enlace: la plantilla y la foto son tuyas.",
-      },
-      {
-        title: "Resumen de clics",
-        body: "Mira qué bloque despierta interés y reorganiza tu página alrededor de él.",
-      },
-      {
-        title: "Países",
-        body: "Mira de qué país llegan tus visitantes y sabe a qué público le estás hablando.",
-      },
-    ],
-    prev: "Tarjeta anterior",
-    next: "Tarjeta siguiente",
-    trackLabel: "Tarjetas del escaparate",
-  },
   karakterler: {
     title: "Cada página se parece a quien la hizo",
     body: "Un mismo producto, seis profesiones. Las pantallas de esos teléfonos son páginas reales de Caka, no capturas.",
@@ -206,7 +168,7 @@ export const es = {
         title: "Producto",
         links: [
           { label: "Cómo funciona", href: "/#urun" },
-          { label: "Escaparate", href: "/#vitrin" },
+          { label: "Escaparate", href: "/#karakterler" },
           { label: "Preguntas", href: "/#sss" },
         ],
       },
