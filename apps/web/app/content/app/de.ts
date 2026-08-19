@@ -1,4 +1,7 @@
 import {
+  ASSET_MAX_COUNT,
+  ASSET_MAX_TOTAL_BYTES,
+  DOCUMENT_MAX_BYTES,
   type BlockIssueId,
   type BlockGridLimits,
   MAX_GALLERY_BLOCKS,
@@ -29,6 +32,7 @@ export const de = {
     gallery: "Fotogalerie",
     youtube: "YouTube",
     spotify: "Spotify",
+    document: "Dokument",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -43,6 +47,7 @@ export const de = {
     youtube_video_url: "Gib einen YouTube-Videolink ein",
     youtube_channel_url: "Gib einen YouTube-Kanallink ein",
     spotify_url: "Gib einen Spotify-Link ein",
+    document_missing: "Lade ein Dokument hoch",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -51,6 +56,17 @@ export const de = {
   galleryCountLimit: `Deine Seite kann höchstens ${MAX_GALLERY_BLOCKS} Galerieblöcke haben`,
 
   editor: {
+    documentField: "Dokument (PDF)",
+    documentDrop: "PDF ziehen oder auswählen",
+    documentReplace: "Dokument ersetzen",
+    documentUploading: "Wird hochgeladen…",
+    documentUploadFailed: "Das Dokument konnte nicht hochgeladen werden",
+    documentHint: (maxMb: number) =>
+      `Vorerst nur PDF, höchstens ${maxMb} MB. Dateiname, Größe und Datum schreibt die Karte selbst.`,
+    documentTitlePlaceholder: "Leer lassen: dann zeigt die Karte den Dateinamen",
+    documentServeHint:
+      "Das Dokument wird über caka.app ausgeliefert und beim Klick heruntergeladen; „Vorschau“ öffnet es in einem neuen Tab.",
+
     layoutUnreadable: "Das Layout der Seite konnte nicht gelesen werden",
     backToDashboard: "Zurück zur Übersicht",
     toolbarLabel: "Editor-Werkzeuge",
@@ -257,6 +273,15 @@ export const de = {
   },
 
   api: {
+    documentOnlyPdf: "Du kannst vorerst nur PDF hochladen",
+    documentTooLarge: `Das Dokument darf höchstens ${DOCUMENT_MAX_BYTES / (1024 * 1024)} MB groß sein`,
+    documentTypeUnverified: "Die Datei konnte nicht als PDF geprüft werden",
+    documentSaveFailed: "Das Dokument konnte nicht gespeichert werden",
+    quota: {
+      count: `Du kannst höchstens ${ASSET_MAX_COUNT} Dateien hochladen. Entferne zuerst die Dateien, die du nicht mehr brauchst.`,
+      bytes: `Dein gesamter Speicher beträgt ${Math.round(ASSET_MAX_TOTAL_BYTES / (1024 * 1024))} MB und diese Datei passt nicht. Entferne zuerst die Dateien, die du nicht mehr brauchst.`,
+    },
+
     origin: "Ungültiger Ursprung der Anfrage",
     layoutReadFailed: "Die Seitendaten konnten nicht gelesen werden; lade die Seite neu",
     layoutTooManyBlocks: (max: number) => `Deine Seite kann höchstens ${max} Blöcke haben`,

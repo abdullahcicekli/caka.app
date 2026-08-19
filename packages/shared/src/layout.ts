@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { DOCUMENT_FILE_NAME_MAX, DOCUMENT_MAX_BYTES } from "./document";
+
 export const PROFILE_NAME_MAX = 60;
 export const PROFILE_BIO_MAX = 160;
 
@@ -262,6 +264,35 @@ const imageBlockSchema = z.object({
   }),
 });
 
+/**
+ * Belge bloğu (öncelikli kullanım: CV). `image` bloğuyla aynı iskelet — R2
+ * anahtarı düz UUID olan asset kimliği (Değişmez #9) — ama kartın yazacağı
+ * üç bilgi (ad, boyut, tarih) fazladan taşınır.
+ *
+ * NEDEN blokta saklanıyor da her render'da `asset` satırından okunmuyor:
+ * kart saf bir fonksiyondur ve düzenin kendisinden çizilir; üç yüzey
+ * (public/panel/editör) tek tek belge sorgusu atsaydı sayfa başına N ekstra
+ * D1 turu olurdu. Üçü de yükleme yanıtından, yani SUNUCUDAN gelir. İstemci
+ * kendi kaydında bunları değiştirebilir; sonuç yalnız kendi kartındaki
+ * etikettir — indirmenin gerçek adı R2 metadata'sından okunur, boyut ve
+ * kota da sunucuda ölçülür.
+ */
+const documentBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("document"),
+  data: z.object({
+    assetId: z.string().uuid().optional(),
+    /** Kart başlığı; boşsa dosya adı başlık olur. */
+    title: z.string().trim().max(60).default(""),
+    /** Sunucunun temizlediği özgün dosya adı (`sanitizeDocumentFileName`). */
+    fileName: z.string().trim().max(DOCUMENT_FILE_NAME_MAX).default(""),
+    /** Dosya boyutu (bayt) — kart "1,2 MB" yazar. */
+    bytes: z.number().int().min(0).max(DOCUMENT_MAX_BYTES).default(0),
+    /** Yükleme anı (epoch ms, UTC) — kart tarihi bundan basar. */
+    uploadedAt: z.number().int().min(0).default(0),
+  }),
+});
+
 const statusBlockSchema = z.object({
   ...blockBase,
   type: z.literal("status"),
@@ -404,6 +435,7 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   galleryBlockSchema,
   youtubeBlockSchema,
   spotifyBlockSchema,
+  documentBlockSchema,
 ]);
 
 /**
@@ -573,6 +605,7 @@ export const BLOCK_ISSUE_IDS = [
   "youtube_video_url",
   "youtube_channel_url",
   "spotify_url",
+  "document_missing",
 ] as const;
 
 export type BlockIssueId = (typeof BLOCK_ISSUE_IDS)[number];
@@ -618,6 +651,9 @@ export function blockIssue(block: ProfileBlock): BlockIssueId | null {
       // YouTube'la aynı gerekçe: kimlik kayıt anında çözülür, boşsa gömülecek
       // bir şey yok.
       return block.data.entityId ? null : "spotify_url";
+    case "document":
+      // `image` ile aynı kural: dosya yüklenmemişse indirilecek bir şey yok.
+      return block.data.assetId ? null : "document_missing";
   }
 }
 
@@ -664,6 +700,15 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   // 2: 181px'lik bir oynatıcıda kontroller sığmıyor. Albüm/liste/sanatçı
   // gömmesi 352px istediği için onların varsayılanı 2x2 (kayıt anında seçilir).
   spotify: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
+  // Belge kartı bir NESNE gösteriyor: solda A4 oranlı kapak, sağda dosya adı
+  // + "PDF · 1,2 MB · 12 Ağustos 2026" satırı + indir/önizle eylemleri.
+  // Ölçüm (masaüstü tuvali, 16px dolgu): eylem satırı iki düğmeyle 180px,
+  // meta satırı 200px istiyor; kapak en kısa bantta 88px eniyle duruyor.
+  // 2 birim (178px) genişlikte kapağa yer kalmıyor ve kart "dosya adının
+  // yazdığı sıkıcı bir satıra" dönüşüyordu — genişlik tabanı bu yüzden
+  // 4 birim (368px). Yükseklik tabanı 2 birim (156px, mobilde 138): kapak
+  // 124px, metin bloğu 94px istiyor, ikisi yan yana sığıyor.
+  document: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
 };
 
 /** Bloğun konumu tip sınırlarını aşıyor mu? Aşıyorsa bloğun sınırları. */

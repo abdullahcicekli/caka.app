@@ -23,7 +23,8 @@ const RESERVED_GROUPS: Record<string, readonly string[]> = {
   // A. Uygulama route'ları (mevcut + planlanan)
   routes: [
     "onboarding", "login", "logout", "signin", "signout", "signup", "register",
-    "edit", "editor", "settings", "api", "i", "og", "basla", "tamamla", "hazir",
+    "edit", "editor", "settings", "api", "i", "b", "belge", "og", "basla",
+    "tamamla", "hazir",
     "kurulum", "dashboard", "profile", "account", "home", "index", "new",
     "search", "explore", "discover", "popular", "trending", "preview",
   ],

@@ -10,6 +10,7 @@ import {
   MediaVideo,
   Megaphone,
   MusicDoubleNote,
+  Page,
   Search,
   Text,
   Xmark,
@@ -47,6 +48,7 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   gallery: { icon: MediaImageList, enabled: true },
   youtube: { icon: MediaVideo, enabled: true },
   spotify: { icon: MusicDoubleNote, enabled: true },
+  document: { icon: Page, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */

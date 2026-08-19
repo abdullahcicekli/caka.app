@@ -125,6 +125,11 @@ olan üç aylık kuralı devreye sokuyor. Gerekçenin tamamı
   çözülür; gömülü oynatıcı ise **yalnız ziyaretçi oynata bastığında**
   yüklenir ve o noktada aktarım doğrudan o platformlara olur
   (`vendor-register.md` §A).
+- **Belge (CV) bloğu** ayrıca üç alan taşır: dosya adı (`fileName`), boyut
+  (`bytes`) ve yükleme anı (`uploadedAt`). Üçü de yükleme yanıtından, yani
+  sunucudan gelir ve kartın yazdığı etikettir; dosyanın kendisi R2'dedir
+  (aşağıda §2). Dosya adı kullanıcının seçtiği addır ve **kişisel veri
+  içerebilir** ("abdullah-cicekli-ozgecmis.pdf"), profilde herkese görünür.
 - `onboarding_data` ilk kurulumda verilen yanıtları tutar.
 - **Amaç:** public profilin yayınlanması. **Sebep:** m.5/2-c.
 - **Süre:** hesap yaşadığı sürece. `draft_layout` yayınlanana kadar; ayrı bir
@@ -173,7 +178,13 @@ veya `null` = negatif önbellek), `fetched_at`.
 `id` (PK, aynı zamanda düz R2 anahtarı — KTD10 / Değişmez #9), `user_id`,
 `content_type`, `size`, `created_at`.
 
-- **Amaç:** yüklenen görsellerin saklanması ve sunulması. **Sebep:** m.5/2-c.
+- **Amaç:** yüklenen görsellerin ve belgelerin saklanması ve sunulması.
+  **Sebep:** m.5/2-c.
+- Tablo **tür ayrımı yapmaz**: görsel (`image/jpeg`, `image/png`,
+  `image/webp`) ve belge (`application/pdf`) aynı satır biçimini, aynı R16
+  kotasını ve aynı yaşam döngüsünü paylaşır. Bu bilinçli: hesap silmede
+  temizlik tek bir sorgudan (`asset.user_id`) yürüdüğü için yeni bir dosya
+  türü eklemek ikinci bir temizlik yolu doğurmuyor.
 - **Süre:** hesap yaşadığı sürece. Silme yalnızca hesap silmede; blok
   kaldırıldığında diff/silme yapılmaz (bilinçli — Değişmez #9).
 
@@ -183,9 +194,10 @@ veya `null` = negatif önbellek), `fetched_at`.
 
 | Ne | Detay |
 |---|---|
-| İçerik | Kullanıcının yüklediği görseller + Google avatarının kopyası (`server/avatar.ts`) |
+| İçerik | Kullanıcının yüklediği görseller + **belgeler (PDF, ör. CV — `server/document-api.ts`)** + Google avatarının kopyası (`server/avatar.ts`) |
 | Anahtar | Düz UUID = `asset.id`; path segmenti yok |
-| Kişisel veri | Görselin kendisi (yüz fotoğrafı olabilir) + görselin türü/boyutu |
+| Nesne metadata'sı | Belgelerde `customMetadata.fileName` — indirmenin `Content-Disposition` adı buradan okunur (anahtar UUID kalır, Değişmez #9 bozulmaz) |
+| Kişisel veri | Görselin kendisi (yüz fotoğrafı olabilir), **belgenin kendisi (CV: ad-soyad, iletişim, eğitim/iş geçmişi — kullanıcının bilerek yayımladığı, profilden herkese açık bir dosya)** + dosyanın adı/türü/boyutu |
 | Amaç | Profil içeriğinin sunulması. **Sebep:** m.5/2-c |
 | Nerede | Cloudflare R2, binding `BUCKET` (`wrangler.jsonc`) |
 | Bölge | **Doğrulanmadı** — `wrangler.jsonc`'de konum ipucu yok; kova konumu panelden teyit edilmedi |

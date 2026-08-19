@@ -102,8 +102,11 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/gizlilik",
     title: "Gizlilik ve Aydınlatma Metni",
     navLabel: "Gizlilik ve Aydınlatma",
-    version: "0.3",
-    updatedAt: "2026-08-18",
+    // 0.4: belge (PDF) yükleme eklendi — "yüklenen dosyalar" satırı artık
+    // görselin yanında belgeyi de sayıyor. Metin değişip damga sabit
+    // kalsaydı yayındaki "son güncelleme" tarihi yalan söylerdi.
+    version: "0.4",
+    updatedAt: "2026-08-19",
   },
   "kullanim-kosullari": {
     id: "kullanim-kosullari",

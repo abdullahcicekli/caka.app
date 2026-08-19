@@ -275,3 +275,26 @@ tarayıcının kırık-görsel ikonunu ve `alt` metnini gösteriyor. Bento
 Yine de ucuz bir sağlamlaştırma var: `onError` ile başarısız görseli gizleyip
 mevcut `.profile-image-placeholder` desenine düşürmek.
 
+
+## 17. Belge kartının kapağı PDF'in ilk sayfası değil
+
+Belge (CV) bloğunun kapağı **tipografik bir sayfa** — kıvrık köşe, satır
+izleri, "PDF" damgası. Gerçek ilk sayfanın küçük görseli bilinçli olarak
+yapılmadı, çünkü Worker'da PDF raster'layacak bir motor yok:
+
+- Depodaki tek raster katmanı `server/og-render.ts` ve o `@cf-wasm/og`,
+  yani satori + resvg — **SVG** çizer, PDF ayrıştırmaz.
+- PDF için PDFium/pdf.js sınıfı bir WASM motoru gerekir. Bu, `og-render`
+  chunk'ı zaten ~1 MB'ken bundle'a birkaç MB daha ekler ve yükleme isteğinin
+  CPU bütçesini (yükleme yolu bugün yalnız bayt kopyalıyor) rasterleştirmeye
+  açar.
+
+Yapılacaksa doğru yeri **yükleme anı**: kapak bir kez üretilip R2'ye ayrı bir
+asset olarak yazılmalı (`asset` satırıyla, R16 kotasına dahil), render hiçbir
+şey hesaplamamalı — YouTube küçük görselindeki desenin aynısı. Bir sonraki
+adım motoru ölçmek: bundle boyutu, tipik bir CV'nin ilk sayfası için CPU
+süresi, ve şifreli/bozuk PDF'te davranış.
+
+Ara adım olarak sayfa sayısı da düşünülebilir ama **ucuz değil**: nesne
+akışıyla sıkıştırılmış PDF'lerde `/Type /Page` saymak yanlış sonuç verir,
+doğrusu için xref çözmek gerekir.

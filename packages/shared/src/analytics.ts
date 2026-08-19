@@ -183,6 +183,14 @@ function blockUrl(block: ProfileBlock): string {
     // taşıyor; ölçülecek hedef odur.
     case "spotify":
       return block.data.url;
+    // Belge DIŞ bir adrese gitmiyor (birinci taraf `/b/<id>`) ama indirme,
+    // bir CV bloğunun ölçülmeye değer TEK olayı — "kaç kişi indirdi"
+    // sorusunun cevabı. Sayı gerçekten indirmedir: kartın "Önizle"
+    // bağlantısı ölçümden muaf (`data-measure="skip"`,
+    // `components/link-click-beacon.tsx`), yoksa sayaç iki olayın toplamı
+    // olur ama indirme diye okunurdu. Ölçüm kimliği yine blok id'si.
+    case "document":
+      return block.data.assetId ? `/b/${block.data.assetId}` : "";
     case "profile":
     case "text":
     // Galeri tek bir dış adrese gitmez (fotoğraflar birinci taraf asset);
@@ -212,6 +220,8 @@ function blockLabel(block: ProfileBlock): string {
         : block.data.channelName || block.data.handle;
     case "spotify":
       return block.data.title;
+    case "document":
+      return block.data.title || block.data.fileName;
     case "profile":
     case "text":
     case "gallery":

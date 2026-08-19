@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BLOCK_GRID_LIMITS,
   GRID_COLUMNS,
   PROFILE_BIO_MAX,
   blockIssue,
@@ -17,6 +18,7 @@ import {
   type ProfileBlock,
   type ProfileLayout,
 } from "./layout";
+import { DOCUMENT_MAX_BYTES } from "./document";
 
 const profileBlock = {
   id: "blk_profile",
@@ -371,5 +373,55 @@ describe("ensureLayoutPositions — genişleten kırpma ızgarayı taşırmaz", 
     expect(yt.pos!.lg.x + yt.pos!.lg.w).toBeLessThanOrEqual(GRID_COLUMNS.lg);
     // İdempotent olmalı: ikinci geçiş bir şey değiştirmemeli.
     expect(ensureLayoutPositions(fixed)).toEqual(fixed);
+  });
+});
+
+describe("belge bloğu şeması", () => {
+  const uuid = "6f1c2f5c-1a1e-4a0e-9a1b-2f3c4d5e6f70";
+
+  it("boş taslak olarak doğar ve varsayılanları alır", () => {
+    const parsed = profileLayoutSchema.parse({
+      version: 1,
+      blocks: [profileBlock, { id: "blk_d", type: "document", data: {} }],
+    });
+    const block = parsed.blocks[1]!;
+    if (block.type !== "document") throw new Error("beklenmeyen tip");
+    expect(block.data).toEqual({ title: "", fileName: "", bytes: 0, uploadedAt: 0 });
+    expect(blockIssue(block)).toBe("document_missing");
+  });
+
+  it("dosya yüklenince yayına hazır olur", () => {
+    const parsed = profileLayoutSchema.parse({
+      version: 1,
+      blocks: [
+        profileBlock,
+        {
+          id: "blk_d",
+          type: "document",
+          data: { assetId: uuid, fileName: "cv.pdf", bytes: 1024, uploadedAt: 1_700_000_000_000 },
+        },
+      ],
+    });
+    expect(blockIssue(parsed.blocks[1]!)).toBeNull();
+  });
+
+  it("boyut tavanını ve UUID olmayan asset kimliğini reddeder", () => {
+    const base = { id: "blk_d", type: "document" as const };
+    expect(() =>
+      profileLayoutSchema.parse({
+        version: 1,
+        blocks: [profileBlock, { ...base, data: { bytes: DOCUMENT_MAX_BYTES + 1 } }],
+      }),
+    ).toThrow();
+    expect(() =>
+      profileLayoutSchema.parse({
+        version: 1,
+        blocks: [profileBlock, { ...base, data: { assetId: "../../etc" } }],
+      }),
+    ).toThrow();
+  });
+
+  it("tip tabanı kartın ölçülen asgarisidir (yarım birimde 4×2)", () => {
+    expect(BLOCK_GRID_LIMITS.document).toEqual({ minW: 4, minH: 2, maxW: 8, maxH: 4 });
   });
 });

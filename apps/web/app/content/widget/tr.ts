@@ -1,4 +1,4 @@
-import type { SpotifyKind } from "@caka/shared";
+import { formatFileSize, formatUploadDate, type SpotifyKind } from "@caka/shared";
 
 import { type NumberFormat, relativeTime, shortNumber } from "./shared";
 
@@ -78,6 +78,37 @@ export const tr = {
           return "Program";
       }
     },
+  },
+
+  /**
+   * Belge (CV) kartı. Kapak PDF'in İLK SAYFASI DEĞİL, tipografik bir sayfa:
+   * Worker'da PDF raster'lamak için gereken motor bugün depoda yok
+   * (bkz. `components/profile-block.tsx`).
+   */
+  document: {
+    /** Tür rozeti; marka değil biçim adı olduğu için beş dilde de aynı. */
+    badge: "PDF",
+    download: "İndir",
+    preview: "Önizle",
+    /**
+     * Erişilebilir ad GÖRÜNEN etiketle BAŞLAR (WCAG 2.5.3): sesle kontrol
+     * eden kullanıcı "İndir" dediğinde düğme bulunmalı. Dosya adı ardından
+     * gelir — hangi dosyanın ineceğini ekran okuyucu da söylemeli.
+     */
+    downloadLabel: (name: string) => `İndir: ${name}`,
+    previewLabel: (name: string) => `Önizle: ${name} (yeni sekmede açılır)`,
+    /** Dosya yüklenmemiş taslak bloğun kart içi yer tutucusu. */
+    empty: "Belge ekle",
+    /** Adı olmayan belgede kartın başlığı. */
+    fallbackName: "Belge",
+    size: (bytes: number) => formatFileSize(bytes, numbers.decimal),
+    date: (epochMs: number) =>
+      formatUploadDate(
+        epochMs,
+        ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+         "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
+        (day, month, year) => `${day} ${month} ${year}`,
+      ),
   },
 
   /** GitHub katkı grafiğinin ekran okuyucu etiketi. */

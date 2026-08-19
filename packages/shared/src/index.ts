@@ -2,6 +2,7 @@
 export * from "./analytics";
 export * from "./assets";
 export * from "./cookies";
+export * from "./document";
 export * from "./favicon";
 export * from "./github-contributions";
 export * from "./layout";
