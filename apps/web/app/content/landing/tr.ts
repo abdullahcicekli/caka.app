@@ -50,12 +50,6 @@ export const tr = {
       play: "Şeridi oynat",
     },
     marquee: landingAssets.marquee,
-    claim: {
-      domain: "caka.app/",
-      placeholder: "adin",
-      cta: "Ücretsiz başla",
-      action: "/onboarding",
-    },
   },
   // Medyadan sonra tek cümlelik editoryal blok: sayfanın vaadini büyük
   // puntoyla tekrarlar.
@@ -72,19 +66,19 @@ export const tr = {
   },
   share: {
     title: "Caka'nı istediğin\nher yerde paylaş",
-    body: "Adresini profillerine, videolarına ve kartvizitine koy. QR kodunla çevrimdışı trafiği de sayfana taşı.",
+    body: "Adresini profillerine, videolarına ve kartvizitine koy. Bağlantını paylaştığında görünen kartı da kendin seçersin.",
     cta: { label: "Ücretsiz başla", href: "/onboarding" },
     // Medya kartının üstündeki rozetler. Sayı iddiası taşımaz (R25): ürünün
     // bugün ölçmediği hiçbir metrik yazılmaz.
-    badges: ["Tek adres", "QR kod"],
+    badges: ["Tek adres", "Paylaşım görseli"],
     pill: "Paylaşım",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Kitleni tanı,\nilgisini koru",
-    body: "Hangi bağlantının tıklandığını, ziyaretçinin nereden geldiğini ve neyin işe yaradığını gör. Sayfanı buna göre güncelle.",
+    body: "Hangi bağlantının tıklandığını, ziyaretçilerinin hangi ülkeden geldiğini ve neyin işe yaradığını gör. Sayfanı buna göre güncelle.",
     cta: { label: "Ücretsiz başla", href: "/onboarding" },
-    badges: ["Tıklama", "Kaynak"],
+    badges: ["Tıklama", "Ülke"],
     pill: "Analitik",
   },
   // Yatay kart karuseli. Kartların görselleri `shared.ts`'te (çevrilmez) ve
@@ -111,16 +105,16 @@ export const tr = {
         body: "caka.app/adin — profillerine, videolarına ve kartvizitine koyduğun tek bağlantı.",
       },
       {
-        title: "QR kod",
-        body: "Çevrimdışı gördüğün kişileri de sayfana taşı; kod adresinle birlikte üretilir.",
+        title: "Paylaşım görseli",
+        body: "Bağlantını paylaştığında görünen kartı sen seçersin; şablonu ve fotoğrafı sende.",
       },
       {
         title: "Tıklama özeti",
         body: "Hangi bloğun ilgi gördüğünü gör, sayfanı ona göre yeniden diz.",
       },
       {
-        title: "Ziyaretçi kaynağı",
-        body: "Trafiğin hangi profilden geldiğini bil, emeğini doğru yere ver.",
+        title: "Ülke dağılımı",
+        body: "Ziyaretçilerinin hangi ülkeden geldiğini gör, hangi kitleye seslendiğini bil.",
       },
     ],
     prev: "Önceki kart",

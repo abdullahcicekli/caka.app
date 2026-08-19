@@ -40,12 +40,6 @@ export const es = {
       play: "Reproducir la tira",
     },
     marquee: landingAssets.marquee,
-    claim: {
-      domain: "caka.app/",
-      placeholder: "tunombre",
-      cta: "Empieza gratis",
-      action: "/onboarding",
-    },
   },
   editorial: {
     body: "Un solo enlace para tu Instagram, TikTok, YouTube y el resto de tus perfiles: reúne todo lo que compartes, creas y vendes.",
@@ -57,17 +51,17 @@ export const es = {
   },
   share: {
     title: "Comparte tu Caka\ndonde quieras",
-    body: "Pon tu dirección en tus perfiles, tus vídeos y tu tarjeta de visita. Lleva también el tráfico offline a tu página con tu código QR.",
+    body: "Pon tu dirección en tus perfiles, tus vídeos y tu tarjeta de visita. La tarjeta que se ve al compartir tu enlace también la eliges tú.",
     cta: { label: "Empieza gratis", href: "/onboarding" },
-    badges: ["Una dirección", "Código QR"],
+    badges: ["Una dirección", "Imagen al compartir"],
     pill: "Compartir",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Conoce a tu público,\nmantén su interés",
-    body: "Descubre en qué enlace hacen clic, de dónde llegan tus visitantes y qué funciona de verdad. Actualiza tu página en consecuencia.",
+    body: "Descubre en qué enlace hacen clic, de qué país llegan tus visitantes y qué funciona de verdad. Actualiza tu página en consecuencia.",
     cta: { label: "Empieza gratis", href: "/onboarding" },
-    badges: ["Clics", "Fuentes"],
+    badges: ["Clics", "Países"],
     pill: "Analíticas",
   },
   showcase: {
@@ -92,16 +86,16 @@ export const es = {
         body: "caka.app/tunombre: el único enlace que pones en tus perfiles, vídeos y tarjeta de visita.",
       },
       {
-        title: "Código QR",
-        body: "Lleva a tu página también a quien conoces offline; el código llega con tu dirección.",
+        title: "Imagen al compartir",
+        body: "Tú eliges la tarjeta que se ve al compartir tu enlace: la plantilla y la foto son tuyas.",
       },
       {
         title: "Resumen de clics",
         body: "Mira qué bloque despierta interés y reorganiza tu página alrededor de él.",
       },
       {
-        title: "Origen de las visitas",
-        body: "Sabe de qué perfil llega tu tráfico y dedica tu esfuerzo donde cuenta.",
+        title: "Países",
+        body: "Mira de qué país llegan tus visitantes y sabe a qué público le estás hablando.",
       },
     ],
     prev: "Tarjeta anterior",

@@ -71,7 +71,7 @@ export function ShowcaseSection({
   const activeSegment = showcaseSlides[Math.min(active, count - 1)]?.segment;
 
   return (
-    <section id="vitrin" className="lp-section">
+    <section id="vitrin" className="lp-section lp-anchor">
       <div className="lp-shell">
         <h2 className="lp-h2">{showcase.title}</h2>
         <p className="lp-body lp-measure mt-5">{showcase.body}</p>

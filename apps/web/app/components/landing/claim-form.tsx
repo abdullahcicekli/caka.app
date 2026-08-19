@@ -4,11 +4,13 @@ import { PillButton } from "./pill-button";
 import type { LandingContent } from "~/content/landing";
 import { useHref } from "~/lib/locale";
 
-type ClaimContent = LandingContent["hero"]["claim"];
+// Adres formu artik yalniz koyu kapanis blogunda; tip sozlesmesi de
+// oradan turer (hero'un eylemi hap CTA).
+type ClaimContent = LandingContent["closingCta"]["claim"];
 
 interface ClaimFormProps {
   claim: ClaimContent;
-  /** Bulunduğu renk bloğuna göre CTA varyantı (lime blokta koyu, mor blokta lime). */
+  /** Bulunduğu renk bloğuna göre CTA varyantı (koyu blokta kireç hap). */
   buttonVariant?: "heroDark" | "lime";
 }
 
@@ -21,7 +23,7 @@ export function ClaimForm({ claim, buttonVariant = "heroDark" }: ClaimFormProps)
       action={localize(claim.action)}
       className="flex w-full max-w-xl flex-col gap-3 sm:flex-row"
     >
-      <label className="flex min-w-0 flex-1 items-center rounded-full bg-white px-6 py-3 text-base">
+      <label className="flex min-w-0 flex-1 items-center rounded-full bg-white px-6 py-3 text-base focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-mavi">
         <span className="text-murekkep/60">{claim.domain}</span>
         <input
           type="text"

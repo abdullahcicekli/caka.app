@@ -40,12 +40,6 @@ export const ptBR = {
       play: "Reproduzir a faixa",
     },
     marquee: landingAssets.marquee,
-    claim: {
-      domain: "caka.app/",
-      placeholder: "seunome",
-      cta: "Comece grátis",
-      action: "/onboarding",
-    },
   },
   editorial: {
     body: "Um único link para o seu Instagram, TikTok, YouTube e todos os outros perfis — reunindo tudo o que você compartilha, cria e vende.",
@@ -57,17 +51,17 @@ export const ptBR = {
   },
   share: {
     title: "Compartilhe seu Caka\nonde você quiser",
-    body: "Coloque seu endereço nos seus perfis, nos seus vídeos e no seu cartão de visita. Traga também o tráfego offline para sua página com o QR code.",
+    body: "Coloque seu endereço nos seus perfis, nos seus vídeos e no seu cartão de visita. O cartão que aparece quando seu link é compartilhado você também escolhe.",
     cta: { label: "Comece grátis", href: "/onboarding" },
-    badges: ["Um endereço", "QR code"],
+    badges: ["Um endereço", "Imagem ao compartilhar"],
     pill: "Compartilhar",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Conheça seu público,\nmantenha o interesse",
-    body: "Veja em qual link clicam, de onde vêm seus visitantes e o que realmente funciona. Atualize sua página com base nisso.",
+    body: "Veja em qual link clicam, de qual país vêm seus visitantes e o que realmente funciona. Atualize sua página com base nisso.",
     cta: { label: "Comece grátis", href: "/onboarding" },
-    badges: ["Cliques", "Origens"],
+    badges: ["Cliques", "Países"],
     pill: "Analytics",
   },
   showcase: {
@@ -92,16 +86,16 @@ export const ptBR = {
         body: "caka.app/seunome — o único link que você põe nos perfis, nos vídeos e no cartão de visita.",
       },
       {
-        title: "QR code",
-        body: "Traga para sua página também quem você encontra offline; o código vem com o seu endereço.",
+        title: "Imagem ao compartilhar",
+        body: "Você escolhe o cartão que aparece quando seu link é compartilhado — modelo e foto são seus.",
       },
       {
         title: "Resumo de cliques",
         body: "Veja qual bloco chama atenção e reorganize sua página em torno dele.",
       },
       {
-        title: "Origem das visitas",
-        body: "Saiba de qual perfil vem seu tráfego e invista seu esforço onde ele rende.",
+        title: "Países",
+        body: "Veja de qual país vêm seus visitantes e saiba para quem você está falando.",
       },
     ],
     prev: "Cartão anterior",

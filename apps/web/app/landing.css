@@ -424,6 +424,9 @@
  * ---------------------------------------------------------------- */
 
 .lp-section { padding-block: clamp(72px, 9vw, 160px); }
+
+/* Çapa hedefleri yüzen hap navbarın ALTINDA kalmasın. */
+.lp-anchor { scroll-margin-top: calc(var(--lp-nav-h) + 28px); }
 .lp-section-tight { padding-block: clamp(48px, 6vw, 104px); }
 
 /* ---------------------------------------------------------------- *

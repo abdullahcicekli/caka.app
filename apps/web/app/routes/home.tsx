@@ -133,7 +133,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           faq={landing.faq}
           publishedLegal={loaderData.publishedLegal}
         />
-        <div id="kapanis">
+        <div id="kapanis" className="lp-anchor">
           <CtaSection cta={landing.closingCta} />
         </div>
       </main>

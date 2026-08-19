@@ -10,7 +10,7 @@ export function EditorialSection({
   editorial: LandingContent["editorial"];
 }) {
   return (
-    <section className="lp-section-tight lp-shell">
+    <section id="urun" className="lp-section-tight lp-shell lp-anchor">
       <p className="lp-lede max-w-[22ch] sm:max-w-[26ch]">{editorial.body}</p>
     </section>
   );

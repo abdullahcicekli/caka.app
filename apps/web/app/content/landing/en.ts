@@ -37,12 +37,6 @@ export const en = {
       play: "Play the strip",
     },
     marquee: landingAssets.marquee,
-    claim: {
-      domain: "caka.app/",
-      placeholder: "yourname",
-      cta: "Start free",
-      action: "/onboarding",
-    },
   },
   editorial: {
     body: "One link for your Instagram, TikTok, YouTube and every other profile — bringing together everything you share, make and sell.",
@@ -54,17 +48,17 @@ export const en = {
   },
   share: {
     title: "Share your Caka\nwherever you want",
-    body: "Put your address on your profiles, your videos and your business card. Bring offline traffic to your page with your QR code.",
+    body: "Put your address on your profiles, your videos and your business card. You pick the card people see when your link is shared, too.",
     cta: { label: "Start free", href: "/onboarding" },
-    badges: ["One address", "QR code"],
+    badges: ["One address", "Share image"],
     pill: "Sharing",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Know your audience,\nkeep their attention",
-    body: "See which link gets clicked, where your visitors come from and what actually works. Update your page accordingly.",
+    body: "See which link gets clicked, which country your visitors come from and what actually works. Update your page accordingly.",
     cta: { label: "Start free", href: "/onboarding" },
-    badges: ["Clicks", "Sources"],
+    badges: ["Clicks", "Countries"],
     pill: "Analytics",
   },
   showcase: {
@@ -89,16 +83,16 @@ export const en = {
         body: "caka.app/yourname — the single link you put on your profiles, videos and business card.",
       },
       {
-        title: "QR code",
-        body: "Bring the people you meet offline to your page; the code comes with your address.",
+        title: "Share image",
+        body: "You pick the card people see when your link is shared — template and photo are yours.",
       },
       {
         title: "Click summary",
         body: "See which block draws attention, then rearrange your page around it.",
       },
       {
-        title: "Visitor sources",
-        body: "Know which profile your traffic comes from, and spend your effort where it lands.",
+        title: "Countries",
+        body: "See which country your visitors come from, and know which audience you are talking to.",
       },
     ],
     prev: "Previous card",

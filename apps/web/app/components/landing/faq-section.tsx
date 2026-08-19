@@ -24,7 +24,7 @@ export function FaqSection({
 }) {
   const localize = useHref();
   return (
-    <section id="sss" className="lp-section lp-shell">
+    <section id="sss" className="lp-section lp-shell lp-anchor">
       <div className="lp-faq">
         <div>
           <p className="lp-eyebrow">{faq.label}</p>

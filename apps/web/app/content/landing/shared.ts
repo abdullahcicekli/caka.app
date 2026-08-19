@@ -56,7 +56,6 @@ export const landingAssets = {
     ] satisfies MarqueeItem[],
   },
   shareImage: shareCards,
-  phoneImage: phone3d,
   // Menü katmanındaki medya kartı.
   menuImage: creatorNaz,
   // Yalnızca Caka'ya ait, var olduğu doğrulanmış hesaplar. `github.com/caka-app`

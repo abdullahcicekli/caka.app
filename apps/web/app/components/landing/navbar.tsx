@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { Link, useLocation } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
@@ -33,6 +40,14 @@ export function Navbar({ nav, user }: NavbarProps) {
     setOpen(false);
   }, [pathname, hash]);
 
+  // KARARLI olmak zorunda: katmanın odak efekti buna bağlı, satır içi bir
+  // arrow her render'da efekti söküp kurar ve odağı ilk bağlantıya geri
+  // zıplatırdı.
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    burgerRef.current?.focus();
+  }, []);
+
   return (
     <header className="lp-nav">
       <nav className="lp-nav-pill">
@@ -66,7 +81,9 @@ export function Navbar({ nav, user }: NavbarProps) {
             type="button"
             className="lp-burger"
             aria-expanded={open}
-            aria-controls={menuId}
+            // Katman kapaliyken bu id'li ogenin kendisi YOK; kirik bir
+            // `aria-controls` birakmak yerine oznitelik hic basilmaz.
+            aria-controls={open ? menuId : undefined}
             aria-label={open ? nav.menu.close : nav.menu.open}
             onClick={() => setOpen((value) => !value)}
           >
@@ -81,10 +98,7 @@ export function Navbar({ nav, user }: NavbarProps) {
           id={menuId}
           menu={nav.menu}
           closeRef={burgerRef}
-          onClose={() => {
-            setOpen(false);
-            burgerRef.current?.focus();
-          }}
+          onClose={closeMenu}
         />
       ) : null}
     </header>
@@ -117,6 +131,16 @@ function MenuLayer({
   const localize = useHref();
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Katman acikken gövde kaydirilmaz: modal katmanin arkasindaki sayfanin
+  // kaymasi baglami kaybettirir (ve iOS'ta katmani da suruklerdi).
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
   useEffect(() => {
     const panel = panelRef.current;
     if (!panel) return;
@@ -132,11 +156,13 @@ function MenuLayer({
       }
       if (event.key !== "Tab") return;
 
-      // Donguye kapatma dugmesi de girer, en sona: son baglantidan Tab ile
-      // "kapat"a, oradan basa donulur.
+      // Kapatma düğmesi de döngüye girer ve DOM SIRASINDA olduğu yere
+      // konur: hamburger panelden ÖNCE geliyor. Sona konsaydı ileri yöndeki
+      // kenar o olurdu, son bağlantıdan Tab yakalanmaz ve odak perdenin
+      // arkasındaki sayfaya kaçardı.
       const items = [
-        ...panel.querySelectorAll<HTMLElement>(FOCUSABLE),
         closeRef.current,
+        ...panel.querySelectorAll<HTMLElement>(FOCUSABLE),
       ].filter((item): item is HTMLElement => item !== null);
       if (items.length === 0) return;
       const edge = event.shiftKey ? items[0] : items[items.length - 1];

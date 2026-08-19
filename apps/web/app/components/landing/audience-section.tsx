@@ -28,7 +28,7 @@ function AnalyticsIllustration() {
       {BAR_HEIGHTS.map((height, index) => (
         <span
           key={index}
-          className="flex-1 rounded-[3px] bg-kirec"
+          className="flex-1 rounded-full bg-kirec"
           style={{ height }}
         />
       ))}

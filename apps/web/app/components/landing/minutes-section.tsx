@@ -37,7 +37,7 @@ export function MinutesSection({
   const words = minutes.title.split(/\s+/).filter(Boolean);
 
   return (
-    <section id="urun" ref={containerRef} className="lp-pinned">
+    <section ref={containerRef} className="lp-pinned">
       <div className="lp-pinned-sticky lp-shell">
         <h2 className="lp-h2">
           <span className="sr-only">{minutes.title}</span>

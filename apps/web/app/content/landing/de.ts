@@ -40,12 +40,6 @@ export const de = {
       play: "Streifen abspielen",
     },
     marquee: landingAssets.marquee,
-    claim: {
-      domain: "caka.app/",
-      placeholder: "deinname",
-      cta: "Kostenlos starten",
-      action: "/onboarding",
-    },
   },
   editorial: {
     body: "Ein Link für Instagram, TikTok, YouTube und alle deine anderen Profile — er bringt zusammen, was du teilst, machst und verkaufst.",
@@ -57,17 +51,17 @@ export const de = {
   },
   share: {
     title: "Teile dein Caka,\nwo immer du willst",
-    body: "Setz deine Adresse in deine Profile, deine Videos und auf deine Visitenkarte. Mit deinem QR-Code holst du auch Offline-Besucher auf deine Seite.",
+    body: "Setz deine Adresse in deine Profile, deine Videos und auf deine Visitenkarte. Auch die Karte, die beim Teilen deines Links erscheint, wählst du selbst.",
     cta: { label: "Kostenlos starten", href: "/onboarding" },
-    badges: ["Eine Adresse", "QR-Code"],
+    badges: ["Eine Adresse", "Teilen-Bild"],
     pill: "Teilen",
     image: landingAssets.shareImage,
   },
   audience: {
     title: "Kenn dein Publikum,\nhalte sein Interesse",
-    body: "Sieh, welcher Link geklickt wird, woher deine Besucher kommen und was wirklich funktioniert. Und pass deine Seite danach an.",
+    body: "Sieh, welcher Link geklickt wird, aus welchem Land deine Besucher kommen und was wirklich funktioniert. Und pass deine Seite danach an.",
     cta: { label: "Kostenlos starten", href: "/onboarding" },
-    badges: ["Klicks", "Quellen"],
+    badges: ["Klicks", "Länder"],
     pill: "Analytics",
   },
   showcase: {
@@ -92,16 +86,16 @@ export const de = {
         body: "caka.app/deinname — der eine Link für deine Profile, Videos und Visitenkarte.",
       },
       {
-        title: "QR-Code",
-        body: "Hol auch die Leute auf deine Seite, die du offline triffst; der Code kommt mit deiner Adresse.",
+        title: "Teilen-Bild",
+        body: "Die Karte beim Teilen deines Links wählst du selbst — Vorlage und Foto gehören dir.",
       },
       {
         title: "Klick-Übersicht",
         body: "Sieh, welcher Block Aufmerksamkeit bekommt, und ordne deine Seite danach neu.",
       },
       {
-        title: "Besucherquellen",
-        body: "Wisse, von welchem Profil dein Traffic kommt, und steck deine Mühe dorthin.",
+        title: "Länder",
+        body: "Sieh, aus welchem Land deine Besucher kommen, und wisse, zu wem du sprichst.",
       },
     ],
     prev: "Vorherige Karte",
