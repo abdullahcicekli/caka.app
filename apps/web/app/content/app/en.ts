@@ -322,8 +322,6 @@ export const en = {
       "You have unpublished changes — the preview below shows the live version.",
     editPage: "Edit page",
     openPage: "Open page",
-
-    comingSoon: "Coming soon",
   },
 
   profile: {

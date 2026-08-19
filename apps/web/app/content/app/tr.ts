@@ -334,8 +334,6 @@ export const tr = {
       "Yayınlanmamış değişikliklerin var — aşağıdaki önizleme yayındaki hâli gösteriyor.",
     editPage: "Sayfayı düzenle",
     openPage: "Sayfayı aç",
-
-    comingSoon: "Yakında",
   },
 
   profile: {

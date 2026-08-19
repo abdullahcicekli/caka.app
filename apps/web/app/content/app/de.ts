@@ -324,8 +324,6 @@ export const de = {
       "Du hast unveröffentlichte Änderungen — die Vorschau unten zeigt die veröffentlichte Fassung.",
     editPage: "Seite bearbeiten",
     openPage: "Seite öffnen",
-
-    comingSoon: "Demnächst",
   },
 
   profile: {

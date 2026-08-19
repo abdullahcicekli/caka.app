@@ -324,8 +324,6 @@ export const ptBR = {
       "Você tem alterações não publicadas — a prévia abaixo mostra a versão no ar.",
     editPage: "Editar a página",
     openPage: "Abrir a página",
-
-    comingSoon: "Em breve",
   },
 
   profile: {

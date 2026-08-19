@@ -79,12 +79,10 @@ function AccountMenuContent({ user }: { user: SessionUser }) {
           </Link>
         </DropdownMenuItem>
       )}
-      {/* Ayarlar sayfası henüz yok; menüde yerini tutar ama tıklanamaz. */}
-      <DropdownMenuItem disabled>
-        <Settings /> {app.nav.accountSettings}
-        <span className="ml-auto rounded-full bg-zemin px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-          {app.nav.comingSoon}
-        </span>
+      <DropdownMenuItem asChild>
+        <Link to="/ayarlar">
+          <Settings /> {app.nav.accountSettings}
+        </Link>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onSelect={signOut} variant="destructive">
@@ -161,13 +159,10 @@ export function MenuAccountSection({
             </Link>
           </li>
         )}
-        {/* Ayarlar sayfası henüz yok: yerini tutar ama ODAK ALMAZ — tıklanamaz
-            bir satırı Tab döngüsüne sokmak klavye kullanıcısını boşa durdurur. */}
         <li>
-          <span className="lp-menu-account-soon">
+          <Link to="/ayarlar" onClick={onNavigate}>
             <Settings width={17} height={17} aria-hidden /> {app.nav.accountSettings}
-            <em>{app.nav.comingSoon}</em>
-          </span>
+          </Link>
         </li>
         <li>
           <button type="button" className="lp-menu-account-out" onClick={signOut}>

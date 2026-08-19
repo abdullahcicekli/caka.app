@@ -324,8 +324,6 @@ export const es = {
       "Tienes cambios sin publicar: la vista previa de abajo muestra la versión publicada.",
     editPage: "Editar la página",
     openPage: "Abrir la página",
-
-    comingSoon: "Próximamente",
   },
 
   profile: {

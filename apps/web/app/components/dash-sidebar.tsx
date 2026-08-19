@@ -65,8 +65,7 @@ export function DashSidebar({
             <MultiplePages width={17} height={17} /> {nav.pages}
           </NavLink>
           {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
-              /dashboard'da önizlemenin altında duruyor. nav.comingSoon etiketi
-              artık gerçeği yansıtmıyordu. */}
+              /dashboard'da önizlemenin altında duruyor. */}
           <NavLink to="/dashboard#analitik">
             <StatsReport width={17} height={17} /> {nav.analytics}
           </NavLink>

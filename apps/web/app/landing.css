@@ -402,7 +402,6 @@ html[data-landing]::-webkit-scrollbar {
   .lp-menu-account-links { grid-template-columns: 1fr 1fr; column-gap: 8px; }
 }
 .lp-menu-account-links a,
-.lp-menu-account-links .lp-menu-account-soon,
 .lp-menu-account-links .lp-menu-account-out {
   display: flex;
   width: 100%;
@@ -424,20 +423,6 @@ html[data-landing]::-webkit-scrollbar {
   outline-offset: 2px;
 }
 .lp-menu-account-links .lp-menu-account-out { cursor: pointer; color: var(--color-tehlike); }
-/* Tıklanamaz satır: imleç de bunu söylesin, hover'da zemin değişmesin. */
-.lp-menu-account-soon { color: color-mix(in srgb, var(--color-murekkep) 45%, transparent); }
-.lp-menu-account-soon em {
-  margin-inline-start: auto;
-  border-radius: var(--radius-full);
-  background: white;
-  padding: 2px 8px;
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
 .lp-menu-meta {
   display: flex;
   flex-wrap: wrap;
