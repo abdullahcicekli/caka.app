@@ -51,7 +51,28 @@ for (const locale of SUPPORTED_LOCALES) {
   }
 }
 
+/**
+ * Laboratuvar: vitrin mockup'larının üretildiği yalnız-geliştirme route'u
+ * (bkz. `routes/lab.karakterler.tsx`). Üretim derlemesinde diziye HİÇ girmez,
+ * dolayısıyla modülü ve import ettiği görseller pakete de girmez.
+ *
+ * KAPI `process.env` İLE, `import.meta.env` İLE DEĞİL: bu dosya route
+ * yapılandırmasıdır ve Vite'ın istemci/sunucu dönüşümünden önce React Router
+ * CLI'ı tarafından Node'da değerlendirilir — orada `import.meta.env` yoktur
+ * ve okumaya kalkmak dev sunucusunu tamamen düşürür (denendi: her sayfa 500).
+ *
+ * `__lab` bir kullanıcı adı olamaz (`USERNAME_PATTERN` yalnız `[a-z0-9-]`
+ * kabul eder), yani `:username` catch-all'uyla çakışmaz ve Değişmez #1'in
+ * rezerve isim listesine bir borç doğurmaz. Yine de catch-all'dan ÖNCE
+ * durur — sıra kuralı istisnasızdır.
+ */
+const lab: RouteConfigEntry[] =
+  process.env.NODE_ENV === "production"
+    ? []
+    : [route("__lab/karakterler", "routes/lab.karakterler.tsx")];
+
 export default [
   ...localized,
+  ...lab,
   route(":username", "routes/username.tsx"),
 ] satisfies RouteConfig;

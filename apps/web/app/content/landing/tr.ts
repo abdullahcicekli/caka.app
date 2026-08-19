@@ -158,6 +158,22 @@ export const tr = {
     next: "Sonraki kart",
     trackLabel: "Vitrin kartları",
   },
+  // Vitrin şeridi: altı persona, altı meslek. Görseller ve düzenler
+  // `personas.ts` + `vitrin.ts` içinde (çevrilmez); burada yalnız METİN var.
+  // `jobs` anahtarları `PersonaJob` kimlikleriyle birebir eşleşir.
+  karakterler: {
+    title: "Herkesin sayfası kendine benzer",
+    body: "Aynı ürün, altı farklı meslek. Telefonlardaki ekranlar gerçek Caka sayfaları — ekran görüntüsü değil.",
+    trackLabel: "Karakter kartları",
+    jobs: {
+      yazilimci: "Yazılım mühendisi",
+      youtuber: "YouTuber",
+      sporHocasi: "Spor hocası",
+      muzisyen: "Müzisyen",
+      gazeteci: "Gazeteci",
+      diyetisyen: "Diyetisyen",
+    },
+  },
   faq: {
     title: "Soruların? Cevaplandı",
     // Akordeonun solundaki etiket sütunu.

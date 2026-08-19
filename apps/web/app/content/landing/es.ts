@@ -136,6 +136,19 @@ export const es = {
     next: "Tarjeta siguiente",
     trackLabel: "Tarjetas del escaparate",
   },
+  karakterler: {
+    title: "Cada página se parece a quien la hizo",
+    body: "Un mismo producto, seis profesiones. Las pantallas de esos teléfonos son páginas reales de Caka, no capturas.",
+    trackLabel: "Tarjetas de personajes",
+    jobs: {
+      yazilimci: "Ingeniero de software",
+      youtuber: "YouTuber",
+      sporHocasi: "Entrenador personal",
+      muzisyen: "Músico",
+      gazeteci: "Periodista",
+      diyetisyen: "Dietista",
+    },
+  },
   faq: {
     title: "¿Preguntas? Respondidas",
     label: "Preguntas frecuentes",

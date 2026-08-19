@@ -133,6 +133,19 @@ export const en = {
     next: "Next card",
     trackLabel: "Showcase cards",
   },
+  karakterler: {
+    title: "Every page looks like the person behind it",
+    body: "One product, six professions. The screens inside those phones are real Caka pages, not screenshots.",
+    trackLabel: "Character cards",
+    jobs: {
+      yazilimci: "Software engineer",
+      youtuber: "YouTuber",
+      sporHocasi: "Personal trainer",
+      muzisyen: "Musician",
+      gazeteci: "Journalist",
+      diyetisyen: "Dietitian",
+    },
+  },
   faq: {
     title: "Questions? Answered",
     label: "Frequently asked",

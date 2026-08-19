@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { Link, redirect } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
-import creatorSelin from "~/assets/landing/creator-selin.webp";
+import telefonMockup from "~/assets/landing/vitrin/telefon-busra.webp";
 import { AppleIcon } from "~/components/icons/apple";
 import { GoogleIcon } from "~/components/icons/google";
 import { signInWithSocial } from "~/lib/auth-client";
@@ -70,33 +70,30 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Sağ panel: lime zemin üzerinde örnek profil kartı (tasarım 05) */}
+      {/* Sağ panel: kireç zemin üzerinde GERÇEK bir Caka sayfası.
+          Burada eskiden elle yazılmış sahte bir kart duruyordu (avatar +
+          üç uydurma bağlantı satırı). Ürünü yanlış tanıtıyordu ve kart
+          tasarımı her değiştiğinde sessizce bayatlıyordu. Yerine
+          laboratuvardan çekilmiş mockup kondu: telefonun içi
+          `ProfileCanvas`'ın kendisi (bkz. `scripts/lab-telefon.mjs`).
+
+          MOCKUP, CANLI RENDER DEĞİL: `ProfileCanvas`'ı buraya koymak tüm
+          blok bileşenlerini ve laboratuvar görsellerini dönüşüm yolunun
+          üstündeki bir sayfanın paketine sokardı. Görsel saydam (alfa) —
+          arkasındaki kireç panelin rengi telefonun köşelerinden geçiyor.
+
+          `lazy`: panel yalnız lg'de görünür ve LCP değil; giriş
+          düğmelerinin önüne geçmemeli. */}
       <aside className="relative hidden items-center justify-center overflow-hidden bg-kirec lg:flex">
-        <div className="w-72 rounded-[2rem] bg-zemin p-5 shadow-xl">
-          <img
-            src={creatorSelin}
-            alt=""
-            className="mx-auto size-20 rounded-full object-cover object-top"
-          />
-          <p className="mt-4 text-center font-bold">Selin Aydemir</p>
-          <p className="mt-0.5 text-center text-sm text-murekkep/50">
-            {app.auth.demoRole}
-          </p>
-          <div className="mx-auto mt-3 w-fit rounded-full bg-murekkep px-3 py-1 text-xs font-medium text-white">
-            caka.app/selin
-          </div>
-          <div className="mt-5 space-y-2">
-            <div className="rounded-xl bg-murekkep px-4 py-3 text-sm font-medium text-white">
-              {app.auth.demoLinkCalendar}
-            </div>
-            <div className="rounded-xl bg-white px-4 py-3 text-sm font-medium">
-              Instagram
-            </div>
-            <div className="rounded-xl bg-white px-4 py-3 text-sm font-medium">
-              {app.auth.demoLinkContact}
-            </div>
-          </div>
-        </div>
+        <img
+          src={telefonMockup}
+          alt={app.auth.demoAlt}
+          width={640}
+          height={1176}
+          loading="lazy"
+          decoding="async"
+          className="h-[88%] w-auto max-w-[70%] object-contain"
+        />
       </aside>
     </main>
   );

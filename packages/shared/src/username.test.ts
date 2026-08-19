@@ -202,10 +202,15 @@ describe("route tablosu ↔ rezerve liste", () => {
     // ve bu test, sessizce olmasın diye burada duruyor.
     const source = readFileSync(ROUTES_PATH, "utf8");
     expect(source, "app/routes.ts slug tablosundan üretilmiyor").toContain("pathFor");
-    expect(
-      literalRoutePaths(source),
-      "elle yazılan tek route :username catch-all'u olmalı",
-    ).toEqual([":username"]);
+    // `__lab/...` yalnız-geliştirme laboratuvar route'larıdır ve üretim
+    // derlemesine hiç girmezler (bkz. `app/routes.ts`'teki NODE_ENV kapısı):
+    // hreflang'de, sitemap'te ve dil değiştiricide görünmemeleri doğrudur.
+    // Önek `__` bilinçli — kullanıcı adı deseni `[a-z0-9-]` olduğu için
+    // hiçbir profil adresiyle çakışamaz.
+    const uretim = literalRoutePaths(source).filter((path) => !path.startsWith("__lab/"));
+    expect(uretim, "elle yazılan tek route :username catch-all'u olmalı").toEqual([
+      ":username",
+    ]);
   });
 
   it("slug tablosundan top-level segment çıkarılabiliyor", () => {

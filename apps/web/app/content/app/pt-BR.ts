@@ -305,9 +305,7 @@ export const ptBR = {
     noAccount: "Não tem conta?",
     claimAddress: "Pegue seu endereço",
     homeAria: "Página inicial do Caka",
-    demoRole: "ateliê de cerâmica · İzmir",
-    demoLinkCalendar: "Agenda do ateliê",
-    demoLinkContact: "Contato",
+    demoAlt: "Uma página real do Caka: o link de agendamento, o plano alimentar e a galeria da nutricionista Büşra Kaya",
 
     signOut: "Sair",
     accountMenu: "Menu da conta",

@@ -136,6 +136,19 @@ export const de = {
     next: "Nächste Karte",
     trackLabel: "Schaufenster-Karten",
   },
+  karakterler: {
+    title: "Jede Seite sieht aus wie ihr Mensch",
+    body: "Ein Produkt, sechs Berufe. Die Bildschirme in diesen Telefonen sind echte Caka-Seiten, keine Screenshots.",
+    trackLabel: "Charakterkarten",
+    jobs: {
+      yazilimci: "Softwareentwickler",
+      youtuber: "YouTuber",
+      sporHocasi: "Personal Trainer",
+      muzisyen: "Musiker",
+      gazeteci: "Journalistin",
+      diyetisyen: "Ernährungsberaterin",
+    },
+  },
   faq: {
     title: "Fragen? Beantwortet",
     label: "Häufige Fragen",
