@@ -18,6 +18,20 @@
  * reduce` altında JS hiç kurulmaz ve varsayılan `--lp-p: 1` kalır — yani
  * koreografi BİTMİŞ hâliyle, statik ve okunur durur. `app.css`'teki genel
  * koruma bloğu da süreleri sıfırlar.
+ *
+ * AÇILIŞ (INTRO) EKRANI YOK — bilinçli. Referansta şekillerin kelime
+ * markasına dönüştüğü kısa bir açılış var. Burada yapılmadı, üç sebeple:
+ *   1) LCP. Ölçülen LCP 184ms ve LCP ögesi hero medyasının ilk karesi. Araya
+ *      600ms'lik bir perde girseydi LCP doğrudan ~800ms'e çıkardı — sayfanın
+ *      birincil metriğinde katmerli bir gerileme, karşılığında sıfır bilgi.
+ *   2) "Yalnız ilk ziyarette" kararı yalnız İSTEMCİDE okunabilir
+ *      (sessionStorage). Sunucu HTML'i ya perdeyi HERKESE basar (dönen
+ *      ziyaretçi de bekler) ya da hiç basmaz ve perde hidrasyondan sonra
+ *      belirip yanıp söner. İkisi de kötü; üçüncü seçenek yok.
+ *   3) Hareket azaltmada zaten hiç görünmeyecekti, yani bedeli herkes öder,
+ *      faydasını bir kısım görür.
+ * Sayfanın girişi bunun yerine hero'nun kendi mekaniğinden geliyor: başlık
+ * yerinde dururken medyanın üstüne binmesi.
  * ==================================================================== */
 
 :root {
@@ -101,7 +115,9 @@
 }
 .lp-kicker span {
   display: block;
-  color: color-mix(in srgb, var(--color-murekkep) 55%, transparent);
+  /* %62: zemin uzerinde 5,13 kontrast. %55 yalniz 3,97 veriyordu ve 14px
+     metin AA esigini (4,5) gecmiyordu. */
+  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
 }
 .lp-kicker span:first-child { color: var(--color-murekkep); }
 
@@ -117,7 +133,8 @@
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-murekkep) 45%, transparent);
+  /* %45 yalniz 2,94 veriyordu — 12px metin icin AA esigi 4,5. */
+  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
 }
 
 /* ---------------------------------------------------------------- *
@@ -286,7 +303,7 @@
   border-top: 1px solid var(--color-sinir);
   padding-top: 12px;
   font-size: 13px;
-  color: color-mix(in srgb, var(--color-murekkep) 55%, transparent);
+  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
 }
 
 /* ---------------------------------------------------------------- *
