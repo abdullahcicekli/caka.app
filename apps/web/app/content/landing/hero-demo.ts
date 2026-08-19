@@ -146,8 +146,16 @@ export const heroTowerCalendars = {
 };
 
 /**
- * Kartların görselleri. Gerçek üründe bunları loader imzalı proxy yoluyla
- * doldurur (`server/layout-images.ts`); burada doğrudan paketlenmiş dosyalar
+ * Kartların görselleri — ŞERİDİN TEK GÖRSEL LİSTESİ.
+ *
+ * Düzen bu listeye bağlı DEĞİL: kutu ölçüleri kartın kendi oranından
+ * seçiliyor (bkz. `heroTowerRows`), görseller yalnız o kutuları dolduruyor.
+ * Yeni bir görsel seti geldiğinde değişmesi gereken tek yer burası ve
+ * yukarıdaki import'lardır; satırlara, sütunlara, ölçülere dokunmak
+ * gerekmez.
+ *
+ * Gerçek üründe bu eşlemeyi loader imzalı proxy yoluyla doldurur
+ * (`server/layout-images.ts`); burada doğrudan paketlenmiş dosyalar
  * veriliyor — sözleşme aynı: blok kimliği → görsel adresi.
  *
  * GÖRSEL TAŞIYABİLEN HER KART BURADA DOLU. Boş bırakılan profil kartı baş
@@ -450,14 +458,17 @@ export function heroTowerRows(copy: HeroTowerCopy): TowerRow[] {
           ],
         },
         {
-          w: 3,
+          // 368, 273 degil: Ispanyolca durum metni ("Agenda abierta para
+          // grabar") 273'te ikinci satira tasip 72px'lik kutuya sigmiyordu.
+          // Metin karti da 368x156'da doluyor.
+          w: 4,
           cells: [
             {
               h: 2,
               block: {
                 id: "demo-naz-text",
                 type: "text",
-                size: "1x1",
+                size: "2x1",
                 data: { text: copy.naz.text },
               },
             },
