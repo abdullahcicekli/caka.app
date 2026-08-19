@@ -344,6 +344,27 @@ html[data-landing]::-webkit-scrollbar {
 .lp-menu-card strong { font-size: 15px; font-weight: 600; }
 .lp-menu-card span { font-size: 13px; opacity: 0.82; }
 
+/* ---------------------------------------------------------------- *
+ * Navbar hesap menüsü (oturum açıkken)
+ *
+ * `UserMenu` bir Radix dropdown'ı: zaten düğmenin altında ve sağa yaslı
+ * açılıyor. Eksik olan tek şey DİLDİ — 12px köşe ve genel `shadow-lg`,
+ * yanındaki site menüsünün 16px köşesi ve yumuşak gölgesiyle
+ * uyuşmuyordu. Bu sınıf ikisini eşitler.
+ *
+ * Sınıf yalnız navbar varyantına verilir; panelin kenar çubuğundaki
+ * `SidebarUserMenu` almaz (Değişmez: paneli bozma).
+ * ---------------------------------------------------------------- */
+
+.lp-account-menu {
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--color-murekkep) 18%, transparent);
+}
+/* Satırların köşesi de kartın köşe ailesinden (12px), 8px değil. */
+.lp-account-menu [data-slot="dropdown-menu-item"] {
+  border-radius: var(--radius-xl);
+  padding-block: 7px;
+}
+
 .lp-menu-meta {
   display: flex;
   flex-wrap: wrap;
