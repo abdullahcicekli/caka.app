@@ -65,6 +65,73 @@ function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
   );
 }
 
+/**
+ * Bir SİTEYİ temsil eden kart. İki blok tipi de bunu kullanır: `link` bloğu
+ * ve sosyal bloğun "web sitesi" platformu.
+ *
+ * NEDEN TEK BİLEŞEN: ikisi aynı şeyi gösteriyordu ama iki ayrı düzenle —
+ * sosyal kartta kimlik satırı üstte ve ham adres ("https://cicekli.me/")
+ * yazılıyordu, bağlantı kartında önizleme üstte ve okunur alan adı
+ * ("cicekli.me") vardı. Aynı sayfada yan yana duran iki site kartı bu yüzden
+ * birbirine benzemiyordu. Bağlantı kartının düzeni kazandı: `.profile-block-link`
+ * altında altı ayrı boyut kovası için ölçülmüş container query'ler var
+ * (og'un 1,91:1 oranı, 2×1'de kapak olması, 4×1'de yana geçmesi); sosyal
+ * kartın kendi `has-og` kuralları bunların yalnız bir kısmını taşıyordu.
+ */
+function WebLinkCard({
+  url,
+  title,
+  preview,
+  favicon,
+  imgLoading,
+}: {
+  url: string;
+  /** İsteğe bağlı başlık; yoksa alan adı satırı tek başına yeter. */
+  title: string;
+  /** İmzalı birinci taraf og görseli; yoksa kart sade yüzeye düşer. */
+  preview: string;
+  favicon: string;
+  imgLoading: "eager" | "lazy";
+}) {
+  const target = prettyLinkTarget(url);
+  const brand = linkBrand(url);
+  return (
+    <a
+      className={`profile-block profile-block-link${preview ? " has-og" : ""}`}
+      href={url || undefined}
+      target="_blank"
+      rel="noreferrer"
+    >
+      {preview ? (
+        <img className="link-og" src={preview} alt="" loading={imgLoading} draggable={false} />
+      ) : null}
+      <span className="link-body">
+        <span className={`platform-mark link-mark ${brand.tone}`} aria-hidden>
+          {brand.initial}
+          {/* Favicon varsa harfin üstünü kapatır; yüklenemezse harf kalır
+              (bkz. `.mark-favicon`, app.css). Uzak host'a gidilmez —
+              adres imzalı birinci taraf proxy'sinden geçer (R58). */}
+          {favicon ? (
+            <img className="mark-favicon" src={favicon} alt="" loading={imgLoading} draggable={false} />
+          ) : null}
+        </span>
+        <span className="link-lines">
+          {/* BAŞLIK İSTEĞE BAĞLI: yoksa alan adı satırı tek başına yeter.
+              Eskiden başlık boşken alan adı `strong`a da yazılıyordu,
+              yani aynı metin kartta iki kez görünüyordu. */}
+          {title ? <strong>{title}</strong> : null}
+          <small>{target}</small>
+        </span>
+      </span>
+      {/* Ok yalnız görselsiz kartta: görselli kartta önizlemenin kendisi
+          zaten "burada bir şey var" diyor, ok gürültü olurdu. */}
+      <span className="link-go" aria-hidden>
+        ↗
+      </span>
+    </a>
+  );
+}
+
 export function ProfileBlockCard({
   block,
   githubCalendars,
@@ -190,17 +257,30 @@ export function ProfileBlockCard({
     // (Eşitlik testi geriye dönük de çalışır: mevcut blokların hepsinde
     // varsayılan yazılı, veri taşımaya gerek yok.)
     const customLabel = block.data.label.trim() === platform.label ? "" : block.data.label.trim();
-    // Favicon yalnız "web sitesi" kartında: marka platformlarında kendi
-    // ikonları favicon'dan daha okunur ve tek renk oldukları için kart
-    // tonuyla uyumlu.
-    const showFavicon = platform.id === "website" && signedFavicon !== "";
+    // "WEB SİTESİ" SOSYAL BLOK DEĞİL, SİTE KARTIDIR. Marka platformları bir
+    // PROFİLİ gösteriyor (ikon + kullanıcı adı, herkesin tanıdığı bir çip);
+    // web sitesinde tanınacak bir marka yok, kartın söyleyeceği şey sitenin
+    // kendisi — önizlemesi, başlığı ve alan adı. Bağlantı bloğu bunu zaten
+    // yapıyordu, yani aynı sayfada iki farklı site kartı vardı. İkisi artık
+    // tek bileşen (bkz. `WebLinkCard`).
+    if (platform.id === "website") {
+      return (
+        <WebLinkCard
+          url={block.data.url}
+          title={customLabel}
+          preview={signedImage}
+          favicon={signedFavicon}
+          imgLoading={imgLoading}
+        />
+      );
+    }
+    // Favicon burada YOK: tek kullanıcısı "web sitesi" platformuydu, o da
+    // artık `WebLinkCard`a gidiyor. Marka platformlarında kendi ikonları
+    // favicon'dan daha okunur ve tek renk oldukları için kart tonuyla uyumlu.
     const head = (
       <>
         <span className={`platform-mark ${platform.tone}`}>
           <SocialIcon platform={platform.id} width={18} height={18} strokeWidth={2.2} />
-          {showFavicon ? (
-            <img className="mark-favicon" src={signedFavicon} alt="" loading={imgLoading} draggable={false} />
-          ) : null}
         </span>
         <span>
           {customLabel ? <strong>{customLabel}</strong> : null}
@@ -250,46 +330,16 @@ export function ProfileBlockCard({
     // (ölçüm: hedeflerin çoğunluğu) kart "bozuk" değil "sade" görünmeli.
     // Görsel çapa marka renginde bir çip + alan adının baş harfidir; favicon
     // için uzak istek atılmaz (bkz. `lib/link-preview.ts`).
-    case "link": {
-      const target = prettyLinkTarget(block.data.url);
-      const brand = linkBrand(block.data.url);
-      const preview = signedImage;
+    case "link":
       return (
-        <a
-          className={`profile-block profile-block-link${preview ? " has-og" : ""}`}
-          href={block.data.url || undefined}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {preview ? (
-            <img className="link-og" src={preview} alt="" loading={imgLoading} draggable={false} />
-          ) : null}
-          <span className="link-body">
-            <span className={`platform-mark link-mark ${brand.tone}`} aria-hidden>
-              {brand.initial}
-              {/* Favicon varsa harfin üstünü kapatır; yüklenemezse harf kalır
-                  (bkz. `.mark-favicon`, app.css). Uzak host'a gidilmez —
-                  adres imzalı birinci taraf proxy'sinden geçer (R58). */}
-              {signedFavicon ? (
-                <img className="mark-favicon" src={signedFavicon} alt="" loading={imgLoading} draggable={false} />
-              ) : null}
-            </span>
-            <span className="link-lines">
-              {/* BAŞLIK İSTEĞE BAĞLI: yoksa alan adı satırı tek başına yeter.
-                  Eskiden başlık boşken alan adı `strong`a da yazılıyordu,
-                  yani aynı metin kartta iki kez görünüyordu. */}
-              {block.data.title ? <strong>{block.data.title}</strong> : null}
-              <small>{target}</small>
-            </span>
-          </span>
-          {/* Ok yalnız görselsiz kartta: görselli kartta önizlemenin kendisi
-              zaten "burada bir şey var" diyor, ok gürültü olurdu. */}
-          <span className="link-go" aria-hidden>
-            ↗
-          </span>
-        </a>
+        <WebLinkCard
+          url={block.data.url}
+          title={block.data.title}
+          preview={signedImage}
+          favicon={signedFavicon}
+          imgLoading={imgLoading}
+        />
       );
-    }
 
     case "text":
       return (
