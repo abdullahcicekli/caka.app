@@ -17,6 +17,7 @@ export const en = {
     settings: "Settings — Caka",
     login: "Log in — Caka",
     setup: "Set up your page — Caka",
+    claim: "Claim your address — Caka",
     onboardingFinish: "Preparing your account — Caka",
     onboardingReady: "Your page is ready — Caka",
     notFound: "Page not found — Caka",
@@ -227,9 +228,11 @@ export const en = {
 
     richText: {
       placeholder: "Write something…",
+      statusPlaceholder: "Write your announcement…",
       linkUrl: "Link address",
       bold: "Bold",
       italic: "Italic",
+      bulletList: "Bulleted list",
       orderedList: "Ordered list",
       quote: "Quote",
       link: "Link",
@@ -264,6 +267,9 @@ export const en = {
     linksBody: "Enter the usernames for the platforms you picked.",
     linksChosen: "Your picks",
     usernameLabel: "Username",
+    addressLabel: "Address",
+    addressTaken: "This address is taken",
+    saving: "Saving…",
     extraLinks: "Extra links",
 
     buildingContent: "Finding your content…",
@@ -286,6 +292,7 @@ export const en = {
     gridSoon: "The grid editor is coming very soon — your page is already live.",
 
     goToPage: "Go to your page",
+    goToMyPage: "Go to my page",
     back: "Back",
     addressPlaceholder: "address",
     handlePlaceholder: "you",
@@ -318,6 +325,7 @@ export const en = {
   },
 
   nav: {
+    close: "Close",
     copied: "Copied",
     copyLink: "Copy link",
     pages: "Pages",

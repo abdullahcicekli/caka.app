@@ -17,6 +17,7 @@ export const de = {
     settings: "Einstellungen — Caka",
     login: "Anmelden — Caka",
     setup: "Seite einrichten — Caka",
+    claim: "Sichere dir deine Adresse — Caka",
     onboardingFinish: "Dein Konto wird vorbereitet — Caka",
     onboardingReady: "Deine Seite ist fertig — Caka",
     notFound: "Seite nicht gefunden — Caka",
@@ -228,9 +229,11 @@ export const de = {
 
     richText: {
       placeholder: "Schreib etwas…",
+      statusPlaceholder: "Schreib deine Ankündigung…",
       linkUrl: "Adresse des Links",
       bold: "Fett",
       italic: "Kursiv",
+      bulletList: "Aufzählung",
       orderedList: "Nummerierte Liste",
       quote: "Zitat",
       link: "Link",
@@ -265,6 +268,9 @@ export const de = {
     linksBody: "Gib die Benutzernamen der Plattformen ein, die du ausgewählt hast.",
     linksChosen: "Deine Auswahl",
     usernameLabel: "Benutzername",
+    addressLabel: "Adresse",
+    addressTaken: "Diese Adresse ist vergeben",
+    saving: "Wird gespeichert…",
     extraLinks: "Weitere Links",
 
     buildingContent: "Deine Inhalte werden gesucht…",
@@ -288,6 +294,7 @@ export const de = {
     gridSoon: "Der Grid-Editor kommt sehr bald — deine Seite ist schon online.",
 
     goToPage: "Zu deiner Seite",
+    goToMyPage: "Zu meiner Seite",
     back: "Zurück",
     addressPlaceholder: "adresse",
     handlePlaceholder: "du",
@@ -320,6 +327,7 @@ export const de = {
   },
 
   nav: {
+    close: "Schließen",
     copied: "Kopiert",
     copyLink: "Link kopieren",
     pages: "Seiten",

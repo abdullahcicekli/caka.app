@@ -16,6 +16,7 @@ export const tr = {
     settings: "Ayarlar — Caka",
     login: "Giriş yap — Caka",
     setup: "Sayfanı hazırla — Caka",
+    claim: "Adresini al — Caka",
     onboardingFinish: "Hesabın hazırlanıyor — Caka",
     onboardingReady: "Sayfan hazır — Caka",
     notFound: "Sayfa bulunamadı — Caka",
@@ -241,9 +242,11 @@ export const tr = {
 
     richText: {
       placeholder: "Bir şeyler yaz…",
+      statusPlaceholder: "Duyurunu yaz…",
       linkUrl: "Bağlantı adresi",
       bold: "Kalın",
       italic: "İtalik",
+      bulletList: "Liste",
       orderedList: "Sıralı liste",
       quote: "Alıntı",
       link: "Bağlantı",
@@ -278,6 +281,9 @@ export const tr = {
     linksBody: "Seçtiğin platformların kullanıcı adlarını gir.",
     linksChosen: "Seçtiklerin",
     usernameLabel: "Kullanıcı adı",
+    addressLabel: "Adres",
+    addressTaken: "Bu adres dolu",
+    saving: "Kaydediliyor…",
     extraLinks: "Ek bağlantılar",
 
     buildingContent: "İçeriğin bulunuyor…",
@@ -300,6 +306,9 @@ export const tr = {
     gridSoon: "Grid editörü çok yakında — sayfan şimdiden yayında.",
 
     goToPage: "Sayfana git",
+    // Kullanıcının BASTIĞI düğme, ona anlatılan bir cümle değil: birinci
+    // tekil kalıyor ("Sayfama git"), `goToPage` ise ikinci tekil.
+    goToMyPage: "Sayfama git",
     back: "Geri",
     addressPlaceholder: "adres",
     handlePlaceholder: "sen",
@@ -332,6 +341,7 @@ export const tr = {
   },
 
   nav: {
+    close: "Kapat",
     copied: "Kopyalandı",
     copyLink: "Bağlantıyı kopyala",
     pages: "Sayfalar",

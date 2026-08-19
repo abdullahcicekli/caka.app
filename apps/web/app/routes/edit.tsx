@@ -2684,7 +2684,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       <nav className="editor-toolbar" aria-label={app.editor.toolbarLabel}>
         <button
           type="button"
-          data-tooltip="Tema"
+          data-tooltip={app.editor.themeAria}
           aria-label={app.editor.themeAria}
           className={panel === "theme" ? "is-active" : ""}
           onClick={() => setPanel(panel === "theme" ? null : "theme")}
@@ -2695,10 +2695,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         <button type="button" data-tooltip={app.editor.addLink} aria-label={app.editor.addLink} onClick={() => add("link")}>
           <LinkIcon width={19} height={19} />
         </button>
-        <button type="button" data-tooltip="Metin ekle" aria-label={app.editor.addText} onClick={() => add("text")}>
+        <button type="button" data-tooltip={app.editor.addText} aria-label={app.editor.addText} onClick={() => add("text")}>
           <Text width={19} height={19} />
         </button>
-        <button type="button" data-tooltip="Duyuru ekle" aria-label={app.editor.addStatus} onClick={() => add("status")}>
+        <button type="button" data-tooltip={app.editor.addStatus} aria-label={app.editor.addStatus} onClick={() => add("status")}>
           <Megaphone width={18} height={18} />
         </button>
         {/* TEK fotoğraf düğmesi: `image` ve `gallery` birleşti. Kullanıcı
@@ -2727,7 +2727,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         </button>
         <button
           type="button"
-          data-tooltip="Blok galerisi"
+          data-tooltip={app.editor.blockPickerAria}
           aria-label={app.editor.blockPickerAria}
           className={panel === "gallery" ? "is-active" : ""}
           onClick={() => setPanel(panel === "gallery" ? null : "gallery")}

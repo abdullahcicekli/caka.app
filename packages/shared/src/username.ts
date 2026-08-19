@@ -193,12 +193,12 @@ export function validateUsername(input: string): UsernameResult {
   return { ok: true, username };
 }
 
-export const USERNAME_ERROR_MESSAGES: Record<UsernameError, string> = {
-  too_short: `En az ${USERNAME_MIN} karakter olmalı`,
-  too_long: `En fazla ${USERNAME_MAX} karakter olabilir`,
-  invalid_chars: "Yalnızca küçük harf, rakam ve tire; başta/sonda tire olamaz",
-  reserved: "Bu adres kullanılamaz",
-};
+/* METİN BURADA DEĞİL: `UsernameError` kodları için kullanıcıya gösterilen
+ * cümleler `app/content/common/*` içinde, beş dilde duruyor
+ * (`common.usernameErrors`). Burada Türkçe sabitlerden oluşan bir
+ * `USERNAME_ERROR_MESSAGES` vardı ve onboarding onu basıyordu — İngilizce
+ * bir kullanıcı adres alırken Türkçe hata görüyordu. Paylaşılan paket
+ * ÇEVİRİ TAŞIMAZ; yalnız kodu üretir, cümleyi arayüz seçer. */
 
 /* ------------------------------------------------------------------ *
  * Adres değişikliği (Değişmez #10)

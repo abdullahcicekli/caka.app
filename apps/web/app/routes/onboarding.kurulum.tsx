@@ -259,10 +259,11 @@ function Progress({ step }: { step: Step }) {
 }
 
 function BottomActions({
-  label = "Devam et",
+  label,
   canSkip = true,
   disabled = false,
 }: {
+  /** Boşsa adımın varsayılan metni ("Devam et") katalogdan gelir. */
   label?: string;
   canSkip?: boolean;
   disabled?: boolean;
@@ -273,7 +274,7 @@ function BottomActions({
   return (
     <div className="onboarding-actions">
       <button type="submit" name="intent" value="continue" disabled={pending || disabled}>
-        {pending ? "Kaydediliyor…" : label}
+        {pending ? app.setup.saving : (label ?? app.setup.continueAria)}
       </button>
       {canSkip ? (
         <button className="onboarding-skip" type="submit" name="intent" value="skip">
@@ -530,7 +531,7 @@ function DiscoveryStep({ initial }: { initial: string }) {
           </label>
         ))}
       </div>
-      <BottomActions label="Sayfama git" />
+      <BottomActions label={app.setup.goToMyPage} />
     </Form>
   );
 }
@@ -617,7 +618,7 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
                 <SocialIcon platform={config.id} width={18} height={18} strokeWidth={2.2} />
               </span>
               <span className="floating-input">
-                <small>{platform === "website" ? "Adres" : app.setup.usernameLabel}</small>
+                <small>{platform === "website" ? app.setup.addressLabel : app.setup.usernameLabel}</small>
                 <input
                   name="linkValue"
                   defaultValue={initial.get(platform) ?? ""}

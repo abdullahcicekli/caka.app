@@ -4,6 +4,8 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import { cn } from "~/lib/utils"
 import { Button } from "~/components/ui/button"
 import { Xmark } from "iconoir-react"
+import { appCatalog } from "~/content/app"
+import { useCatalog } from "~/lib/locale"
 
 function Dialog({
   ...props
@@ -57,6 +59,9 @@ function DialogContent({
       varsayılan perde (bg-black/10 + blur) form dialogları içindir. */
   overlayClassName?: string
 }) {
+  // Kapatma düğmesinin metni ekran okuyucuya okunur; İngilizce "Close"
+  // Türkçe bir kurulum akışında çevrilmemiş kalıyordu.
+  const app = useCatalog(appCatalog)
   return (
     <DialogPortal>
       <DialogOverlay className={overlayClassName} />
@@ -78,7 +83,7 @@ function DialogContent({
             >
               <Xmark
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{app.nav.close}</span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -105,6 +110,7 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean
 }) {
+  const app = useCatalog(appCatalog)
   return (
     <div
       data-slot="dialog-footer"
@@ -117,7 +123,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">{app.nav.close}</Button>
         </DialogPrimitive.Close>
       )}
     </div>

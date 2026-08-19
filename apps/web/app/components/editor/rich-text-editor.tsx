@@ -61,7 +61,7 @@ export function InlineTextEditor({
       // Gerçek placeholder: boşken görünür, ilk karakterde kaybolur. Blok
       // içeriği olarak örnek metin YAZILMAZ (yoksa yazının başında kalır).
       Placeholder.configure({
-        placeholder: variant === "status" ? "Duyurunu yaz…" : rt.placeholder,
+        placeholder: variant === "status" ? rt.statusPlaceholder : rt.placeholder,
       }),
     ],
     content: (doc as object) ?? docFromPlainText(fallbackText),
@@ -94,7 +94,7 @@ export function InlineTextEditor({
   const tools = [
     { label: rt.bold, icon: Bold, active: editor.isActive("bold"), run: () => editor.chain().focus().toggleBold().run() },
     { label: rt.italic, icon: Italic, active: editor.isActive("italic"), run: () => editor.chain().focus().toggleItalic().run() },
-    { label: "Liste", icon: List, active: editor.isActive("bulletList"), run: () => editor.chain().focus().toggleBulletList().run() },
+    { label: rt.bulletList, icon: List, active: editor.isActive("bulletList"), run: () => editor.chain().focus().toggleBulletList().run() },
     { label: rt.orderedList, icon: NumberedListLeft, active: editor.isActive("orderedList"), run: () => editor.chain().focus().toggleOrderedList().run() },
     { label: rt.quote, icon: Quote, active: editor.isActive("blockquote"), run: () => editor.chain().focus().toggleBlockquote().run() },
     { label: rt.link, icon: LinkIcon, active: editor.isActive("link"), run: setLink },
@@ -123,7 +123,7 @@ export function InlineTextEditor({
           </button>
         ))}
         <span className="sep" aria-hidden />
-        <button type="button" aria-label={app.editor.doneAria} data-tooltip="Bitti" onClick={onClose}>
+        <button type="button" aria-label={app.editor.doneAria} data-tooltip={app.editor.doneAria} onClick={onClose}>
           <Check width={15} height={15} />
         </button>
       </div>

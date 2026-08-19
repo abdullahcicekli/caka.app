@@ -9,7 +9,7 @@ import { useCatalog } from "~/lib/locale";
 import { DashSidebar } from "~/components/dash-sidebar";
 import { ProfileCanvas } from "~/components/profile-block";
 import { noIndexMeta } from "~/lib/seo";
-import {
+import { DEFAULT_LOCALE,
   buildDailySeries,
   buildLinkBreakdown,
   collectTrackableLinks,
@@ -33,8 +33,8 @@ import type { Route } from "./+types/dashboard";
 import { localeFromRequest, localizedRedirect } from "../../server/locale";
 import { appCatalog } from "~/content/app";
 
-export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Panel — Caka");
+export function meta({ loaderData }: Route.MetaArgs) {
+  return noIndexMeta(appCatalog[loaderData?.locale ?? DEFAULT_LOCALE].titles.dashboard);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -80,6 +80,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   ]);
 
   return {
+    // Sekme başlığı `meta`da katalogdan okunuyor; `meta` hook kullanamaz.
+    locale: localeFromRequest(request),
     analytics,
     username: profile.username,
     layout: ensureLayoutPositions(layout),

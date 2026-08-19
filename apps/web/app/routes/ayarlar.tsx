@@ -29,7 +29,7 @@ import { commonCatalog } from "~/content/common";
 import { useCatalog } from "~/lib/locale";
 import { publishedLegalDocumentIds } from "~/content/legal";
 import { noIndexMeta } from "~/lib/seo";
-import {
+import { DEFAULT_LOCALE,
   layoutPhotoAssets,
   normalizeOgTemplate,
   OG_TEMPLATE_OPTIONS,
@@ -52,8 +52,8 @@ import type { Route } from "./+types/ayarlar";
 import { localeFromRequest, localizedRedirect } from "../../server/locale";
 import { appCatalog } from "~/content/app";
 
-export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Ayarlar — Caka");
+export function meta({ loaderData }: Route.MetaArgs) {
+  return noIndexMeta(appCatalog[loaderData?.locale ?? DEFAULT_LOCALE].titles.settings);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -94,6 +94,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const previews = Object.fromEntries(previewEntries) as Record<OgTemplate, string>;
 
   return {
+    // Sekme başlığı `meta`da katalogdan okunuyor; `meta` hook kullanamaz.
+    locale: localeFromRequest(request),
     username: profile.username,
     ogTemplate: normalizeOgTemplate(profile.ogTemplate),
     ogPhotoAssetId,

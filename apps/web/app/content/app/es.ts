@@ -17,6 +17,7 @@ export const es = {
     settings: "Ajustes — Caka",
     login: "Iniciar sesión — Caka",
     setup: "Prepara tu página — Caka",
+    claim: "Consigue tu dirección — Caka",
     onboardingFinish: "Preparando tu cuenta — Caka",
     onboardingReady: "Tu página está lista — Caka",
     notFound: "Página no encontrada — Caka",
@@ -228,9 +229,11 @@ export const es = {
 
     richText: {
       placeholder: "Escribe algo…",
+      statusPlaceholder: "Escribe tu anuncio…",
       linkUrl: "Dirección del enlace",
       bold: "Negrita",
       italic: "Cursiva",
+      bulletList: "Lista con viñetas",
       orderedList: "Lista numerada",
       quote: "Cita",
       link: "Enlace",
@@ -265,6 +268,9 @@ export const es = {
     linksBody: "Escribe los nombres de usuario de las plataformas que elegiste.",
     linksChosen: "Tu selección",
     usernameLabel: "Nombre de usuario",
+    addressLabel: "Dirección",
+    addressTaken: "Esta dirección está ocupada",
+    saving: "Guardando…",
     extraLinks: "Enlaces adicionales",
 
     buildingContent: "Buscando tu contenido…",
@@ -288,6 +294,7 @@ export const es = {
     gridSoon: "El editor de cuadrícula llega muy pronto: tu página ya está publicada.",
 
     goToPage: "Ir a tu página",
+    goToMyPage: "Ir a mi página",
     back: "Atrás",
     addressPlaceholder: "dirección",
     handlePlaceholder: "tu",
@@ -320,6 +327,7 @@ export const es = {
   },
 
   nav: {
+    close: "Cerrar",
     copied: "Copiado",
     copyLink: "Copiar enlace",
     pages: "Páginas",

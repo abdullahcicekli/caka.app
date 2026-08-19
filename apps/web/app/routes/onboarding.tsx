@@ -15,30 +15,34 @@ import {
 } from "~/components/ui/dialog";
 import { signInWithSocial, type SocialProvider } from "~/lib/auth-client";
 import { noIndexMeta } from "~/lib/seo";
-import { USERNAME_ERROR_MESSAGES, validateUsername } from "@caka/shared";
+import { DEFAULT_LOCALE, validateUsername } from "@caka/shared";
 import { getSession } from "../../server/auth";
 import { claimUsername, getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/onboarding";
-import { localizedRedirect } from "../../server/locale";
+import { localeFromRequest, localizedRedirect } from "../../server/locale";
 import { appCatalog } from "~/content/app";
 import { useCatalog } from "~/lib/locale";
+import { commonCatalog, type CommonContent } from "~/content/common";
 
 export const CLAIM_COOKIE = "caka_claim";
 
-export function meta({}: Route.MetaArgs) {
-  return noIndexMeta("Adresini al — Caka");
+export function meta({ loaderData }: Route.MetaArgs) {
+  return noIndexMeta(appCatalog[loaderData?.locale ?? DEFAULT_LOCALE].titles.claim);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  // Sekme başlığı da çevrilir: `meta` istemci katalogunu kullanamıyor
+  // (hook değil), o yüzden dili loader taşır — `routes/edit.tsx` ile aynı.
+  const locale = localeFromRequest(request);
   const session = await getSession(env, request);
-  if (!session) return { authed: false };
+  if (!session) return { authed: false, locale };
   const existing = await getProfileByUserId(env, session.user.id);
   if (existing) {
     throw redirect(
       existing.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil",
     );
   }
-  return { authed: true };
+  return { authed: true, locale };
 }
 
 /** Oturumlu kullanıcı için doğrudan claim (Google adımı atlanır). */
@@ -64,7 +68,18 @@ type Availability =
   | { state: "available"; username: string }
   | { state: "unavailable"; message: string };
 
-function useAvailability(value: string): Availability {
+/** Hook'un bastığı metinler; çağıran bileşen katalogdan geçirir. */
+type AvailabilityCopy = {
+  usernameErrors: CommonContent["usernameErrors"];
+  taken: string;
+};
+
+/**
+ * Adres uygunluğu. Metinler DIŞARIDAN geliyor: hook `useCatalog`'u kendisi
+ * çağırsaydı da olurdu, ama `common.usernameErrors` zaten çağıran bileşende
+ * duruyor ve iki ayrı katalog aboneliği aynı metin için gereksiz.
+ */
+function useAvailability(value: string, copy: AvailabilityCopy): Availability {
   const [availability, setAvailability] = useState<Availability>({ state: "idle" });
   const requestId = useRef(0);
 
@@ -78,7 +93,7 @@ function useAvailability(value: string): Availability {
     if (!local.ok) {
       setAvailability({
         state: "unavailable",
-        message: USERNAME_ERROR_MESSAGES[local.error],
+        message: copy.usernameErrors[local.error],
       });
       return;
     }
@@ -91,7 +106,7 @@ function useAvailability(value: string): Availability {
         setAvailability(
           body.available
             ? { state: "available", username: body.username ?? local.username }
-            : { state: "unavailable", message: "Bu adres dolu" },
+            : { state: "unavailable", message: copy.taken },
         );
       } catch {
         if (requestId.current === id) setAvailability({ state: "idle" });
@@ -105,10 +120,14 @@ function useAvailability(value: string): Availability {
 
 export default function Onboarding({ loaderData, actionData }: Route.ComponentProps) {
   const app = useCatalog(appCatalog);
+  const common = useCatalog(commonCatalog);
   const [params] = useSearchParams();
   const [value, setValue] = useState(params.get("u") ?? "");
   const [confirming, setConfirming] = useState(false);
-  const availability = useAvailability(value);
+  const availability = useAvailability(value, {
+    usernameErrors: common.usernameErrors,
+    taken: app.setup.addressTaken,
+  });
 
   const takenError =
     params.get("error") === "taken" || actionData?.error === "taken"

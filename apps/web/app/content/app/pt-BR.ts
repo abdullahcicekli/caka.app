@@ -17,6 +17,7 @@ export const ptBR = {
     settings: "Configurações — Caka",
     login: "Entrar — Caka",
     setup: "Prepare sua página — Caka",
+    claim: "Garanta seu endereço — Caka",
     onboardingFinish: "Preparando sua conta — Caka",
     onboardingReady: "Sua página está pronta — Caka",
     notFound: "Página não encontrada — Caka",
@@ -228,9 +229,11 @@ export const ptBR = {
 
     richText: {
       placeholder: "Escreva alguma coisa…",
+      statusPlaceholder: "Escreva seu anúncio…",
       linkUrl: "Endereço do link",
       bold: "Negrito",
       italic: "Itálico",
+      bulletList: "Lista com marcadores",
       orderedList: "Lista numerada",
       quote: "Citação",
       link: "Link",
@@ -265,6 +268,9 @@ export const ptBR = {
     linksBody: "Escreva os nomes de usuário das plataformas que você escolheu.",
     linksChosen: "Suas escolhas",
     usernameLabel: "Nome de usuário",
+    addressLabel: "Endereço",
+    addressTaken: "Este endereço está ocupado",
+    saving: "Salvando…",
     extraLinks: "Links extras",
 
     buildingContent: "Buscando seu conteúdo…",
@@ -288,6 +294,7 @@ export const ptBR = {
     gridSoon: "O editor em grade chega muito em breve — sua página já está no ar.",
 
     goToPage: "Ir para sua página",
+    goToMyPage: "Ir para minha página",
     back: "Voltar",
     addressPlaceholder: "endereço",
     handlePlaceholder: "voce",
@@ -320,6 +327,7 @@ export const ptBR = {
   },
 
   nav: {
+    close: "Fechar",
     copied: "Copiado",
     copyLink: "Copiar link",
     pages: "Páginas",
