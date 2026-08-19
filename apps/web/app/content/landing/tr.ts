@@ -18,6 +18,10 @@ export const tr = {
   // Yüzen hap navbar iki eylem taşır (giriş / başla) ve bir menü düğmesi.
   // Bölüm bağlantıları menü katmanına taşındı: hap dar ekranda da tek satırda
   // kalsın, gezinme tek bir yerde toplansın.
+  // "Vitrin" bağlantısı KARAKTER ŞERİDİNE gider (`/#karakterler`): eski
+  // `/#vitrin` çapası kaldırılan karusel bölümüne aitti ve o bölüm gidince
+  // kırık kalırdı. Etiket beş dilde olduğu gibi kaldı — şerit zaten vitrinin
+  // kendisi (görselleri de `assets/landing/vitrin/` altında yaşıyor).
   nav: {
     login: { label: "Giriş yap", href: "/login" },
     cta: { label: "Ücretsiz başla", href: "/onboarding" },
@@ -27,7 +31,7 @@ export const tr = {
       close: "Menüyü kapat",
       links: [
         { label: "Nasıl çalışır", href: "/#urun" },
-        { label: "Vitrin", href: "/#vitrin" },
+        { label: "Vitrin", href: "/#karakterler" },
         { label: "Sorular", href: "/#sss" },
         { label: "Giriş yap", href: "/login" },
       ],
@@ -118,46 +122,6 @@ export const tr = {
     badges: ["Tıklama", "Ülke"],
     pill: "Analitik",
   },
-  // Yatay kart karuseli. Kartların görselleri `shared.ts`'te (çevrilmez) ve
-  // buradaki kartlarla **sırayla** eşlenir.
-  showcase: {
-    title: "Gerçek kullanım için tasarlandı",
-    body: "Sayfanı kurmaktan paylaşmaya, paylaşmaktan ölçmeye kadar üç adım.",
-    segments: [
-      { id: "kur", label: "Kur" },
-      { id: "paylas", label: "Paylaş" },
-      { id: "olc", label: "Ölç" },
-    ],
-    cards: [
-      {
-        title: "Bloklu ızgara",
-        body: "Blokları sürükle, boyutlarını değiştir, sayfanı kendi düzeninde kur.",
-      },
-      {
-        title: "Hazır temalar",
-        body: "Renk ve tipografi kararlarını tek seçimle al, sonra istediğini değiştir.",
-      },
-      {
-        title: "Tek adres",
-        body: "caka.app/adin — profillerine, videolarına ve kartvizitine koyduğun tek bağlantı.",
-      },
-      {
-        title: "Paylaşım görseli",
-        body: "Bağlantını paylaştığında görünen kartı sen seçersin; şablonu ve fotoğrafı sende.",
-      },
-      {
-        title: "Tıklama özeti",
-        body: "Hangi bloğun ilgi gördüğünü gör, sayfanı ona göre yeniden diz.",
-      },
-      {
-        title: "Ülke dağılımı",
-        body: "Ziyaretçilerinin hangi ülkeden geldiğini gör, hangi kitleye seslendiğini bil.",
-      },
-    ],
-    prev: "Önceki kart",
-    next: "Sonraki kart",
-    trackLabel: "Vitrin kartları",
-  },
   // Vitrin şeridi: altı persona, altı meslek. Görseller ve düzenler
   // `personas.ts` + `vitrin.ts` içinde (çevrilmez); burada yalnız METİN var.
   // `jobs` anahtarları `PersonaJob` kimlikleriyle birebir eşleşir.
@@ -230,7 +194,7 @@ export const tr = {
     pills: ["Kaynak kodu açık", "Beş dilde", "caka.app"],
   },
   footer: {
-    // Yalnızca çalışan hedefler: gerçek çapalar (/#urun, /#vitrin, /#sss —
+    // Yalnızca çalışan hedefler: gerçek çapalar (/#urun, /#karakterler, /#sss —
     // footer hukuki sayfalarda da render edildiği için mutlak yolla), tek
     // gerçek posta kutusu (hello@caka.app) ve hukuki route'lar (R23).
     //
@@ -242,7 +206,7 @@ export const tr = {
         title: "Ürün",
         links: [
           { label: "Nasıl çalışır", href: "/#urun" },
-          { label: "Vitrin", href: "/#vitrin" },
+          { label: "Vitrin", href: "/#karakterler" },
           { label: "Sorular", href: "/#sss" },
         ],
       },

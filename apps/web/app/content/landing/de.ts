@@ -17,7 +17,7 @@ export const de = {
       close: "Menü schließen",
       links: [
         { label: "So funktioniert's", href: "/#urun" },
-        { label: "Schaufenster", href: "/#vitrin" },
+        { label: "Schaufenster", href: "/#karakterler" },
         { label: "Fragen", href: "/#sss" },
         { label: "Anmelden", href: "/login" },
       ],
@@ -98,44 +98,6 @@ export const de = {
     badges: ["Klicks", "Länder"],
     pill: "Analytics",
   },
-  showcase: {
-    title: "Für den echten Alltag gebaut",
-    body: "Drei Schritte: Seite aufbauen, teilen, messen.",
-    segments: [
-      { id: "kur", label: "Aufbauen" },
-      { id: "paylas", label: "Teilen" },
-      { id: "olc", label: "Messen" },
-    ],
-    cards: [
-      {
-        title: "Blockraster",
-        body: "Zieh deine Blöcke, ändere ihre Größe, bau die Seite in deinem eigenen Layout.",
-      },
-      {
-        title: "Fertige Themes",
-        body: "Entscheide Farbe und Typografie mit einer Auswahl — und ändere danach, was du willst.",
-      },
-      {
-        title: "Eine Adresse",
-        body: "caka.app/deinname — der eine Link für deine Profile, Videos und Visitenkarte.",
-      },
-      {
-        title: "Teilen-Bild",
-        body: "Die Karte beim Teilen deines Links wählst du selbst — Vorlage und Foto gehören dir.",
-      },
-      {
-        title: "Klick-Übersicht",
-        body: "Sieh, welcher Block Aufmerksamkeit bekommt, und ordne deine Seite danach neu.",
-      },
-      {
-        title: "Länder",
-        body: "Sieh, aus welchem Land deine Besucher kommen, und wisse, zu wem du sprichst.",
-      },
-    ],
-    prev: "Vorherige Karte",
-    next: "Nächste Karte",
-    trackLabel: "Schaufenster-Karten",
-  },
   karakterler: {
     title: "Jede Seite sieht aus wie ihr Mensch",
     body: "Ein Produkt, sechs Berufe. Die Bildschirme in diesen Telefonen sind echte Caka-Seiten, keine Screenshots.",
@@ -206,7 +168,7 @@ export const de = {
         title: "Produkt",
         links: [
           { label: "So funktioniert's", href: "/#urun" },
-          { label: "Schaufenster", href: "/#vitrin" },
+          { label: "Schaufenster", href: "/#karakterler" },
           { label: "Fragen", href: "/#sss" },
         ],
       },

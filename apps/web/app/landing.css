@@ -842,11 +842,11 @@ html[data-landing]::-webkit-scrollbar {
 }
 
 /* ---------------------------------------------------------------- *
- * Yatay karusel
+ * Karakter şeridi
  *
- * Kaydırma NATIVE: `overflow-x: auto` + snap. Klavye kabın kendisinde
- * çalışır (odaklanabilir kaydırma kabı ok tuşlarıyla kayar) ve ayrıca
- * ileri/geri düğmeleri ile segment düğmeleri var.
+ * Kaydırma NATIVE: `overflow-x: auto` + snap; kütüphane yok, sürükle
+ * taklidi yok, OTOMATİK OYNATMA YOK — şeridi yalnız ziyaretçi kaydırır.
+ * Kap `tabindex="0"` ile odaklanabilir, yani ok tuşları da kaydırır.
  * ---------------------------------------------------------------- */
 
 .lp-track {
@@ -862,56 +862,8 @@ html[data-landing]::-webkit-scrollbar {
 .lp-track::-webkit-scrollbar { display: none; }
 .lp-track:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 4px; }
 
-.lp-slide {
-  display: flex;
-  overflow: hidden;
-  /* Sabit yukseklik: kartlar en uzuna gore uzayip serit devlesmesin. */
-  height: clamp(380px, 44vw, 520px);
-  width: min(84vw, 460px);
-  flex: none;
-  flex-direction: column;
-  border-radius: var(--lp-radius);
-  background: white;
-  scroll-snap-align: start;
-}
-@media (min-width: 1024px) { .lp-slide { width: 460px; } }
-
-.lp-slide-copy { padding: 20px 20px 16px; }
-.lp-slide-copy h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-.lp-slide-copy p {
-  margin-top: 6px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
-}
-.lp-slide-media {
-  display: grid;
-  margin: 0 12px 12px;
-  min-height: 220px;
-  flex: 1;
-  border-radius: var(--radius-xl);
-  place-items: center;
-  overflow: hidden;
-}
-.lp-slide-media img { width: 100%; height: 100%; object-fit: cover; }
-.lp-slide-media[data-tint="kirec"] { background: var(--color-kirec); }
-.lp-slide-media[data-tint="zemin"] { background: var(--color-zemin); }
-.lp-slide-media[data-tint="murekkep"] { background: var(--color-murekkep); }
-/* Ürün illüstrasyonları beyaz zeminli: kırpılmaz, nefes alsın. */
-.lp-slide-media[data-tint="kirec"] img,
-.lp-slide-media[data-tint="zemin"] img {
-  width: 82%;
-  height: auto;
-  object-fit: contain;
-}
-
-/* ----------------------------------------------------------------
- * Karakter şeridi
- *
- * Aynı `lp-track` kabını kullanır (bkz. yukarısı); farkı kartın kendisi:
- * burada kart bir MOCKUP'tır ve tam kanar — beyaz bir kutunun içinde
- * durmaz. Altyazı kartın DIŞINDA, şeridin tipografisinde.
- * ---------------------------------------------------------------- */
+/* Şeridin kartı bir MOCKUP'tır ve tam kanar — beyaz bir kutunun içinde
+   durmaz. Altyazı kartın DIŞINDA, şeridin tipografisinde. */
 
 .lp-kisi {
   display: flex;
@@ -945,43 +897,6 @@ html[data-landing]::-webkit-scrollbar {
 }
 .lp-kisi-ad strong { font-weight: 600; }
 .lp-kisi-ad span { color: color-mix(in srgb, var(--color-murekkep) 58%, transparent); }
-
-/* Segment kontrolü */
-.lp-segments {
-  display: inline-flex;
-  gap: 2px;
-  border-radius: 999px;
-  background: white;
-  padding: 4px;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-murekkep) 8%, transparent);
-}
-.lp-segment {
-  border-radius: 999px;
-  padding: 8px 18px;
-  color: color-mix(in srgb, var(--color-murekkep) 62%, transparent);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 200ms var(--lp-ease), color 200ms var(--lp-ease);
-}
-.lp-segment:hover { color: var(--color-murekkep); }
-.lp-segment[aria-current="true"] { background: var(--color-zemin); color: var(--color-murekkep); }
-.lp-segment:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
-
-.lp-arrow {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--color-sinir);
-  border-radius: 999px;
-  background: white;
-  place-items: center;
-  color: var(--color-murekkep);
-  cursor: pointer;
-  transition: border-color 150ms var(--lp-ease), opacity 150ms var(--lp-ease);
-}
-.lp-arrow:hover { border-color: var(--color-murekkep); }
-.lp-arrow:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 2px; }
 
 /* ---------------------------------------------------------------- *
  * Kaydırma göstergesi (dekoratif)

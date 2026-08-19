@@ -17,7 +17,7 @@ export const en = {
       close: "Close menu",
       links: [
         { label: "How it works", href: "/#urun" },
-        { label: "Showcase", href: "/#vitrin" },
+        { label: "Showcase", href: "/#karakterler" },
         { label: "Questions", href: "/#sss" },
         { label: "Log in", href: "/login" },
       ],
@@ -95,44 +95,6 @@ export const en = {
     badges: ["Clicks", "Countries"],
     pill: "Analytics",
   },
-  showcase: {
-    title: "Designed for real use",
-    body: "Three steps: build your page, share it, then measure it.",
-    segments: [
-      { id: "kur", label: "Build" },
-      { id: "paylas", label: "Share" },
-      { id: "olc", label: "Measure" },
-    ],
-    cards: [
-      {
-        title: "Block grid",
-        body: "Drag your blocks, resize them, build the page in your own layout.",
-      },
-      {
-        title: "Ready-made themes",
-        body: "Settle colour and type in one pick, then change whatever you like.",
-      },
-      {
-        title: "One address",
-        body: "caka.app/yourname — the single link you put on your profiles, videos and business card.",
-      },
-      {
-        title: "Share image",
-        body: "You pick the card people see when your link is shared — template and photo are yours.",
-      },
-      {
-        title: "Click summary",
-        body: "See which block draws attention, then rearrange your page around it.",
-      },
-      {
-        title: "Countries",
-        body: "See which country your visitors come from, and know which audience you are talking to.",
-      },
-    ],
-    prev: "Previous card",
-    next: "Next card",
-    trackLabel: "Showcase cards",
-  },
   karakterler: {
     title: "Every page looks like the person behind it",
     body: "One product, six professions. The screens inside those phones are real Caka pages, not screenshots.",
@@ -203,7 +165,7 @@ export const en = {
         title: "Product",
         links: [
           { label: "How it works", href: "/#urun" },
-          { label: "Showcase", href: "/#vitrin" },
+          { label: "Showcase", href: "/#karakterler" },
           { label: "Questions", href: "/#sss" },
         ],
       },
