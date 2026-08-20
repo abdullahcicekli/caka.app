@@ -94,6 +94,13 @@ Bir görsel bloğundaki görsel değiştirildiğinde yalnızca `assetId` üzerin
 yazılır; eski `asset` satırı ve R2 nesnesi yerinde kalır. Aynısı yükleyip
 sayfaya hiç eklenmeyen görseller için de geçerli.
 
+**Yeni kaynak (2026-08-20): profil fotoğrafı değiştirme.** Editörde avatar
+artık değiştirilebiliyor ve her değişiklik bir öksüz nesne bırakıyor.
+Değişmez #9 ("asset silme yalnızca hesap silmede") gereği o akışa silme
+EKLENMEDİ; bunun yerine avatar 512px kareye indiriliyor
+(`app/lib/image-upload.ts`, `AVATAR_MAX_EDGE`) — nesne başına ~60 KB, yani
+kanama ~7 kat yavaş. Doğru çözüm yine referans sayımlı toplu temizlik.
+
 Bugün kanama sınırlı: R16 kotası (50 asset / 100 MB, `server/onboarding-api.ts`)
 artık **uygulanıyor**, yani sızıntı sınırsız değil — ama kullanıcının kotasını
 yiyor ve kotayı doldurduğunda kullanıcının yer açmak için bir yolu yok.

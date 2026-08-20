@@ -124,6 +124,10 @@ export const tr = {
     deleteBlock: "Bloğu sil",
 
     fieldName: "Ad",
+    avatarChange: "Fotoğrafı değiştir",
+    avatarAdd: "Fotoğraf ekle",
+    avatarRemove: "Kaldır",
+    avatarHint: "Kare kırpılır ve 512 pikselde saklanır.",
     fieldPlatform: "Platform",
     fieldSocialTarget: "Bağlantı ya da kullanıcı adı",
     socialHint:

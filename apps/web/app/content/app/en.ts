@@ -118,6 +118,10 @@ export const en = {
     deleteBlock: "Delete block",
 
     fieldName: "Name",
+    avatarChange: "Change photo",
+    avatarAdd: "Add photo",
+    avatarRemove: "Remove",
+    avatarHint: "Cropped to a square and stored at 512 pixels.",
     fieldPlatform: "Platform",
     fieldSocialTarget: "Link or username",
     socialHint:

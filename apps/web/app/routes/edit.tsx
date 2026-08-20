@@ -29,6 +29,7 @@ import {
   type BlockAddBlockers,
   type GalleryPick,
 } from "~/components/editor/gallery";
+import { ProfileAvatar } from "~/components/profile-avatar";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
@@ -87,7 +88,11 @@ import { localizedRedirect } from "../../server/locale";
 import { DEFAULT_LOCALE } from "@caka/shared";
 import { appCatalog } from "~/content/app";
 import { widgetCatalog } from "~/content/widget";
-import { prepareImageForUpload } from "~/lib/image-upload";
+import {
+  AVATAR_MAX_EDGE,
+  prepareImageForUpload,
+  type PrepareImageOptions,
+} from "~/lib/image-upload";
 import { useCatalog } from "~/lib/locale";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { localeFromRequest } from "../../server/locale";
@@ -333,10 +338,11 @@ type SpotifyResolveResponse =
 async function uploadPhotoFile(
   file: File,
   onProgress: (percent: number) => void,
+  prepare: PrepareImageOptions = {},
 ): Promise<{ id?: string; error?: string }> {
   // Ham fotoğraf yola çıkmadan küçültülür (bkz. `lib/image-upload.ts`).
   // Küçültülemeyen dosya olduğu gibi döner, yani bu satır bir kapı değil.
-  const prepared = await prepareImageForUpload(file);
+  const prepared = await prepareImageForUpload(file, prepare);
   return new Promise((resolve) => {
     const request = new XMLHttpRequest();
     request.open("POST", "/api/onboarding/avatar");
@@ -577,12 +583,15 @@ function Inspector({
   async function uploadAsset(
     file: File,
     step: { done: number; total: number },
+    prepare: PrepareImageOptions = {},
   ): Promise<string | null> {
     setUploading(true);
     setUploadError(null);
     setUploadStep({ ...step, percent: 0 });
-    const result = await uploadPhotoFile(file, (percent) =>
-      setUploadStep({ ...step, percent }),
+    const result = await uploadPhotoFile(
+      file,
+      (percent) => setUploadStep({ ...step, percent }),
+      prepare,
     );
     setUploading(false);
     if (result.id) return result.id;
@@ -1028,6 +1037,69 @@ function Inspector({
    * kullanıcının kendi seçtiği boy sebepsiz yere sıfırlanmasın.
    */
   /**
+   * Profil fotoğrafı alanı.
+   *
+   * NEDEN BURADA, AYARLAR'DA DEĞİL: avatar bir hesap kolonu değil, profil
+   * BLOĞUNUN verisi (`avatarAssetId`). Değiştirmek layout yazmak demek ve
+   * layout'un taslak/yayın ayrımı var. Ayarlar'da "yayınla" kavramı yok;
+   * oradan değiştirilseydi yayındaki sayfa anında değişir ama editördeki
+   * taslak değişmezdi — iki gerçek doğardı. Ayarlar avatarı yalnız gösterir.
+   *
+   * ÖLÇÜ: 512px kare (`AVATAR_MAX_EDGE`). Avatar hiçbir yerde büyük
+   * gösterilmiyor; ölçülen en büyük kullanım og şablonundaki 140px. Kare
+   * kırpma da burada yapılır — her tüketici aynı kadrajı görsün diye
+   * (kart, og ve paylaşım kartı üçü de `object-fit: cover` uyguluyor ve
+   * kırpmayı kendileri yapsaydı üç farklı kadraj çıkardı).
+   */
+  function avatarField(assetId: string | undefined, name: string) {
+    return (
+      <div className="inspector-avatar">
+        <span className="inspector-avatar-preview">
+          <ProfileAvatar name={name} avatarUrl={assetId ? `/i/${assetId}` : null} className="size-16" />
+        </span>
+        <span className="inspector-avatar-actions">
+          <span className="inspector-upload is-inline">
+            <MediaImage width={16} height={16} />
+            {uploading
+              ? uploadStep
+                ? app.editor.uploadPercent(uploadStep.percent)
+                : app.editor.imageUploading
+              : assetId
+                ? app.editor.avatarChange
+                : app.editor.avatarAdd}
+            <input
+              type="file"
+              accept="image/jpeg,image/png"
+              disabled={uploading}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void replaceAvatar(file);
+              }}
+            />
+          </span>
+          {assetId ? (
+            <button type="button" className="inspector-avatar-remove" onClick={() => update({ avatarAssetId: undefined })}>
+              {app.editor.avatarRemove}
+            </button>
+          ) : null}
+          <small className="inspector-hint">{app.editor.avatarHint}</small>
+        </span>
+      </div>
+    );
+  }
+
+  /** Fotoğrafı yükler ve profil bloğuna yazar. Yükleme başarısızsa mevcut
+      avatar OLDUĞU GİBİ kalır — yarım bir durum bırakılmaz. */
+  async function replaceAvatar(file: File) {
+    const id = await uploadAsset(file, { done: 0, total: 1 }, {
+      maxEdge: AVATAR_MAX_EDGE,
+      square: true,
+    });
+    if (id) update({ avatarAssetId: id });
+  }
+
+  /**
    * Sürüm seçici. İki yerde birden çiziliyor — bağlantı bloğunda ve sosyal
    * bloğun "web sitesi" platformunda — çünkü ikisi de aynı kartı (`WebLinkCard`)
    * çiziyor. Ayet kartındaki seçicinin aynısı: sürüm hem kartın çizimini hem
@@ -1243,6 +1315,7 @@ function Inspector({
       case "profile":
         return (
           <>
+            {avatarField(block.data.avatarAssetId, block.data.name)}
             <label>{app.editor.fieldName}<input value={block.data.name} onChange={(event) => update({ name: event.target.value })} /></label>
             <label>{app.editor.fieldDescription}<textarea value={block.data.title} onChange={(event) => update({ title: event.target.value })} /></label>
           </>

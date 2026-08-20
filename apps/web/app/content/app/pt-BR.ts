@@ -119,6 +119,10 @@ export const ptBR = {
     deleteBlock: "Excluir bloco",
 
     fieldName: "Nome",
+    avatarChange: "Trocar foto",
+    avatarAdd: "Adicionar foto",
+    avatarRemove: "Remover",
+    avatarHint: "É cortada em quadrado e salva com 512 pixels.",
     fieldPlatform: "Plataforma",
     fieldSocialTarget: "Link ou nome de usuário",
     socialHint:

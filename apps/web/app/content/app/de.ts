@@ -119,6 +119,10 @@ export const de = {
     deleteBlock: "Block löschen",
 
     fieldName: "Name",
+    avatarChange: "Foto ändern",
+    avatarAdd: "Foto hinzufügen",
+    avatarRemove: "Entfernen",
+    avatarHint: "Wird quadratisch zugeschnitten und mit 512 Pixeln gespeichert.",
     fieldPlatform: "Plattform",
     fieldSocialTarget: "Link oder Benutzername",
     socialHint:

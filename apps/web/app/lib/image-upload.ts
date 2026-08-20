@@ -37,9 +37,29 @@
 
 /** Küçültülmüş görselin uzun kenar tavanı. */
 export const UPLOAD_MAX_EDGE = 1600;
+/**
+ * AVATAR tavanı — kart fotoğrafından ayrı, çünkü avatar hiçbir yerde büyük
+ * gösterilmiyor. Ölçülen en büyük kullanım og şablonundaki 140px
+ * (`server/og-templates.ts`); ötekiler 64px (kart), 96px (paylaşım kartı),
+ * 112px (kimlik satırı ve kurulum). 140 × 2 DPR = 280, yani 512 rahat bir
+ * tavan. 1600 avatar için ~5,7 kat fazlaydı ve doğrudan asset kotasını
+ * (R16: 50 asset / 100 MB) yiyordu.
+ */
+export const AVATAR_MAX_EDGE = 512;
 /** JPEG kalitesi. 0,85: 0,82 ile arasındaki 60 KB, gözle görülür bant
  *  farkına değmiyor; 0,90 ise %24 daha ağır ve fark yok. */
 export const UPLOAD_JPEG_QUALITY = 0.85;
+
+/**
+ * Kare kırpmada dikey pencerenin nereden alınacağı (0 = tepe, 0,5 = merkez).
+ *
+ * NEDEN MERKEZ DEĞİL: avatar her yerde `object-fit: cover` ile yuvarlak
+ * gösteriliyor (`components/profile-avatar.tsx`, og tarafında da aynı).
+ * Portre bir fotoğrafta merkezden kare almak yüzü değil gövdeyi seçiyor —
+ * baş kesiliyor. Üçte bir, yüz algılama olmadan yapılabilecek en iyi
+ * yaklaşım; garanti değil ama portrede belirgin biçimde daha isabetli.
+ */
+const SQUARE_CROP_TOP_BIAS = 1 / 3;
 
 /** Küçültme denenecek kaynak türleri; ötekiler dokunulmadan geçer. */
 const DECODABLE = new Set(["image/jpeg", "image/png"]);
@@ -59,11 +79,32 @@ function hasAlpha(context: CanvasRenderingContext2D, width: number, height: numb
   return false;
 }
 
+export type PrepareImageOptions = {
+  /** Uzun kenar tavanı. Varsayılan `UPLOAD_MAX_EDGE`. */
+  maxEdge?: number;
+  /**
+   * Kaynaktan KARE kırp (avatar). Kırpma penceresi yatayda ortalanır,
+   * dikeyde `SQUARE_CROP_TOP_BIAS` kadar yukarı çekilir. Çıktı `maxEdge`
+   * kenarlı bir karedir; kaynak ondan küçükse büyütülmez.
+   */
+  square?: boolean;
+};
+
 /**
  * Dosyayı yüklemeye hazırlar. Küçültemediği ya da küçültmenin kazandırmadığı
  * her durumda GİRDİYİ AYNEN döner — çağıran taraf sonucu koşulsuz kullanır.
+ *
+ * TEK İSTİSNA `square`: orada kırpma işin kendisi, ölçü kazancı değil. Kare
+ * çıktı orijinalden büyük çıksa bile kullanılır — yoksa avatar dikdörtgen
+ * kalır ve her tüketici (kart, og, paylaşım kartı) onu kendi kırpar, üç
+ * yerde üç farklı kadraj doğardı.
  */
-export async function prepareImageForUpload(file: File): Promise<File> {
+export async function prepareImageForUpload(
+  file: File,
+  options: PrepareImageOptions = {},
+): Promise<File> {
+  const maxEdge = options.maxEdge ?? UPLOAD_MAX_EDGE;
+  const square = options.square ?? false;
   if (!DECODABLE.has(file.type)) return file;
   if (typeof createImageBitmap !== "function") return file;
   let bitmap: ImageBitmap;
@@ -77,16 +118,25 @@ export async function prepareImageForUpload(file: File): Promise<File> {
   try {
     const longest = Math.max(bitmap.width, bitmap.height);
     if (longest === 0) return file;
-    const scale = Math.min(1, UPLOAD_MAX_EDGE / longest);
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    // Kaynaktan okunacak pencere. Kare modda kısa kenar boyunda bir kare,
+    // yoksa görselin tamamı.
+    const side = Math.min(bitmap.width, bitmap.height);
+    const sourceW = square ? side : bitmap.width;
+    const sourceH = square ? side : bitmap.height;
+    const sourceX = square ? Math.round((bitmap.width - side) / 2) : 0;
+    const sourceY = square ? Math.round((bitmap.height - side) * SQUARE_CROP_TOP_BIAS) : 0;
+
+    const scale = Math.min(1, maxEdge / (square ? side : longest));
+    const width = Math.max(1, Math.round(sourceW * scale));
+    const height = Math.max(1, Math.round(sourceH * scale));
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const context = canvas.getContext("2d", { willReadFrequently: true });
     if (!context) return file;
-    context.drawImage(bitmap, 0, 0, width, height);
+    context.drawImage(bitmap, sourceX, sourceY, sourceW, sourceH, 0, 0, width, height);
 
     // JPEG'de saydamlık zaten yok; sorgu yalnız png için anlamlı.
     const type =
@@ -101,7 +151,8 @@ export async function prepareImageForUpload(file: File): Promise<File> {
     if (!blob || blob.type !== type) return file;
     // Küçülmediyse dokunma: zaten optimize edilmiş bir görseli yeniden
     // kodlamak bazen büyütüyor ve kalite de bedava kaybedilmiş olurdu.
-    if (blob.size >= file.size) return file;
+    // Kare modda bu kural GEÇERSİZ — orada amaç kadraj, bayt değil.
+    if (!square && blob.size >= file.size) return file;
     return new File([blob], renamed(file.name, type), {
       type,
       lastModified: file.lastModified,

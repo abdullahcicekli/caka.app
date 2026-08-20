@@ -43,6 +43,12 @@ function getFonts(): CustomFont[] {
 
 // Satori yalnız PNG/JPEG kaynak kabul eder (KTD7); WebP vb. yok sayılır ve
 // şablon deterministik biçimde monogram/karta düşer.
+// TUZAK: `/i/:id` WebP de servis ediyor (`server/index.ts`, IMAGE_CONTENT_TYPES).
+// Yükleme yolu bugün WebP kabul etmiyor (`onboarding-api.ts` ACCEPTED_TYPES,
+// `app/lib/image-upload.ts` DECODABLE) ve zincir bu yüzden tutuyor. İleride
+// WebP kabul edilirse burası SESSİZCE bozulur: ayarlardaki önizleme avatarı
+// gösterir ama üretilen og PNG'sinde avatar olmaz (aşağıdaki `assetToImage`
+// null döner ve şablon monograma düşer). O gün bu küme de genişletilmeli.
 const SATORI_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 
 interface OgAssetImage {
