@@ -9,6 +9,7 @@ import {
   PROFILE_BIO_MAX,
   blockGridLimitIssue,
   blockGridLimits,
+  blockSupportsChromeless,
   blockIssue,
   detectSocialFromUrl,
   ensureLayoutPositions,
@@ -566,5 +567,73 @@ describe("ayet bloğu", () => {
     expect(blockIssue(ayetBlock("both", { meal: "" }))).toBe("ayet_verse");
     expect(blockIssue(ayetBlock("arabic", { arabic: "" }))).toBe("ayet_verse");
     expect(blockIssue(ayetBlock("meal", { meal: "" }))).toBe("ayet_verse");
+  });
+});
+
+describe("kutusuz kart (chrome)", () => {
+  it("alan YOKSA kart yüzeyi çizilir — eski kayıtlar aynen çalışır", () => {
+    const parsed = parseProfileLayout(
+      JSON.stringify({
+        version: 1,
+        grid: GRID_UNIT,
+        blocks: [profileBlock, { id: "blk_s", type: "social", data: { platform: "github", handle: "a", url: "", label: "" } }],
+      }),
+    );
+    expect(parsed?.blocks[1].chrome).toBeUndefined();
+  });
+
+  it("`none` yazılıp okunabiliyor", () => {
+    const parsed = parseProfileLayout(
+      JSON.stringify({
+        version: 1,
+        grid: GRID_UNIT,
+        blocks: [
+          profileBlock,
+          { id: "blk_s", type: "social", chrome: "none", data: { platform: "github", handle: "a", url: "", label: "" } },
+        ],
+      }),
+    );
+    expect(parsed?.blocks[1].chrome).toBe("none");
+  });
+
+  it("tanınmayan değer sessizce KABUL EDİLMEZ; blok düşer (R54)", () => {
+    const parsed = parseProfileLayout(
+      JSON.stringify({
+        version: 1,
+        grid: GRID_UNIT,
+        blocks: [
+          profileBlock,
+          { id: "blk_s", type: "social", chrome: "yok", data: { platform: "github", handle: "a", url: "", label: "" } },
+        ],
+      }),
+    );
+    // Belge ayakta kalır (bilinmeyen blok sayfayı düşürmez) ama geçersiz
+    // bayrak taşıyan blok render dışı bırakılır — "yok" sessizce "card"a
+    // dönmez.
+    expect(parsed?.blocks).toHaveLength(1);
+    expect(parsed?.blocks[0].type).toBe("profile");
+  });
+
+  it("yalnız simge/görsel taşıyan tiplerde anlamlı", () => {
+    const social = { id: "s", type: "social", data: { platform: "github", handle: "a", url: "", label: "" } } as const;
+    expect(blockSupportsChromeless(parseProfileLayout(JSON.stringify({
+      version: 1, grid: GRID_UNIT, blocks: [profileBlock, social],
+    }))!.blocks[1])).toBe(true);
+
+    // Bağlantı kartı: `card` sürümünde kimlik satırı var, kutusuz anlamsız.
+    const linkOf = (variant: string) =>
+      parseProfileLayout(JSON.stringify({
+        version: 1, grid: GRID_UNIT,
+        blocks: [profileBlock, { id: "l", type: "link", data: { url: "https://a.co", title: "", variant } }],
+      }))!.blocks[1];
+    expect(blockSupportsChromeless(linkOf("card"))).toBe(false);
+    expect(blockSupportsChromeless(linkOf("favicon"))).toBe(true);
+    expect(blockSupportsChromeless(linkOf("image"))).toBe(true);
+
+    // Metin taşıyan tipler: zemini kalkınca yazının nerede bittiği belirsiz.
+    const textBlock = parseProfileLayout(JSON.stringify({
+      version: 1, grid: GRID_UNIT, blocks: [profileBlock, { id: "t", type: "text", data: { text: "x" } }],
+    }))!.blocks[1];
+    expect(blockSupportsChromeless(textBlock)).toBe(false);
   });
 });

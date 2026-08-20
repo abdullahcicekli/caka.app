@@ -82,6 +82,28 @@ const blockBase = {
     })
     .optional(),
   smManual: z.boolean().optional(),
+  /**
+   * Kartın YÜZEYİ çizilsin mi? `none` zemini, kenarlığı ve köşe yarıçapını
+   * kaldırır; geriye sayfa zemininin üstünde duran çıplak içerik kalır
+   * (iOS ana ekranındaki uygulama ikonu gibi).
+   *
+   * NEDEN `blockBase`, NEDEN `link`'in `variant`ı DEĞİL: yüzey kaldırmak
+   * tipten bağımsız bir SUNUM kararı. Kullanıcı bunu en çok sosyal kartta
+   * istiyor (GitHub'ın katkı grafiği boşken yalnız simge kalsın) ve
+   * `linkVariantSchema` sosyal karta uygulanamıyor. Hangi tiplerde
+   * ANLAMLI olduğu ayrı bir soru — `blockSupportsChromeless` cevaplıyor
+   * (`blockGridLimits` ile aynı desen).
+   *
+   * ESKİ DEPLOY: alanı tanımaz ve zod `strip` ile sessizce atar. Yani bayat
+   * bir sekmeden kaydedilirse bayrak kaybolur ve kart yüzeyi geri gelir —
+   * `smManual` ile aynı risk sınıfı, kabul edilmiş.
+   *
+   * `.default("card")` DEĞİL `.optional()`: varsayılan verilseydi alan çıktı
+   * tipinde zorunlu olur ve elle blok kuran her yer (testler, demo içerik,
+   * `defaultBlock`) onu yazmak zorunda kalırdı. Yokluk zaten "kart" demek ve
+   * kayıtlar da gereksiz bir alan taşımaz — `smManual` ile aynı desen.
+   */
+  chrome: z.enum(["card", "none"]).optional(),
 };
 
 export const socialPlatformSchema = z.enum([
@@ -1074,6 +1096,21 @@ export const AYET_GRID_LIMITS: Record<AyetVariant, BlockGridLimits> = {
  * (editör gridstack'i, yazma şeması, `ensureLayoutPositions`) buradan
  * okur ki üçü ayrışmasın.
  */
+/**
+ * Kutusuz sürüm bu blokta anlamlı mı?
+ *
+ * İçeriği tek bir simge ya da tek bir görsel olan tipler kart yüzeyi olmadan
+ * da okunur. METİN TAŞIYAN tipler taşımaz: yazının nerede bittiğini yüzeyin
+ * kenarı söylüyor, zemini kalkınca metin sayfaya dağılmış gibi duruyor.
+ * `link` yalnız kimlik satırı taşımayan sürümlerinde uygun — `card`
+ * sürümünde başlık ve alan adı var.
+ */
+export function blockSupportsChromeless(block: ProfileBlock): boolean {
+  if (block.type === "social") return true;
+  if (block.type === "link") return block.data.variant !== "card";
+  return false;
+}
+
 export function blockGridLimits(block: ProfileBlock): BlockGridLimits | null {
   if (block.type === "profile") return null;
   if (block.type === "ayet") return AYET_GRID_LIMITS[block.data.variant];

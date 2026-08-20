@@ -40,6 +40,7 @@ import {
   AYET_GRID_LIMITS,
   BLOCK_GRID_LIMITS,
   blockGridLimits,
+  blockSupportsChromeless,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
@@ -404,6 +405,7 @@ function Inspector({
   setData,
   setSize,
   setDims,
+  setChrome,
   remove,
   close,
   onSignedImage,
@@ -421,6 +423,8 @@ function Inspector({
       biliniyor — kullanıcıyı elle boyutlandırmaya bırakmak, kırpılmış bir
       oynatıcıyı ona düzelttirmek olurdu. */
   setSize: (size: BlockSize) => void;
+  /** Blok SEVİYESİNDE yama; `update` yalnız `data`ya dokunuyor. */
+  setChrome: (chrome: "none" | undefined) => void;
   /** Bloğu YARIM BİRİM ölçüsüyle boyutlandırır. `setSize`in sözlüğü kaba
       (genişlik 2/4/8, yükseklik 2/4); fotoğraf bloğu ara basamaklarda da
       durabildiği için büyütme oradan geçemez. */
@@ -1114,6 +1118,44 @@ function Inspector({
    * Önizleme görseli YOKSA "yalnız görsel" boş bir kutu olurdu: düğme kapanır
    * ve gerekçesi yazılır.
    */
+  /**
+   * Kart yüzeyi anahtarı. Sürüm seçicinin ALTINDA duruyor çünkü ondan
+   * bağımsız: "yalnız simge" bir sürüm, "kutusuz" o sürümün nasıl
+   * çizileceği. Yalnız anlamlı olduğu tiplerde görünür
+   * (`blockSupportsChromeless`) — metin taşıyan kartta zemini kaldırmak
+   * yazının nerede bittiğini belirsizleştirirdi.
+   */
+  function chromePicker() {
+    if (!blockSupportsChromeless(block)) return null;
+    const chromeless = block.chrome === "none";
+    return (
+      <fieldset className="inspector-choices">
+        <legend>{app.editor.chromeLegend}</legend>
+        <button
+          type="button"
+          className={chromeless ? "" : "is-active"}
+          aria-pressed={!chromeless}
+          onClick={() => setChrome(undefined)}
+        >
+          {app.editor.chromeCard}
+        </button>
+        <button
+          type="button"
+          className={chromeless ? "is-active" : ""}
+          aria-pressed={chromeless}
+          onClick={() => setChrome("none")}
+        >
+          {app.editor.chromeNone}
+        </button>
+        <small className="inspector-hint">
+          {block.type === "social" && block.data.platform === "github"
+            ? app.editor.chromeHintGithub
+            : app.editor.chromeHint}
+        </small>
+      </fieldset>
+    );
+  }
+
   function variantPicker(current: LinkVariant) {
     return (
       <fieldset className="inspector-choices">
@@ -1394,6 +1436,7 @@ function Inspector({
                 anlatmaz. Web sitesi kartı ise bağlantı kartıyla aynı bileşen
                 (`WebLinkCard`), yani aynı sürümleri alabilir. */}
             {block.data.platform === "website" ? variantPicker(block.data.variant) : null}
+            {chromePicker()}
           </>
         );
       case "link":
@@ -1421,6 +1464,7 @@ function Inspector({
               />
             </label>
             {variantPicker(block.data.variant)}
+            {chromePicker()}
           </>
         );
       case "status":
@@ -2921,6 +2965,14 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               ...current,
               blocks: current.blocks.map((block) =>
                 block.id === selected.id ? ({ ...block, data } as ProfileBlock) : block,
+              ),
+            }))
+          }
+          setChrome={(chrome) =>
+            setLayout((current) => ({
+              ...current,
+              blocks: current.blocks.map((block) =>
+                block.id === selected.id ? ({ ...block, chrome } as ProfileBlock) : block,
               ),
             }))
           }

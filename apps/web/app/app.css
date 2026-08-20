@@ -736,6 +736,12 @@
    (vurgu degradesi; status/CTA), cta/cta-text (bağlantı çipi "buton" rengi),
    card-border, display-font + title-case (başlık tipografisi). */
 [data-profile-theme="light"] {
+  /* Kutusuz kart çipleri (bkz. `.is-chromeless`). AÇIK tema: "siyah" marka
+     tonu olduğu gibi kalır, "beyaz" ton mürekkebe döner. */
+  --chip-ink: #111116;
+  --chip-ink-text: white;
+  --chip-paper: var(--profile-text);
+  --chip-paper-text: var(--profile-bg);
   --profile-bg: var(--color-zemin);
   --profile-card: white;
   --profile-text: var(--color-murekkep);
@@ -748,6 +754,12 @@
 }
 
 [data-profile-theme="dark"] {
+  /* Kutusuz kart çipleri: KOYU temada iki akromatik ton da yön değiştirir —
+     siyah çip zeminde kaybolur (ölçüldü: 1,02-1,03), beyaz çip zaten doğru. */
+  --chip-ink: var(--profile-text);
+  --chip-ink-text: var(--profile-bg);
+  --chip-paper: white;
+  --chip-paper-text: #111116;
   --profile-bg: var(--color-murekkep);
   --profile-card: color-mix(in srgb, white 8%, var(--color-murekkep));
   --profile-text: white;
@@ -761,6 +773,12 @@
 
 /* Lavanta: açık lavanta zemin, beyaz kartlar, canlı mor vurgu (fintech ref) */
 [data-profile-theme="lavanta"] {
+  /* Kutusuz kart çipleri (bkz. `.is-chromeless`). AÇIK tema: "siyah" marka
+     tonu olduğu gibi kalır, "beyaz" ton mürekkebe döner. */
+  --chip-ink: #111116;
+  --chip-ink-text: white;
+  --chip-paper: var(--profile-text);
+  --chip-paper-text: var(--profile-bg);
   --profile-bg: #f4f2fb;
   --profile-bg-image: radial-gradient(90% 60% at 15% 0%, rgb(124 92 240 / 0.14), transparent 60%);
   --profile-card: white;
@@ -777,6 +795,12 @@
 /* Ufuk: krem kâğıt zemin, lacivert kartlar, turuncu vurgu, versal başlık
    (retro macera ref). Sayfa mürekkebi lacivert, kart metni krem. */
 [data-profile-theme="ufuk"] {
+  /* Kutusuz kart çipleri (bkz. `.is-chromeless`). AÇIK tema: "siyah" marka
+     tonu olduğu gibi kalır, "beyaz" ton mürekkebe döner. */
+  --chip-ink: #111116;
+  --chip-ink-text: white;
+  --chip-paper: var(--profile-text);
+  --chip-paper-text: var(--profile-bg);
   --profile-bg: #eae7e0;
   --profile-card: #22334a;
   --profile-text: #22334a;
@@ -794,6 +818,12 @@
 
 /* Neon: koyu erik zemin, mor parıltı, mor→pembe→şeftali degrade (Lumora ref) */
 [data-profile-theme="neon"] {
+  /* Kutusuz kart çipleri: KOYU temada iki akromatik ton da yön değiştirir —
+     siyah çip zeminde kaybolur (ölçüldü: 1,02-1,03), beyaz çip zaten doğru. */
+  --chip-ink: var(--profile-text);
+  --chip-ink-text: var(--profile-bg);
+  --chip-paper: white;
+  --chip-paper-text: #111116;
   --profile-bg: #171123;
   --profile-bg-image:
     radial-gradient(110% 70% at 82% -10%, rgb(139 92 246 / 0.30), transparent 55%),
@@ -812,6 +842,12 @@
 /* Zümrüt: koyu yeşil-siyah zemin, yeşil parıltı ve canlı yeşil vurgu
    (accounting intelligence ref) */
 [data-profile-theme="zumrut"] {
+  /* Kutusuz kart çipleri: KOYU temada iki akromatik ton da yön değiştirir —
+     siyah çip zeminde kaybolur (ölçüldü: 1,02-1,03), beyaz çip zaten doğru. */
+  --chip-ink: var(--profile-text);
+  --chip-ink-text: var(--profile-bg);
+  --chip-paper: white;
+  --chip-paper-text: #111116;
   --profile-bg: #0d1615;
   --profile-bg-image: radial-gradient(100% 65% at 75% -5%, rgb(74 222 128 / 0.16), transparent 55%);
   --profile-card: #15211e;
@@ -1927,9 +1963,12 @@ button.photo-cell:focus-visible {
     gap: 10px;
     padding: 16px;
   }
-  .profile-block-social:not(.has-gh) > span:last-child,
+  /* `:not(.is-chromeless)` ŞART: kutusuz kartta çip TEK ÇOCUK, yani
+     `> span:last-child` onu yakalıyor ve tam genişliğe geriyordu (ölçüldü:
+     176x72, kare olması gerekirken). */
+  .profile-block-social:not(.has-gh):not(.is-chromeless) > span:last-child,
   .profile-block-social:not(.has-gh) .social-head { width: 100%; }
-  .profile-block-social:not(.has-gh) .platform-mark { width: 42px; height: 42px; border-radius: 13px; }
+  .profile-block-social:not(.has-gh):not(.is-chromeless) .platform-mark { width: 42px; height: 42px; border-radius: 13px; }
   /* Önizleme burada GİZLENMEZ: kutu artık og'un oranını koruyor (1,91:1),
      yani 178px'lik dar bir kartta 178×93'lük küçük ama TAM bir görsel oluyor.
      Eskiden `flex: 1` yüzünden ezilmiş bir şeride dönüştüğü için gizleniyordu.
@@ -2229,6 +2268,102 @@ button.photo-cell:focus-visible {
   white-space: nowrap;
 }
 .profile-block-link.is-favicon .link-go { display: none; }
+
+/* ---------------------------------------------------------------- *
+ * KUTUSUZ KART (`chrome: "none"`) — iOS ana ekranı deseni.
+ *
+ * Kart yüzeyi kalkar, geriye sayfa zemininin üstünde duran çip kalır.
+ * İKİ KATMANDAN BİRİ kaldırılıyor, ikisi birden değil: iOS'ta da ikonun
+ * KENDİ opak squircle'ı vardır (yarıçap ≈ %22,5; buradaki %24 neredeyse
+ * birebir), olmayan tek şey altındaki ikinci kutudur. Çipi de kaldırmak
+ * glifi doğrudan zemine bırakırdı ve altı temada okunurluğu ayrı ayrı
+ * kovalamak gerekirdi.
+ * ---------------------------------------------------------------- */
+.profile-block.is-chromeless {
+  border-color: transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+/* Şeritte kartlara verilen gölge (bkz. `.lp-tower .profile-block`) kutusuzda
+   havada asılı bir dikdörtgen çizerdi. */
+.lp-tower .profile-block.is-chromeless { box-shadow: none; }
+.profile-block-social.is-chromeless .platform-mark,
+.profile-block-link.is-chromeless .link-icon {
+  width: min(96px, 46cqmin);
+  height: min(96px, 46cqmin);
+  border-radius: 24%;
+}
+.profile-block-social.is-chromeless .platform-mark svg {
+  width: min(46px, 22cqmin);
+  height: min(46px, 22cqmin);
+}
+
+/* KONTRAST — ölçüldü 2026-08-20, WCAG 1.4.11 (metin dışı, eşik 3:1).
+ *
+ * Kart yüzeyi kalkınca çip doğrudan `--profile-bg` üstünde duruyor. Altı
+ * temada 17 çip tonu ölçüldü; SEKİZİ en az bir temada eşiğin altında kaldı.
+ * Geri kalan (youtube, linkedin, facebook, twitch, website, email, figma,
+ * discord, mavi ve iki gradyan) altı temada da >=3, dokunulmuyor.
+ *
+ * "İNCE HALKA" ÇÖZÜMÜ DENENDİ VE ÇALIŞMIYOR: halkanın hem zeminle hem çiple
+ * 3:1 tutması gerekiyor; temanın en kötü çipini kurtaran karışım aynı
+ * temadaki öteki çiplere karşı düşüyor (açık temada %60 halka `#7a7a7b`
+ * zemine 4,69 veriyor ama linkedin çipine 1,12). Tek bir sabit halka kuralı
+ * yok, o yüzden düzeltme tonun kendisinde.
+ *
+ * (a) AKROMATİK GRUP tema yönüne döner. Marka kılavuzlarına da uygun:
+ *     X ve GitHub'ın kendi koyu-mod işaretleri beyazdır.
+ *     `#111116`: light 17,41 · lavanta 16,98 · ufuk 15,24 — ama
+ *     dark 1,03 · neon 1,02 · zümrüt 1,02. Dönüşten sonra: 18,35 / 16,53 / 16,51.
+ *     `#ffffff` (`.platform-link`): dark 18,35 · neon 18,41 · zümrüt 18,38 —
+ *     ama light 1,08 · lavanta 1,11 · ufuk 1,23. Dönüşten sonra: 16,96 / 16,13 / 10,37.
+ */
+.is-chromeless .platform-x,
+.is-chromeless .platform-github,
+.is-chromeless .platform-tiktok,
+.is-chromeless .platform-threads,
+.is-chromeless .link-tone-siyah {
+  background: var(--chip-ink);
+  color: var(--chip-ink-text);
+}
+.is-chromeless .platform-link {
+  border-color: transparent;
+  background: var(--chip-paper);
+  color: var(--chip-paper-text);
+}
+
+/* (b) AÇIK TEMADA DÜŞEN DOYGUN TONLAR koyulaştırılır (%62 ton + siyah).
+ *     Ölçülen (light / lavanta / ufuk → düzeltilmiş):
+ *       sahibinden #ffe800  1,16 / 1,13 / 1,01 → %70 karışımla 3,01+
+ *       whatsapp   #25d366  1,83 / 1,79 / 1,61 → 4,46
+ *       spotify    #1db954  2,39 / 2,33 / 2,09 → 5,50
+ *       trendyol   #f27a1a  2,56 / 2,50 / 2,25 → 5,82
+ *       github yeşili #2ea043  3,12 / 3,04 / 2,73 → 6,77  (yalnız ufuk düşüyordu)
+ *       dribbble   #ea4c89  3,30 / 3,21 / 2,89 → 7,08  (yalnız ufuk düşüyordu)
+ *     KOYU temada bu tonların hepsi zaten 5,15-9,28 arası; dokunulmuyor. */
+[data-profile-theme="light"] .is-chromeless .link-tone-spotify,
+[data-profile-theme="lavanta"] .is-chromeless .link-tone-spotify,
+[data-profile-theme="ufuk"] .is-chromeless .link-tone-spotify { background: color-mix(in srgb, #1db954 62%, black); }
+[data-profile-theme="light"] .is-chromeless .link-tone-whatsapp,
+[data-profile-theme="lavanta"] .is-chromeless .link-tone-whatsapp,
+[data-profile-theme="ufuk"] .is-chromeless .link-tone-whatsapp { background: color-mix(in srgb, #25d366 62%, black); }
+[data-profile-theme="light"] .is-chromeless .link-tone-trendyol,
+[data-profile-theme="lavanta"] .is-chromeless .link-tone-trendyol,
+[data-profile-theme="ufuk"] .is-chromeless .link-tone-trendyol { background: color-mix(in srgb, #f27a1a 62%, black); }
+[data-profile-theme="light"] .is-chromeless .link-tone-dribbble,
+[data-profile-theme="lavanta"] .is-chromeless .link-tone-dribbble,
+[data-profile-theme="ufuk"] .is-chromeless .link-tone-dribbble,
+[data-profile-theme="light"] .is-chromeless .platform-dribbble,
+[data-profile-theme="lavanta"] .is-chromeless .platform-dribbble,
+[data-profile-theme="ufuk"] .is-chromeless .platform-dribbble { background: color-mix(in srgb, #ea4c89 62%, black); }
+/* Sarı çipin glifi siyah; koyulaşınca beyaza döner. */
+[data-profile-theme="light"] .is-chromeless .link-tone-sahibinden,
+[data-profile-theme="lavanta"] .is-chromeless .link-tone-sahibinden,
+[data-profile-theme="ufuk"] .is-chromeless .link-tone-sahibinden { background: color-mix(in srgb, #ffe800 70%, black); color: white; }
 /* Görünen çip `.link-body`nin İÇİNDE olamaz (o gizli); sürüm için kartın
    doğrudan çocuğu olarak ikinci bir kopya çizilir. */
 .profile-block-link.is-favicon .link-icon {

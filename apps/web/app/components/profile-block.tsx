@@ -86,6 +86,7 @@ function WebLinkCard({
   favicon,
   imgLoading,
   variant = "card",
+  chromeless = false,
 }: {
   url: string;
   /** İsteğe bağlı başlık; yoksa alan adı satırı tek başına yeter. */
@@ -98,6 +99,8 @@ function WebLinkCard({
       sürümünde tek bir simge; ikisinde de yazı görünmez (DOM'da kalır —
       bağlantının erişilebilir adı onlardan gelir). */
   variant?: LinkVariant;
+  /** Kart yüzeyi (zemin, kenarlık, köşe) çizilmesin — bkz. `blockBase.chrome`. */
+  chromeless?: boolean;
 }) {
   const target = prettyLinkTarget(url);
   const brand = linkBrand(url);
@@ -112,7 +115,9 @@ function WebLinkCard({
     <a
       className={`profile-block profile-block-link${
         preview && !faviconOnly ? " has-og" : ""
-      }${imageOnly ? " is-image" : ""}${faviconOnly ? " is-favicon" : ""}`}
+      }${imageOnly ? " is-image" : ""}${faviconOnly ? " is-favicon" : ""}${
+        chromeless ? " is-chromeless" : ""
+      }`}
       href={url || undefined}
       target="_blank"
       rel="noreferrer"
@@ -304,6 +309,7 @@ export function ProfileBlockCard({
           favicon={signedFavicon}
           imgLoading={imgLoading}
           variant={block.data.variant}
+          chromeless={block.chrome === "none"}
         />
       );
     }
@@ -321,7 +327,16 @@ export function ProfileBlockCard({
         </span>
       </>
     );
-    const content = calendar ? (
+    // KUTUSUZ: kart tek bir simgeye iner. Takvim de og de bastırılır —
+    // kullanıcının bu sürümü seçme gerekçesi zaten "katkı grafiğim boş,
+    // yalnız simge kalsın". Kararı kullanıcı veriyor, veri kaybolmuyor:
+    // grafik hâlâ çekiliyor, sürüm geri alınınca yerinde.
+    const chromeless = block.chrome === "none";
+    const content = chromeless ? (
+      <span className={`platform-mark ${platform.tone}`} aria-hidden>
+        <SocialIcon platform={platform.id} width={18} height={18} strokeWidth={2.2} />
+      </span>
+    ) : calendar ? (
       <>
         <span className="social-head">{head}</span>
         <GithubHeatmap calendar={calendar} />
@@ -339,10 +354,20 @@ export function ProfileBlockCard({
     );
     // has-og ve has-gh birlikte verilmez: grafik varken düzeni has-gh kurar,
     // og yalnız onun içindeki dar bantta açılan bir yedektir.
-    const className = `profile-block profile-block-social${ogImage && !calendar ? " has-og" : ""}${calendar ? " has-gh" : ""}`;
+    const className = `profile-block profile-block-social${
+      chromeless ? " is-chromeless" : ogImage && !calendar ? " has-og" : ""
+    }${calendar && !chromeless ? " has-gh" : ""}`;
     if (block.data.url) {
       return (
-        <a className={className} href={block.data.url} target="_blank" rel="noreferrer">
+        <a
+          className={className}
+          href={block.data.url}
+          target="_blank"
+          rel="noreferrer"
+          // Kutusuzda görünen tek şey `aria-hidden` bir simge; bağlantının
+          // adı buradan gelmezse ekran okuyucuya adsız kalırdı.
+          aria-label={chromeless ? `${customLabel || platform.label} ${block.data.handle}`.trim() : undefined}
+        >
           {content}
         </a>
       );
@@ -372,6 +397,7 @@ export function ProfileBlockCard({
           favicon={signedFavicon}
           imgLoading={imgLoading}
           variant={block.data.variant}
+          chromeless={block.chrome === "none"}
         />
       );
 
