@@ -5,13 +5,16 @@
 // content div'ine uygulanır. Gridstack yalnızca client'ta dinamik import
 // edilir — SSR bundle'ına girmez.
 import { useEffect, useRef, type ReactNode } from "react";
-import { Trash, WarningTriangle } from "iconoir-react";
+import { NavArrowDown, NavArrowUp, Trash, WarningTriangle } from "iconoir-react";
 import type { GridItemHTMLElement, GridStack } from "gridstack";
 
 import {
   GRID_COLUMNS,
   blockGridLimits,
   type ProfileBlock,
+  SECTION_TITLE_MAX,
+  sectionRows,
+  type LayoutSection,
 } from "@caka/shared";
 import { ProfileBlockCard } from "~/components/profile-block";
 
@@ -34,6 +37,10 @@ export function EditorGrid({
   onRemove,
   renderBlock,
   issueOf,
+  sections = [],
+  onSectionRename,
+  onSectionRemove,
+  onSectionMove,
 }: {
   blocks: ProfileBlock[];
   device: EditorDevice;
@@ -47,6 +54,15 @@ export function EditorGrid({
   renderBlock?: (block: ProfileBlock) => ReactNode;
   /** Bloğun yayına engel eksiği; varsa "Aksiyon gerekli" rozeti gösterilir. */
   issueOf?: (block: ProfileBlock) => string | null;
+  /**
+   * Sayfa bölümleri. Bunlar gridstack NODE'U DEĞİL, tuvalin üstüne çizilen
+   * bir katman: node olsalardı çarpışma motoru onları blok sanar, yerçekimi
+   * ve `firstFit` altlarındaki blokları başlığın üstüne çekerdi.
+   */
+  sections?: readonly LayoutSection[];
+  onSectionRename?: (id: string, title: string) => void;
+  onSectionRemove?: (id: string) => void;
+  onSectionMove?: (id: string, delta: number) => void;
 }) {
   const app = useCatalog(appCatalog);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,7 +109,25 @@ export function EditorGrid({
             cellHeight: 84,
             margin: 6,
             animate: true,
-            float: false,
+            /**
+             * YERÇEKİMİ KAPALI (`float: true`).
+             *
+             * Kapalıyken kullanıcı bilerek boşluk bırakamıyordu: bir bloğu
+             * aşağı bırakınca gridstack onu yukarı çekiyordu. Public sayfa
+             * boşluğu ZATEN render edebiliyor (`has-pos` mutlak satıra
+             * oturuyor, bkz. `.profile-grid-item.has-pos`), yani engel
+             * tamamen editördeydi.
+             *
+             * BÖLÜMLER İÇİN DE ŞART: bölüm başlığı bir ızgara satırı kaplıyor
+             * ve o satır boş kalmalı. Yerçekimi açıkken altındaki bloklar
+             * hemen o boşluğa tırmanıp başlığın üstüne çıkardı.
+             *
+             * Yeni blok yerleştirme yine sıkıştırıyor (`placeNewBlock` →
+             * `firstFit`), yani boş sayfada bloklar dağınık doğmuyor. Blok
+             * SİLİNİNCE altındakiler yukarı gelmiyor — bunun kullanıcı
+             * tarafından tetiklenen çözümü "yukarı sıkıştır" komutu.
+             */
+            float: true,
             resizable: { handles: "n,e,s,w" },
             // Tutamaç görünürlüğü CSS'te yönetilir (hover/seçim animasyonu);
             // gridstack'in display:none tabanlı autohide'ı animasyonu keser.
@@ -328,8 +362,41 @@ export function EditorGrid({
     [],
   );
 
+  // Başlığın piksel konumu: satır × birim yükseklik. Masaüstünde 84
+  // (`cellHeight`), mobilde public sayfayla aynı 75 (63 içerik + 12 boşluk).
+  const rowHeight = device === "mobile" ? 75 : 84;
+  const sectionTop = (section: LayoutSection) =>
+    (device === "mobile" ? sectionRows(blocks, sections).find((r) => r.section.id === section.id)?.sm ?? section.y : section.y) *
+    rowHeight;
+
   return (
     <div ref={containerRef} className="grid-stack editor-grid-stack">
+      {sections.map((section) => (
+        <div
+          key={section.id}
+          className="editor-section"
+          style={{ top: `${sectionTop(section)}px`, height: `${rowHeight - 12}px` }}
+        >
+          <input
+            className="editor-section-title"
+            value={section.title}
+            placeholder={app.editor.sectionPlaceholder}
+            maxLength={SECTION_TITLE_MAX}
+            onChange={(event) => onSectionRename?.(section.id, event.target.value)}
+          />
+          <span className="editor-section-actions">
+            <button type="button" aria-label={app.editor.sectionUp} onClick={() => onSectionMove?.(section.id, -1)}>
+              <NavArrowUp width={15} height={15} />
+            </button>
+            <button type="button" aria-label={app.editor.sectionDown} onClick={() => onSectionMove?.(section.id, 1)}>
+              <NavArrowDown width={15} height={15} />
+            </button>
+            <button type="button" aria-label={app.editor.sectionRemove} onClick={() => onSectionRemove?.(section.id)}>
+              <Trash width={15} height={15} />
+            </button>
+          </span>
+        </div>
+      ))}
       {blocks.map((block) => {
         const pos = block.pos?.[posKey];
         const issue = issueOf?.(block) ?? null;

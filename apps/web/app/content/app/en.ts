@@ -222,6 +222,11 @@ export const en = {
 
     blockPickerAria: "Block gallery",
     searchPlaceholder: "Search…",
+    sectionPlaceholder: "Section title",
+    sectionUp: "Move section up",
+    sectionDown: "Move section down",
+    sectionRemove: "Delete section",
+    sectionAdd: "Add section",
     categoriesAria: "Categories",
     clearFilterAria: "Clear filter",
     doneAria: "Done",

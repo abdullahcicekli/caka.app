@@ -730,3 +730,28 @@ describe("bölümler (sections)", () => {
     expect(createSectionId()).toMatch(/^sec_[0-9a-f]{8}$/);
   });
 });
+
+describe("bölüm ekleme/silme aritmetiği (editör mantığı)", () => {
+  // Editördeki `shiftBlocksFrom` ile aynı kural; burada saf hâliyle
+  // sınanıyor çünkü editör tarayıcı gerektiriyor ve mantık ondan bağımsız.
+  const shift = (blocks: { y: number }[], from: number, delta: number) =>
+    blocks.map((b) => (b.y < from ? b : { y: Math.max(0, b.y + delta) }));
+
+  it("bölüm eklenince altındaki her şey bir satır iner", () => {
+    // Başlık ızgarada gerçek bir satır kaplıyor; itilmezse üstüne binerdi.
+    expect(shift([{ y: 0 }, { y: 4 }, { y: 8 }], 4, 1)).toEqual([{ y: 0 }, { y: 5 }, { y: 9 }]);
+  });
+
+  it("bölüm silinince açılan satır geri kapanır", () => {
+    expect(shift([{ y: 0 }, { y: 5 }, { y: 9 }], 4, -1)).toEqual([{ y: 0 }, { y: 4 }, { y: 8 }]);
+  });
+
+  it("ekle-sil çifti başlangıç durumuna döner", () => {
+    const start = [{ y: 0 }, { y: 2 }, { y: 6 }];
+    expect(shift(shift(start, 2, 1), 2, -1)).toEqual(start);
+  });
+
+  it("sıfırın altına inmez", () => {
+    expect(shift([{ y: 0 }], 0, -1)).toEqual([{ y: 0 }]);
+  });
+});

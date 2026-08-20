@@ -223,6 +223,11 @@ export const de = {
 
     blockPickerAria: "Blockgalerie",
     searchPlaceholder: "Suchen…",
+    sectionPlaceholder: "Abschnittstitel",
+    sectionUp: "Abschnitt nach oben",
+    sectionDown: "Abschnitt nach unten",
+    sectionRemove: "Abschnitt löschen",
+    sectionAdd: "Abschnitt hinzufügen",
     categoriesAria: "Kategorien",
     clearFilterAria: "Filter zurücksetzen",
     doneAria: "Fertig",

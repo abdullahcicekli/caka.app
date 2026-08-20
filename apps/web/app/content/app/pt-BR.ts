@@ -223,6 +223,11 @@ export const ptBR = {
 
     blockPickerAria: "Galeria de blocos",
     searchPlaceholder: "Buscar…",
+    sectionPlaceholder: "Título da seção",
+    sectionUp: "Mover seção para cima",
+    sectionDown: "Mover seção para baixo",
+    sectionRemove: "Excluir seção",
+    sectionAdd: "Adicionar seção",
     categoriesAria: "Categorias",
     clearFilterAria: "Limpar o filtro",
     doneAria: "Pronto",

@@ -929,6 +929,52 @@
   letter-spacing: -0.01em;
 }
 .profile-section-title:empty { display: none; }
+
+/* ---------------------------------------------------------------- *
+ * Editördeki bölüm ayracı.
+ *
+ * Gridstack NODE'U DEĞİL: tuvalin üstünde mutlak konumlu bir katman. Node
+ * olsaydı çarpışma motoru onu blok sanar, `firstFit` ve sürükleme altındaki
+ * blokları başlığın üstüne çekerdi. Konumu satır × birim yükseklikten
+ * hesaplanıyor (bkz. `sectionTop`, editor/grid.tsx).
+ * ---------------------------------------------------------------- */
+.editor-section {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-sinir);
+  /* Tıklama ızgaraya geçmeli; yalnız kendi denetimleri olay alır. */
+  pointer-events: none;
+}
+.editor-section > * { pointer-events: auto; }
+.editor-section-title {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--color-murekkep);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  outline: none;
+}
+.editor-section-title::placeholder { color: color-mix(in srgb, var(--color-murekkep) 40%, transparent); font-weight: 500; }
+.editor-section-actions { display: flex; flex: none; align-items: center; gap: 2px; opacity: 0; transition: opacity 120ms ease; }
+.editor-section:hover .editor-section-actions,
+.editor-section:focus-within .editor-section-actions { opacity: 1; }
+.editor-section-actions button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--color-murekkep) 60%, transparent);
+}
+.editor-section-actions button:hover { background: var(--color-zemin); color: var(--color-murekkep); }
 /* pos'suz eski kayıtlar için akış tabanlı boyut sınıfları. Track sayısı
    etiketin KENDİ genişliğidir (sizeToDims ile birebir): eskiden "1x1" burada
    2 track kaplıyordu ama ensureLayoutPositions aynı bloğa pos verdiğinde 1

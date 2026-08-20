@@ -3,6 +3,7 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { env } from "cloudflare:workers";
 import {
   Computer,
+  Menu,
   Link as LinkIcon,
   MapPin,
   MediaImage,
@@ -41,6 +42,10 @@ import {
   BLOCK_GRID_LIMITS,
   blockGridLimits,
   blockSupportsChromeless,
+  createSectionId,
+  MAX_LAYOUT_SECTIONS,
+  orderedSections,
+  SECTION_TITLE_MAX,
   blockIssue,
   createBlockId,
   detectSocialFromUrl,
@@ -2265,6 +2270,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
             },
           } as ProfileBlock;
         }),
+        current.sections,
       ),
     }));
   }
@@ -2557,6 +2563,85 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     return () => window.clearTimeout(timer);
   }, [layout.blocks]);
 
+  /**
+   * Bölüm ekler ve ALTINDAKİ HER ŞEYİ bir satır aşağı iter.
+   *
+   * İtme şart: başlık ızgarada gerçek bir satır kaplıyor (public sayfada da
+   * öyle çiziliyor). İtilmeseydi başlık o satırdaki bloğun üstüne binerdi.
+   * Yerçekimi kapalı olduğu için (`float: true`) açılan boşluk kapanmıyor.
+   */
+  function addSection() {
+    setLayout((current) => {
+      const sections = current.sections ?? [];
+      if (sections.length >= MAX_LAYOUT_SECTIONS) return current;
+      // Yeni bölüm sayfanın SONUNA: kullanıcı önce içeriği kurar, sonra
+      // bölerken sınırı yukarı taşır. Boş sayfada 0. satıra düşer.
+      const y = current.blocks.reduce(
+        (max, block) => (block.pos ? Math.max(max, block.pos.lg.y + block.pos.lg.h) : max),
+        0,
+      );
+      return {
+        ...current,
+        sections: orderedSections([...sections, { id: createSectionId(), title: "", y }]),
+        blocks: shiftBlocksFrom(current.blocks, y, 1),
+      };
+    });
+  }
+
+  /** `y` ve altındaki blokları `delta` satır kaydırır (negatif = yukarı). */
+  function shiftBlocksFrom(blocks: ProfileBlock[], y: number, delta: number): ProfileBlock[] {
+    return blocks.map((block) => {
+      if (!block.pos || block.pos.lg.y < y) return block;
+      const lgY = Math.max(0, block.pos.lg.y + delta);
+      return { ...block, pos: { ...block.pos, lg: { ...block.pos.lg, y: lgY } } } as ProfileBlock;
+    });
+  }
+
+  function renameSection(id: string, title: string) {
+    setLayout((current) => ({
+      ...current,
+      sections: (current.sections ?? []).map((section) =>
+        section.id === id ? { ...section, title: title.slice(0, SECTION_TITLE_MAX) } : section,
+      ),
+    }));
+  }
+
+  /**
+   * Bölüm sınırını bir satır oynatır. BLOKLARI TAŞIMAZ — sınır bir işaret,
+   * kapsayıcı değil; yukarı çekildiğinde araya giren blok o bölüme katılır.
+   * Bu, "kapsayıcı" modelinden hem daha ucuz hem daha öngörülebilir:
+   * kullanıcı sınırı gördüğü yerde bırakır, altındaki her şey o bölümdür.
+   */
+  function moveSection(id: string, delta: number) {
+    setLayout((current) => {
+      const sections = current.sections ?? [];
+      const target = sections.find((section) => section.id === id);
+      if (!target) return current;
+      const y = Math.max(0, target.y + delta);
+      // Başka bir bölüm zaten o satırdaysa üst üste binmesin.
+      if (sections.some((section) => section.id !== id && section.y === y)) return current;
+      return {
+        ...current,
+        sections: orderedSections(
+          sections.map((section) => (section.id === id ? { ...section, y } : section)),
+        ),
+      };
+    });
+  }
+
+  /** Bölümü siler ve açtığı satırı geri kapatır. Blokları SİLMEZ. */
+  function removeSection(id: string) {
+    setLayout((current) => {
+      const target = (current.sections ?? []).find((section) => section.id === id);
+      if (!target) return current;
+      return {
+        ...current,
+        sections: (current.sections ?? []).filter((section) => section.id !== id),
+        blocks: shiftBlocksFrom(current.blocks, target.y, -1),
+      };
+    });
+  }
+
   function insertBlock(block: ProfileBlock) {
     setLayout((current) => {
       const dims = sizeToDims(block.size);
@@ -2577,7 +2662,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         ...block,
         pos: { lg, sm: { ...lg, w: Math.min(w, GRID_COLUMNS.sm) } },
       } as ProfileBlock;
-      return { ...current, blocks: withDerivedSmPositions([...current.blocks, positioned]) };
+      return {
+        ...current,
+        blocks: withDerivedSmPositions([...current.blocks, positioned], current.sections),
+      };
     });
     setSelectedId(block.id);
     setPanel(null);
@@ -2667,7 +2755,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
       });
       if (!changed) return current;
       // R7: desktop değişikliği smManual olmayan blokların mobilini yeniden türetir.
-      if (changeDevice === "desktop") blocks = withDerivedSmPositions(blocks);
+      if (changeDevice === "desktop") blocks = withDerivedSmPositions(blocks, current.sections);
       return { ...current, blocks };
     });
   }
@@ -2833,6 +2921,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               onChange={applyGridChange}
               onManual={markSmManual}
               issueOf={blockIssue}
+              sections={layout.sections ?? []}
+              onSectionRename={renameSection}
+              onSectionRemove={removeSection}
+              onSectionMove={moveSection}
               onRemove={(id) => {
                 setLayout((current) => ({
                   ...current,
@@ -2934,6 +3026,18 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           onClick={() => setDevice(device === "desktop" ? "mobile" : "desktop")}
         >
           {device === "desktop" ? <SmartphoneDevice width={18} height={18} /> : <Computer width={19} height={19} />}
+        </button>
+        {/* Bölüm ekleme MOBİL ÖNİZLEMEDE KAPALI: bölüm sınırı masaüstü
+            satırında (`section.y`) yaşıyor, mobil karşılığı ondan türetiliyor.
+            Mobilde eklemek kullanıcıya kontrol ettiği yeri yanlış gösterirdi. */}
+        <button
+          type="button"
+          data-tooltip={app.editor.sectionAdd}
+          aria-label={app.editor.sectionAdd}
+          disabled={device === "mobile" || (layout.sections?.length ?? 0) >= MAX_LAYOUT_SECTIONS}
+          onClick={addSection}
+        >
+          <Menu width={19} height={19} />
         </button>
       </nav>
 

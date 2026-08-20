@@ -236,6 +236,11 @@ export const tr = {
 
     blockPickerAria: "Blok galerisi",
     searchPlaceholder: "Ara…",
+    sectionPlaceholder: "Bölüm başlığı",
+    sectionUp: "Bölümü yukarı taşı",
+    sectionDown: "Bölümü aşağı taşı",
+    sectionRemove: "Bölümü sil",
+    sectionAdd: "Bölüm ekle",
     categoriesAria: "Kategoriler",
     clearFilterAria: "Filtreyi temizle",
     doneAria: "Bitti",
