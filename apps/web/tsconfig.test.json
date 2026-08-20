@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["tests/**/*", "vitest.config.ts"],
+  // `server/locale.ts` testten doğrudan içe aktarılıyor (dil kapısı saf bir
+  // fonksiyon); proje dosya listesinde adı geçmeli.
+  "include": ["tests/**/*", "vitest.config.ts", "server/locale.ts"],
   "compilerOptions": {
     "composite": true,
     "strict": true,

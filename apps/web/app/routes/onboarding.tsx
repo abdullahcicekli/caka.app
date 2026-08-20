@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { env } from "cloudflare:workers";
-import { Form, Link, data, redirect, useSearchParams } from "react-router";
+import { Form, Link, data, useSearchParams } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
 import telefonMockup from "~/assets/landing/vitrin/telefon-busra.webp";
@@ -38,7 +38,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!session) return { authed: false, locale };
   const existing = await getProfileByUserId(env, session.user.id);
   if (existing) {
-    throw redirect(
+    throw localizedRedirect(
+      request,
       existing.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil",
     );
   }

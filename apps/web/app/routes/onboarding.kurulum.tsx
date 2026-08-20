@@ -17,7 +17,7 @@ import {
   Shop,
   Sparks,
 } from "iconoir-react";
-import { Form, Link, data, redirect, useNavigate, useNavigation } from "react-router";
+import { Form, Link, data, useNavigate, useNavigation } from "react-router";
 
 import { ProfileAvatar } from "~/components/profile-avatar";
 import { SocialIcon } from "~/components/icons/social";
@@ -51,7 +51,7 @@ import type { Route } from "./+types/onboarding.kurulum";
 import { localeFromRequest, localizedRedirect } from "../../server/locale";
 import { DEFAULT_LOCALE } from "@caka/shared";
 import { appCatalog } from "~/content/app";
-import { useCatalog } from "~/lib/locale";
+import { useCatalog, useHref } from "~/lib/locale";
 
 const STEPS = [
   "profil",
@@ -110,11 +110,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const profile = await getProfileByUserId(env, session.user.id);
   if (!profile) throw localizedRedirect(request, "/onboarding");
   const step = asStep(params.step);
-  if (!step) throw redirect(stepPath("profil"));
+  if (!step) throw localizedRedirect(request, stepPath("profil"));
 
   const finishStep = step === "hazirlaniyor" || step === "hazir";
   if (profile.onboardingCompletedAt && !finishStep) throw localizedRedirect(request, "/edit");
-  if (!profile.onboardingCompletedAt && finishStep) throw redirect(stepPath("profil"));
+  if (!profile.onboardingCompletedAt && finishStep)
+    throw localizedRedirect(request, stepPath("profil"));
 
   const onboarding = parseOnboardingData(profile.onboardingData);
   const seed = parseSeedProfile(profile.layout);
@@ -145,7 +146,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (!profile) throw localizedRedirect(request, "/onboarding");
   const step = asStep(params.step);
   if (!step || step === "hazirlaniyor" || step === "hazir") {
-    throw redirect(stepPath("profil"));
+    throw localizedRedirect(request, stepPath("profil"));
   }
 
   const form = await request.formData();
@@ -234,12 +235,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     } catch {
       return data({ error: app.setup.linkInvalid }, { status: 400 });
     }
-    throw redirect(stepPath("hazirlaniyor"));
+    throw localizedRedirect(request, stepPath("hazirlaniyor"));
   }
 
   await updateOnboardingData(env, session.user.id, patch);
   const next = NEXT_STEP[step];
-  throw redirect(next ? stepPath(next) : "/edit");
+  throw localizedRedirect(request, next ? stepPath(next) : "/edit");
 }
 
 function Progress({ step }: { step: Step }) {
@@ -655,10 +656,13 @@ function LinksStep({ platforms, links }: { platforms: SocialPlatform[]; links: O
 function PreparingStep() {
   const app = useCatalog(appCatalog);
   const navigate = useNavigate();
+  // Hedef dizeye çözülür: `useHref` her render'da yeni bir fonksiyon döner ve
+  // bağımlılığa konsaydı sayaç her render'da sıfırlanırdı.
+  const target = useHref()(stepPath("hazir"));
   useEffect(() => {
-    const timer = window.setTimeout(() => navigate(stepPath("hazir")), 1600);
+    const timer = window.setTimeout(() => navigate(target), 1600);
     return () => window.clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, target]);
   return (
     <div className="preparing-card" aria-live="polite">
       <h1><span className="loading-ring" /> {app.setup.buildingContent}</h1>
@@ -682,6 +686,7 @@ function ReadyStep({
   links: OnboardingLink[];
 }) {
   const app = useCatalog(appCatalog);
+  const href = useHref();
   const lists = useOnboardingLists();
   return (
     <div className="ready-screen">
@@ -707,13 +712,14 @@ function ReadyStep({
         </div>
         <p>{app.setup.readyTitle}</p>
       </div>
-      <Link className="ready-button" to="/edit">{app.setup.readyCta}</Link>
+      <Link className="ready-button" to={href("/edit")}>{app.setup.readyCta}</Link>
     </div>
   );
 }
 
 export default function OnboardingSetup({ loaderData, actionData }: Route.ComponentProps) {
   const app = useCatalog(appCatalog);
+  const href = useHref();
   const { step, onboarding, defaults, username } = loaderData;
   const back = PREVIOUS_STEP[step];
   const content = useMemo(() => {
@@ -750,7 +756,7 @@ export default function OnboardingSetup({ loaderData, actionData }: Route.Compon
       {step !== "hazir" ? (
         <nav className="onboarding-topbar" aria-label={app.setup.stepsLabel}>
           {back ? (
-            <Link className="onboarding-back" to={stepPath(back)}>
+            <Link className="onboarding-back" to={href(stepPath(back))}>
               <NavArrowLeft width={17} height={17} strokeWidth={2} />
               {app.setup.back}
             </Link>

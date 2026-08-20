@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { redirect } from "react-router";
 
 import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
@@ -39,9 +38,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (existing) {
     // Girişten dönen mevcut kullanıcı — avatarsız kalmışsa onar, sayfasına git.
     await ensureProfileAvatar(env, session.user, existing);
-    throw redirect(existing.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil", {
-      headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
-    });
+    throw localizedRedirect(
+      request,
+      existing.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil",
+      { headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE } },
+    );
   }
 
   const desired = readClaimCookie(request);
@@ -54,12 +55,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Beklenmeyen hata (ör. DB): çerezi temizleyip Türkçe mesajla geri dön;
     // aksi halde her yenilemede aynı 500 tekrar eder. PII loglanmaz.
     console.error("claim failed:", err instanceof Error ? err.message : err);
-    throw redirect(`/onboarding?error=hata&u=${encodeURIComponent(desired)}`, {
+    throw localizedRedirect(request, `/onboarding?error=hata&u=${encodeURIComponent(desired)}`, {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
     });
   }
   if (!result.ok) {
-    throw redirect(`/onboarding?error=taken&u=${encodeURIComponent(desired)}`, {
+    throw localizedRedirect(request, `/onboarding?error=taken&u=${encodeURIComponent(desired)}`, {
       headers: { "Set-Cookie": CLEAR_CLAIM_COOKIE },
     });
   }

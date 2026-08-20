@@ -63,7 +63,7 @@ export function localeFromRequest(request: Request): Locale {
  * L7/L8 — öneksiz bir uygulama adresine gelen ziyaretçiyi kendi diline
  * yollayan kapı. Yönlendirilmeyecekse `null` döner.
  *
- * Dört koşulun hepsi tutmalı:
+ * Beş koşulun hepsi tutmalı:
  *
  *  1. **GET/HEAD.** Bir POST'u 302'lemek gövdeyi düşürür; form action'ları
  *     kendi adresine gönderiyor.
@@ -82,6 +82,16 @@ export function localeRedirect(request: Request): Response | null {
   if (request.method !== "GET" && request.method !== "HEAD") return null;
 
   const url = new URL(request.url);
+
+  // 5. koşul: React Router'ın tek-getirme (single fetch) veri isteği OLMAMALI.
+  // İstemci içi gezinmede route verisi `<yol>.data` adresinden çekilir. Bu
+  // isteği 302'lersek tarayıcı yönlendirmeyi kendisi izler, yanıt istenen
+  // adresten BAŞKA bir adresten döner ve React Router bunu işlenmemiş
+  // yönlendirme sayıp gezinmeyi hataya düşürür — kullanıcı "Bir şeyler ters
+  // gitti" ekranını görür (onboarding'de her adımda yaşandı). Belge isteği
+  // zaten doğru dile yönlendirildiği için veri isteği yerinde yanıtlanır.
+  if (url.pathname.endsWith(".data")) return null;
+
   const parsed = parseLocalizedPath(url.pathname);
   if (!parsed || parsed.locale !== DEFAULT_LOCALE) return null;
 
