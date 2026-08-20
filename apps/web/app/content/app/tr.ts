@@ -335,6 +335,7 @@ export const tr = {
   auth: {
     loginTitle: "Tekrar hoş geldin",
     loginBody: "Kaldığın yerden devam et.",
+    signInFailed: "Giriş tamamlanmadı. Yeniden denemek için aşağıdaki düğmelerden birini seç.",
     loginCta: "giriş yap",
     signInGoogle: "Google ile giriş yap",
     signInApple: "Apple ile giriş yap",

@@ -321,6 +321,7 @@ export const de = {
   auth: {
     loginTitle: "Willkommen zurück",
     loginBody: "Mach da weiter, wo du aufgehört hast.",
+    signInFailed: "Die Anmeldung wurde nicht abgeschlossen. Wähle unten eine Schaltfläche, um es erneut zu versuchen.",
     loginCta: "anmelden",
     signInGoogle: "Mit Google anmelden",
     signInApple: "Mit Apple anmelden",

@@ -319,6 +319,7 @@ export const en = {
   auth: {
     loginTitle: "Welcome back",
     loginBody: "Pick up where you left off.",
+    signInFailed: "Sign-in didn't complete. Pick one of the buttons below to try again.",
     loginCta: "log in",
     signInGoogle: "Sign in with Google",
     signInApple: "Sign in with Apple",

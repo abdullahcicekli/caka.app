@@ -321,6 +321,7 @@ export const es = {
   auth: {
     loginTitle: "Bienvenido de nuevo",
     loginBody: "Continúa donde lo dejaste.",
+    signInFailed: "El inicio de sesión no se completó. Elige uno de los botones de abajo para volver a intentarlo.",
     loginCta: "iniciar sesión",
     signInGoogle: "Iniciar sesión con Google",
     signInApple: "Iniciar sesión con Apple",

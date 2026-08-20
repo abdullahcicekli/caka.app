@@ -321,6 +321,7 @@ export const ptBR = {
   auth: {
     loginTitle: "Que bom te ver de novo",
     loginBody: "Continue de onde parou.",
+    signInFailed: "O login não foi concluído. Escolha um dos botões abaixo para tentar de novo.",
     loginCta: "entrar",
     signInGoogle: "Entrar com o Google",
     signInApple: "Entrar com a Apple",

@@ -1,31 +1,35 @@
 import { env } from "cloudflare:workers";
-import { Link, redirect } from "react-router";
+import { Link, redirect, useSearchParams } from "react-router";
 
 import { logoBlackText } from "~/assets/brand";
 import telefonMockup from "~/assets/landing/vitrin/telefon-busra.webp";
 import { AppleIcon } from "~/components/icons/apple";
 import { GoogleIcon } from "~/components/icons/google";
-import { signInWithSocial } from "~/lib/auth-client";
+import { AUTH_ERROR_PARAM, signInWithSocial } from "~/lib/auth-client";
 import { noIndexMeta } from "~/lib/seo";
 import { getSession } from "../../server/auth";
+import { localeFromRequest } from "../../server/locale";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/login";
 import { DEFAULT_LOCALE } from "@caka/shared";
 import { appCatalog } from "~/content/app";
 import { useCatalog } from "~/lib/locale";
 
-export function meta({}: Route.MetaArgs) {
-  return noIndexMeta(appCatalog[DEFAULT_LOCALE].titles.login);
+export function meta({ loaderData }: Route.MetaArgs) {
+  return noIndexMeta(appCatalog[loaderData?.locale ?? DEFAULT_LOCALE].titles.login);
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+  // Sekme başlığı `meta`da katalogdan okunuyor; `meta` hook kullanamadığı
+  // için dili loader taşır (`routes/edit.tsx` ile aynı kalıp).
+  const locale = localeFromRequest(request);
   const session = await getSession(env, request);
-  if (!session) return null;
+  if (!session) return { locale };
   const profile = await getProfileByUserId(env, session.user.id);
   // Oturum var ama profil yoksa yönlendirme yapma: /onboarding'den gelen
   // app.auth.loginCta tıklaması sessiz bir döngüye girmesin, kullanıcı isterse
   // farklı hesapla giriş yapabilsin.
-  if (!profile) return null;
+  if (!profile) return { locale };
   throw redirect(
     profile.onboardingCompletedAt ? "/edit" : "/onboarding/kurulum/profil",
   );
@@ -33,6 +37,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Login() {
   const app = useCatalog(appCatalog);
+  // Sağlayıcı ekranından hatayla dönüldü mü (bkz. `AUTH_ERROR_PARAM`).
+  // Sağlayıcının kendi gerekçesi BASILMAZ: "access_denied" gibi bir dize
+  // kullanıcıya bir şey anlatmıyor ve çoğu zaman tek sebep iptal etmesi.
+  const [params] = useSearchParams();
+  const failed = params.get(AUTH_ERROR_PARAM) !== null;
   return (
     <main className="grid min-h-svh bg-white lg:grid-cols-2">
       <div className="relative flex flex-col px-6 py-6 sm:px-10">
@@ -43,6 +52,15 @@ export default function Login() {
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center text-center">
           <h1 className="text-3xl font-bold">{app.auth.loginTitle}</h1>
           <p className="mt-2 text-murekkep/60">{app.auth.loginBody}</p>
+
+          {failed ? (
+            <p
+              className="mt-5 w-full rounded-xl bg-murekkep/5 px-4 py-3 text-sm text-murekkep"
+              role="alert"
+            >
+              {app.auth.signInFailed}
+            </p>
+          ) : null}
 
           <button
             type="button"
