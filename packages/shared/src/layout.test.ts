@@ -10,6 +10,10 @@ import {
   blockGridLimitIssue,
   blockGridLimits,
   blockSupportsChromeless,
+  createSectionId,
+  orderedSections,
+  sectionRows,
+  serializeProfileLayout,
   blockIssue,
   detectSocialFromUrl,
   ensureLayoutPositions,
@@ -635,5 +639,94 @@ describe("kutusuz kart (chrome)", () => {
       version: 1, grid: GRID_UNIT, blocks: [profileBlock, { id: "t", type: "text", data: { text: "x" } }],
     }))!.blocks[1];
     expect(blockSupportsChromeless(textBlock)).toBe(false);
+  });
+});
+
+describe("bölümler (sections)", () => {
+  const doc = (extra: object) =>
+    JSON.stringify({ version: 1, grid: GRID_UNIT, blocks: [profileBlock], ...extra });
+
+  it("alan yoksa belge bugünküyle birebir aynı kalır", () => {
+    const parsed = parseProfileLayout(doc({}));
+    expect(parsed?.sections).toBeUndefined();
+    // Serileştirme boş bir `sections` alanı EKLEMEZ; eski deploy'un okuduğu
+    // belge değişmemiş olmalı.
+    expect(JSON.parse(serializeProfileLayout(parsed!))).not.toHaveProperty("sections");
+  });
+
+  it("bölüm yazılıp okunuyor ve y sırasına diziliyor", () => {
+    const parsed = parseProfileLayout(
+      doc({ sections: [{ id: "b", title: "Alt", y: 10 }, { id: "a", title: "Üst", y: 2 }] }),
+    );
+    expect(parsed?.sections?.map((s) => s.title)).toEqual(["Üst", "Alt"]);
+  });
+
+  it("bozuk bölüm sayfayı düşürmez, yalnız kendisi atılır", () => {
+    const parsed = parseProfileLayout(
+      doc({ sections: [{ id: "a", title: "İyi", y: 0 }, { id: "b", y: "hop" }, { title: "idsiz", y: 4 }] }),
+    );
+    expect(parsed?.sections).toHaveLength(1);
+    expect(parsed?.sections?.[0].title).toBe("İyi");
+  });
+
+  it("aynı satıra düşen ikinci bölüm teke iner", () => {
+    expect(
+      orderedSections([
+        { id: "a", title: "A", y: 4 },
+        { id: "b", title: "B", y: 4 },
+      ]),
+    ).toHaveLength(1);
+  });
+
+  it("bölüm sınırı MOBİLDE de tutar — blok önceki bölüme sızmaz", () => {
+    // Masaüstü: geniş bir blok (y=0), sonra bölüm sınırı (y=2), sonra dar
+    // bir blok (y=2). Sınır olmasaydı dar blok mobilde geniş bloğun yanındaki
+    // boşluğa yerleşir ve başlığın ÜSTÜNDE görünürdü.
+    const blocks = [
+      profileBlock,
+      { id: "wide", type: "link" as const, size: "2x1" as const,
+        data: { title: "", url: "", ogImage: "", favicon: "", variant: "card" as const },
+        pos: { lg: { x: 0, y: 0, w: 2, h: 2 }, sm: { x: 0, y: 0, w: 2, h: 2 } } },
+      { id: "narrow", type: "link" as const, size: "1x1" as const,
+        data: { title: "", url: "", ogImage: "", favicon: "", variant: "card" as const },
+        pos: { lg: { x: 4, y: 2, w: 2, h: 2 }, sm: { x: 0, y: 0, w: 2, h: 2 } } },
+    ];
+    const sections = [{ id: "s", title: "İkinci", y: 2 }];
+
+    const withoutSections = withDerivedSmPositions(blocks as never, []);
+    const withSections = withDerivedSmPositions(blocks as never, sections);
+    const smY = (list: typeof blocks, id: string) =>
+      (list.find((b) => b.id === id) as { pos: { sm: { y: number } } }).pos.sm.y;
+
+    // Sınırsız: dar blok geniş bloğun YANINA (aynı satıra) düşüyor.
+    expect(smY(withoutSections as never, "narrow")).toBe(smY(withoutSections as never, "wide"));
+    // Sınırlı: geniş bloğun ALTINA iniyor.
+    expect(smY(withSections as never, "narrow")).toBeGreaterThanOrEqual(
+      smY(withSections as never, "wide") + 2,
+    );
+  });
+
+  it("başlık satırı mobilde bölümün en üst bloğundan türer", () => {
+    const blocks = [
+      profileBlock,
+      { id: "a", type: "link" as const, size: "1x1" as const,
+        data: { title: "", url: "", ogImage: "", favicon: "", variant: "card" as const },
+        pos: { lg: { x: 0, y: 0, w: 2, h: 2 }, sm: { x: 0, y: 0, w: 2, h: 2 } } },
+      { id: "b", type: "link" as const, size: "1x1" as const,
+        data: { title: "", url: "", ogImage: "", favicon: "", variant: "card" as const },
+        pos: { lg: { x: 0, y: 6, w: 2, h: 2 }, sm: { x: 0, y: 6, w: 2, h: 2 } } },
+    ];
+    const sections = [{ id: "s", title: "İkinci", y: 6 }];
+    const derived = withDerivedSmPositions(blocks as never, sections);
+    const rows = sectionRows(derived as never, sections);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].lg).toBe(6);
+    const bSm = (derived.find((x) => x.id === "b") as { pos: { sm: { y: number } } }).pos.sm.y;
+    expect(rows[0].sm).toBe(bSm);
+  });
+
+  it("bölüm kimliği benzersiz üretilir", () => {
+    expect(createSectionId()).not.toBe(createSectionId());
+    expect(createSectionId()).toMatch(/^sec_[0-9a-f]{8}$/);
   });
 });

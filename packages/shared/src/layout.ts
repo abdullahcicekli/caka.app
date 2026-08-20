@@ -661,6 +661,61 @@ export function faviconImageKey(blockId: string): string {
 
 export const MAX_LAYOUT_BLOCKS = 50;
 
+/** Sayfa başına bölüm tavanı. */
+export const MAX_LAYOUT_SECTIONS = 8;
+/** Bölüm başlığı uzunluk tavanı. */
+export const SECTION_TITLE_MAX = 40;
+
+/**
+ * SAYFA BÖLÜMÜ — başlıklı bir ayraç.
+ *
+ * `y` SAYFA GENELİNDE, bölüme göreli DEĞİL. Yani bölüm bir kapsayıcı değil,
+ * "şu satırdan itibaren şu başlık" demek. Blokların `pos`u hiç değişmiyor.
+ *
+ * NEDEN BÖYLE, "bölüm başına ayrı ızgara" değil: göreli `y` yazsaydık eski
+ * bir deploy (bu alanı hiç bilmeyen) göreli değerleri mutlak sanar ve
+ * blokları ÜST ÜSTE BİNDİRİRDİ. Bu hâliyle eski deploy `sections`ı görmezden
+ * geliyor ve aynı sayfayı yalnız başlıksız çiziyor — sessiz bozulma yok.
+ * Aynı gerekçe "ayraç blok" seçeneğini de eliyor: ayraç bir blok olsaydı
+ * mobil türetme (`withDerivedSmPositions`, `firstFit`) onu sıradan bir blok
+ * sanıp başka bir yere paketler ve gruplamayı bozardı.
+ *
+ * Belge `version`ı yükseltilmiyor; `grid` alanı bu deseni zaten kurmuştu
+ * (eski kodun görmezden geldiği isteğe bağlı işaret).
+ */
+const layoutSectionSchema = z.object({
+  id: z.string().min(1).max(64),
+  title: z.string().trim().max(SECTION_TITLE_MAX),
+  /** Bölümün başladığı ızgara satırı (yarım birimde, `pos.y` ile aynı ölçek). */
+  y: z.number().int().min(0).max(400),
+});
+
+export type LayoutSection = z.infer<typeof layoutSectionSchema>;
+
+/** Ham JSON düğümü nesne mi? Bölüm ölçeklemesi için. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function createSectionId(): string {
+  return `sec_${crypto.randomUUID().slice(0, 8)}`;
+}
+
+/**
+ * Bölümleri `y` sırasına dizer ve aynı satıra düşenleri teke indirir.
+ * Render ve editör aynı sırayı görmek zorunda; sıralama tek yerde yapılır.
+ */
+export function orderedSections(sections: readonly LayoutSection[]): LayoutSection[] {
+  const seen = new Set<number>();
+  return [...sections]
+    .sort((a, b) => a.y - b.y)
+    .filter((section) => {
+      if (seen.has(section.y)) return false;
+      seen.add(section.y);
+      return true;
+    });
+}
+
 /** Belgeyi ayakta tutan tek yapısal kural; hem şemada hem kurtarmalı
  * ayrıştırmada aynı yerden okunur ki ikisi ayrışmasın. */
 function profileBlockCountIssue(blocks: readonly { type: string }[]): string | null {
@@ -684,6 +739,8 @@ export const profileLayoutSchema = z.object({
   // gövdesi gerçekten değişene kadar bu sabit kalmalı.
   version: z.literal(1),
   blocks: z.array(profileBlockSchema).max(MAX_LAYOUT_BLOCKS),
+  /** Başlıklı sayfa ayraçları; yoksa sayfa bugünkü gibi tek akıştır. */
+  sections: z.array(layoutSectionSchema).max(MAX_LAYOUT_SECTIONS).optional(),
 }).superRefine((layout, context) => {
   const message = profileBlockCountIssue(layout.blocks);
   if (message) {
@@ -707,6 +764,12 @@ const layoutEnvelopeSchema = z.object({
    */
   grid: z.literal(GRID_UNIT).optional(),
   blocks: z.array(z.unknown()).max(MAX_LAYOUT_BLOCKS),
+  /**
+   * Bölümler burada da KURTARMALI okunur: bozuk bir bölüm kaydı sayfayı
+   * düşürmemeli. `unknown` gelir, aşağıda tek tek doğrulanır ve geçersiz
+   * olan atılır — bloklarla aynı desen.
+   */
+  sections: z.array(z.unknown()).max(MAX_LAYOUT_SECTIONS).optional(),
 });
 
 /** Eski hücre biriminde yazılmış bir konumu yarım birime çevirir. */
@@ -771,7 +834,27 @@ export function parseProfileLayoutDetailed(value: string): ParsedProfileLayout |
     );
   }
   if (profileBlockCountIssue(blocks)) return null;
-  return { layout: { version: 1, grid: GRID_UNIT, blocks }, unknownBlocks };
+
+  // Bölümler: geçersiz olan atılır, sayfa ayakta kalır. Eski kayıtta alan
+  // hiç yok — o zaman `sections` da yazılmaz ve belge bugünküyle birebir
+  // aynı kalır (serileştirme `undefined` alanı basmaz).
+  const sections: LayoutSection[] = [];
+  for (const rawSection of envelope.data.sections ?? []) {
+    const parsed = layoutSectionSchema.safeParse(
+      // Eski birimden gelen kayıtta bölüm satırı da ölçeklenir; bloklarla
+      // aynı çarpan uygulanmazsa başlıklar kaydığı yerde kalırdı.
+      legacyGrid && isRecord(rawSection) && typeof rawSection.y === "number"
+        ? { ...rawSection, y: rawSection.y * GRID_UNIT }
+        : rawSection,
+    );
+    if (parsed.success) sections.push(parsed.data);
+  }
+  const ordered = orderedSections(sections);
+
+  return {
+    layout: { version: 1, grid: GRID_UNIT, blocks, ...(ordered.length ? { sections: ordered } : {}) },
+    unknownBlocks,
+  };
 }
 
 export function parseProfileLayout(value: string): ProfileLayout | null {
@@ -1317,11 +1400,14 @@ function firstFit(
   w: number,
   h: number,
   columns: number,
+  /** Aramanın başlayacağı satır. Bölüm sınırı bunun için var: bir bölümün
+      bloğu, kendinden önceki bölümün alanına geri sızmamalı. */
+  minY = 0,
 ): { x: number; y: number } {
   const width = Math.min(w, columns);
   const overlaps = (x: number, y: number) =>
     occupied.some((p) => x < p.x + p.w && p.x < x + width && y < p.y + p.h && p.y < y + h);
-  for (let y = 0; ; y += 1) {
+  for (let y = minY; ; y += 1) {
     for (let x = 0; x + width <= columns; x += 1) {
       if (!overlaps(x, y)) return { x, y };
     }
@@ -1344,7 +1430,24 @@ export function placeNewBlock(
 // R7: mobil yerleşim, smManual olmayan bloklar için desktop'tan türetilir —
 // genişlik 2'ye kırpılır, desktop okuma sırasına (y, sonra x) göre dizilir.
 // smManual bloklar sabit engel olarak korunur.
-export function withDerivedSmPositions<T extends ProfileBlock>(blocks: T[]): T[] {
+/**
+ * Bölümün bir bloğu hangi bölüme ait? Masaüstü satırına göre: bloğun `lg.y`
+ * değerinden KÜÇÜK ya da eşit en büyük bölüm sınırı. Hiçbiri yoksa bloklar
+ * ilk bölümden önce duruyordur (başlıksız giriş alanı).
+ */
+function sectionIndexOf(y: number, boundaries: readonly number[]): number {
+  let index = -1;
+  for (let i = 0; i < boundaries.length; i += 1) {
+    if (boundaries[i] <= y) index = i;
+    else break;
+  }
+  return index;
+}
+
+export function withDerivedSmPositions<T extends ProfileBlock>(
+  blocks: T[],
+  sections: readonly LayoutSection[] = [],
+): T[] {
   const positioned = blocks.filter(
     (block): block is T & { pos: { lg: GridPosition; sm: GridPosition } } =>
       block.type !== "profile" && block.pos !== undefined,
@@ -1356,10 +1459,23 @@ export function withDerivedSmPositions<T extends ProfileBlock>(blocks: T[]): T[]
     .filter((block) => !block.smManual)
     .sort((a, b) => a.pos.lg.y - b.pos.lg.y || a.pos.lg.x - b.pos.lg.x);
   const derived = new Map<string, GridPosition>();
+  // BÖLÜM SINIRI MOBİLDE DE TUTMALI. Mobil düzen bir yeniden paketlemedir
+  // (ölçekleme değil): sınır uygulanmazsa `firstFit` bir bölümün küçük
+  // bloğunu önceki bölümde kalan boşluğa yerleştirir ve gruplama görünürde
+  // bozulur — başlık altında olması gereken kart başlığın üstüne çıkar.
+  const boundaries = orderedSections(sections).map((section) => section.y);
+  let currentSection = -2;
+  let floor = 0;
   for (const block of auto) {
+    const index = sectionIndexOf(block.pos.lg.y, boundaries);
+    if (index !== currentSection) {
+      // Yeni bölüm: taban, o ana kadar yerleşen her şeyin altı.
+      currentSection = index;
+      floor = occupied.reduce((max, p) => Math.max(max, p.y + p.h), 0);
+    }
     const w = Math.min(block.pos.lg.w, GRID_COLUMNS.sm);
     const h = block.pos.lg.h;
-    const { x, y } = firstFit(occupied, w, h, GRID_COLUMNS.sm);
+    const { x, y } = firstFit(occupied, w, h, GRID_COLUMNS.sm, floor);
     const pos = { x, y, w, h };
     occupied.push(pos);
     derived.set(block.id, pos);
@@ -1368,6 +1484,38 @@ export function withDerivedSmPositions<T extends ProfileBlock>(blocks: T[]): T[]
     const sm = derived.get(block.id);
     return sm && block.pos ? { ...block, pos: { ...block.pos, sm } } : block;
   });
+}
+
+/**
+ * Bölüm başlıklarının ızgara satırı — masaüstü ve mobil için ayrı.
+ *
+ * Masaüstünde satır doğrudan `section.y`. MOBİLDE hesaplanır: mobil düzen
+ * bir yeniden paketleme olduğu için `y` orada karşılığı olmayan bir sayı.
+ * Başlık, o bölümün mobildeki EN ÜST bloğunun hemen üstüne konur; bölüm
+ * boşsa masaüstü sırası korunacak biçimde bir öncekinin altına düşer.
+ */
+export function sectionRows(
+  blocks: readonly ProfileBlock[],
+  sections: readonly LayoutSection[],
+): { section: LayoutSection; lg: number; sm: number }[] {
+  const ordered = orderedSections(sections);
+  const boundaries = ordered.map((section) => section.y);
+  const rows: { section: LayoutSection; lg: number; sm: number }[] = [];
+  let previousSm = 0;
+  ordered.forEach((section, index) => {
+    const members = blocks.filter(
+      (block) =>
+        block.type !== "profile" &&
+        block.pos !== undefined &&
+        sectionIndexOf(block.pos.lg.y, boundaries) === index,
+    );
+    const sm = members.length
+      ? Math.min(...members.map((block) => block.pos!.sm.y))
+      : previousSm;
+    previousSm = sm;
+    rows.push({ section, lg: section.y, sm });
+  });
+  return rows;
 }
 
 // pos alanı olmayan (eski) bloklara size'dan konum türetir; sm'i R7 kuralıyla
@@ -1423,5 +1571,5 @@ export function ensureLayoutPositions(layout: ProfileLayout): ProfileLayout {
     occupied.push(lg);
     return { ...block, pos: { lg, sm: { ...lg, w: Math.min(w, GRID_COLUMNS.sm) } } };
   });
-  return { ...layout, blocks: withDerivedSmPositions(blocks) };
+  return { ...layout, blocks: withDerivedSmPositions(blocks, layout.sections) };
 }

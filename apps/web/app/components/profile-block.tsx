@@ -11,6 +11,7 @@ import {
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
+  sectionRows,
 } from "@caka/shared";
 
 import { SocialIcon } from "~/components/icons/social";
@@ -750,6 +751,21 @@ export function ProfileCanvas({
           {profileBlock ? <ProfileBlockCard block={profileBlock} /> : null}
         </aside>
         <section className="profile-grid" aria-label={app.profile.blocksLabel}>
+          {/* Bölüm başlıkları ızgaranın İÇİNDE, tam genişlik bir satır olarak
+              duruyor. Ayrı bir sarmalayıcı olsaydı her bölüm kendi ızgarasını
+              açardı ve bloklar bölümler arasında hizasını kaybederdi — oysa
+              `pos` sayfa genelinde tek bir koordinat sistemi (bkz.
+              `layoutSectionSchema`). Mobil satır hesaplanır: mobil düzen bir
+              yeniden paketleme, `y` orada karşılığı olmayan bir sayı. */}
+          {sectionRows(layout.blocks, layout.sections ?? []).map(({ section, lg, sm }) => (
+            <h2
+              key={section.id}
+              className="profile-section-title"
+              style={{ "--lg-row": `${lg + 1}`, "--sm-row": `${sm + 1}` } as CSSProperties}
+            >
+              {section.title}
+            </h2>
+          ))}
           {bentoBlocks.map((block) => {
             const pos = block.pos;
             // pos varsa editörle birebir aynı hücrelere yerleştir (KTD13);
