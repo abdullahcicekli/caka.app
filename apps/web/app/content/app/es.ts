@@ -80,6 +80,9 @@ export const es = {
     pickTheme: "Elegir tema",
     editProfileInfo: "Editar la información general del perfil",
     saveFailed: "No se pudo guardar: comprueba tu conexión.",
+    sessionLost: "Tu sesión ha caducado: tus cambios no se están guardando.",
+    sessionSignIn: "Vuelve a iniciar sesión",
+    sessionWrongAccount: "Has iniciado sesión con otra cuenta; no se ha escrito nada en esta página.",
 
     draftTitle: "Tienes cambios sin publicar",
     liveTitle: "Tu página publicada",

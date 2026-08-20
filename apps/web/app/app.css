@@ -3220,7 +3220,10 @@ button.photo-cell:focus-visible {
   font-weight: 500;
   box-shadow: 0 12px 32px rgb(17 17 22 / 0.24);
 }
-.editor-alert button { border-radius: 999px; padding: 6px 14px; background: white; color: var(--color-murekkep); font-weight: 600; }
+/* Bağlantı da düğme gibi görünür: "yeniden giriş yap" yeni sekmede açıldığı
+   için <a> olmak zorunda (bkz. edit.tsx), ama şeritte düğmeden ayrışmamalı. */
+.editor-alert button,
+.editor-alert a { display: inline-flex; align-items: center; flex: none; border-radius: 999px; padding: 6px 14px; background: white; color: var(--color-murekkep); font-weight: 600; white-space: nowrap; }
 
 /* Yüzen araç çubuğu */
 .editor-toolbar {

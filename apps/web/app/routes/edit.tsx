@@ -128,7 +128,14 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
-type SaveState = "saved" | "saving" | "error" | "conflict";
+/**
+ * `unauthenticated` AYRI BİR DURUM, `error`'ın bir alt hâli değil: ötekiler
+ * "tekrar dene" ile geçebilir, bu geçmez — kullanıcının yeniden giriş yapması
+ * gerekiyor ve o sırada yazdığı her şey yalnız bellekte duruyor. Genel hata
+ * mesajı gösterildiğinde kullanıcı yazmaya devam ediyor ve emeğini geç fark
+ * ediyordu.
+ */
+type SaveState = "saved" | "saving" | "error" | "conflict" | "unauthenticated";
 
 // Yeni bloklar BOŞ doğar: örnek metin gömülürse kullanıcı yazmaya başlayınca
 // başta kalıyor. Eksik alanlar "Aksiyon gerekli" rozetiyle işaretlenir ve
@@ -2265,6 +2272,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...latestRef.current, version: versionRef.current }),
         });
+        // 401 gövdesiz de gelebilir; JSON'dan ÖNCE bakılır.
+        if (response.status === 401) return setSaveState("unauthenticated");
         const result = (await response.json()) as { version?: number };
         if (response.status === 409) return setSaveState("conflict");
         if (!response.ok || !result.version) return setSaveState("error");
@@ -2279,12 +2288,61 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     return saveQueueRef.current.then(() => ok);
   }
 
+  /**
+   * Oturum düştükten sonra geri dönüş.
+   *
+   * AYNI KULLANICI KONTROLÜ ŞART: `/api/profile/layout` yazmayı
+   * `eq(profile.userId, session.user.id)` ile kapsıyor, yani hedef OTURUMDAN
+   * geliyor — editörün açtığı sayfadan değil. Kullanıcı ikinci bir hesapla
+   * giriş yaparsa bekleyen düzenleme sessizce O hesabın profiline yazılırdı.
+   * O yüzden gönderimden önce adres karşılaştırılıyor (`/api/oturum`).
+   *
+   * Kontrol `visibilitychange`'de koşuyor: yeniden giriş yeni sekmede
+   * açılıyor, kullanıcı editöre dönünce sekme görünür oluyor.
+   */
+  const [wrongAccount, setWrongAccount] = useState(false);
+
+  async function retryAfterReauth() {
+    let session: { username: string | null };
+    try {
+      const response = await fetch("/api/oturum", { headers: { Accept: "application/json" } });
+      // Hâlâ oturumsuz: durum değişmez, kullanıcı bekletilmez.
+      if (response.status === 401) return;
+      session = (await response.json()) as { username: string | null };
+    } catch {
+      return;
+    }
+    if (session.username !== loaderData.username) {
+      setWrongAccount(true);
+      return;
+    }
+    setWrongAccount(false);
+    setSaveState("saving");
+    void queueSave();
+  }
+
+  useEffect(() => {
+    if (saveState !== "unauthenticated") return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void retryAfterReauth();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız durum değişince
+  }, [saveState]);
+
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    if (saveState === "conflict") return;
+    // Oturum düşükken her tuşa basışta 401 almanın anlamı yok; kullanıcı
+    // yazmaya devam edebilir, gönderim yeniden girişten sonra yapılır.
+    if (saveState === "conflict" || saveState === "unauthenticated") return;
     if (publishingRef.current) {
       dirtyWhilePublishingRef.current = true;
       return;
@@ -2368,6 +2426,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         setPublishTried(true);
         if (result.issues?.[0]) focusBlock(result.issues[0].blockId);
         return;
+      }
+      if (response.status === 401) {
+        stop();
+        return setSaveState("unauthenticated");
       }
       if (response.status === 409) {
         stop();
@@ -2661,12 +2723,24 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
         </div>
       ) : null}
 
-      {saveState === "conflict" || saveState === "error" ? (
+      {saveState === "conflict" || saveState === "error" || saveState === "unauthenticated" ? (
         <div className="editor-alert" role="alert">
           {saveState === "conflict" ? (
             <>
               {app.editor.editedElsewhere}
               <button type="button" onClick={() => window.location.reload()}>{app.editor.refresh}</button>
+            </>
+          ) : saveState === "unauthenticated" ? (
+            <>
+              {wrongAccount ? app.editor.sessionWrongAccount : app.editor.sessionLost}
+              {wrongAccount ? (
+                <button type="button" onClick={() => window.location.reload()}>{app.editor.refresh}</button>
+              ) : (
+                /* YENİ SEKMEDE: aynı sekmede açılsaydı editör sökülür ve
+                   kaydedilmemiş düzenleme bellekten silinirdi — korumaya
+                   çalıştığımız şeyin ta kendisi. */
+                <a href="/login" target="_blank" rel="noreferrer">{app.editor.sessionSignIn}</a>
+              )}
             </>
           ) : (
             app.editor.saveFailed

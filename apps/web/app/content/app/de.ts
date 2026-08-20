@@ -80,6 +80,9 @@ export const de = {
     pickTheme: "Theme wählen",
     editProfileInfo: "Allgemeine Profilangaben bearbeiten",
     saveFailed: "Konnte nicht gespeichert werden — prüf deine Verbindung.",
+    sessionLost: "Deine Sitzung ist abgelaufen — deine Änderungen werden nicht gespeichert.",
+    sessionSignIn: "Erneut anmelden",
+    sessionWrongAccount: "Du hast dich mit einem anderen Konto angemeldet; auf dieser Seite wurde nichts geschrieben.",
 
     draftTitle: "Du hast unveröffentlichte Änderungen",
     liveTitle: "Deine veröffentlichte Seite",

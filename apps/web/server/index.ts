@@ -6,10 +6,10 @@ import {
   validateUsername,
 } from "@caka/shared";
 import { analyticsApi } from "./analytics-api";
-import { getAuth } from "./auth";
+import { getAuth, getSession } from "./auth";
 import { documentApi } from "./document-api";
 import { imageProxyApi } from "./image-proxy";
-import { isUsernameAvailable } from "./profile";
+import { getProfileByUserId, isUsernameAvailable } from "./profile";
 import { layoutApi } from "./layout-api";
 import { locationApi } from "./location-api";
 import { ogApi } from "./og";
@@ -167,6 +167,28 @@ honoApp.get("/b/:id", async (c) => {
       "X-Robots-Tag": "noindex, noarchive",
     },
   });
+});
+
+/**
+ * Oturumun KİME ait olduğunu söyleyen hafif uç.
+ *
+ * NEDEN VAR: editörde autosave 401 alınca kullanıcı yeniden giriş yapıyor;
+ * dönüşte bekleyen düzenleme tekrar gönderilecek. Ama dönen oturum BAŞKA bir
+ * kullanıcıya aitse o gönderim sessizce başkasının profiline yazardı —
+ * `/api/profile/layout` yazmayı `eq(profile.userId, session.user.id)` ile
+ * kapsıyor, yani hedef oturumdan geliyor, editörün açtığı sayfadan değil.
+ * Editör dönüşte burayı çağırıp adresi karşılaştırıyor.
+ *
+ * Yalnız adres döner; ad, e-posta ve kimlik dönmez — bu uç kimlik doğrulama
+ * için değil, "aynı kişi mi" sorusu için var.
+ */
+honoApp.get("/api/oturum", async (c) => {
+  // Oturum durumu asla önbelleklenmez — iki dalda da.
+  c.header("Cache-Control", "no-store");
+  const session = await getSession(c.env, c.req.raw);
+  if (!session) return c.json({ username: null }, 401);
+  const profile = await getProfileByUserId(c.env, session.user.id);
+  return c.json({ username: profile?.username ?? null });
 });
 
 honoApp.get("/api/username-check", async (c) => {

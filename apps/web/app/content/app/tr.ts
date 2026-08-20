@@ -86,6 +86,9 @@ export const tr = {
     pickTheme: "Tema seç",
     editProfileInfo: "Genel profil bilgilerini düzenle",
     saveFailed: "Kaydedilemedi — bağlantını kontrol et.",
+    sessionLost: "Oturumun düştü — değişikliklerin kaydedilmiyor.",
+    sessionSignIn: "Yeniden giriş yap",
+    sessionWrongAccount: "Başka bir hesapla giriş yapıldı; bu sayfaya yazılmadı.",
 
     draftTitle: "Yayınlanmamış değişiklikler var",
     liveTitle: "Yayındaki sayfan",

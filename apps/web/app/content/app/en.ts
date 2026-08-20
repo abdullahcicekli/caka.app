@@ -80,6 +80,9 @@ export const en = {
     pickTheme: "Pick a theme",
     editProfileInfo: "Edit general profile information",
     saveFailed: "Couldn't save — check your connection.",
+    sessionLost: "Your session expired — your changes aren't being saved.",
+    sessionSignIn: "Sign in again",
+    sessionWrongAccount: "You signed in with a different account; nothing was written to this page.",
 
     draftTitle: "You have unpublished changes",
     liveTitle: "Your live page",

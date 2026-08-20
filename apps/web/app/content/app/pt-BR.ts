@@ -80,6 +80,9 @@ export const ptBR = {
     pickTheme: "Escolher tema",
     editProfileInfo: "Editar as informações gerais do perfil",
     saveFailed: "Não foi possível salvar — verifique sua conexão.",
+    sessionLost: "Sua sessão expirou — suas alterações não estão sendo salvas.",
+    sessionSignIn: "Entrar novamente",
+    sessionWrongAccount: "Você entrou com outra conta; nada foi gravado nesta página.",
 
     draftTitle: "Você tem alterações não publicadas",
     liveTitle: "Sua página no ar",
