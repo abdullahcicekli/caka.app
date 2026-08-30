@@ -25,6 +25,8 @@ export const ROUTE_KEYS = [
   "onboarding.tamamla",
   "onboarding.hazir",
   "onboarding.kurulum",
+  "edit.yazilar",
+  "edit.yazi",
 ] as const;
 
 export type RouteKey = (typeof ROUTE_KEYS)[number];
@@ -114,6 +116,23 @@ export const ROUTE_SLUGS: Record<RouteKey, Record<Locale, string>> = {
     es: "bienvenida/configuracion/:step",
     "pt-BR": "bem-vindo/configuracao/:step",
     de: "willkommen/einrichtung/:step",
+  },
+  // U7: yazı yönetimi `edit` segmentinin altında yaşar — top-level segment
+  // eklenmez, Değişmez #1'e yeni rezerve isim borcu doğmaz. İlk segment her
+  // dilde `edit` girişinin çevirisiyle aynıdır.
+  "edit.yazilar": {
+    tr: "edit/yazilar",
+    en: "edit/posts",
+    es: "editar/publicaciones",
+    "pt-BR": "editar/publicacoes",
+    de: "bearbeiten/beitraege",
+  },
+  "edit.yazi": {
+    tr: "edit/yazi/:id",
+    en: "edit/post/:id",
+    es: "editar/publicacion/:id",
+    "pt-BR": "editar/publicacao/:id",
+    de: "bearbeiten/beitrag/:id",
   },
 };
 

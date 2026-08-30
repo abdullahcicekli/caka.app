@@ -3,7 +3,7 @@
 // altında yüzer. Çıktı Tiptap JSON'u olarak bloğa yazılır; public render
 // allowlist'li RichTextView ile yapılır.
 import { Placeholder } from "@tiptap/extensions";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, Node, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   Bold,
@@ -31,8 +31,32 @@ import { useCatalog } from "~/lib/locale";
  * burada bir tip açılıyorsa `rich-text.tsx` ve `validatePostDoc` ile
  * EŞZAMANLI açılır; tek taraflı genişletme sessiz düz-metin düşüşü üretir.
  */
+/**
+ * Yazı gövdesinin görsel düğümü (U7/R9). `@tiptap/extension-image` bilinçli
+ * eklenmedi: ihtiyaç yalnız `src`/`alt` taşıyan atomik bir blok, paket ise
+ * base64/inline gibi burada istemediğimiz yetenekler getirir. Düğüm adı ve
+ * öznitelikler `validatePostDoc` izin listesi ve `RichTextView` render'ıyla
+ * eşzamanlıdır (R6) — `src` her kayıtta sunucuda birinci taraf desenine
+ * (`/i/<assetId>`) karşı denetlenir.
+ */
+const PostImage = Node.create({
+  name: "image",
+  group: "block",
+  atom: true,
+  addAttributes() {
+    return { src: { default: null }, alt: { default: "" } };
+  },
+  parseHTML() {
+    return [{ tag: "img[src]" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ["img", HTMLAttributes];
+  },
+});
+
 export function richTextExtensions(context: "block" | "post", placeholder: string) {
   return [
+    ...(context === "post" ? [PostImage] : []),
     StarterKit.configure({
       heading: context === "post" ? { levels: [2, 3] } : false,
       codeBlock: context === "post" ? {} : false,

@@ -1,13 +1,14 @@
 // Panel sol menüsü — Dashboard ve Ayarlar sayfalarının ortak sidebar'ı.
 // routes/dashboard.tsx'ten çıkarıldı; görünüm birebir korunur (dash-* CSS).
 import { useEffect, useState } from "react";
-import { Check, Copy, MultiplePages, Settings, StatsReport } from "iconoir-react";
+import { Check, Copy, MultiplePages, PageEdit, Settings, StatsReport } from "iconoir-react";
 import { Link, NavLink } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
 import { SidebarUserMenu } from "~/components/user-menu";
 import { appCatalog } from "~/content/app";
-import { useCatalog } from "~/lib/locale";
+import { yaziEditorCatalog } from "~/content/yazi-editor";
+import { useCatalog, useLocalizedPath } from "~/lib/locale";
 
 export interface DashAccount {
   name: string;
@@ -23,6 +24,8 @@ export function DashSidebar({
   account: DashAccount;
 }) {
   const nav = useCatalog(appCatalog).nav;
+  const yaziNav = useCatalog(yaziEditorCatalog).nav;
+  const path = useLocalizedPath();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -66,6 +69,10 @@ export function DashSidebar({
           </NavLink>
           {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
               /dashboard'da önizlemenin altında duruyor. */}
+          {/* Yazı yönetimi (U7). Adres slug tablosundan gelir: route dilli. */}
+          <NavLink to={path("edit.yazilar")}>
+            <PageEdit width={17} height={17} /> {yaziNav}
+          </NavLink>
           <NavLink to="/dashboard#analitik">
             <StatsReport width={17} height={17} /> {nav.analytics}
           </NavLink>

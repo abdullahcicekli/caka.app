@@ -23,6 +23,8 @@ describe("slug tablosu", () => {
     expect(ROUTE_SLUGS.edit.tr).toBe("edit");
     expect(ROUTE_SLUGS.dashboard.tr).toBe("dashboard");
     expect(ROUTE_SLUGS["onboarding.kurulum"].tr).toBe("onboarding/kurulum/:step");
+    expect(ROUTE_SLUGS["edit.yazilar"].tr).toBe("edit/yazilar");
+    expect(ROUTE_SLUGS["edit.yazi"].tr).toBe("edit/yazi/:id");
   });
 
   it("her route her dilde boş olmayan bir slug taşır", () => {
@@ -99,6 +101,12 @@ describe("pathFor", () => {
       "/de/willkommen/einrichtung/2",
     );
     expect(pathFor("onboarding.kurulum", "tr", { step: "1" })).toBe("/onboarding/kurulum/1");
+    // U7: yazı editörü route'ları — kimlik parametresi beş dilde taşınır.
+    expect(pathFor("edit.yazi", "tr", { id: "abc" })).toBe("/edit/yazi/abc");
+    expect(pathFor("edit.yazi", "en", { id: "abc" })).toBe("/en/edit/post/abc");
+    expect(pathFor("edit.yazilar", "de")).toBe("/de/bearbeiten/beitraege");
+    expect(pathFor("edit.yazilar", "es")).toBe("/es/editar/publicaciones");
+    expect(pathFor("edit.yazilar", "pt-BR")).toBe("/pt-br/editar/publicacoes");
   });
 });
 

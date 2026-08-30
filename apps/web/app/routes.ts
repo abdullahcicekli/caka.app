@@ -31,6 +31,8 @@ const ROUTE_FILES: Record<RouteKey, string> = {
   "onboarding.tamamla": "routes/onboarding.tamamla.tsx",
   "onboarding.hazir": "routes/onboarding.hazir.tsx",
   "onboarding.kurulum": "routes/onboarding.kurulum.tsx",
+  "edit.yazilar": "routes/edit.yazilar.tsx",
+  "edit.yazi": "routes/edit.yazi.tsx",
 };
 
 const localized: RouteConfigEntry[] = [];
