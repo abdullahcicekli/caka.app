@@ -38,6 +38,22 @@ const BLOCK_LABELS: Record<string, string> = {
   status: "Estado",
 };
 
+const SOURCES: Record<string, string> = {
+  dogrudan: "Directo",
+  diger: "Otros",
+  caka: "Dentro de Caka",
+  google: "Google",
+  instagram: "Instagram",
+  x: "X",
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  reddit: "Reddit",
+};
+
 export const es = {
   title: "Estadísticas de la página",
   windowLabel: "Últimos 30 días",
@@ -55,6 +71,17 @@ export const es = {
     "Todavía no hay ningún enlace ni tarjeta de medios medible en tu página. Añade un enlace, un vídeo de YouTube o algo de Spotify y podrás seguirlo desde aquí.",
 
   countriesTitle: "Países",
+
+  sourcesTitle: "Origen de las visitas",
+
+  sourcesEmpty:
+    "La medición de origen acaba de empezar. A medida que lleguen " +
+    "visitas, aquí se acumula desde dónde se llega a tu página " +
+    "(Instagram, Google, directo…).",
+
+  percent: (share: number) => `${share} %`,
+
+  sourceName: (code: string): string => SOURCES[code] ?? code,
 
   countryThresholdNote:
     `Los países con menos de ${OLCUM_ULKE_ESIGI} visitas no se muestran por separado; ` +

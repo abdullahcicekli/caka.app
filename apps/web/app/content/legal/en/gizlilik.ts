@@ -251,15 +251,25 @@ export const gizlilikSectionsEn: LegalSection[] = [
             ["Automatically, when a page is viewed."],
           ],
           [
-            ["Page statistics counters (profile_view_daily, link_click_daily)"],
             [
-              "Separate from the above, two counter tables kept in ",
+              "Page statistics counters (profile_view_daily, " +
+                "profile_referrer_daily, link_click_daily)",
+            ],
+            [
+              "Separate from the above, three counter tables kept in ",
               { kind: "strong", text: "our own database" },
               ". They show the owner of a public Caka profile the statistics of " +
                 "their own page. What is kept: for views, the day (in Türkiye " +
                 "time), a two-letter country code and the number of views from " +
-                "that country on that day; for clicks, the day, the identifier " +
-                "of the block clicked and the click count. Country is ",
+                "that country on that day; for traffic sources, the day, a " +
+                "source name from a fixed list (e.g. instagram, google, direct) " +
+                "and a count; for clicks, the day, the identifier " +
+                "of the block clicked and the click count. The full referring " +
+                "address (Referer) is ",
+              { kind: "strong", text: "not stored" },
+              ": the address is only mapped onto that fixed list and then " +
+                "discarded; any source not on the list is folded into a single " +
+                "“other” entry — not even its domain name is kept. Country is ",
               { kind: "strong", text: "deliberately not kept" },
               " on click rows. What is stored is not an event but a ",
               { kind: "strong", text: "counter" },
@@ -418,8 +428,10 @@ export const gizlilikSectionsEn: LegalSection[] = [
             [
               "Showing the owner of a public profile the statistics of their " +
                 "own page: how many times the page was viewed each day, which " +
-                "countries the visits came from and how many times each link " +
-                "was clicked (profile_view_daily, link_click_daily).",
+                "countries and which sources (e.g. Instagram, Google, direct) " +
+                "the visits came from and how many times each link " +
+                "was clicked (profile_view_daily, profile_referrer_daily, " +
+                "link_click_daily).",
             ],
             [
               "art. 5/2-f — legitimate interest: the creator being able to see " +
@@ -843,7 +855,8 @@ export const gizlilikSectionsEn: LegalSection[] = [
               text: "Page statistics counters: kept indefinitely. ",
             },
             "These rows are counters carrying not a person but a day, a " +
-              "two-letter country code and a block identifier; because they " +
+              "two-letter country code, a source name from a fixed list and " +
+              "a block identifier; because they " +
               "contain no timestamp, identity or IP derivative, they cannot be " +
               "traced back to a single person. As they are genuinely anonymous " +
               "they are not subject to a destruction period. Only the last 30 " +

@@ -42,6 +42,27 @@ const BLOCK_LABELS: Record<string, string> = {
   status: "Durum",
 };
 
+/**
+ * Kaynak adları `@caka/shared` normalizeReferrer sözlüğünün anahtarlarıdır.
+ * Marka adları dilden dile değişmez; yalnızca üç kavramsal kova çevrilir
+ * (doğrudan / diğer / site içi). Tanınmayan anahtar olduğu gibi gösterilir.
+ */
+const SOURCES: Record<string, string> = {
+  dogrudan: "Doğrudan",
+  diger: "Diğer",
+  caka: "Caka içi",
+  google: "Google",
+  instagram: "Instagram",
+  x: "X",
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  reddit: "Reddit",
+};
+
 export const tr = {
   title: "Sayfa istatistikleri",
   windowLabel: "Son 30 gün",
@@ -60,6 +81,22 @@ export const tr = {
     "Sayfanda ölçülebilir bir bağlantı ya da medya kartı yok. Bağlantı, YouTube veya Spotify ekleyince buradan takip edersin.",
 
   countriesTitle: "Ülkeler",
+
+  sourcesTitle: "Gelen kaynak",
+
+  /**
+   * Kaynak ölçümü ülke ölçümünden sonra eklendi; satır yokluğu "sıfır
+   * ziyaret" değil "ölçüm yeni başladı" demektir ve metin bunu söyler.
+   */
+  sourcesEmpty:
+    "Kaynak ölçümü yeni başladı. Ziyaretler geldikçe sayfana nereden " +
+    "gelindiği (Instagram, Google, doğrudan…) burada birikir.",
+
+  /** Halka listesindeki yüzde etiketi. */
+  percent: (share: number) => `%${share}`,
+
+  /** Bilinen kaynak adı; tanınmayan anahtar olduğu gibi gösterilir. */
+  sourceName: (code: string): string => SOURCES[code] ?? code,
 
   /**
    * Eşik altı satırların toplandığı kovanın neden orada durduğu. Sayı

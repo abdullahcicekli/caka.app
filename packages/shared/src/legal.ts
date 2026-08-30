@@ -102,6 +102,9 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     path: "/gizlilik",
     title: "Gizlilik ve Aydınlatma Metni",
     navLabel: "Gizlilik ve Aydınlatma",
+    // 0.6: sayaç tablolarına gelen kaynak (profile_referrer_daily) eklendi —
+    // Referer sabit bir kaynak listesine eşlenip atılıyor, ham adres/host
+    // saklanmıyor. Saklanan alan listesi değişti; damga sabit kalamazdı.
     // 0.5: konum kartının haritası artık ziyaretçinin tarayıcısından
     // DOĞRUDAN Mapbox'a gidiyor (sağlayıcının şartları proxy'lemeyi
     // yasaklıyor) — §6 tablosuna Mapbox satırı eklendi. Yeni bir üçüncü
@@ -109,8 +112,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocumentMeta> = {
     // 0.4: belge (PDF) yükleme eklendi — "yüklenen dosyalar" satırı artık
     // görselin yanında belgeyi de sayıyor. Metin değişip damga sabit
     // kalsaydı yayındaki "son güncelleme" tarihi yalan söylerdi.
-    version: "0.5",
-    updatedAt: "2026-08-19",
+    version: "0.6",
+    updatedAt: "2026-08-30",
   },
   "kullanim-kosullari": {
     id: "kullanim-kosullari",

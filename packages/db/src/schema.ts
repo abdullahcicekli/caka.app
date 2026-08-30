@@ -153,3 +153,27 @@ export const linkClickDaily = sqliteTable(
     primaryKey({ columns: [table.profileId, table.day, table.blockId] }),
   ],
 );
+
+/**
+ * Panel analitiği — gelen kaynak (referrer) sayacı. `Referer` başlığı
+ * sunucuda sabit bir kaynak sözlüğüne eşlenir ve ATILIR: ham adres, host,
+ * yol veya sorgu hiçbir yerde saklanmaz (`@caka/shared` normalizeReferrer).
+ * Sözlük dar ve sabit olduğu için satırlar ülke kırılımındaki k-anonimlik
+ * eşiğine ihtiyaç duymaz — nadir bir satır tek ziyaretçiyi işaret edemez.
+ */
+export const profileReferrerDaily = sqliteTable(
+  "profile_referrer_daily",
+  {
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profile.id, { onDelete: "cascade" }),
+    /** Türkiye günü (`YYYY-MM-DD`) — profile_view_daily ile aynı kesim */
+    day: text("day").notNull(),
+    /** Sabit sözlükten kaynak adı (`instagram`, `google`, `dogrudan`, `diger`…) */
+    source: text("source").notNull(),
+    views: integer("views").notNull().default(0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.profileId, table.day, table.source] }),
+  ],
+);

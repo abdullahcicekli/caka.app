@@ -270,17 +270,23 @@ export const gizlilikSections: LegalSection[] = [
           [
             [
               "Sayfa istatistiği sayaçları (profile_view_daily, " +
-                "link_click_daily)",
+                "profile_referrer_daily, link_click_daily)",
             ],
             [
               "Yukarıdakinden ayrı, ",
               { kind: "strong", text: "bizim kendi veritabanımızda" },
-              " tutulan iki sayaç tablosu. Bunlar public bir Caka profilinin " +
+              " tutulan üç sayaç tablosu. Bunlar public bir Caka profilinin " +
                 "sahibine kendi sayfasının istatistiğini gösterir. " +
                 "Tutulanlar: görüntülenme için gün (Türkiye saatiyle), iki " +
                 "harfli ülke kodu ve o gün o ülkeden gelen görüntülenme " +
-                "sayısı; tıklama için gün, tıklanan bloğun kimliği ve tıklama " +
-                "sayısı. Tıklama satırlarında ülke ",
+                "sayısı; gelen kaynak için gün, sabit bir listeden kaynak adı " +
+                "(ör. instagram, google, doğrudan) ve sayı; tıklama için gün, " +
+                "tıklanan bloğun kimliği ve tıklama sayısı. Yönlendiren " +
+                "adresin (Referer) tam hâli ",
+              { kind: "strong", text: "saklanmaz" },
+              ": adres yalnızca bu sabit listeye eşlenir ve atılır; listede " +
+                "olmayan her kaynak tek bir “diğer” kaleminde toplanır, alan " +
+                "adı dahi tutulmaz. Tıklama satırlarında ülke ",
               { kind: "strong", text: "bilerek tutulmaz" },
               ". Saklanan şey bir olay değil, bir ",
               { kind: "strong", text: "sayaçtır" },
@@ -443,8 +449,10 @@ export const gizlilikSections: LegalSection[] = [
             [
               "Public profil sahibine kendi sayfasının istatistiğinin " +
                 "gösterilmesi: sayfanın günlük kaç kez görüntülendiği, " +
-                "ziyaretlerin hangi ülkelerden geldiği ve hangi bağlantısına " +
-                "kaç kez tıklandığı (profile_view_daily, link_click_daily).",
+                "ziyaretlerin hangi ülkelerden ve hangi kaynaklardan " +
+                "(ör. Instagram, Google, doğrudan) geldiği ve hangi " +
+                "bağlantısına kaç kez tıklandığı (profile_view_daily, " +
+                "profile_referrer_daily, link_click_daily).",
             ],
             [
               "m.5/2-f — meşru menfaat: yaratıcının kendi sayfasının " +
@@ -873,8 +881,9 @@ export const gizlilikSections: LegalSection[] = [
               kind: "strong",
               text: "Sayfa istatistiği sayaçları: süresiz tutulur. ",
             },
-            "Bu satırlar kişiyi değil günü, iki harfli ülke kodunu ve blok " +
-              "kimliğini taşıyan sayaçlardır; zaman damgası, kimlik ve IP " +
+            "Bu satırlar kişiyi değil günü, iki harfli ülke kodunu, sabit " +
+              "listeden kaynak adını ve blok kimliğini taşıyan sayaçlardır; " +
+              "zaman damgası, kimlik ve IP " +
               "türevi içermedikleri için tek bir kişiye geri götürülemezler. " +
               "Gerçekten anonim oldukları için bir imha süresine bağlı " +
               "değiller. Panelde yalnızca son 30 gün gösterilir, ama bunu " +

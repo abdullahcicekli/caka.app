@@ -217,6 +217,29 @@ veya `null` = negatif önbellek), `fetched_at`.
 - **Süre:** hesap yaşadığı sürece. Silme yalnızca hesap silmede; blok
   kaldırıldığında diff/silme yapılmaz (bilinçli — Değişmez #9).
 
+### `profile_view_daily` / `profile_referrer_daily` / `link_click_daily` — panel sayaçları
+
+Görüntülenme: `profile_id`, `day` (Türkiye günü), `country` (iki harf veya
+`XX`), `views`. Gelen kaynak: `profile_id`, `day`, `source` (sabit sözlükten
+ad — `instagram`, `google`, `dogrudan`, `diger`…), `views`. Tıklama:
+`profile_id`, `day`, `block_id`, `clicks`.
+
+- **Amaç:** profil sahibine kendi sayfasının istatistiğinin gösterilmesi.
+  **Sebep:** m.5/2-f (meşru menfaat; denge tasarımda — aşağıda).
+- Satırlar **sayaçtır, olay değildir**: olay düzeyinde zaman damgası yoktur,
+  tek bir ziyaret geri kurulamaz. Ham IP okunmaz ve hiçbir türevi tutulmaz;
+  kullanıcı-ajanı yalnız bot ayıklamak için okunur, yazılmaz. Cihaza hiçbir
+  şey yazılmaz (çerez envanterine kalem eklemez — KTD21).
+- `Referer` başlığının **tam hâli saklanmaz**: `@caka/shared`
+  `normalizeReferrer` başlığı sabit kaynak sözlüğüne eşler ve atar; sözlükte
+  olmayan her kaynak `diger` kovasına düşer, alan adı dahi tutulmaz. Sözlük
+  dar olduğu için ülke kırılımındaki k-anonimlik eşiği burada gerekmez.
+- Ülke kırılımı panelde eşiklidir (`OLCUM_ULKE_ESIGI`); tıklama satırlarında
+  ülke bilerek yoktur.
+- **Süre:** süresiz (gerçekten anonim; imha süresine bağlı değil). Panel
+  yalnız son 30 günü gösterir — bu bir görüntüleme filtresidir, silme değil.
+  Hesap silmede üç tablo da `server/account.ts` batch'inde açıkça silinir.
+
 ---
 
 ## 2. R2 — `caka-assets`

@@ -10,7 +10,9 @@
  * yayındaki `/cerez-politikasi` metni olduğu gibi doğru kalır (KTD21).
  *
  * ── Ham IP saklanmaz ───────────────────────────────────────────────────────
- * İstekten yalnızca `request.cf.country` okunur (iki harfli ülke kodu).
+ * İstekten `request.cf.country` (iki harfli ülke kodu) ve `Referer` başlığı
+ * okunur. `Referer` sabit bir kaynak sözlüğüne eşlenir ve ATILIR: ham adres,
+ * host, yol veya sorgu saklanmaz (`@caka/shared` normalizeReferrer).
  * `CF-Connecting-IP` hiç okunmaz; IP hash'lenmez, tuzlanmaz, türev üretilmez.
  * Kullanıcı-ajanı yalnız bot ayıklama kararı için okunur ve saklanmaz.
  *
@@ -22,16 +24,23 @@ import { waitUntil } from "cloudflare:workers";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { isbot } from "isbot";
 
-import { createDb, linkClickDaily, profileViewDaily } from "@caka/db";
+import {
+  createDb,
+  linkClickDaily,
+  profileReferrerDaily,
+  profileViewDaily,
+} from "@caka/db";
 import {
   dayKey,
   earliestDay,
   normalizeCountry,
+  normalizeReferrer,
   OLCUM_PENCERE_GUN,
   shiftDayKey,
   type CountryRow,
   type DailyRow,
   type LinkClickRow,
+  type SourceRow,
 } from "@caka/shared";
 
 /** Kaç günlük ham gün-kovası panele çekilir. */
@@ -96,20 +105,37 @@ export function recordProfileView(
 
   const day = dayKey(new Date());
   const country = visitorCountry(request);
-  fireAndForget(() =>
-    createDb(env.DB)
-      .insert(profileViewDaily)
-      .values({ profileId: options.profileId, day, country, views: 1 })
-      .onConflictDoUpdate({
-        target: [
-          profileViewDaily.profileId,
-          profileViewDaily.day,
-          profileViewDaily.country,
-        ],
-        // Tek deyimde atomik artış: eşzamanlı istekler birbirini ezmez.
-        set: { views: sql`${profileViewDaily.views} + 1` },
-      }),
-  );
+  // Eşleme burada, istek bağlamında yapılır; fireAndForget içine ham başlık
+  // taşınmaz. Eşlenen ad dışında başlıktan geriye hiçbir şey kalmaz.
+  const source = normalizeReferrer(request.headers.get("Referer"));
+  fireAndForget(() => {
+    const db = createDb(env.DB);
+    return Promise.all([
+      db
+        .insert(profileViewDaily)
+        .values({ profileId: options.profileId, day, country, views: 1 })
+        .onConflictDoUpdate({
+          target: [
+            profileViewDaily.profileId,
+            profileViewDaily.day,
+            profileViewDaily.country,
+          ],
+          // Tek deyimde atomik artış: eşzamanlı istekler birbirini ezmez.
+          set: { views: sql`${profileViewDaily.views} + 1` },
+        }),
+      db
+        .insert(profileReferrerDaily)
+        .values({ profileId: options.profileId, day, source, views: 1 })
+        .onConflictDoUpdate({
+          target: [
+            profileReferrerDaily.profileId,
+            profileReferrerDaily.day,
+            profileReferrerDaily.source,
+          ],
+          set: { views: sql`${profileReferrerDaily.views} + 1` },
+        }),
+    ]);
+  });
 }
 
 /** Bağlantı tıklamasını sayar. Görüntülenmeyle aynı bloklamayan yol. */
@@ -148,6 +174,8 @@ export interface ProfileAnalytics {
   views: DailyRow[];
   /** Pencere içindeki ülke kırılımı */
   countries: CountryRow[];
+  /** Pencere içindeki gelen kaynak kırılımı */
+  sources: SourceRow[];
   /** Pencere içindeki blok başına tıklama */
   clicks: LinkClickRow[];
   /** Kayıt altına alınmış en eski gün; hiç veri yoksa null */
@@ -167,7 +195,7 @@ export async function getProfileAnalytics(
   const today = dayKey(now);
   const windowStart = shiftDayKey(today, -(WINDOW_DAYS - 1));
 
-  const [viewRows, clickRows, oldestView, oldestClick] = await Promise.all([
+  const [viewRows, sourceRows, clickRows, oldestView, oldestClick] = await Promise.all([
     db
       .select({
         day: profileViewDaily.day,
@@ -179,6 +207,18 @@ export async function getProfileAnalytics(
         and(
           eq(profileViewDaily.profileId, profileId),
           gte(profileViewDaily.day, windowStart),
+        ),
+      ),
+    db
+      .select({
+        source: profileReferrerDaily.source,
+        views: profileReferrerDaily.views,
+      })
+      .from(profileReferrerDaily)
+      .where(
+        and(
+          eq(profileReferrerDaily.profileId, profileId),
+          gte(profileReferrerDaily.day, windowStart),
         ),
       ),
     db
@@ -211,6 +251,10 @@ export async function getProfileAnalytics(
     today,
     views: viewRows.map((row) => ({ day: row.day, count: row.views })),
     countries: viewRows.map((row) => ({ country: row.country, count: row.views })),
+    // Kaynak ölçümü görüntülenmeden sonra eklendi: satırların yokluğu
+    // "ölçüm yeni başladı" demektir, sıfır ziyaret değil. Panel bu farkı
+    // kendi boş-durum metniyle anlatır.
+    sources: sourceRows.map((row) => ({ source: row.source, count: row.views })),
     clicks: clickRows.map((row) => ({ blockId: row.blockId, clicks: row.clicks })),
     since: earliestDay(oldest),
   };

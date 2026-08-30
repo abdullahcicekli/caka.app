@@ -340,3 +340,97 @@ export function normalizeCountry(value: string | null | undefined): string {
   const code = (value ?? "").trim().toUpperCase();
   return /^[A-Z]{2}$/.test(code) ? code : OLCUM_BILINMEYEN_ULKE;
 }
+
+// ── Gelen kaynak (referrer) ────────────────────────────────────────────────
+// `Referer` başlığı tam URL taşıyabilir (arama sorgusu, özel grup bağlantısı,
+// iç yol). Bu yüzden ham host dahil hiçbir parçası saklanmaz: başlık okunur,
+// aşağıdaki SABİT sözlüğe eşlenir ve atılır. Sözlük dar olduğu için ülke
+// kırılımındaki k-anonimlik eşiği burada gerekmez — "instagram: 1" satırı
+// tek bir ziyaretçinin kim olduğunu söyleyemez, "kisiselblog.net: 1" ise
+// söyleyebilirdi; o satır bilerek üretilmiyor.
+
+/** `Referer` başlığı hiç yoksa (adres çubuğu, yer imi, uygulama içi). */
+export const OLCUM_KAYNAK_DOGRUDAN = "dogrudan";
+
+/** Sözlükte olmayan her kaynak. Ham host'u bilerek taşımaz. */
+export const OLCUM_KAYNAK_DIGER = "diger";
+
+/** Site içi geçiş (caka.app'ten gelen ziyaret). */
+export const OLCUM_KAYNAK_CAKA = "caka";
+
+/**
+ * Bilinen kaynaklar → host listeleri. Alt alan adları da eşleşir
+ * (`l.instagram.com` → instagram). Google TLD çeşitliliği (google.com.tr,
+ * google.de, google.co.uk…) listeyle değil desenle yakalanır — aşağıda.
+ */
+const KAYNAK_HOSTLARI: readonly (readonly [string, readonly string[]])[] = [
+  ["x", ["x.com", "twitter.com", "t.co"]],
+  ["instagram", ["instagram.com"]],
+  ["linkedin", ["linkedin.com", "lnkd.in"]],
+  ["github", ["github.com"]],
+  ["youtube", ["youtube.com", "youtu.be"]],
+  ["tiktok", ["tiktok.com"]],
+  ["whatsapp", ["whatsapp.com", "wa.me"]],
+  ["facebook", ["facebook.com", "fb.com", "fb.me", "messenger.com"]],
+  ["reddit", ["reddit.com", "redd.it"]],
+  [OLCUM_KAYNAK_CAKA, ["caka.app"]],
+] as const;
+
+/** google.com, google.com.tr, google.de, google.co.uk… (alt alan dahil). */
+const GOOGLE_HOST = /(^|\.)google\.(com|[a-z]{2})(\.[a-z]{2})?$/;
+
+/**
+ * `Referer` başlığını sabit kaynak adına eşler. Girdinin URL olmaması
+ * (bozuk başlık) `diger` sayılır — `dogrudan` yalnızca başlığın hiç
+ * gelmediği durumdur; ikisi ayrı bilgi taşır.
+ */
+export function normalizeReferrer(referer: string | null | undefined): string {
+  const raw = (referer ?? "").trim();
+  if (!raw) return OLCUM_KAYNAK_DOGRUDAN;
+
+  let host: string;
+  try {
+    host = new URL(raw).hostname.toLowerCase();
+  } catch {
+    return OLCUM_KAYNAK_DIGER;
+  }
+  if (host.startsWith("www.")) host = host.slice(4);
+
+  for (const [source, hosts] of KAYNAK_HOSTLARI) {
+    for (const candidate of hosts) {
+      if (host === candidate || host.endsWith(`.${candidate}`)) return source;
+    }
+  }
+  if (GOOGLE_HOST.test(host)) return "google";
+  return OLCUM_KAYNAK_DIGER;
+}
+
+export interface SourceRow {
+  source: string;
+  count: number;
+}
+
+/**
+ * Kaynak kırılımı: çoktan aza, eşitlikte ada göre. `limit` üstünde kalanlar
+ * `diger` kovasına eklenir ve o satır her zaman en sonda durur — toplam
+ * korunur, liste sonsuz uzamaz. Eşik yoktur (bkz. yukarıdaki blok yorumu).
+ */
+export function topSources(rows: readonly SourceRow[], limit = 5): SourceRow[] {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const key = row.source || OLCUM_KAYNAK_DIGER;
+    totals.set(key, (totals.get(key) ?? 0) + row.count);
+  }
+
+  const named: SourceRow[] = [];
+  let diger = totals.get(OLCUM_KAYNAK_DIGER) ?? 0;
+  for (const [source, count] of totals) {
+    if (source !== OLCUM_KAYNAK_DIGER) named.push({ source, count });
+  }
+  named.sort((a, b) => b.count - a.count || a.source.localeCompare(b.source));
+
+  const visible = named.slice(0, Math.max(0, limit));
+  for (const row of named.slice(Math.max(0, limit))) diger += row.count;
+  if (diger > 0) visible.push({ source: OLCUM_KAYNAK_DIGER, count: diger });
+  return visible;
+}

@@ -11,12 +11,17 @@ import {
   formatDayKey,
   isTrackableBlockId,
   normalizeCountry,
+  normalizeReferrer,
   OLCUM_BILINMEYEN_ULKE,
   OLCUM_DIGER_ULKE,
+  OLCUM_KAYNAK_CAKA,
+  OLCUM_KAYNAK_DIGER,
+  OLCUM_KAYNAK_DOGRUDAN,
   OLCUM_ULKE_ESIGI,
   shiftDayKey,
   sumSince,
   topCountries,
+  topSources,
 } from "./analytics";
 import { profileLayoutSchema, type ProfileLayout } from "./layout";
 
@@ -256,6 +261,104 @@ describe("ülke kırılımı — yeniden kimliklendirme eşiği", () => {
     expect(OLCUM_ULKE_ESIGI).toBe(5);
     expect(topCountries([{ country: "DE", count: 1 }], 5, 1)).toEqual([
       { country: "DE", count: 1 },
+    ]);
+  });
+});
+
+describe("gelen kaynak eşlemesi", () => {
+  it("başlık yoksa doğrudan sayılır", () => {
+    expect(normalizeReferrer(null)).toBe(OLCUM_KAYNAK_DOGRUDAN);
+    expect(normalizeReferrer("")).toBe(OLCUM_KAYNAK_DOGRUDAN);
+    expect(normalizeReferrer("   ")).toBe(OLCUM_KAYNAK_DOGRUDAN);
+  });
+
+  it("bozuk başlık doğrudan değil diğer sayılır", () => {
+    // "Başlık yok" ile "başlık var ama okunamıyor" ayrı bilgidir.
+    expect(normalizeReferrer("not-a-url")).toBe(OLCUM_KAYNAK_DIGER);
+  });
+
+  it("bilinen kaynakları eşler, kısaltıcılar dahil", () => {
+    expect(normalizeReferrer("https://www.instagram.com/")).toBe("instagram");
+    expect(normalizeReferrer("https://l.instagram.com/?u=x")).toBe("instagram");
+    expect(normalizeReferrer("https://t.co/abc")).toBe("x");
+    expect(normalizeReferrer("https://twitter.com/yusuf")).toBe("x");
+    expect(normalizeReferrer("https://x.com/yusuf")).toBe("x");
+    expect(normalizeReferrer("https://lnkd.in/abc")).toBe("linkedin");
+    expect(normalizeReferrer("https://youtu.be/dQw4")).toBe("youtube");
+    expect(normalizeReferrer("https://wa.me/905551112233")).toBe("whatsapp");
+    expect(normalizeReferrer("https://github.com/abdullah")).toBe("github");
+  });
+
+  it("google'ı TLD çeşitliliğiyle yakalar", () => {
+    expect(normalizeReferrer("https://www.google.com/search?q=caka")).toBe("google");
+    expect(normalizeReferrer("https://www.google.com.tr/")).toBe("google");
+    expect(normalizeReferrer("https://google.de/")).toBe("google");
+    expect(normalizeReferrer("https://www.google.co.uk/")).toBe("google");
+    // Benzer ama sahte host'lar google sayılmaz.
+    expect(normalizeReferrer("https://notgoogle.com/")).toBe(OLCUM_KAYNAK_DIGER);
+    expect(normalizeReferrer("https://google.evil.com/")).toBe(OLCUM_KAYNAK_DIGER);
+  });
+
+  it("site içi geçişi ayrı sayar, bilinmeyen host'u diğere atar", () => {
+    expect(normalizeReferrer("https://caka.app/")).toBe(OLCUM_KAYNAK_CAKA);
+    // Ham host asla dönmez: sözlükte olmayan her şey tek kovada toplanır.
+    expect(normalizeReferrer("https://kisiselblog.net/yazi")).toBe(OLCUM_KAYNAK_DIGER);
+  });
+
+  it("son-ek eşleşmesi sahte alt alanları kabul etmez", () => {
+    expect(normalizeReferrer("https://instagram.com.evil.net/")).toBe(OLCUM_KAYNAK_DIGER);
+    expect(normalizeReferrer("https://fakegithub.com/")).toBe(OLCUM_KAYNAK_DIGER);
+  });
+});
+
+describe("kaynak kırılımı", () => {
+  it("çoktan aza sıralar, eşitlikte ada göre", () => {
+    const rows = topSources([
+      { source: "x", count: 3 },
+      { source: "instagram", count: 9 },
+      { source: "google", count: 3 },
+    ]);
+    expect(rows).toEqual([
+      { source: "instagram", count: 9 },
+      { source: "google", count: 3 },
+      { source: "x", count: 3 },
+    ]);
+  });
+
+  it("aynı kaynağın satırlarını toplar", () => {
+    expect(
+      topSources([
+        { source: "x", count: 2 },
+        { source: "x", count: 5 },
+      ]),
+    ).toEqual([{ source: "x", count: 7 }]);
+  });
+
+  it("limit üstü kaynaklar diğer kovasına eklenir ve kova sonda durur", () => {
+    const rows = topSources(
+      [
+        { source: "instagram", count: 50 },
+        { source: "x", count: 40 },
+        { source: "google", count: 30 },
+        { source: "youtube", count: 20 },
+        { source: "github", count: 10 },
+        { source: "linkedin", count: 4 },
+        { source: OLCUM_KAYNAK_DIGER, count: 2 },
+      ],
+      5,
+    );
+    expect(rows).toHaveLength(6);
+    expect(rows[rows.length - 1]).toEqual({ source: OLCUM_KAYNAK_DIGER, count: 6 });
+  });
+
+  it("diğer kovası yoksa eklenmez", () => {
+    const rows = topSources([{ source: "instagram", count: 3 }]);
+    expect(rows).toEqual([{ source: "instagram", count: 3 }]);
+  });
+
+  it("boş kaynak adı diğer sayılır", () => {
+    expect(topSources([{ source: "", count: 2 }])).toEqual([
+      { source: OLCUM_KAYNAK_DIGER, count: 2 },
     ]);
   });
 });

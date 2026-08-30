@@ -57,6 +57,13 @@
       "when": 1787158472615,
       "tag": "0007_hesap-silme",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788122790349,
+      "tag": "0008_gelen-kaynak",
+      "breakpoints": true
     }
   ]
 }

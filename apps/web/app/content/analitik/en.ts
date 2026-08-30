@@ -38,6 +38,22 @@ const BLOCK_LABELS: Record<string, string> = {
   status: "Status",
 };
 
+const SOURCES: Record<string, string> = {
+  dogrudan: "Direct",
+  diger: "Other",
+  caka: "Within Caka",
+  google: "Google",
+  instagram: "Instagram",
+  x: "X",
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  reddit: "Reddit",
+};
+
 export const en = {
   title: "Page stats",
   windowLabel: "Last 30 days",
@@ -55,6 +71,16 @@ export const en = {
     "There's no measurable link or media card on your page yet. Add a link, a YouTube video or a Spotify item and you'll follow it here.",
 
   countriesTitle: "Countries",
+
+  sourcesTitle: "Traffic sources",
+
+  sourcesEmpty:
+    "Source measurement has just started. As visits come in, where " +
+    "your page is found (Instagram, Google, direct…) accumulates here.",
+
+  percent: (share: number) => `${share}%`,
+
+  sourceName: (code: string): string => SOURCES[code] ?? code,
 
   countryThresholdNote:
     `Countries with fewer than ${OLCUM_ULKE_ESIGI} visits aren't listed separately; ` +
