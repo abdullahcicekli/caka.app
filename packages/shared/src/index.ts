@@ -12,6 +12,8 @@ export * from "./location";
 export * from "./og-image";
 export * from "./og-template";
 export * from "./photo";
+export * from "./post";
+export * from "./post-slug";
 export * from "./quran";
 export * from "./remote-image";
 export * from "./routes";
