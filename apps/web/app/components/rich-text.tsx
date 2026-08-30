@@ -2,6 +2,14 @@
 // enjekte edilmez; tüm düğüm/mark tipleri burada üretildiğinden ve link
 // href'leri protokol kontrolünden geçtiğinden XSS yüzeyi yoktur.
 // Bilinmeyen düğümler çocuklarıyla, bilinmeyen mark'lar yok sayılarak geçilir.
+//
+// İki bağlam var (U4/R6): tuval blokları (`block`, varsayılan) bugünkü dar
+// listeyle ve sessiz-düşme davranışıyla AYNEN kalır; yazı gövdesi (`post`)
+// başlık/kod bloğu/görsel de basar. Yazı tarafında sessiz düşme kayıt anında
+// `validatePostDoc` ile zaten engellenir — buradaki genişleme o izin
+// listesiyle eşzamanlıdır, genişlemenin tuvale sızmaması için `block`
+// bağlamında bu düğümler yine düz metne düşer.
+import { postHeadingLevel, postImageAssetId } from "@caka/shared";
 import type { ReactNode } from "react";
 
 type RichMark = { type?: string; attrs?: Record<string, unknown> };
@@ -11,7 +19,10 @@ type RichNode = {
   text?: string;
   content?: RichNode[];
   marks?: RichMark[];
+  attrs?: Record<string, unknown>;
 };
+
+export type RichTextVariant = "block" | "post";
 
 function safeHref(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -46,8 +57,8 @@ function renderMarks(node: RichNode, key: number): ReactNode {
   return <span key={key}>{element}</span>;
 }
 
-function renderNode(node: RichNode, key: number): ReactNode {
-  const children = (node.content ?? []).map((child, index) => renderNode(child, index));
+function renderNode(node: RichNode, key: number, variant: RichTextVariant): ReactNode {
+  const children = (node.content ?? []).map((child, index) => renderNode(child, index, variant));
   switch (node.type) {
     case "text":
       return renderMarks(node, key);
@@ -63,13 +74,44 @@ function renderNode(node: RichNode, key: number): ReactNode {
       return <blockquote key={key}>{children}</blockquote>;
     case "hardBreak":
       return <br key={key} />;
-    default:
-      return <span key={key}>{children}</span>;
+    // Yazıya özel düğümler: `block` bağlamında default'a düşüp bugünkü
+    // sessiz düz-metin davranışını korurlar (tuvale sızma yok).
+    case "heading": {
+      if (variant !== "post") break;
+      // h1 sayfa başlığına ayrılmış; eşleme deterministik (1-2→h2, 3+→h3).
+      return postHeadingLevel(node.attrs?.level) === 2 ? (
+        <h2 key={key}>{children}</h2>
+      ) : (
+        <h3 key={key}>{children}</h3>
+      );
+    }
+    case "codeBlock":
+      if (variant !== "post") break;
+      return (
+        <pre key={key}>
+          <code>{children}</code>
+        </pre>
+      );
+    case "image": {
+      if (variant !== "post") break;
+      // Savunma katmanı: kayıt `validatePostDoc` ile zaten reddediyor; yine
+      // de yalnız birinci taraf `/i/<uuid>` deseni basılır (R9). Desen dışı
+      // düğüm hiç render edilmez — üçüncü taraf istek atılmaz.
+      const assetId = postImageAssetId(node.attrs?.src);
+      if (!assetId) return null;
+      const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
+      return <img key={key} src={`/i/${assetId}`} alt={alt} loading="lazy" />;
+    }
   }
+  return <span key={key}>{children}</span>;
 }
 
-export function RichTextView({ doc }: { doc: unknown }) {
+export function RichTextView({ doc, variant = "block" }: { doc: unknown; variant?: RichTextVariant }) {
   const root = doc as RichNode | null | undefined;
   if (!root || typeof root !== "object" || !Array.isArray(root.content)) return null;
-  return <div className="rich-text">{root.content.map((node, index) => renderNode(node, index))}</div>;
+  return (
+    <div className="rich-text">
+      {root.content.map((node, index) => renderNode(node, index, variant))}
+    </div>
+  );
 }

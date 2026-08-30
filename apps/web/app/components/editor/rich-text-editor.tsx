@@ -17,6 +17,35 @@ import {
 import { appCatalog } from "~/content/app";
 import { useCatalog } from "~/lib/locale";
 
+/**
+ * Zengin metin uzantılarını bağlama göre kurar (U4/R6).
+ *
+ * - `block` (tuval blokları): bugünkü dar küme — heading/codeBlock kapalı;
+ *   davranış DEĞİŞMEDİ.
+ * - `post` (yazı gövdesi): heading (yalnız 2-3; h1 sayfa başlığına ayrılmış,
+ *   render eşlemesi `postHeadingLevel`) ve codeBlock açık. Görsel ekleme
+ *   UI'si U7'nin işi; şema (`validatePostDoc`) ve render (`RichTextView
+ *   variant="post"`) zemini hazır.
+ *
+ * Editörün üretebildiği her düğüm render izin listesinde olmalı (R6) —
+ * burada bir tip açılıyorsa `rich-text.tsx` ve `validatePostDoc` ile
+ * EŞZAMANLI açılır; tek taraflı genişletme sessiz düz-metin düşüşü üretir.
+ */
+export function richTextExtensions(context: "block" | "post", placeholder: string) {
+  return [
+    StarterKit.configure({
+      heading: context === "post" ? { levels: [2, 3] } : false,
+      codeBlock: context === "post" ? {} : false,
+      code: false,
+      horizontalRule: false,
+      link: { openOnClick: false, autolink: true },
+    }),
+    // Gerçek placeholder: boşken görünür, ilk karakterde kaybolur. İçerik
+    // olarak örnek metin YAZILMAZ (yoksa yazının başında kalır).
+    Placeholder.configure({ placeholder }),
+  ];
+}
+
 // Legacy düz metni Tiptap dokümanına çevirir (HTML olarak parse ETMEDEN).
 function docFromPlainText(text: string) {
   return {
@@ -50,20 +79,11 @@ export function InlineTextEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
     autofocus: "end",
-    extensions: [
-      StarterKit.configure({
-        heading: false,
-        codeBlock: false,
-        code: false,
-        horizontalRule: false,
-        link: { openOnClick: false, autolink: true },
-      }),
-      // Gerçek placeholder: boşken görünür, ilk karakterde kaybolur. Blok
-      // içeriği olarak örnek metin YAZILMAZ (yoksa yazının başında kalır).
-      Placeholder.configure({
-        placeholder: variant === "status" ? rt.statusPlaceholder : rt.placeholder,
-      }),
-    ],
+    // Tuval blokları `block` bağlamında kalır: heading/codeBlock kapalı.
+    extensions: richTextExtensions(
+      "block",
+      variant === "status" ? rt.statusPlaceholder : rt.placeholder,
+    ),
     content: (doc as object) ?? docFromPlainText(fallbackText),
     onUpdate: ({ editor: instance }) => onChange(instance.getJSON(), instance.getText()),
     editorProps: {
