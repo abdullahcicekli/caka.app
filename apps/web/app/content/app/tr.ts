@@ -5,6 +5,8 @@ import {
   type BlockIssueId,
   type BlockGridLimits,
   MAX_GALLERY_BLOCKS,
+  MAX_POSTS_PER_PROFILE,
+  POST_BODY_MAX_BYTES,
   type ProfileBlock,
 } from "@caka/shared";
 
@@ -450,6 +452,21 @@ export const tr = {
     uploadTooLarge: "Fotoğraf en fazla 5 MB olabilir",
     uploadTypeUnverified: "Fotoğraf türü doğrulanamadı",
     uploadSaveFailed: "Fotoğraf kaydedilemedi",
+
+    // Yazı uçları (/api/yazi — U3). Slug biçim hataları (too_short vb.)
+    // kimlik olarak döner ve cümlesini editör katalogdan kurar (Değişmez #5);
+    // buradakiler sunucunun kestiği durumların metinleridir.
+    postNotFound: "Yazı bulunamadı",
+    postInvalid: "Yazı verisi geçersiz",
+    postTooLarge: "Yazı verisi çok büyük",
+    postBodyTooLarge: `Yazı en fazla ${POST_BODY_MAX_BYTES / 1024} KB olabilir`,
+    postBodyInvalid: "Yazı gövdesi okunamadı",
+    postLimitReached: `En fazla ${MAX_POSTS_PER_PROFILE} yazın olabilir. Yeni yazı için önce birini silmen gerekiyor.`,
+    postSlugInvalid: "Yazı adresi geçersiz",
+    postSlugTaken: "Bu adres başka bir yazında kullanılıyor",
+    postSlugLocked: "Yayınlanmış yazının adresi değiştirilemez",
+    postConflict: "Yazı başka bir yerde güncellendi",
+    postSaveFailed: "Yazı kaydedilemedi",
   },
 
   errors: {

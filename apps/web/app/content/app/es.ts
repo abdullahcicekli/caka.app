@@ -5,6 +5,8 @@ import {
   type BlockIssueId,
   type BlockGridLimits,
   MAX_GALLERY_BLOCKS,
+  MAX_POSTS_PER_PROFILE,
+  POST_BODY_MAX_BYTES,
   type ProfileBlock,
 } from "@caka/shared";
 
@@ -434,6 +436,18 @@ export const es = {
     uploadTooLarge: "La foto puede pesar como máximo 5 MB",
     uploadTypeUnverified: "No se ha podido verificar el tipo de la foto",
     uploadSaveFailed: "No se ha podido guardar la foto",
+
+    postNotFound: "Publicación no encontrada",
+    postInvalid: "Los datos de la publicación no son válidos",
+    postTooLarge: "Los datos de la publicación son demasiado grandes",
+    postBodyTooLarge: `Una publicación puede ocupar como máximo ${POST_BODY_MAX_BYTES / 1024} KB`,
+    postBodyInvalid: "No se ha podido leer el contenido de la publicación",
+    postLimitReached: `Puedes tener como máximo ${MAX_POSTS_PER_PROFILE} publicaciones. Elimina una antes de crear otra.`,
+    postSlugInvalid: "La dirección de la publicación no es válida",
+    postSlugTaken: "Esta dirección ya la usa otra de tus publicaciones",
+    postSlugLocked: "La dirección de una publicación ya publicada no se puede cambiar",
+    postConflict: "La publicación se ha actualizado en otro sitio",
+    postSaveFailed: "No se ha podido guardar la publicación",
   },
 
   errors: {

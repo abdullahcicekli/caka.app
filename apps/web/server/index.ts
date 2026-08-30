@@ -16,6 +16,7 @@ import { ogApi } from "./og";
 import { quranApi } from "./quran-api";
 import { ogImageApi } from "./og-image";
 import { onboardingApi } from "./onboarding-api";
+import { postApi } from "./post-api";
 import { seoRoutes } from "./seo";
 import { spotifyApi } from "./spotify-api";
 import { youtubeApi } from "./youtube-api";
@@ -39,6 +40,10 @@ honoApp.route("/api/onboarding", onboardingApi);
 honoApp.route("/api/belge", documentApi);
 // layoutApi: PUT /api/profile/layout (taslak kaydı) + POST /api/profile/publish
 honoApp.route("/api/profile", layoutApi);
+// Yazı uçları (U3): liste/oluştur/güncelle/yayınla/taslağa al/sil + adres
+// denetimi. HEPSİ oturumun kendi profiliyle sınırlı; adres denetimi de
+// bilerek oturum arkasında (taslak sızdıran sayım oracle'ı olmasın — R4).
+honoApp.route("/api/yazi", postApi);
 // Birinci taraf ölçüm (R48): POST /api/olcum/tiklama — çerezsiz, gövdesiz 204.
 honoApp.route("/api/olcum", analyticsApi);
 honoApp.route("/api/og-image", ogApi);
