@@ -26,7 +26,9 @@ export default {
       // Kullanıcıya özel og:image (KTD7'nin `/:username/og.png`u yerine
       // hash'li URL — bkz. server/og-image.ts). Statik /og/*.png marka
       // görselleri assets katmanından döner, Worker'a hiç düşmez.
-      pathname.startsWith("/og/u/")
+      // `/og/p/` yazı sayfalarının paylaşım görseli (U5/KTD6).
+      pathname.startsWith("/og/u/") ||
+      pathname.startsWith("/og/p/")
     ) {
       return honoApp.fetch(request, env, ctx);
     }

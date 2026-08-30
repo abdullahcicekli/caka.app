@@ -174,7 +174,10 @@ seoRoutes.get("/sitemaps/core.xml", (c) => {
   return c.body(urlset(entries), 200, XML_HEADERS);
 });
 
-seoRoutes.get("/sitemaps/profiles-*", async (c) => {
+// Not: segment-İÇİ `*` (profiles-*) Hono yönlendiricisinde güvenilir
+// eşleşmiyor (lokalde 404 üretti); dosya adı regex'li tek param olarak
+// yakalanır, sayfa numarası yine path'ten ayrıştırılır.
+seoRoutes.get("/sitemaps/:file{profiles-[0-9]+\\.xml}", async (c) => {
   const pageMatch = c.req.path.match(/^\/sitemaps\/profiles-(\d+)\.xml$/);
   const page = Number(pageMatch?.[1]);
   if (!Number.isInteger(page) || page < 1) return c.notFound();
@@ -202,7 +205,7 @@ seoRoutes.get("/sitemaps/profiles-*", async (c) => {
 
 // Yayındaki yazılar (R13): taslaklar ve onboarding'i tamamlamamış profillerin
 // yazıları listeye girmez. `lastmod` yazının kendi `updatedAt`'i (KTD8).
-seoRoutes.get("/sitemaps/posts-*", async (c) => {
+seoRoutes.get("/sitemaps/:file{posts-[0-9]+\\.xml}", async (c) => {
   const pageMatch = c.req.path.match(/^\/sitemaps\/posts-(\d+)\.xml$/);
   const page = Number(pageMatch?.[1]);
   if (!Number.isInteger(page) || page < 1) return c.notFound();
