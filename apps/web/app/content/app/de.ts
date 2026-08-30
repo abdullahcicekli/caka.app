@@ -77,7 +77,9 @@ export const de = {
       "Das Dokument wird über caka.app ausgeliefert und beim Klick heruntergeladen; „Vorschau“ öffnet es in einem neuen Tab.",
     postsHint:
       "Deine veröffentlichten Beiträge werden automatisch gelistet, der neueste zuerst. Ein neuer Beitrag erfordert kein erneutes Veröffentlichen deiner Seite.",
-    postsEmptyPreview: "Noch keine veröffentlichten Beiträge",
+    postsEmptyPreview:
+      "Du hast noch keine Beiträge. Diese Karte listet automatisch die Beiträge auf, die du veröffentlichst.",
+    postsEmptyCta: "Neuen Beitrag schreiben",
     featuredPostField: "Hervorzuhebender Beitrag",
     featuredPostNone: "Beitrag wählen…",
     featuredPostDraftOption: (title: string) => `${title} — Entwurf`,
@@ -85,6 +87,10 @@ export const de = {
       "Du kannst auch einen Entwurf wählen; die Karte bleibt auf deiner Seite verborgen, bis der Beitrag veröffentlicht ist.",
     featuredPostEmptyPreview: "Wähle einen Beitrag zum Hervorheben",
     featuredPostNoPosts: "Du hast noch keine Beiträge.",
+    featuredPostWriteFirst: "Schreibe zuerst einen Beitrag und hebe ihn dann hier hervor.",
+    pickerPostsTitle: "Beiträge",
+    pickerPostsWrite: "Beitrag schreiben",
+    pickerPostsManage: "Beiträge verwalten",
 
     layoutUnreadable: "Das Layout der Seite konnte nicht gelesen werden",
     backToDashboard: "Zurück zur Übersicht",

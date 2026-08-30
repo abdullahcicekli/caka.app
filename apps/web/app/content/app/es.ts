@@ -77,7 +77,9 @@ export const es = {
       "El documento se sirve desde caka.app y se descarga al hacer clic; «Vista previa» lo abre en una pestaña nueva.",
     postsHint:
       "Tus publicaciones publicadas se listan solas, la más reciente primero. Publicar una nueva no requiere volver a publicar tu página.",
-    postsEmptyPreview: "Aún no hay publicaciones publicadas",
+    postsEmptyPreview:
+      "Aún no tienes publicaciones. Esta tarjeta lista automáticamente las que publiques.",
+    postsEmptyCta: "Escribir una publicación",
     featuredPostField: "Publicación a destacar",
     featuredPostNone: "Elige una publicación…",
     featuredPostDraftOption: (title: string) => `${title} — borrador`,
@@ -85,6 +87,10 @@ export const es = {
       "También puedes elegir un borrador; la tarjeta no aparecerá en tu página hasta que se publique.",
     featuredPostEmptyPreview: "Elige la publicación que quieres destacar",
     featuredPostNoPosts: "Todavía no tienes publicaciones.",
+    featuredPostWriteFirst: "Escribe primero una publicación y luego destácala aquí.",
+    pickerPostsTitle: "Publicaciones",
+    pickerPostsWrite: "Escribir publicación",
+    pickerPostsManage: "Gestionar publicaciones",
 
     layoutUnreadable: "No se ha podido leer la composición de la página",
     backToDashboard: "Volver al panel",

@@ -84,7 +84,11 @@ export const tr = {
     // sıfır yayınlanmış yazı her yeni profilin beklenen ara hâli.
     postsHint:
       "Yayındaki yazıların kendiliğinden listelenir, en yenisi en üstte. Yeni bir yazı yayınladığında sayfayı yeniden yayınlaman gerekmez.",
-    postsEmptyPreview: "Henüz yayınlanmış yazı yok",
+    // Boş hâl açıklar VE yönlendirir: blok eklemek yazı OLUŞTURMAZ, bu
+    // karışıklık ilk kullanımda bire bir yaşandı (kullanıcı geri bildirimi).
+    postsEmptyPreview:
+      "Henüz yazın yok. Bu kart, yayınladığın yazıları kendiliğinden listeler.",
+    postsEmptyCta: "Yeni yazı yaz",
     featuredPostField: "Öne çıkarılacak yazı",
     featuredPostNone: "Yazı seç…",
     featuredPostDraftOption: (title: string) => `${title} — taslak`,
@@ -92,6 +96,10 @@ export const tr = {
       "Taslak da seçebilirsin; kart, yazı yayınlanana kadar sayfanda görünmez.",
     featuredPostEmptyPreview: "Öne çıkarılacak yazıyı seç",
     featuredPostNoPosts: "Henüz yazın yok.",
+    featuredPostWriteFirst: "Önce bir yazı yaz, sonra burada öne çıkar.",
+    pickerPostsTitle: "Yazılar",
+    pickerPostsWrite: "Yazı yaz",
+    pickerPostsManage: "Yazıları düzenle",
 
     layoutUnreadable: "Sayfa düzeni okunamadı",
     backToDashboard: "Panele dön",

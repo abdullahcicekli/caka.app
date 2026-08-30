@@ -100,7 +100,7 @@ import {
   prepareImageForUpload,
   type PrepareImageOptions,
 } from "~/lib/image-upload";
-import { useCatalog } from "~/lib/locale";
+import { useCatalog, useLocalizedPath } from "~/lib/locale";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { localeFromRequest } from "../../server/locale";
 
@@ -477,6 +477,7 @@ function Inspector({
   posts: readonly OwnPostOption[];
 }) {
   const app = useCatalog(appCatalog);
+  const lpath = useLocalizedPath();
   const widget = useCatalog(widgetCatalog);
   const onboarding = useOnboardingLists();
   // "Yalnız görsel" sürümünün ön koşulu: İMZALI bir önizleme adresi. Ham
@@ -2126,7 +2127,12 @@ function Inspector({
                 ))}
               </select>
               {posts.length === 0 ? (
-                <small className="inspector-hint">{app.editor.featuredPostNoPosts}</small>
+                <small className="inspector-hint">
+                  {app.editor.featuredPostNoPosts}{" "}
+                  <Link to={lpath("edit.yazi", { id: "yeni" })} className="underline underline-offset-2">
+                    {app.editor.postsEmptyCta}
+                  </Link>
+                </small>
               ) : null}
             </label>
             <p className="inspector-hint">{app.editor.featuredPostHint}</p>
@@ -2162,6 +2168,7 @@ function Inspector({
 
 export default function Editor({ loaderData }: Route.ComponentProps) {
   const app = useCatalog(appCatalog);
+  const lpath = useLocalizedPath();
   const blockLabel = useBlockLabel();
   const onboarding = useOnboardingLists();
   const [layout, setLayout] = useState<ProfileLayout>(loaderData.layout);
@@ -3031,12 +3038,36 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                   />
                 ) : block.type === "posts" && publishedPosts.length === 0 ? (
                   // Sıfır yayınlanmış yazı BOZULMA DEĞİL (uyarı da üretmez,
-                  // bkz. blockIssue): public'te blok çizilmez, editörde ise
-                  // fotoğraf/ayet taslaklarıyla aynı nötr yer tutucu görünür.
+                  // bkz. blockIssue): public'te blok çizilmez. Boş hâl hem
+                  // açıklar hem yönlendirir — blok eklemek yazı OLUŞTURMAZ,
+                  // bu karışıklık ilk kullanımda bire bir yaşandı.
                   <article className="profile-block profile-block-posts">
                     <span className="profile-image-placeholder">
                       {app.editor.postsEmptyPreview}
                     </span>
+                    <Link
+                      to={lpath("edit.yazi", { id: "yeni" })}
+                      className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold underline underline-offset-2"
+                      // Tıklama grid sürüklemesine dönüşmesin.
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
+                      {app.editor.postsEmptyCta} →
+                    </Link>
+                  </article>
+                ) : block.type === "featuredPost" && loaderData.posts.length === 0 ? (
+                  // Hiç yazı yokken seçilecek bir şey de yok: seçim ipucu
+                  // yerine yazmaya yönlendir (posts bloğuyla aynı desen).
+                  <article className="profile-block profile-block-featured-post">
+                    <span className="profile-image-placeholder">
+                      {app.editor.featuredPostWriteFirst}
+                    </span>
+                    <Link
+                      to={lpath("edit.yazi", { id: "yeni" })}
+                      className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold underline underline-offset-2"
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
+                      {app.editor.postsEmptyCta} →
+                    </Link>
                   </article>
                 ) : block.type === "featuredPost" &&
                   !publishedPosts.some((post) => post.id === block.data.postId) ? (

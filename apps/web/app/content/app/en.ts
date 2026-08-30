@@ -77,7 +77,9 @@ export const en = {
       "The document is served from caka.app and downloads on click; “Preview” opens it in a new tab.",
     postsHint:
       "Your published posts are listed automatically, newest first. Publishing a new post doesn't require republishing your page.",
-    postsEmptyPreview: "No published posts yet",
+    postsEmptyPreview:
+      "You have no posts yet. This card automatically lists the posts you publish.",
+    postsEmptyCta: "Write a new post",
     featuredPostField: "Post to feature",
     featuredPostNone: "Choose a post…",
     featuredPostDraftOption: (title: string) => `${title} — draft`,
@@ -85,6 +87,10 @@ export const en = {
       "You can pick a draft too; the card stays hidden on your page until the post is published.",
     featuredPostEmptyPreview: "Choose a post to feature",
     featuredPostNoPosts: "You have no posts yet.",
+    featuredPostWriteFirst: "Write a post first, then feature it here.",
+    pickerPostsTitle: "Posts",
+    pickerPostsWrite: "Write a post",
+    pickerPostsManage: "Manage posts",
 
     layoutUnreadable: "The page layout could not be read",
     backToDashboard: "Back to dashboard",

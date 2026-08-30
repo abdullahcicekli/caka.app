@@ -23,7 +23,8 @@ import { SocialIcon } from "~/components/icons/social";
 import type { ProfileBlock, SocialPlatform } from "@caka/shared";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { appCatalog } from "~/content/app";
-import { useCatalog } from "~/lib/locale";
+import { Link } from "react-router";
+import { useCatalog, useLocalizedPath } from "~/lib/locale";
 
 export type GalleryPick =
   | { kind: "content"; type: Exclude<ProfileBlock["type"], "profile" | "social"> }
@@ -73,6 +74,11 @@ const CONTENT_ITEMS = (Object.entries(CONTENT_CATALOG) as [ContentBlockType, Cat
   .filter(([, item]) => item.enabled)
   .map(([type, item]) => ({ type, ...item }));
 
+// Yazı blokları galeride kendi bölümünde durur (kullanıcı geri bildirimi):
+// blok eklemek yazı OLUŞTURMAZ; bölümün eylem satırı yazma/düzenleme
+// sayfalarına götürerek bu ayrımı galeri anında görünür kılar.
+const POST_BLOCK_TYPES: readonly ContentBlockType[] = ["posts", "featuredPost"];
+
 export function BlockGallery({
   onPick,
   blockers,
@@ -97,9 +103,20 @@ export function BlockGallery({
     [needle],
   );
   const contentItems = useMemo(
-    () => CONTENT_ITEMS.filter((item) => matches(app.blockTypes[item.type])),
+    () =>
+      CONTENT_ITEMS.filter(
+        (item) => !POST_BLOCK_TYPES.includes(item.type) && matches(app.blockTypes[item.type]),
+      ),
     [needle, app],
   );
+  const postItems = useMemo(
+    () =>
+      CONTENT_ITEMS.filter(
+        (item) => POST_BLOCK_TYPES.includes(item.type) && matches(app.blockTypes[item.type]),
+      ),
+    [needle, app],
+  );
+  const lpath = useLocalizedPath();
   // Aramaya odak YALNIZCA fiziksel imleçli cihazlarda. Dokunmatikte odak
   // klavyeyi açar; galeri klavyenin altında kalır ve listeyi kaydırmak
   // imkânsızlaşır — kullanıcı önce blokları görmeli, arama isteğe bağlı.
@@ -111,6 +128,7 @@ export function BlockGallery({
 
   const showSocial = category !== "content" && socialItems.length > 0;
   const showContent = category !== "social" && contentItems.length > 0;
+  const showPosts = category !== "social" && postItems.length > 0;
 
   return (
     <div className="block-gallery editor-popover" role="dialog" aria-label={app.editor.blockPickerAria}>
@@ -172,6 +190,48 @@ export function BlockGallery({
                 );
               })}
             </div>
+          ) : null}
+          {showPosts ? (
+            <section aria-label={app.editor.pickerPostsTitle}>
+              <div className="mb-1.5 mt-3 flex items-baseline justify-between gap-3 px-0.5">
+                <strong className="text-xs font-bold tracking-wide text-murekkep/60 uppercase">
+                  {app.editor.pickerPostsTitle}
+                </strong>
+                <span className="flex items-center gap-3 text-[12.5px] font-medium">
+                  <Link to={lpath("edit.yazi", { id: "yeni" })} className="underline underline-offset-2">
+                    {app.editor.pickerPostsWrite}
+                  </Link>
+                  <Link to={lpath("edit.yazilar")} className="underline underline-offset-2">
+                    {app.editor.pickerPostsManage}
+                  </Link>
+                </span>
+              </div>
+              <div className="gallery-grid">
+                {postItems.map((item) => {
+                  const blocked = blockers?.[item.type];
+                  return (
+                    <button
+                      key={item.type}
+                      type="button"
+                      className={`gallery-item ${blocked ? "cursor-not-allowed opacity-45" : ""}`}
+                      disabled={Boolean(blocked)}
+                      title={blocked}
+                      onClick={() => onPick({ kind: "content", type: item.type })}
+                    >
+                      <span className="tile tile-content" aria-hidden>
+                        <item.icon width={30} height={30} strokeWidth={1.8} />
+                      </span>
+                      {app.blockTypes[item.type]}
+                      {blocked ? (
+                        <small className="text-center text-[11px] leading-tight font-normal opacity-80">
+                          {blocked}
+                        </small>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           ) : null}
           {showSocial ? (
             <div className="gallery-grid">

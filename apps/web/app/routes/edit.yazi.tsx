@@ -502,7 +502,10 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
       ]
     : [];
 
-  const publicPath = useMemo(() => `/${username}/${persistedRef.current.slug || slug}`, [username, slug]);
+  // Bilerek memo DEĞİL: sunucunun kabul ettiği slug bir ref'te yaşıyor ve
+  // memo bağımlılığı olamaz — kayıt tamamlanınca gelen re-render taze değeri
+  // böyle okur (memo'lu hâli yayın sonrası bayat adres gösterebiliyordu).
+  const publicPath = `/${username}/${persistedRef.current.slug || slug}`;
 
   if (blocked) {
     return (

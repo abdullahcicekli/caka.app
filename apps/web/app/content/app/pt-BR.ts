@@ -77,7 +77,9 @@ export const ptBR = {
       "O documento é servido pelo caka.app e baixa ao clicar; “Prévia” abre em uma nova aba.",
     postsHint:
       "Suas publicações publicadas são listadas sozinhas, da mais recente para a mais antiga. Publicar uma nova não exige republicar sua página.",
-    postsEmptyPreview: "Ainda não há publicações publicadas",
+    postsEmptyPreview:
+      "Você ainda não tem publicações. Este cartão lista automaticamente as que você publicar.",
+    postsEmptyCta: "Escrever uma publicação",
     featuredPostField: "Publicação em destaque",
     featuredPostNone: "Escolha uma publicação…",
     featuredPostDraftOption: (title: string) => `${title} — rascunho`,
@@ -85,6 +87,10 @@ export const ptBR = {
       "Você também pode escolher um rascunho; o cartão fica oculto na sua página até a publicação.",
     featuredPostEmptyPreview: "Escolha a publicação em destaque",
     featuredPostNoPosts: "Você ainda não tem publicações.",
+    featuredPostWriteFirst: "Escreva uma publicação primeiro e depois destaque-a aqui.",
+    pickerPostsTitle: "Publicações",
+    pickerPostsWrite: "Escrever publicação",
+    pickerPostsManage: "Gerenciar publicações",
 
     layoutUnreadable: "Não foi possível ler o layout da página",
     backToDashboard: "Voltar ao painel",
