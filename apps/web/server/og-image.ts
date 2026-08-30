@@ -21,7 +21,7 @@
  * SSR/auth istekleri o yükü taşımaz.
  */
 import { and, eq } from "drizzle-orm";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 
 import { createDb, post } from "@caka/db";
 import {
@@ -34,6 +34,7 @@ import {
   ogTemplateSchema,
   parseProfileLayout,
   resolveOgPhotoAssetId,
+  shortContentHash,
   validatePostSlug,
   type OgProfileData,
   type OgTemplate,
@@ -144,20 +145,13 @@ async function computePostOgHash(
   username: string,
   postRow: PostOgSource,
 ): Promise<string> {
-  const payload = JSON.stringify([
+  return shortContentHash([
     "post",
     username,
     postRow.slug,
     postRow.title,
     postRow.publishedAt ? postRow.publishedAt.getTime() : 0,
   ]);
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(payload),
-  );
-  return [...new Uint8Array(digest).slice(0, 8)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 /** Kanonik yazı og:image yolu. */
@@ -173,6 +167,63 @@ export async function ogImagePathForPost(
   return postOgImagePath(username, postRow.slug, await computePostOgHash(username, postRow));
 }
 
+type OgContext = Context<{ Bindings: Env }>;
+
+// DOM lib'in CacheStorage tipi `default`ı bilmez; workerd'de mevcut.
+// Cache API colo-yereldir: ilk istekler colo başına bir kez üretir.
+function defaultCache(): Cache {
+  return (caches as unknown as { default: Cache }).default;
+}
+
+/**
+ * Hash'li URL'in KANONİK cache anahtarı: query string atılır, yol normalize
+ * hâliyle yazılır. Aksi hâlde `?a=1`, `?a=2`… veya `/og/u/FOO/...` her
+ * istekte cache miss yaratıp tam PNG üretimini (satori + resvg + R2 GET)
+ * tetikler ve cache'i çöple doldurur.
+ */
+function canonicalCacheKey(requestUrl: string, pathname: string): Request {
+  const url = new URL(requestUrl);
+  url.pathname = pathname;
+  url.search = "";
+  return new Request(url.toString());
+}
+
+/** Adres devrini (30 gün, Değişmez #10) izleyerek profili çözer: görsel de
+ *  yeni adrese taşınır. */
+async function resolveThroughRedirect(env: Env, username: string) {
+  const resolved = await resolveUsername(env, username);
+  return resolved.kind === "redirect" ? resolveUsername(env, resolved.to) : resolved;
+}
+
+/**
+ * PNG üretimi + colo-yerel cache yazımı — iki ucun ortak kuyruğu. Raster
+ * katmanı (WASM + fontlar) yalnız burada dinamik import edilir; import da
+ * render da patlarsa sayfa og:image'siz kalmasın diye sabit marka görseline
+ * düşülür (best-effort), worker'ın kalanı etkilenmez.
+ */
+async function renderAndCache(
+  c: OgContext,
+  cacheKey: Request,
+  data: OgProfileData,
+): Promise<Response> {
+  try {
+    const { renderOgPng } = await import("./og-render");
+    const png = await renderOgPng(c.env, data);
+    const response = new Response(png, {
+      headers: {
+        "Content-Type": "image/png",
+        // URL hash'li olduğu için immutable güvenli.
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+    c.executionCtx.waitUntil(defaultCache().put(cacheKey, response.clone()));
+    return response;
+  } catch {
+    return c.redirect(FALLBACK_OG_IMAGE, 302);
+  }
+}
+
 export const ogImageApi = new Hono<{ Bindings: Env }>();
 
 /**
@@ -184,10 +235,7 @@ export const ogImageApi = new Hono<{ Bindings: Env }>();
 ogImageApi.get("/u/:username/:file", async (c) => {
   if (!HASH_FILE_PATTERN.test(c.req.param("file"))) return c.notFound();
   const username = normalizeUsername(c.req.param("username"));
-  let resolved = await resolveUsername(c.env, username);
-  if (resolved.kind === "redirect") {
-    resolved = await resolveUsername(c.env, resolved.to);
-  }
+  const resolved = await resolveThroughRedirect(c.env, username);
   if (resolved.kind !== "profile") {
     return c.redirect(FALLBACK_OG_IMAGE, 302);
   }
@@ -206,26 +254,12 @@ ogImageApi.get("/u/:username/:template/:file", async (c) => {
   const username = normalizeUsername(c.req.param("username"));
 
   // Hash URL'de olduğu için içerik değişmezdir: cache isabetinde D1'e bile
-  // inmeyiz. Cache API colo-yereldir; ilk istekler colo başına bir kez üretir.
-  // DOM lib'in CacheStorage tipi `default`ı bilmez; workerd'de mevcut.
-  //
-  // Anahtar KANONİKTİR: query string atılır ve kullanıcı adı normalize edilmiş
-  // hâliyle yazılır. Aksi hâlde `?a=1`, `?a=2`… veya `/og/u/FOO/...` her
-  // istekte cache miss yaratıp tam PNG üretimini (satori + resvg + R2 GET)
-  // tetikleyebilir ve cache'i çöple doldurur.
-  const cache = (caches as unknown as { default: Cache }).default;
-  const canonicalUrl = new URL(c.req.url);
-  canonicalUrl.pathname = ogImagePath(username, template, requestedHash);
-  canonicalUrl.search = "";
-  const cacheKey = new Request(canonicalUrl.toString());
-  const cached = await cache.match(cacheKey);
+  // inmeyiz.
+  const cacheKey = canonicalCacheKey(c.req.url, ogImagePath(username, template, requestedHash));
+  const cached = await defaultCache().match(cacheKey);
   if (cached) return cached;
 
-  let resolved = await resolveUsername(c.env, username);
-  if (resolved.kind === "redirect") {
-    // Adres devri (30 gün, R18): görsel de yeni adrese taşınır.
-    resolved = await resolveUsername(c.env, resolved.to);
-  }
+  const resolved = await resolveThroughRedirect(c.env, username);
   if (resolved.kind !== "profile") {
     return c.redirect(FALLBACK_OG_IMAGE, 302);
   }
@@ -243,25 +277,7 @@ ogImageApi.get("/u/:username/:template/:file", async (c) => {
     );
   }
 
-  try {
-    // Raster katmanı (WASM + fontlar) yalnız burada yüklenir; import da
-    // render da patlarsa fallback'e düşülür, worker'ın kalanı etkilenmez.
-    const { renderOgPng } = await import("./og-render");
-    const png = await renderOgPng(c.env, data);
-    const response = new Response(png, {
-      headers: {
-        "Content-Type": "image/png",
-        // URL hash'li olduğu için immutable güvenli.
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
-    c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
-    return response;
-  } catch {
-    // Üretim hatasında sayfa asla og:image'siz kalmasın (best-effort).
-    return c.redirect(FALLBACK_OG_IMAGE, 302);
-  }
+  return renderAndCache(c, cacheKey, data);
 });
 
 /**
@@ -286,21 +302,11 @@ ogImageApi.get("/p/:username/:slug/:file", async (c) => {
   if (!slugParsed.ok) return c.redirect(FALLBACK_OG_IMAGE, 302);
   const slug = slugParsed.slug;
 
-  // Kanonik cache anahtarı: query atılır, username/slug normalize yazılır
-  // (profil ucundaki gerekçeyle aynı — cache çöple dolmasın).
-  const cache = (caches as unknown as { default: Cache }).default;
-  const canonicalUrl = new URL(c.req.url);
-  canonicalUrl.pathname = postOgImagePath(username, slug, requestedHash);
-  canonicalUrl.search = "";
-  const cacheKey = new Request(canonicalUrl.toString());
-  const cached = await cache.match(cacheKey);
+  const cacheKey = canonicalCacheKey(c.req.url, postOgImagePath(username, slug, requestedHash));
+  const cached = await defaultCache().match(cacheKey);
   if (cached) return cached;
 
-  let resolved = await resolveUsername(c.env, username);
-  if (resolved.kind === "redirect") {
-    // Adres devri (30 gün, Değişmez #10): görsel de yeni adrese taşınır.
-    resolved = await resolveUsername(c.env, resolved.to);
-  }
+  const resolved = await resolveThroughRedirect(c.env, username);
   if (resolved.kind !== "profile") {
     return c.redirect(FALLBACK_OG_IMAGE, 302);
   }
@@ -332,21 +338,5 @@ ogImageApi.get("/p/:username/:slug/:file", async (c) => {
     linkTitles: [],
   };
 
-  try {
-    const { renderOgPng } = await import("./og-render");
-    const png = await renderOgPng(c.env, data);
-    const response = new Response(png, {
-      headers: {
-        "Content-Type": "image/png",
-        // URL hash'li olduğu için immutable güvenli.
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
-    c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
-    return response;
-  } catch {
-    // Üretim hatasında sayfa asla og:image'siz kalmasın (best-effort).
-    return c.redirect(FALLBACK_OG_IMAGE, 302);
-  }
+  return renderAndCache(c, cacheKey, data);
 });

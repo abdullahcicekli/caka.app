@@ -5,6 +5,7 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import { createDb, post } from "@caka/db";
+import type { ProfileLayout } from "@caka/shared";
 
 /** Tuval kartlarının çizdiği yayınlanmış yazı satırı. */
 export interface PublishedPostCard {
@@ -108,4 +109,40 @@ export async function getOwnPostFull(
     updatedAt: row.updatedAt.getTime(),
     body: row.body,
   };
+}
+
+/**
+ * Tuval kartlarının beklediği biçim (`ProfilePostItem`,
+ * components/profile-block.tsx ile yapıca aynı): `href` hazır gelir, bileşen
+ * kullanıcı adını bilmek zorunda kalmaz.
+ */
+export interface ProfilePostFeedItem {
+  id: string;
+  title: string;
+  href: string;
+  publishedAt: number;
+}
+
+/**
+ * Public profilin ve panel önizlemesinin yazı bloğu beslemesi — tek yerde,
+ * çünkü ikisi AYNI veriyi görmeli. Düzende yazı bloğu yoksa D1'e hiç
+ * gidilmez; varsa yayındaki yazılar en yeniden eskiye iner, yani yeni yayın
+ * tuval yeniden yayınlanmadan listenin başına düşer (AE7).
+ */
+export async function getProfilePostFeed(
+  env: Env,
+  layout: ProfileLayout,
+  profile: { id: string; username: string },
+): Promise<ProfilePostFeedItem[]> {
+  const hasPostBlocks = layout.blocks.some(
+    (block) => block.type === "posts" || block.type === "featuredPost",
+  );
+  if (!hasPostBlocks) return [];
+  const cards = await getPublishedPostCards(env, profile.id);
+  return cards.map((card) => ({
+    id: card.id,
+    title: card.title,
+    href: `/${profile.username}/${card.slug}`,
+    publishedAt: card.publishedAt,
+  }));
 }

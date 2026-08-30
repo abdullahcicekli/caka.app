@@ -25,7 +25,7 @@ import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
 import { ogImagePathForProfile } from "../../server/og-image";
-import { getPublishedPostCards } from "../../server/post-list";
+import { getProfilePostFeed } from "../../server/post-list";
 import { resolveUsername } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/username";
@@ -152,17 +152,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   // Zenginleştirmeler birbirinden bağımsız; sırayla beklenirse gecikmeleri
   // toplanırdı. İlk üçü kendi içinde hata yutar — hiçbiri sayfayı düşürmez.
-  // Yazı sorgusu düzende yazı bloğu yoksa hiç koşmaz (D1'e boşuna gidilmez);
-  // yayındaki yazılar en yeniden eskiye iner, yani yeni yayın tuval yeniden
-  // yayınlanmadan liste bloğunun başına düşer (AE7).
-  const hasPostBlocks = layout.blocks.some(
-    (block) => block.type === "posts" || block.type === "featuredPost",
-  );
-  const [githubCalendars, signedImages, youtubeFeeds, publishedPosts] = await Promise.all([
+  const [githubCalendars, signedImages, youtubeFeeds, posts] = await Promise.all([
     getGithubCalendars(env, collectGithubLogins(layout)),
     signLayoutImages(env, layout),
     getYoutubeChannelCards(env, layout, localeFromRequest(request)),
-    hasPostBlocks ? getPublishedPostCards(env, p.id) : Promise.resolve([]),
+    getProfilePostFeed(env, layout, p),
   ]);
 
   return {
@@ -185,14 +179,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     // Kanal widget'larının son videosu (RSS, 15 dk önbellek). Akış
     // okunamazsa sözlük boş kalır ve kart saklanan bilgiyle yetinir.
     youtubeFeeds,
-    // Yazı blokları (U6): kartların çizeceği yayındaki yazılar. `href` burada
-    // kurulur; bileşen kullanıcı adını bilmek zorunda kalmaz.
-    posts: publishedPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      href: `/${p.username}/${post.slug}`,
-      publishedAt: post.publishedAt,
-    })),
+    // Yazı blokları (U6): kartların çizeceği yayındaki yazılar.
+    posts,
   };
 }
 

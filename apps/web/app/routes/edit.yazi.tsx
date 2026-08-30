@@ -173,6 +173,14 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
   const overLimit = bodyBytes > POST_BODY_MAX_BYTES;
   const dirty = () => editSeqRef.current !== savedSeqRef.current;
 
+  /** Sunucu yanıtı geldi: kilit damgası tazelenir ve — kuyruk uçuştayken yeni
+   *  harf yazılmadıysa — içerik "kaydedildi" sayılır. */
+  function markSaved(meta: PostMeta, seq: number) {
+    persistedRef.current = { id: meta.id, updatedAt: meta.updatedAt, slug: meta.slug };
+    if (editSeqRef.current === seq) savedSeqRef.current = seq;
+    setSaveState("saved");
+  }
+
   function queueSave(): Promise<void> {
     saveQueueRef.current = saveQueueRef.current.then(async () => {
       if (conflictRef.current) return;
@@ -206,13 +214,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
             return setSaveState("error");
           }
           if (!response.ok || !result.post) return setSaveState("error");
-          persistedRef.current = {
-            id: result.post.id,
-            updatedAt: result.post.updatedAt,
-            slug: result.post.slug,
-          };
-          if (editSeqRef.current === snapshot.seq) savedSeqRef.current = snapshot.seq;
-          setSaveState("saved");
+          markSaved(result.post, snapshot.seq);
           // Adres artık gerçek kimlik; `replace` — geri tuşu "yeni"ye dönmesin.
           // Route aynı kaldığı için bileşen ve editör durumu korunur.
           void navigate(path("edit.yazi", { id: result.post.id }), { replace: true });
@@ -243,13 +245,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
           return setSaveState("conflict");
         }
         if (!response.ok || !result.post) return setSaveState("error");
-        persistedRef.current = {
-          id: result.post.id,
-          updatedAt: result.post.updatedAt,
-          slug: result.post.slug,
-        };
-        if (editSeqRef.current === snapshot.seq) savedSeqRef.current = snapshot.seq;
-        setSaveState("saved");
+        markSaved(result.post, snapshot.seq);
       } catch {
         setSaveState("error");
       }

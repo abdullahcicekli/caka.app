@@ -1,5 +1,5 @@
 import { and, count, desc, eq, ne } from "drizzle-orm";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { z } from "zod";
 
 import { createDb, post, profile } from "@caka/db";
@@ -7,6 +7,7 @@ import {
   MAX_POSTS_PER_PROFILE,
   POST_BODY_MAX_BYTES,
   POST_TITLE_MAX,
+  type PostStatus,
   validatePostDoc,
   validatePostSlug,
 } from "@caka/shared";
@@ -26,6 +27,32 @@ function apiText(request: Request) {
   return appCatalog[localeFromRequest(request)].api;
 }
 
+type PostApiContext = Context<{ Bindings: Env }>;
+type ApiText = ReturnType<typeof apiText>;
+type PostSession = NonNullable<Awaited<ReturnType<typeof getSession>>>;
+
+/**
+ * Her ucun ortak ilk adımı: köken kapısı + oturum. Okuyan uçlar
+ * `isCrossOriginRequest`, yazanlar `hasSameOrigin` kullanır — gerekçe
+ * `server/request.ts`'te: tarayıcı aynı köken GET'inde `Origin` GÖNDERMEZ,
+ * bu yüzden okuma tarafında kural tersine çevrilir.
+ *
+ * Geçerse oturumu ve isteğin dilindeki metinleri, geçmezse hazır yanıtı
+ * döner (çağıran `instanceof Response` ile ayırır).
+ */
+async function openGate(
+  c: PostApiContext,
+  kind: "read" | "write",
+): Promise<{ session: PostSession; text: ApiText } | Response> {
+  const text = apiText(c.req.raw);
+  const blocked =
+    kind === "read" ? isCrossOriginRequest(c.req.raw) : !hasSameOrigin(c.req.raw);
+  if (blocked) return c.json({ error: text.origin }, 403);
+  const session = await getSession(c.env, c.req.raw);
+  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  return { session, text };
+}
+
 // Gövde 50 KB (R7) + başlık/slug/JSON zarfı için pay. Zarfı aşan istek daha
 // gövde ayrıştırılmadan 413 ile kesilir (readLimitedJson).
 const REQUEST_BYTE_LIMIT = POST_BODY_MAX_BYTES + 8 * 1024;
@@ -35,26 +62,25 @@ const REQUEST_BYTE_LIMIT = POST_BODY_MAX_BYTES + 8 * 1024;
 // birinci taraf görsel kaynağı tek kaynaktan denetlenir; izin dışı düğüm
 // sessizce düşmez, kimlikli hatayla reddedilir.
 
-/** Gövdeyi ayrıştırıp postDoc şemasından geçirir; hatayı HTTP koduna eşler. */
-function checkPostBody(
-  raw: string,
-): { ok: true } | { ok: false; status: 400 | 413; issue: string } {
+/**
+ * Gövdeyi ayrıştırıp postDoc şemasından geçirir. Sorun varsa hazır hata
+ * yanıtını (413 = 50 KB aşımı, 400 = biçim/izin listesi), temizse null döner.
+ */
+function postBodyError(c: PostApiContext, text: ApiText, raw: string): Response | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { ok: false, status: 400, issue: "invalid_doc" };
+    return c.json({ error: text.postBodyInvalid, issue: "invalid_doc" }, 400);
   }
   const doc = validatePostDoc(parsed);
-  if (!doc.ok) {
-    return {
-      ok: false,
-      status: doc.issue === "body_too_large" ? 413 : 400,
-      issue: doc.issue,
-    };
+  if (doc.ok) return null;
+  if (doc.issue === "body_too_large") {
+    return c.json({ error: text.postBodyTooLarge, issue: doc.issue }, 413);
   }
-  return { ok: true };
+  return c.json({ error: text.postBodyInvalid, issue: doc.issue }, 400);
 }
+
 const createSchema = z.object({
   slug: z.string(),
   title: z.string().trim().min(1).max(POST_TITLE_MAX),
@@ -73,11 +99,12 @@ const actionSchema = z.object({
   updatedAt: z.number().int().min(0),
 });
 
-type PostRow = typeof post.$inferSelect;
+/** Yanıt biçimi gövdeyi taşımaz; liste sorgusu da gövdesiz satır okur. */
+type PostMetaRow = Omit<typeof post.$inferSelect, "body">;
 
 /** Liste/tekil yanıt biçimi: tarihler ms sayısı olarak döner (kilit için geri
  *  gönderilecekleri biçimin aynısı). */
-function toMeta(row: PostRow) {
+function toMeta(row: PostMetaRow) {
   return {
     id: row.id,
     slug: row.slug,
@@ -109,21 +136,19 @@ export const postApi = new Hono<{ Bindings: Env }>();
 // Sahibin yazı listesi (taslaklar dahil — yalnız sahibi görür, R4). Gövde
 // listeye girmez: 20 × 50 KB'lık bir yanıt üretmemek için tekil uca bırakılır.
 postApi.get("/", async (c) => {
-  if (isCrossOriginRequest(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  const gate = await openGate(c, "read");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   const db = createDb(c.env.DB);
   const profileId = await ownProfileId(db, session.user.id);
-  if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+  if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
-  const rows = await db
-    .select()
-    .from(post)
-    .where(eq(post.profileId, profileId))
-    .orderBy(desc(post.updatedAt));
+  const rows = await db.query.post.findMany({
+    columns: { body: false },
+    where: eq(post.profileId, profileId),
+    orderBy: desc(post.updatedAt),
+  });
   return c.json({ posts: rows.map(toMeta) });
 });
 
@@ -133,11 +158,9 @@ postApi.get("/", async (c) => {
 // çakışma saymaz. Biçim hataları kimlik olarak döner (Değişmez #5): cümleyi
 // editör katalogdan kurar.
 postApi.get("/adres-denetim", async (c) => {
-  if (isCrossOriginRequest(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  const gate = await openGate(c, "read");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   const result = validatePostSlug(c.req.query("slug") ?? "");
   if (!result.ok) {
@@ -145,7 +168,7 @@ postApi.get("/adres-denetim", async (c) => {
   }
   const db = createDb(c.env.DB);
   const profileId = await ownProfileId(db, session.user.id);
-  if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+  if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
   const exceptId = c.req.query("haric");
   // Benzersizlik taslakları da kapsar (R22); silinen yazının satırı kalmadığı
@@ -161,57 +184,42 @@ postApi.get("/adres-denetim", async (c) => {
 
 // Tekil yazı (gövde dahil) — editörün düzenleme ekranı için.
 postApi.get("/:id", async (c) => {
-  if (isCrossOriginRequest(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  const gate = await openGate(c, "read");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   const db = createDb(c.env.DB);
   const profileId = await ownProfileId(db, session.user.id);
-  if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+  if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
   const row = await db.query.post.findFirst({
     where: and(eq(post.id, c.req.param("id")), eq(post.profileId, profileId)),
   });
-  if (!row) return c.json({ error: apiText(c.req.raw).postNotFound }, 404);
+  if (!row) return c.json({ error: text.postNotFound }, 404);
   return c.json({ post: { ...toMeta(row), body: row.body } });
 });
 
 // Oluştur: yeni yazı her zaman taslak doğar (R4); yayın ayrı bir eylemdir.
 postApi.post("/", async (c) => {
-  if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  const gate = await openGate(c, "write");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   try {
     const body = createSchema.safeParse(await readLimitedJson(c.req.raw, REQUEST_BYTE_LIMIT));
     if (!body.success) {
-      return c.json({ error: apiText(c.req.raw).postInvalid, issues: body.error.issues }, 400);
+      return c.json({ error: text.postInvalid, issues: body.error.issues }, 400);
     }
     const slug = validatePostSlug(body.data.slug);
     if (!slug.ok) {
-      return c.json({ error: apiText(c.req.raw).postSlugInvalid, reason: slug.error }, 400);
+      return c.json({ error: text.postSlugInvalid, reason: slug.error }, 400);
     }
-    const bodyCheck = checkPostBody(body.data.body);
-    if (!bodyCheck.ok) {
-      return c.json(
-        {
-          error:
-            bodyCheck.status === 413
-              ? apiText(c.req.raw).postBodyTooLarge
-              : apiText(c.req.raw).postBodyInvalid,
-          issue: bodyCheck.issue,
-        },
-        bodyCheck.status,
-      );
-    }
+    const bodyError = postBodyError(c, text, body.data.body);
+    if (bodyError) return bodyError;
 
     const db = createDb(c.env.DB);
     const profileId = await ownProfileId(db, session.user.id);
-    if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+    if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
     // 20 sınırı taslak dahil (R8 + R22): sayım status süzmeden, profilin TÜM
     // yazı satırları üstünden yapılır.
@@ -220,7 +228,7 @@ postApi.post("/", async (c) => {
       .from(post)
       .where(eq(post.profileId, profileId));
     if ((tally?.value ?? 0) >= MAX_POSTS_PER_PROFILE) {
-      return c.json({ error: apiText(c.req.raw).postLimitReached }, 400);
+      return c.json({ error: text.postLimitReached }, 400);
     }
 
     // Benzersizlik taslak dahil (R22). Ön kontrol net mesaj için; yarış hâli
@@ -229,7 +237,7 @@ postApi.post("/", async (c) => {
       columns: { id: true },
       where: and(eq(post.profileId, profileId), eq(post.slug, slug.slug)),
     });
-    if (clash) return c.json({ error: apiText(c.req.raw).postSlugTaken }, 409);
+    if (clash) return c.json({ error: text.postSlugTaken }, 409);
 
     try {
       const now = new Date();
@@ -249,15 +257,15 @@ postApi.post("/", async (c) => {
       return c.json({ post: toMeta(created!) }, 201);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        return c.json({ error: apiText(c.req.raw).postSlugTaken }, 409);
+        return c.json({ error: text.postSlugTaken }, 409);
       }
       throw error;
     }
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: apiText(c.req.raw).postTooLarge }, 413);
+      return c.json({ error: text.postTooLarge }, 413);
     }
-    return c.json({ error: apiText(c.req.raw).postSaveFailed }, 400);
+    return c.json({ error: text.postSaveFailed }, 400);
   }
 });
 
@@ -265,47 +273,36 @@ postApi.post("/", async (c) => {
 // `publishedAt` bir kez dolduysa slug değişikliği reddedilir — taslağa dönüş
 // kilidi KALDIRMAZ, çünkü paylaşılmış bağlantı yazı taslaktayken de sahiplidir.
 postApi.put("/:id", async (c) => {
-  if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  const gate = await openGate(c, "write");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   try {
     const body = updateSchema.safeParse(await readLimitedJson(c.req.raw, REQUEST_BYTE_LIMIT));
     if (!body.success) {
-      return c.json({ error: apiText(c.req.raw).postInvalid, issues: body.error.issues }, 400);
+      return c.json({ error: text.postInvalid, issues: body.error.issues }, 400);
     }
     const slug = validatePostSlug(body.data.slug);
     if (!slug.ok) {
-      return c.json({ error: apiText(c.req.raw).postSlugInvalid, reason: slug.error }, 400);
+      return c.json({ error: text.postSlugInvalid, reason: slug.error }, 400);
     }
-    const bodyCheck = checkPostBody(body.data.body);
-    if (!bodyCheck.ok) {
-      return c.json(
-        {
-          error:
-            bodyCheck.status === 413
-              ? apiText(c.req.raw).postBodyTooLarge
-              : apiText(c.req.raw).postBodyInvalid,
-          issue: bodyCheck.issue,
-        },
-        bodyCheck.status,
-      );
-    }
+    const bodyError = postBodyError(c, text, body.data.body);
+    if (bodyError) return bodyError;
 
     const db = createDb(c.env.DB);
     const profileId = await ownProfileId(db, session.user.id);
-    if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+    if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
     const current = await db.query.post.findFirst({
+      // Gövde okunmaz: bu satır yalnız 404 ve R18/çakışma ayrımı için.
+      columns: { id: true, slug: true, publishedAt: true },
       where: and(eq(post.id, c.req.param("id")), eq(post.profileId, profileId)),
     });
-    if (!current) return c.json({ error: apiText(c.req.raw).postNotFound }, 404);
+    if (!current) return c.json({ error: text.postNotFound }, 404);
 
     // R18: yayınlanmış (veya yayınlanıp taslağa alınmış) yazının adresi sabit.
     if (current.publishedAt !== null && slug.slug !== current.slug) {
-      return c.json({ error: apiText(c.req.raw).postSlugLocked }, 400);
+      return c.json({ error: text.postSlugLocked }, 400);
     }
     // Adres değişiyorsa yeni adres profil içinde boşta olmalı (taslak dahil).
     if (slug.slug !== current.slug) {
@@ -313,7 +310,7 @@ postApi.put("/:id", async (c) => {
         columns: { id: true },
         where: and(eq(post.profileId, profileId), eq(post.slug, slug.slug)),
       });
-      if (clash) return c.json({ error: apiText(c.req.raw).postSlugTaken }, 409);
+      if (clash) return c.json({ error: text.postSlugTaken }, 409);
     }
 
     try {
@@ -337,52 +334,62 @@ postApi.put("/:id", async (c) => {
         )
         .returning();
       if (!updated.length) {
-        return c.json({ error: apiText(c.req.raw).postConflict }, 409);
+        return c.json({ error: text.postConflict }, 409);
       }
       return c.json({ post: toMeta(updated[0]!) });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        return c.json({ error: apiText(c.req.raw).postSlugTaken }, 409);
+        return c.json({ error: text.postSlugTaken }, 409);
       }
       throw error;
     }
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: apiText(c.req.raw).postTooLarge }, 413);
+      return c.json({ error: text.postTooLarge }, 413);
     }
-    return c.json({ error: apiText(c.req.raw).postSaveFailed }, 400);
+    return c.json({ error: text.postSaveFailed }, 400);
   }
 });
 
-// Yayınla: durum `published` olur; `publishedAt` yalnız İLK yayında dolar ve
-// bir daha asla yazılmaz — adres kilidinin (R18) dayanağı bu alandır.
-postApi.post("/:id/yayinla", async (c) => {
-  if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+/**
+ * Yayınla / taslağa al ortak gövdesi: iki uç yalnız YAZDIKLARI DURUMDA
+ * ayrışır, gerisi (kapı, iyimser kilit, hata eşlemesi) aynıdır.
+ *
+ * `publishedAt` yalnız İLK yayında dolar ve bir daha asla yazılmaz — adres
+ * kilidinin (R18) dayanağı bu alandır. Taslağa alma ona DOKUNMAZ; kilit
+ * kalıcıdır ve ziyaretçi o andan itibaren 404 alır (R4, U5'in işi).
+ */
+async function changeStatus(
+  c: PostApiContext,
+  postId: string,
+  next: PostStatus,
+): Promise<Response> {
+  const gate = await openGate(c, "write");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   try {
     const body = actionSchema.safeParse(await readLimitedJson(c.req.raw, 4 * 1024));
     if (!body.success) {
-      return c.json({ error: apiText(c.req.raw).requestInvalid }, 400);
+      return c.json({ error: text.requestInvalid }, 400);
     }
     const db = createDb(c.env.DB);
     const profileId = await ownProfileId(db, session.user.id);
-    if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+    if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
     const current = await db.query.post.findFirst({
       columns: { id: true, publishedAt: true },
-      where: and(eq(post.id, c.req.param("id")), eq(post.profileId, profileId)),
+      where: and(eq(post.id, postId), eq(post.profileId, profileId)),
     });
-    if (!current) return c.json({ error: apiText(c.req.raw).postNotFound }, 404);
+    if (!current) return c.json({ error: text.postNotFound }, 404);
 
     const updated = await db
       .update(post)
       .set({
-        status: "published",
-        publishedAt: current.publishedAt ?? new Date(),
+        status: next,
+        ...(next === "published"
+          ? { publishedAt: current.publishedAt ?? new Date() }
+          : {}),
         updatedAt: new Date(),
       })
       .where(
@@ -394,82 +401,36 @@ postApi.post("/:id/yayinla", async (c) => {
       )
       .returning();
     if (!updated.length) {
-      return c.json({ error: apiText(c.req.raw).postConflict }, 409);
+      return c.json({ error: text.postConflict }, 409);
     }
     return c.json({ post: toMeta(updated[0]!) });
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: apiText(c.req.raw).requestTooLarge }, 413);
+      return c.json({ error: text.requestTooLarge }, 413);
     }
-    return c.json({ error: apiText(c.req.raw).postSaveFailed }, 400);
+    return c.json({ error: text.postSaveFailed }, 400);
   }
-});
+}
 
-// Taslağa al: durum döner ama `publishedAt`e DOKUNULMAZ — kilit kalıcıdır
-// (R18) ve ziyaretçi bu andan itibaren 404 alır (R4, U5'in işi).
-postApi.post("/:id/taslak", async (c) => {
-  if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
-
-  try {
-    const body = actionSchema.safeParse(await readLimitedJson(c.req.raw, 4 * 1024));
-    if (!body.success) {
-      return c.json({ error: apiText(c.req.raw).requestInvalid }, 400);
-    }
-    const db = createDb(c.env.DB);
-    const profileId = await ownProfileId(db, session.user.id);
-    if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
-
-    const current = await db.query.post.findFirst({
-      columns: { id: true },
-      where: and(eq(post.id, c.req.param("id")), eq(post.profileId, profileId)),
-    });
-    if (!current) return c.json({ error: apiText(c.req.raw).postNotFound }, 404);
-
-    const updated = await db
-      .update(post)
-      .set({ status: "draft", updatedAt: new Date() })
-      .where(
-        and(
-          eq(post.id, current.id),
-          eq(post.profileId, profileId),
-          eq(post.updatedAt, new Date(body.data.updatedAt)),
-        ),
-      )
-      .returning();
-    if (!updated.length) {
-      return c.json({ error: apiText(c.req.raw).postConflict }, 409);
-    }
-    return c.json({ post: toMeta(updated[0]!) });
-  } catch (error) {
-    if (error instanceof Error && error.message === "body_too_large") {
-      return c.json({ error: apiText(c.req.raw).requestTooLarge }, 413);
-    }
-    return c.json({ error: apiText(c.req.raw).postSaveFailed }, 400);
-  }
-});
+postApi.post("/:id/yayinla", (c) => changeStatus(c, c.req.param("id"), "published"));
+postApi.post("/:id/taslak", (c) => changeStatus(c, c.req.param("id"), "draft"));
 
 // Sil: satır kalkınca adres aynı profilde yeniden kullanılabilir (R22) —
 // unique index satırla birlikte boşalır, ek bir kilit tablosu yoktur.
 // Gövde taşımadığı için iyimser kilit de yoktur; silme idempotent bir niyettir.
 postApi.delete("/:id", async (c) => {
-  if (!hasSameOrigin(c.req.raw)) {
-    return c.json({ error: apiText(c.req.raw).origin }, 403);
-  }
-  const session = await getSession(c.env, c.req.raw);
-  if (!session) return c.json({ error: "Oturum gerekli" }, 401);
+  const gate = await openGate(c, "write");
+  if (gate instanceof Response) return gate;
+  const { session, text } = gate;
 
   const db = createDb(c.env.DB);
   const profileId = await ownProfileId(db, session.user.id);
-  if (!profileId) return c.json({ error: apiText(c.req.raw).profileNotFound }, 404);
+  if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
   const deleted = await db
     .delete(post)
     .where(and(eq(post.id, c.req.param("id")), eq(post.profileId, profileId)))
     .returning({ id: post.id });
-  if (!deleted.length) return c.json({ error: apiText(c.req.raw).postNotFound }, 404);
+  if (!deleted.length) return c.json({ error: text.postNotFound }, 404);
   return c.json({ ok: true });
 });

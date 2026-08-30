@@ -142,9 +142,22 @@ export function resolveOgPhotoAssetId(input: {
 /**
  * İçerik özeti: 8 bayt (16 hex) SHA-256 öneki. Girdi JSON dizisi olarak
  * normalize edilir (alan sırası sabit) — aynı içerik her zaman aynı hash.
+ * Yazı paylaşım görseli de (server/og-image.ts) bu biçimi kullanır; iki
+ * hattın özet biçimi ayrışmasın diye tek yerde durur.
  */
+export async function shortContentHash(parts: readonly unknown[]): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(JSON.stringify(parts)),
+  );
+  return [...new Uint8Array(digest).slice(0, 8)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/** Profil og:image'ini etkileyen alanların içerik özeti. */
 export async function computeOgHash(data: OgProfileData): Promise<string> {
-  const payload = JSON.stringify([
+  return shortContentHash([
     data.template,
     data.name,
     data.title,
@@ -153,13 +166,6 @@ export async function computeOgHash(data: OgProfileData): Promise<string> {
     data.avatarAssetId,
     data.linkTitles,
   ]);
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(payload),
-  );
-  return [...new Uint8Array(digest).slice(0, 8)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 /**

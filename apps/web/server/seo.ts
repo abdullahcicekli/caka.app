@@ -123,6 +123,28 @@ function crawlerRules(userAgent: string): string {
 
 export const seoRoutes = new Hono<{ Bindings: Env }>();
 
+/**
+ * Sitemap'e giren yazıların süzgeci (R13): yayında olmayan yazı ve
+ * onboarding'i tamamlamamış profilin yazısı listeye girmez. İndeksin sayfa
+ * sayımı ile sayfaların kendisi AYNI süzgeci okumalı — ayrışırsa indeks var
+ * olmayan sayfaları duyurur.
+ */
+function publishedPostFilter() {
+  return and(eq(post.status, "published"), isNotNull(profile.onboardingCompletedAt));
+}
+
+/**
+ * `/sitemaps/<önek>-<n>.xml` yolundan sayfa numarasını okur; biçimsizse null.
+ * Not: segment-İÇİ `*` (profiles-*) Hono yönlendiricisinde güvenilir
+ * eşleşmiyor (lokalde 404 üretti); dosya adı regex'li tek param olarak
+ * yakalanır, sayfa numarası bu yüzden yine path'ten ayrıştırılır.
+ */
+function sitemapPage(path: string, prefix: string): number | null {
+  const match = new RegExp(`^/sitemaps/${prefix}-(\\d+)\\.xml$`).exec(path);
+  const page = Number(match?.[1]);
+  return Number.isInteger(page) && page >= 1 ? page : null;
+}
+
 seoRoutes.get("/sitemap.xml", async (c) => {
   const db = createDb(c.env.DB);
   const [row] = await db
@@ -141,7 +163,7 @@ seoRoutes.get("/sitemap.xml", async (c) => {
     .select({ value: count() })
     .from(post)
     .innerJoin(profile, eq(post.profileId, profile.id))
-    .where(and(eq(post.status, "published"), isNotNull(profile.onboardingCompletedAt)));
+    .where(publishedPostFilter());
   const postCount = postRow?.value ?? 0;
   const postPages = Math.ceil(postCount / SITEMAP_PAGE_SIZE);
   for (let page = 1; page <= postPages; page += 1) {
@@ -174,13 +196,9 @@ seoRoutes.get("/sitemaps/core.xml", (c) => {
   return c.body(urlset(entries), 200, XML_HEADERS);
 });
 
-// Not: segment-İÇİ `*` (profiles-*) Hono yönlendiricisinde güvenilir
-// eşleşmiyor (lokalde 404 üretti); dosya adı regex'li tek param olarak
-// yakalanır, sayfa numarası yine path'ten ayrıştırılır.
 seoRoutes.get("/sitemaps/:file{profiles-[0-9]+\\.xml}", async (c) => {
-  const pageMatch = c.req.path.match(/^\/sitemaps\/profiles-(\d+)\.xml$/);
-  const page = Number(pageMatch?.[1]);
-  if (!Number.isInteger(page) || page < 1) return c.notFound();
+  const page = sitemapPage(c.req.path, "profiles");
+  if (page === null) return c.notFound();
 
   const rows = await createDb(c.env.DB)
     .select({ username: profile.username, updatedAt: profile.updatedAt })
@@ -206,15 +224,14 @@ seoRoutes.get("/sitemaps/:file{profiles-[0-9]+\\.xml}", async (c) => {
 // Yayındaki yazılar (R13): taslaklar ve onboarding'i tamamlamamış profillerin
 // yazıları listeye girmez. `lastmod` yazının kendi `updatedAt`'i (KTD8).
 seoRoutes.get("/sitemaps/:file{posts-[0-9]+\\.xml}", async (c) => {
-  const pageMatch = c.req.path.match(/^\/sitemaps\/posts-(\d+)\.xml$/);
-  const page = Number(pageMatch?.[1]);
-  if (!Number.isInteger(page) || page < 1) return c.notFound();
+  const page = sitemapPage(c.req.path, "posts");
+  if (page === null) return c.notFound();
 
   const rows = await createDb(c.env.DB)
     .select({ username: profile.username, slug: post.slug, updatedAt: post.updatedAt })
     .from(post)
     .innerJoin(profile, eq(post.profileId, profile.id))
-    .where(and(eq(post.status, "published"), isNotNull(profile.onboardingCompletedAt)))
+    .where(publishedPostFilter())
     .orderBy(desc(post.updatedAt))
     .limit(SITEMAP_PAGE_SIZE)
     .offset((page - 1) * SITEMAP_PAGE_SIZE);
