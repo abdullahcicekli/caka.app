@@ -64,6 +64,13 @@
       "when": 1788122790349,
       "tag": "0008_gelen-kaynak",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788125539440,
+      "tag": "0009_yazi-tablosu",
+      "breakpoints": true
     }
   ]
 }

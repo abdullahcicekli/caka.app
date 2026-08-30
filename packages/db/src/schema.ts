@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth-schema";
 
@@ -175,5 +182,41 @@ export const profileReferrerDaily = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.profileId, table.day, table.source] }),
+  ],
+);
+
+/**
+ * Yazı sayfaları (R1/R4): profil sahibinin uzun metin içeriği. `body` zengin
+ * metin dokümanının JSON metnidir (postDoc şeması @caka/shared'da doğrulanır).
+ *
+ * Her yazı bağımsız taslak/yayın durumu taşır: `status` görünürlüğü belirler,
+ * `publishedAt` ise İLK yayının kalıcı izidir — yazı taslağa geri alınsa bile
+ * dolu kalır, çünkü adres kilidi (R18) buna bakar: bir kez yayınlanan slug'ın
+ * değişmesi uygulama katmanında reddedilir. Benzersizlik taslak dahil geçerli
+ * (R22), bu yüzden unique kısıt `status`'e bakmaz.
+ *
+ * Silme: FK cascade'e bel bağlanmaz; hesap silmede satırlar `server/account.ts`
+ * batch'inde açıkça silinir (R17, kalem: docs/legal/data-map.md).
+ */
+export const post = sqliteTable(
+  "post",
+  {
+    id: text("id").primaryKey(),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profile.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    /** Zengin metin dokümanı (JSON metin, ≤50 KB — sınır API katmanında) */
+    body: text("body").notNull(),
+    /** 'draft' | 'published' */
+    status: text("status").notNull().default("draft"),
+    /** İlk yayın anı; null = hiç yayınlanmadı. Dolunca slug kilitlenir (R18). */
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    createdAt: timestampMs("created_at"),
+    updatedAt: timestampMs("updated_at"),
+  },
+  (table) => [
+    uniqueIndex("post_profile_slug_unique").on(table.profileId, table.slug),
   ],
 );

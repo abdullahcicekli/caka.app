@@ -217,6 +217,25 @@ veya `null` = negatif önbellek), `fetched_at`.
 - **Süre:** hesap yaşadığı sürece. Silme yalnızca hesap silmede; blok
   kaldırıldığında diff/silme yapılmaz (bilinçli — Değişmez #9).
 
+### `post` — yazı sayfaları
+
+`id` (PK), `profile_id`, `slug`, `title`, `body` (zengin metin dokümanının
+JSON hâli), `status` (`draft`/`published`), `published_at` (ilk yayın anı;
+taslağa dönülse de kalır — adres kilidinin dayanağı), `created_at`,
+`updated_at`.
+
+- **Amaç:** profil sahibinin uzun metin (yazı) yayımlaması ve taslak
+  saklaması. **Sebep:** m.5/2-c.
+- `title` ve `body` **kullanıcı içeriğidir**: kullanıcı buraya ne yazarsa o
+  saklanır (kendisi veya üçüncü kişiler hakkında kişisel veri dahil olabilir).
+  Bu içerik için 5651 yer sağlayıcı rejimi geçerlidir; sorumluluk çerçevesi
+  kullanım koşullarında çizilir.
+- Taslaklar (`status = 'draft'`) yalnız sahibine görünür; public yollar
+  taslağın varlığını da sızdırmaz (R4).
+- **Süre:** hesap yaşadığı sürece; kullanıcı tek yazıyı istediği an kendisi
+  siler. Hesap silmede satırlar `server/account.ts` batch'inde **açıkça**
+  silinir (FK cascade'e bel bağlanmaz).
+
 ### `profile_view_daily` / `profile_referrer_daily` / `link_click_daily` — panel sayaçları
 
 Görüntülenme: `profile_id`, `day` (Türkiye günü), `country` (iki harf veya
