@@ -20,8 +20,10 @@
  * (`./og-render`, WASM + fontlar) yalnız cache miss'te dinamik import edilir —
  * SSR/auth istekleri o yükü taşımaz.
  */
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 
+import { createDb, post } from "@caka/db";
 import {
   computeOgHash,
   GRID_UNIT,
@@ -32,6 +34,7 @@ import {
   ogTemplateSchema,
   parseProfileLayout,
   resolveOgPhotoAssetId,
+  validatePostSlug,
   type OgProfileData,
   type OgTemplate,
 } from "@caka/shared";
@@ -112,6 +115,64 @@ export async function ogImagePathForProfile(row: OgProfileSource): Promise<strin
 
 const HASH_FILE_PATTERN = /^([0-9a-f]{16})\.png$/;
 
+/* ------------------------------------------------------------------ *
+ * Yazı paylaşım görseli (U5/KTD6): /og/p/<username>/<slug>/<hash>.png
+ * ------------------------------------------------------------------ */
+
+/**
+ * Yazı görseli mevcut şablonlardan p5'i (Monogram) kullanır: fotoğraf/avatar
+ * istemez (R2'ye inilmez, ~40 ms'lik en ucuz dal) ve büyük başlık + adres
+ * yerleşimi yazıya birebir oturur. `name` alanına yazı BAŞLIĞI, `title`
+ * alanına boş dize verilir — alt satırda zaten `/<username>` basılır.
+ */
+const POST_OG_TEMPLATE: OgTemplate = "p5";
+
+interface PostOgSource {
+  slug: string;
+  title: string;
+  publishedAt: Date | null;
+}
+
+/**
+ * Yazı görselinin içerik özeti — profil hattındaki `computeOgHash` ile aynı
+ * biçim (8 bayt / 16 hex SHA-256 öneki). Girdiye başlık + İLK yayın anı girer
+ * (KTD6): başlık değişince URL değişir ve scraper cache'i kendiliğinden
+ * tazelenir; `username`/`slug` da katılır ki iki yazının aynı başlığı aynı
+ * hash'i paylaşmasın.
+ */
+async function computePostOgHash(
+  username: string,
+  postRow: PostOgSource,
+): Promise<string> {
+  const payload = JSON.stringify([
+    "post",
+    username,
+    postRow.slug,
+    postRow.title,
+    postRow.publishedAt ? postRow.publishedAt.getTime() : 0,
+  ]);
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(payload),
+  );
+  return [...new Uint8Array(digest).slice(0, 8)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/** Kanonik yazı og:image yolu. */
+function postOgImagePath(username: string, slug: string, hash: string): string {
+  return `/og/p/${username}/${slug}/${hash}.png`;
+}
+
+/** Yazı sayfası loader'ının meta için kullandığı güncel og:image yolu. */
+export async function ogImagePathForPost(
+  username: string,
+  postRow: PostOgSource,
+): Promise<string> {
+  return postOgImagePath(username, postRow.slug, await computePostOgHash(username, postRow));
+}
+
 export const ogImageApi = new Hono<{ Bindings: Env }>();
 
 /**
@@ -185,6 +246,93 @@ ogImageApi.get("/u/:username/:template/:file", async (c) => {
   try {
     // Raster katmanı (WASM + fontlar) yalnız burada yüklenir; import da
     // render da patlarsa fallback'e düşülür, worker'ın kalanı etkilenmez.
+    const { renderOgPng } = await import("./og-render");
+    const png = await renderOgPng(c.env, data);
+    const response = new Response(png, {
+      headers: {
+        "Content-Type": "image/png",
+        // URL hash'li olduğu için immutable güvenli.
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+    c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+    return response;
+  } catch {
+    // Üretim hatasında sayfa asla og:image'siz kalmasın (best-effort).
+    return c.redirect(FALLBACK_OG_IMAGE, 302);
+  }
+});
+
+/**
+ * Yazı paylaşım görseli (R14). Profil ucuyla aynı hat: kanonik cache anahtarı,
+ * colo-yerel Cache API, immutable PNG, hata hâlinde fallback.
+ *
+ * KRİTİK GÜVENLİK KAPISI (KTD6/AE1): uç YALNIZ `status='published'` yazı için
+ * render eder. Taslak ve hiç olmayan yazı AYNI genel fallback görseline düşer —
+ * ikisi ayrışsaydı uç, taslak varlığını sızdıran bir oracle olurdu; render
+ * etseydi taslak BAŞLIĞI PNG üzerinden sızardı. Hash uyuşmazlığında güncel
+ * adrese yönlendirme de bu kapının ARKASINDADIR: yalnız yayındaki yazı için
+ * yapılır. Taslağa dönüşte colo cache'inde kalabilecek eski immutable PNG,
+ * planda kabul edilmiş artık risktir.
+ */
+ogImageApi.get("/p/:username/:slug/:file", async (c) => {
+  const fileMatch = HASH_FILE_PATTERN.exec(c.req.param("file"));
+  if (!fileMatch) return c.notFound();
+  const requestedHash = fileMatch[1];
+  const username = normalizeUsername(c.req.param("username"));
+  // Slug KATI doğrulanır; biçimsiz/rezerve segment hiçbir yazıya ait olamaz.
+  const slugParsed = validatePostSlug(c.req.param("slug"));
+  if (!slugParsed.ok) return c.redirect(FALLBACK_OG_IMAGE, 302);
+  const slug = slugParsed.slug;
+
+  // Kanonik cache anahtarı: query atılır, username/slug normalize yazılır
+  // (profil ucundaki gerekçeyle aynı — cache çöple dolmasın).
+  const cache = (caches as unknown as { default: Cache }).default;
+  const canonicalUrl = new URL(c.req.url);
+  canonicalUrl.pathname = postOgImagePath(username, slug, requestedHash);
+  canonicalUrl.search = "";
+  const cacheKey = new Request(canonicalUrl.toString());
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  let resolved = await resolveUsername(c.env, username);
+  if (resolved.kind === "redirect") {
+    // Adres devri (30 gün, Değişmez #10): görsel de yeni adrese taşınır.
+    resolved = await resolveUsername(c.env, resolved.to);
+  }
+  if (resolved.kind !== "profile") {
+    return c.redirect(FALLBACK_OG_IMAGE, 302);
+  }
+
+  const row = await createDb(c.env.DB).query.post.findFirst({
+    columns: { slug: true, title: true, status: true, publishedAt: true },
+    where: and(eq(post.profileId, resolved.profile.id), eq(post.slug, slug)),
+  });
+  // KTD6 kapısı: yok ve taslak AYIRT EDİLMEDEN fallback'e düşer (AE1).
+  if (!row || row.status !== "published") {
+    return c.redirect(FALLBACK_OG_IMAGE, 302);
+  }
+
+  const currentHash = await computePostOgHash(resolved.profile.username, row);
+  if (currentHash !== requestedHash || resolved.profile.username !== username) {
+    // Eski paylaşım: güncel görsele 302 (301 süresiz cache'lenir, kullanma).
+    // Bu dal yalnız YAYINDAKİ yazı için çalışır — kapı yukarıda.
+    return c.redirect(postOgImagePath(resolved.profile.username, row.slug, currentHash), 302);
+  }
+
+  // p5 girdisi: başlık `name` alanında büyük basılır; fotoğraf/avatar yok.
+  const data: OgProfileData = {
+    template: POST_OG_TEMPLATE,
+    name: row.title,
+    title: "",
+    username: resolved.profile.username,
+    photoAssetId: null,
+    avatarAssetId: null,
+    linkTitles: [],
+  };
+
+  try {
     const { renderOgPng } = await import("./og-render");
     const png = await renderOgPng(c.env, data);
     const response = new Response(png, {

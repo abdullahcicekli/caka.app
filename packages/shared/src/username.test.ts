@@ -208,7 +208,12 @@ describe("route tablosu ↔ rezerve liste", () => {
     // Önek `__` bilinçli — kullanıcı adı deseni `[a-z0-9-]` olduğu için
     // hiçbir profil adresiyle çakışamaz.
     const uretim = literalRoutePaths(source).filter((path) => !path.startsWith("__lab/"));
-    expect(uretim, "elle yazılan tek route :username catch-all'u olmalı").toEqual([
+    // `:username/:slug` (yazı sayfası) ikinci belgeli istisnadır (KTD2):
+    // profil sayfası gibi dil öneki almaz, iki segmenti de parametreli olduğu
+    // için hiçbir statik adresle çakışamaz. Sıra önemlidir — slug'lı route
+    // catch-all'dan ÖNCE durmalı, yoksa /:username her şeyi yutar.
+    expect(uretim, "elle yazılan route'lar yalnız yazı sayfası + catch-all olmalı").toEqual([
+      ":username/:slug",
       ":username",
     ]);
   });

@@ -74,5 +74,17 @@ const lab: RouteConfigEntry[] =
 export default [
   ...localized,
   ...lab,
+  /**
+   * Public yazı sayfası (U5/KTD2) — dosyanın "elle yazılmaz" başlığının
+   * BELGELİ İSTİSNASI: profil sayfası gibi dil öneki almaz (R15/L9), bu
+   * yüzden beş dilli slug tablosuna GİREMEZ; tabloya girmeyen tek route
+   * biçimi de buraya elle yazılan düz `route()` çağrısıdır (`__lab` emsali).
+   *
+   * Catch-all'dan HEMEN ÖNCE durur (sıra kuralı istisnasız) ve top-level
+   * segment eklemediği için Değişmez #1'e rezerve isim borcu doğurmaz;
+   * `:slug` alanını profil-içi rezerve liste (`RESERVED_POST_SLUGS`) korur.
+   * Derin yollar (`/:username/:slug/x`) bu route'a eşleşmez → mevcut 404.
+   */
+  route(":username/:slug", "routes/username.yazi.tsx"),
   route(":username", "routes/username.tsx"),
 ] satisfies RouteConfig;
