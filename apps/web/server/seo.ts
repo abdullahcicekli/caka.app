@@ -1,7 +1,7 @@
-import { count, desc, isNotNull } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 
-import { createDb, profile } from "@caka/db";
+import { createDb, post, profile } from "@caka/db";
 import {
   DEFAULT_LOCALE,
   type Locale,
@@ -135,6 +135,18 @@ seoRoutes.get("/sitemap.xml", async (c) => {
   for (let page = 1; page <= pages; page += 1) {
     locations.push(`${SITE_URL}/sitemaps/profiles-${page}.xml`);
   }
+  // Yazılar ayrı bir seri (KTD8): profil sayfalaması yukarıda değişmeden
+  // kalır. Yayında yazı yoksa (R13) seri hiç görünmez.
+  const [postRow] = await db
+    .select({ value: count() })
+    .from(post)
+    .innerJoin(profile, eq(post.profileId, profile.id))
+    .where(and(eq(post.status, "published"), isNotNull(profile.onboardingCompletedAt)));
+  const postCount = postRow?.value ?? 0;
+  const postPages = Math.ceil(postCount / SITEMAP_PAGE_SIZE);
+  for (let page = 1; page <= postPages; page += 1) {
+    locations.push(`${SITE_URL}/sitemaps/posts-${page}.xml`);
+  }
   return c.body(sitemapIndex(locations), 200, XML_HEADERS);
 });
 
@@ -180,6 +192,35 @@ seoRoutes.get("/sitemaps/profiles-*", async (c) => {
     urlset(
       rows.map((row) => ({
         loc: `${SITE_URL}/${encodeURIComponent(row.username)}`,
+        lastmod: row.updatedAt,
+      })),
+    ),
+    200,
+    XML_HEADERS,
+  );
+});
+
+// Yayındaki yazılar (R13): taslaklar ve onboarding'i tamamlamamış profillerin
+// yazıları listeye girmez. `lastmod` yazının kendi `updatedAt`'i (KTD8).
+seoRoutes.get("/sitemaps/posts-*", async (c) => {
+  const pageMatch = c.req.path.match(/^\/sitemaps\/posts-(\d+)\.xml$/);
+  const page = Number(pageMatch?.[1]);
+  if (!Number.isInteger(page) || page < 1) return c.notFound();
+
+  const rows = await createDb(c.env.DB)
+    .select({ username: profile.username, slug: post.slug, updatedAt: post.updatedAt })
+    .from(post)
+    .innerJoin(profile, eq(post.profileId, profile.id))
+    .where(and(eq(post.status, "published"), isNotNull(profile.onboardingCompletedAt)))
+    .orderBy(desc(post.updatedAt))
+    .limit(SITEMAP_PAGE_SIZE)
+    .offset((page - 1) * SITEMAP_PAGE_SIZE);
+  if (rows.length === 0) return c.notFound();
+
+  return c.body(
+    urlset(
+      rows.map((row) => ({
+        loc: `${SITE_URL}/${encodeURIComponent(row.username)}/${encodeURIComponent(row.slug)}`,
         lastmod: row.updatedAt,
       })),
     ),
