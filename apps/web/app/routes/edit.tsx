@@ -88,6 +88,7 @@ import {
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
+import { getOwnPostOptions, type OwnPostOption } from "../../server/post-list";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 import { localizedRedirect } from "../../server/locale";
@@ -131,6 +132,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     // eklenen bloklar burada yok; onların imzalı yolu /api/og-image
     // yanıtındaki `proxied` alanından gelir.
     signedImages: await signLayoutImages(env, layout),
+    // Yazı blokları (U6): öne çıkan seçici TASLAKLARI da listeler, önizleme
+    // ve uyarı bağlamı yayındakileri süzer. Tek sorgu, üç tüketici.
+    posts: await getOwnPostOptions(env, profile.id),
   };
 }
 
@@ -254,6 +258,14 @@ function defaultBlock(type: ProfileBlock["type"]): ProfileBlock {
           mealTranslator: "",
         },
       };
+    // Yazı listesi veri taşımaz; içerik render anında yayındaki yazılardan
+    // gelir. 2x2 doğar (368×324): birkaç satırlık liste için makul başlangıç.
+    case "posts":
+      return { id, type, size: "2x2", data: {} };
+    // Öne çıkan yazı BOŞ doğar: hedef, panelin seçicisinden gelir. 2x1
+    // (368×156) belge kartıyla aynı tek satırlık vitrin ölçüsü.
+    case "featuredPost":
+      return { id, type, size: "2x1", data: { postId: "" } };
     case "profile":
       return { id, type: "profile", size: "1x1", data: { name: "", title: "" } };
     default: {
@@ -284,6 +296,10 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   // Ayet bloğu boş doğuyor ve kullanılabilir olması için arama gerekiyor;
   // panelden tek tıkla eklenen bir kısayol boş kart bırakırdı.
   ayet: false,
+  // Panelde kısayolu yok; blok galerisinden eklenir.
+  posts: false,
+  // Öne çıkan yazı boş doğuyor (seçim panelde); tek tık kısayolu boş kart bırakırdı.
+  featuredPost: false,
 };
 
 /**
@@ -417,6 +433,7 @@ function Inspector({
   multiPhotoBlocked,
   rememberImage,
   signedImages,
+  posts,
 }: {
   block: ProfileBlock;
   update: (patch: Partial<ProfileBlock["data"]>) => void;
@@ -455,6 +472,9 @@ function Inspector({
   /** Panelin içindeki önizleme kartı da tuvaldeki kartla AYNI eşlemeyi okur;
       yoksa harita kareleri boş kalırdı. */
   signedImages: Readonly<Record<string, string>>;
+  /** Sahibin yazıları — öne çıkan seçici TASLAKLARI DA listeler (taslak
+      seçilirse uyarı anında görünür, kart yayınlanana dek public'te çizilmez). */
+  posts: readonly OwnPostOption[];
 }) {
   const app = useCatalog(appCatalog);
   const widget = useCatalog(widgetCatalog);
@@ -2080,6 +2100,38 @@ function Inspector({
           </>
         );
       }
+      // Yazı listesi veri taşımaz: panelde ayar yok, yalnız kartın nasıl
+      // dolduğunu anlatan bir not var (liste yayındaki yazılardan kurulur).
+      case "posts":
+        return <p className="inspector-hint">{app.editor.postsHint}</p>;
+      case "featuredPost":
+        return (
+          <>
+            <label>
+              {app.editor.featuredPostField}
+              <select
+                value={block.data.postId}
+                onChange={(event) => update({ postId: event.target.value })}
+              >
+                <option value="">{app.editor.featuredPostNone}</option>
+                {posts.map((post) => (
+                  <option key={post.id} value={post.id}>
+                    {/* Taslaklar da listelenir ama işaretli: taslak seçmek
+                        serbest, kart yayında görünmez ve uyarı rozeti anında
+                        çıkar (blockIssue + publishedPostIds bağlamı). */}
+                    {post.status === "published"
+                      ? post.title
+                      : app.editor.featuredPostDraftOption(post.title)}
+                  </option>
+                ))}
+              </select>
+              {posts.length === 0 ? (
+                <small className="inspector-hint">{app.editor.featuredPostNoPosts}</small>
+              ) : null}
+            </label>
+            <p className="inspector-hint">{app.editor.featuredPostHint}</p>
+          </>
+        );
       // Metin bloğu tuval üzerinde Tiptap ile düzenlenir; panelde alanı yok.
       case "text":
         return null;
@@ -2126,6 +2178,28 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   // sonra açılır ve kullanıcı eksikleri kapattıkça kendiliğinden kaybolur.
   const [publishTried, setPublishTried] = useState(false);
   const navigate = useNavigate();
+
+  // Yazı bloklarının beslemesi (U6). Önizleme YALNIZ yayındakileri görür —
+  // canlı sayfayla aynı veri (username.tsx aynı süzgeci loader'da uygular);
+  // uyarı bağlamı da aynı kümeden kurulur ki rozet ve public render tek
+  // gerçeği okusun.
+  const publishedPosts = useMemo(
+    () =>
+      loaderData.posts
+        .filter((post) => post.status === "published")
+        .sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
+        .map((post) => ({
+          id: post.id,
+          title: post.title,
+          href: `/${loaderData.username}/${post.slug}`,
+          publishedAt: post.publishedAt ?? 0,
+        })),
+    [loaderData.posts, loaderData.username],
+  );
+  const issueCtx = useMemo(
+    () => ({ publishedPostIds: new Set(publishedPosts.map((post) => post.id)) }),
+    [publishedPosts],
+  );
 
   // Gerçek telefonda editör mobil düzeni yönetmeli. Aksi hâlde sürükleme
   // masaüstü (lg) konumlarına yazılır, telefondan bakan ziyaretçi ise sm
@@ -2413,12 +2487,13 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   const issues = useMemo(() => {
     if (!publishTried) return [];
     // Kural katmanı kimlik döndürür; metin burada, kullanıcının dilinde kurulur.
-    return layoutIssues(layout).map((issue) => ({
+    // Bağlam, öne çıkan yazının hedefi yayında mı denetimini de açar (AE3).
+    return layoutIssues(layout, issueCtx).map((issue) => ({
       blockId: issue.blockId,
       label: blockLabel(issue.type),
       message: app.blockIssues[issue.issue],
     }));
-  }, [publishTried, layout, app, blockLabel]);
+  }, [publishTried, layout, app, blockLabel, issueCtx]);
 
   function focusBlock(id: string) {
     setSelectedId(id);
@@ -2920,7 +2995,13 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
               onSelect={setSelectedId}
               onChange={applyGridChange}
               onManual={markSmManual}
-              issueOf={blockIssue}
+              // Rozet metni katalogdan kurulur (Değişmez #5: kural katmanı
+              // kimlik döndürür, metni katalog verir). Bağlam, taslak/silinmiş
+              // hedefe işaret eden öne çıkan yazıyı ANINDA işaretler.
+              issueOf={(candidate) => {
+                const issue = blockIssue(candidate, issueCtx);
+                return issue ? app.blockIssues[issue] : null;
+              }}
               sections={layout.sections ?? []}
               onSectionRename={renameSection}
               onSectionRemove={removeSection}
@@ -2948,11 +3029,32 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     }
                     onClose={() => setSelectedId(null)}
                   />
+                ) : block.type === "posts" && publishedPosts.length === 0 ? (
+                  // Sıfır yayınlanmış yazı BOZULMA DEĞİL (uyarı da üretmez,
+                  // bkz. blockIssue): public'te blok çizilmez, editörde ise
+                  // fotoğraf/ayet taslaklarıyla aynı nötr yer tutucu görünür.
+                  <article className="profile-block profile-block-posts">
+                    <span className="profile-image-placeholder">
+                      {app.editor.postsEmptyPreview}
+                    </span>
+                  </article>
+                ) : block.type === "featuredPost" &&
+                  !publishedPosts.some((post) => post.id === block.data.postId) ? (
+                  // Hedef yayında değil: kart public'te çizilmeyecek. Taslak
+                  // seçiliyse başlığı gösterilir ki sahibi neyi beklediğini
+                  // görsün; uyarıyı rozet söyler (issueOf, anında).
+                  <article className="profile-block profile-block-featured-post">
+                    <span className="profile-image-placeholder">
+                      {loaderData.posts.find((post) => post.id === block.data.postId)?.title ??
+                        app.editor.featuredPostEmptyPreview}
+                    </span>
+                  </article>
                 ) : (
                   <ProfileBlockCard
                     block={block}
                     githubCalendars={loaderData.githubCalendars}
                     signedImages={signedImages}
+                    posts={publishedPosts}
                   />
                 )
               }
@@ -3086,6 +3188,7 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           multiPhotoBlocked={multiPhotoBlocked}
           rememberImage={rememberSignedImage}
           signedImages={signedImages}
+          posts={loaderData.posts}
           close={() => setSelectedId(null)}
           remove={() => {
             setLayout((current) => ({ ...current, blocks: current.blocks.filter((block) => block.id !== selected.id) }));

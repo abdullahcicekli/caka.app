@@ -37,6 +37,8 @@ export const de = {
     document: "Dokument",
     location: "Standort",
     ayet: "Koranvers",
+    posts: "Beiträge",
+    featuredPost: "Hervorgehobener Beitrag",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -53,6 +55,8 @@ export const de = {
     document_missing: "Lade ein Dokument hoch",
     location_missing: "Suche deinen Ort und wähle ihn aus",
     ayet_verse: "Wähle einen Vers",
+    featured_post_missing: "Wähle einen Beitrag zum Hervorheben",
+    featured_post_unpublished: "Der gewählte Beitrag ist nicht veröffentlicht — veröffentliche ihn oder wähle einen anderen",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -71,6 +75,16 @@ export const de = {
     documentTitlePlaceholder: "Leer lassen: dann zeigt die Karte den Dateinamen",
     documentServeHint:
       "Das Dokument wird über caka.app ausgeliefert und beim Klick heruntergeladen; „Vorschau“ öffnet es in einem neuen Tab.",
+    postsHint:
+      "Deine veröffentlichten Beiträge werden automatisch gelistet, der neueste zuerst. Ein neuer Beitrag erfordert kein erneutes Veröffentlichen deiner Seite.",
+    postsEmptyPreview: "Noch keine veröffentlichten Beiträge",
+    featuredPostField: "Hervorzuhebender Beitrag",
+    featuredPostNone: "Beitrag wählen…",
+    featuredPostDraftOption: (title: string) => `${title} — Entwurf`,
+    featuredPostHint:
+      "Du kannst auch einen Entwurf wählen; die Karte bleibt auf deiner Seite verborgen, bis der Beitrag veröffentlicht ist.",
+    featuredPostEmptyPreview: "Wähle einen Beitrag zum Hervorheben",
+    featuredPostNoPosts: "Du hast noch keine Beiträge.",
 
     layoutUnreadable: "Das Layout der Seite konnte nicht gelesen werden",
     backToDashboard: "Zurück zur Übersicht",

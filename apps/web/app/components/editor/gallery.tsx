@@ -9,8 +9,10 @@ import {
   MediaImage,
   MediaVideo,
   Megaphone,
+  MultiplePages,
   MusicDoubleNote,
   Page,
+  PageStar,
   OpenBook,
   Search,
   Text,
@@ -58,6 +60,10 @@ const CONTENT_CATALOG: Record<ContentBlockType, CatalogItem> = {
   document: { icon: Page, enabled: true },
   location: { icon: MapPin, enabled: true },
   ayet: { icon: OpenBook, enabled: true },
+  // Yazı blokları (U6): liste yayındaki yazılardan kendiliğinden dolar,
+  // öne çıkan tek bir yazıyı vitrine koyar (seçim panelde).
+  posts: { icon: MultiplePages, enabled: true },
+  featuredPost: { icon: PageStar, enabled: true },
 };
 
 /** Tip → eklemenin neden kapalı olduğunu anlatan Türkçe cümle. */

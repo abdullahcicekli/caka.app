@@ -33,6 +33,19 @@ import { ProfileAvatar } from "./profile-avatar";
 import { useOnboardingLists } from "~/lib/onboarding";
 import { appCatalog } from "~/content/app";
 
+/**
+ * Yazı bloklarının (posts / featuredPost) render girdisi. Loader kurar:
+ * profilin YAYINDAKİ yazıları, en yeniden eskiye. `href` burada hazır gelir
+ * (`/kullanici/yazi-adresi`) — bileşen kullanıcı adını bilmek zorunda kalmaz.
+ */
+export interface ProfilePostItem {
+  id: string;
+  title: string;
+  href: string;
+  /** İlk yayın anı (ms); kartta tarih satırı olarak basılır. */
+  publishedAt: number;
+}
+
 function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
   const w = useCatalog(widgetCatalog);
   return (
@@ -175,6 +188,7 @@ export function ProfileBlockCard({
   githubCalendars,
   signedImages,
   youtubeFeeds,
+  posts,
   allowEmbeds = false,
   eagerImages = false,
 }: {
@@ -187,6 +201,10 @@ export function ProfileBlockCard({
   /** blok kimliği → kanalın en son videosu (loader doldurur; editörde boş
       kalır ve kart kayıt anında saklanan bilgiye düşer). */
   youtubeFeeds?: YoutubeFeedMap;
+  /** Profilin YAYINDAKİ yazıları, en yeniden eskiye (loader doldurur).
+      posts bloğu listeyi çizer; featuredPost hedefini burada arar ve
+      bulamazsa (taslak/silinmiş) HİÇ render edilmez — R11. */
+  posts?: readonly ProfilePostItem[];
   /**
    * Medya kartları YERİNDE oynatılabilir mi? Yalnız public profil (`/:username`)
    * true geçer. Editör tuvalinde oynatma sürükleme/yeniden boyutlandırmayla
@@ -709,6 +727,51 @@ export function ProfileBlockCard({
         />
       );
 
+    /**
+     * Yazı listesi (R10). Tamamen STATİK render (R12): düz <a> bağlantıları,
+     * JS yok — liste loader'ın verdiği yayındaki yazılardır (en yeniden
+     * eskiye), yani yeni yayın tuval yeniden yayınlanmadan en üste düşer
+     * (AE7). Sıfır yazı public'te blok ÇİZİLMEZ (boş kutu "bozuk" okunurdu);
+     * editör önizlemesi kendi nötr boş-durumunu basar (routes/edit.tsx).
+     */
+    case "posts": {
+      const items = posts ?? [];
+      if (items.length === 0) return null;
+      return (
+        <article className="profile-block profile-block-posts" aria-label={w.posts.listLabel}>
+          <ul className="posts-list">
+            {items.map((post) => (
+              <li key={post.id}>
+                <a href={post.href}>
+                  <strong>{post.title}</strong>
+                  {/* Belge kartıyla aynı tarih biçimi — tek sözlük, tek biçim. */}
+                  <small>{w.document.date(post.publishedAt)}</small>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </article>
+      );
+    }
+
+    /**
+     * Öne çıkan yazı (R11). Hedef YAYINDAKİ listede yoksa (taslağa döndü,
+     * silindi, hiç seçilmedi) kart public'te render EDİLMEZ — kırık bağlantı
+     * ya da boş vitrin basılmaz; sahibi editörde layoutIssues uyarısıyla
+     * görür. Bağlantı iç adres olduğu için yeni sekme açılmaz.
+     */
+    case "featuredPost": {
+      const target = posts?.find((post) => post.id === block.data.postId);
+      if (!target) return null;
+      return (
+        <a className="profile-block profile-block-featured-post" href={target.href}>
+          <small className="featured-post-kicker">{w.posts.featuredKicker}</small>
+          <strong>{target.title}</strong>
+          <small className="featured-post-date">{w.document.date(target.publishedAt)}</small>
+        </a>
+      );
+    }
+
     default: {
       // Tanınmayan tip: derleyici burada hata verir. Çalışma anında (eski
       // deploy + yeni blok) sessizce boş kalır, sayfayı düşürmez.
@@ -726,6 +789,7 @@ export function ProfileCanvas({
   githubCalendars,
   signedImages,
   youtubeFeeds,
+  posts,
   allowEmbeds = false,
 }: {
   layout: ProfileLayout;
@@ -737,6 +801,8 @@ export function ProfileCanvas({
   signedImages?: Readonly<Record<string, string>>;
   /** blok kimliği → kanalın en son videosu (loader doldurur) */
   youtubeFeeds?: YoutubeFeedMap;
+  /** Yayındaki yazılar (loader doldurur); yazı blokları bundan çizilir. */
+  posts?: readonly ProfilePostItem[];
   /** Medya kartları yerinde oynatılabilsin mi? Yalnız public profil true geçer. */
   allowEmbeds?: boolean;
 }) {
@@ -794,6 +860,7 @@ export function ProfileCanvas({
                   githubCalendars={githubCalendars}
                   signedImages={signedImages}
                   youtubeFeeds={youtubeFeeds}
+                  posts={posts}
                   allowEmbeds={allowEmbeds}
                 />
               </div>

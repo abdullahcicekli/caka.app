@@ -37,6 +37,8 @@ export const en = {
     document: "Document",
     location: "Location",
     ayet: "Qur'an verse",
+    posts: "Posts",
+    featuredPost: "Featured post",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -53,6 +55,8 @@ export const en = {
     document_missing: "Upload a document",
     location_missing: "Search for and pick your place",
     ayet_verse: "Choose a verse",
+    featured_post_missing: "Choose a post to feature",
+    featured_post_unpublished: "The selected post isn't published — publish it or pick another one",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -71,6 +75,16 @@ export const en = {
     documentTitlePlaceholder: "Leave it empty and the card shows the file name",
     documentServeHint:
       "The document is served from caka.app and downloads on click; “Preview” opens it in a new tab.",
+    postsHint:
+      "Your published posts are listed automatically, newest first. Publishing a new post doesn't require republishing your page.",
+    postsEmptyPreview: "No published posts yet",
+    featuredPostField: "Post to feature",
+    featuredPostNone: "Choose a post…",
+    featuredPostDraftOption: (title: string) => `${title} — draft`,
+    featuredPostHint:
+      "You can pick a draft too; the card stays hidden on your page until the post is published.",
+    featuredPostEmptyPreview: "Choose a post to feature",
+    featuredPostNoPosts: "You have no posts yet.",
 
     layoutUnreadable: "The page layout could not be read",
     backToDashboard: "Back to dashboard",

@@ -28,6 +28,7 @@ import { getProfileAnalytics } from "../../server/analytics";
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
+import { getPublishedPostCards } from "../../server/post-list";
 import { getProfileByUserId } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/dashboard";
@@ -74,11 +75,16 @@ export async function loader({ request }: Route.LoaderArgs) {
     ),
   };
 
-  // Önizleme canlı sayfayla aynı veriyi görsün. Üçü bağımsız; paralel.
-  const [githubCalendars, signedImages, youtubeFeeds] = await Promise.all([
+  // Önizleme canlı sayfayla aynı veriyi görsün. Hepsi bağımsız; paralel.
+  // Yazı sorgusu düzende yazı bloğu yoksa koşmaz (username.tsx ile aynı ilke).
+  const hasPostBlocks = layout.blocks.some(
+    (block) => block.type === "posts" || block.type === "featuredPost",
+  );
+  const [githubCalendars, signedImages, youtubeFeeds, publishedPosts] = await Promise.all([
     getGithubCalendars(env, collectGithubLogins(layout)),
     signLayoutImages(env, layout),
     getYoutubeChannelCards(env, layout, localeFromRequest(request)),
+    hasPostBlocks ? getPublishedPostCards(env, profile.id) : Promise.resolve([]),
   ]);
 
   return {
@@ -95,6 +101,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     githubCalendars,
     signedImages,
     youtubeFeeds,
+    // Yazı blokları da canlı sayfayla aynı listeyi görsün (U6).
+    posts: publishedPosts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      href: `/${profile.username}/${post.slug}`,
+      publishedAt: post.publishedAt,
+    })),
     account: {
       name: card?.data.name || profile.username,
       username: profile.username,
@@ -329,6 +342,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     analytics,
     signedImages,
     youtubeFeeds,
+    posts,
   } =
     loaderData;
 
@@ -359,6 +373,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               githubCalendars={githubCalendars}
               signedImages={signedImages}
               youtubeFeeds={youtubeFeeds}
+              posts={posts}
             />
           </div>
         </div>

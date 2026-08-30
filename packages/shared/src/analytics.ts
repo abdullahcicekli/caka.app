@@ -203,6 +203,10 @@ function blockUrl(block: ProfileBlock): string {
     // Ayet kartı bir bağlantı DEĞİL: metin kayıtta duruyor, tıklanacak bir
     // hedef yok (R58 — ziyaretçi hiçbir dış kaynağa gitmiyor).
     case "ayet":
+    // Yazı blokları İÇ bağlantıdır (/kullanici/yazi-adresi): dış tıklama
+    // ölçümünün konusu değiller — konum/ayet ile aynı küme.
+    case "posts":
+    case "featuredPost":
       return "";
     default: {
       const exhaustive: never = block;
@@ -233,6 +237,9 @@ function blockLabel(block: ProfileBlock): string {
     case "text":
     case "location":
     case "ayet":
+    // Yazı blokları etiket taşımaz; ölçüme de girmiyorlar (bkz. `blockUrl`).
+    case "posts":
+    case "featuredPost":
       return "";
     default: {
       const exhaustive: never = block;

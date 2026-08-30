@@ -755,3 +755,69 @@ describe("bölüm ekleme/silme aritmetiği (editör mantığı)", () => {
     expect(shift([{ y: 0 }], 0, -1)).toEqual([{ y: 0 }]);
   });
 });
+
+// ── U6: yazı blokları (posts / featuredPost) ────────────────────────────────
+describe("yazı blokları", () => {
+  const withPostBlocks = (postId: string) => ({
+    version: 1,
+    blocks: [
+      { ...profileBlock },
+      { id: "blk_posts", type: "posts", data: {} },
+      { id: "blk_featured", type: "featuredPost", data: { postId } },
+    ],
+  });
+
+  it("posts ve featuredPost şemadan geçer", () => {
+    const parsed = profileLayoutSchema.parse(withPostBlocks("post_1"));
+    const featured = parsed.blocks.find((block) => block.id === "blk_featured");
+    expect(featured).toMatchObject({ type: "featuredPost", data: { postId: "post_1" } });
+    expect(parsed.blocks.find((block) => block.id === "blk_posts")?.type).toBe("posts");
+  });
+
+  // R11'in okunabilirlik yarısı: silinen/eski bir yazıya işaret eden kayıt
+  // düzeni DÜŞÜRMEZ — sorun parse hatası değil, layoutIssues uyarısıdır.
+  it("geçersiz ya da aşırı uzun postId parse hatası vermez", () => {
+    expect(() => profileLayoutSchema.parse(withPostBlocks("silinmis-yazi"))).not.toThrow();
+    const tooLong = profileLayoutSchema.parse(withPostBlocks("x".repeat(500)));
+    const featured = tooLong.blocks.find((block) => block.id === "blk_featured");
+    // Sınırı aşan değer veriyi bozmaz; alan boşa düşer ve uyarı mekanizması
+    // ("yazı seç") devralır.
+    expect(featured).toMatchObject({ type: "featuredPost", data: { postId: "" } });
+  });
+
+  it("posts bloğu veri taşımadan da parse olur (data alanı yok)", () => {
+    expect(() =>
+      profileLayoutSchema.parse({
+        version: 1,
+        blocks: [{ ...profileBlock }, { id: "blk_posts", type: "posts" }],
+      }),
+    ).not.toThrow();
+  });
+
+  it("boş featuredPost seçim ister; posts bloğu sıfır yazıyla sorun DEĞİLDİR", () => {
+    const parsed = profileLayoutSchema.parse(withPostBlocks(""));
+    const byId = new Map(parsed.blocks.map((block) => [block.id, block]));
+    expect(blockIssue(byId.get("blk_featured")!)).toBe("featured_post_missing");
+    // Sıfır yayınlanmış yazı her yeni profilin beklenen ara durumu: public'te
+    // blok çizilmez, editörde nötr boş-durum görünür — uyarı üretilmez.
+    expect(blockIssue(byId.get("blk_posts")!)).toBeNull();
+  });
+
+  it("layoutIssues bağlamsız çağrıda hedefi denetlemez (layout-api geriye uyumlu)", () => {
+    const parsed = profileLayoutSchema.parse(withPostBlocks("post_yok"));
+    expect(layoutIssues(parsed)).toEqual([]);
+  });
+
+  it("bağlam verilince yayında olmayan hedef uyarı üretir (AE3)", () => {
+    const parsed = profileLayoutSchema.parse(withPostBlocks("post_taslak"));
+    expect(
+      layoutIssues(parsed, { publishedPostIds: new Set(["post_baska"]) }),
+    ).toEqual([
+      { blockId: "blk_featured", type: "featuredPost", issue: "featured_post_unpublished" },
+    ]);
+    // Hedef yayındaysa uyarı yok.
+    expect(
+      layoutIssues(parsed, { publishedPostIds: new Set(["post_taslak"]) }),
+    ).toEqual([]);
+  });
+});

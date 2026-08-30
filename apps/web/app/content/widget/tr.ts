@@ -147,6 +147,18 @@ export const tr = {
   },
 
   /** GitHub katkı grafiğinin ekran okuyucu etiketi. */
+  /**
+   * Yazı blokları (U6): liste kartı ve öne çıkan kart. Tarih biçimi
+   * `document.date`ten okunur — aynı sözlükte ikinci bir ay listesi taşımamak
+   * için (biçim de bilinçli olarak aynı).
+   */
+  posts: {
+    /** Liste kartının ekran okuyucu etiketi. */
+    listLabel: "Yazılar",
+    /** Öne çıkan kartın üst etiketi (kicker). */
+    featuredKicker: "Yazı",
+  },
+
   github: {
     heatmapLabel: (total: number) => `${total} katkı, son bir yıl`,
   },

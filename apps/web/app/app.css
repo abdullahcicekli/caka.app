@@ -1488,6 +1488,59 @@
   .profile-block-ayet .ayet-meal { font-size: 16px; }
 }
 
+/* ── Yazı blokları (U6): liste + öne çıkan ────────────────────────────────
+   İkisi de tümüyle statik (R12): düz <a> bağlantıları, JS yok. Liste kartı
+   sığmayan satırları KAYDIRIR — başlık ortadan kesilmez (ayet gövdesiyle
+   aynı gerekçe), kartı büyütmek kullanıcının elinde. */
+.profile-block-posts { flex-direction: column; padding: 6px 8px; }
+.posts-list {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.posts-list li + li {
+  border-top: 1px solid color-mix(in srgb, var(--profile-card-text, var(--profile-text)) 9%, transparent);
+}
+.posts-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+.posts-list a:hover strong { text-decoration: underline; }
+.posts-list strong { font-size: 14.5px; font-weight: 600; line-height: 1.35; }
+.posts-list small { color: var(--profile-card-muted, var(--profile-muted)); font-size: 11.5px; }
+
+/* Öne çıkan yazı: kicker + başlık + tarih; kartın tamamı tek bağlantı. */
+.profile-block-featured-post {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 18px;
+  color: inherit;
+  text-decoration: none;
+}
+.profile-block-featured-post:hover strong { text-decoration: underline; }
+.featured-post-kicker {
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.profile-block-featured-post strong { font-size: 17px; font-weight: 650; line-height: 1.3; }
+.featured-post-date { color: var(--profile-card-muted, var(--profile-muted)); font-size: 11.5px; }
+
 .profile-image-placeholder {
   display: grid;
   width: 100%;

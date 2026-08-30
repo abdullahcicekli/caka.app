@@ -37,6 +37,8 @@ export const ptBR = {
     document: "Documento",
     location: "Localização",
     ayet: "Versículo do Alcorão",
+    posts: "Publicações",
+    featuredPost: "Publicação em destaque",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -53,6 +55,8 @@ export const ptBR = {
     document_missing: "Envie um documento",
     location_missing: "Busque e escolha o seu lugar",
     ayet_verse: "Escolha um versículo",
+    featured_post_missing: "Escolha a publicação em destaque",
+    featured_post_unpublished: "A publicação escolhida não está publicada — publique-a ou escolha outra",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -71,6 +75,16 @@ export const ptBR = {
     documentTitlePlaceholder: "Se deixar vazio, o cartão mostra o nome do arquivo",
     documentServeHint:
       "O documento é servido pelo caka.app e baixa ao clicar; “Prévia” abre em uma nova aba.",
+    postsHint:
+      "Suas publicações publicadas são listadas sozinhas, da mais recente para a mais antiga. Publicar uma nova não exige republicar sua página.",
+    postsEmptyPreview: "Ainda não há publicações publicadas",
+    featuredPostField: "Publicação em destaque",
+    featuredPostNone: "Escolha uma publicação…",
+    featuredPostDraftOption: (title: string) => `${title} — rascunho`,
+    featuredPostHint:
+      "Você também pode escolher um rascunho; o cartão fica oculto na sua página até a publicação.",
+    featuredPostEmptyPreview: "Escolha a publicação em destaque",
+    featuredPostNoPosts: "Você ainda não tem publicações.",
 
     layoutUnreadable: "Não foi possível ler o layout da página",
     backToDashboard: "Voltar ao painel",

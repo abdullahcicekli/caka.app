@@ -37,6 +37,8 @@ export const es = {
     document: "Documento",
     location: "Ubicación",
     ayet: "Versículo del Corán",
+    posts: "Publicaciones",
+    featuredPost: "Publicación destacada",
   } satisfies Record<ProfileBlock["type"], string>,
 
   blockIssues: {
@@ -53,6 +55,8 @@ export const es = {
     document_missing: "Sube un documento",
     location_missing: "Busca y elige tu lugar",
     ayet_verse: "Elige un versículo",
+    featured_post_missing: "Elige la publicación que quieres destacar",
+    featured_post_unpublished: "La publicación elegida no está publicada: publícala o elige otra",
   } satisfies Record<BlockIssueId, string>,
 
   gridLimit: (blockLabel: string, limits: BlockGridLimits) =>
@@ -71,6 +75,16 @@ export const es = {
     documentTitlePlaceholder: "Si lo dejas vacío, la tarjeta muestra el nombre del archivo",
     documentServeHint:
       "El documento se sirve desde caka.app y se descarga al hacer clic; «Vista previa» lo abre en una pestaña nueva.",
+    postsHint:
+      "Tus publicaciones publicadas se listan solas, la más reciente primero. Publicar una nueva no requiere volver a publicar tu página.",
+    postsEmptyPreview: "Aún no hay publicaciones publicadas",
+    featuredPostField: "Publicación a destacar",
+    featuredPostNone: "Elige una publicación…",
+    featuredPostDraftOption: (title: string) => `${title} — borrador`,
+    featuredPostHint:
+      "También puedes elegir un borrador; la tarjeta no aparecerá en tu página hasta que se publique.",
+    featuredPostEmptyPreview: "Elige la publicación que quieres destacar",
+    featuredPostNoPosts: "Todavía no tienes publicaciones.",
 
     layoutUnreadable: "No se ha podido leer la composición de la página",
     backToDashboard: "Volver al panel",

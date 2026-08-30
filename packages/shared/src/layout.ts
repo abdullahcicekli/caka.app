@@ -594,6 +594,37 @@ const ayetBlockSchema = z.object({
   }),
 });
 
+/**
+ * Yazı listesi bloğu (R10). VERİ TAŞIMAZ: liste render anında profilin
+ * yayındaki yazılarından kurulur (en yeniden eskiye), yani yeni bir yayın
+ * tuval yeniden yayınlanmadan listenin başına düşer (AE7). Sıfır yayınlanmış
+ * yazı bozulma değildir — public'te blok çizilmez, editörde nötr boş-durum
+ * görünür (bkz. `blockIssue`).
+ */
+const postsBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("posts"),
+  data: z.object({}).default({}),
+});
+
+/**
+ * Öne çıkan yazı bloğu (R11). Tek veri hedef yazının kimliğidir. Geçersiz,
+ * silinmiş ya da taslağa dönmüş bir `postId` PARSE HATASI DEĞİLDİR — düzen
+ * okunur kalmalı; sorun `layoutIssues`'un bağlamlı denetimiyle uyarıya
+ * dönüşür (AE3) ve public render bloğu atlar. `catch("")` bu yüzden:
+ * biçimsiz/aşırı uzun değer alanı boşa düşürür, belgeyi düşürmez.
+ */
+const featuredPostBlockSchema = z.object({
+  ...blockBase,
+  type: z.literal("featuredPost"),
+  data: z
+    .object({
+      /** Hedef yazının kimliği (post.id — UUID). Boş = henüz seçilmedi. */
+      postId: z.string().trim().max(64).catch("").default(""),
+    })
+    .default({ postId: "" }),
+});
+
 export const profileBlockSchema = z.discriminatedUnion("type", [
   profileCardSchema,
   socialBlockSchema,
@@ -606,6 +637,8 @@ export const profileBlockSchema = z.discriminatedUnion("type", [
   documentBlockSchema,
   locationBlockSchema,
   ayetBlockSchema,
+  postsBlockSchema,
+  featuredPostBlockSchema,
 ]);
 
 export type AyetBlockData = z.infer<typeof ayetBlockSchema>["data"];
@@ -905,6 +938,10 @@ export const BLOCK_ISSUE_IDS = [
   "document_missing",
   "location_missing",
   "ayet_verse",
+  // Öne çıkan yazı: hiç seçilmemiş ↔ seçili ama yayında değil AYRI sorunlar —
+  // ilkinin çaresi "yazı seç", ikincisininki "yayınla ya da başkasını seç".
+  "featured_post_missing",
+  "featured_post_unpublished",
 ] as const;
 
 export type BlockIssueId = (typeof BLOCK_ISSUE_IDS)[number];
@@ -915,8 +952,20 @@ export type BlockIssue = {
   issue: BlockIssueId;
 };
 
+/**
+ * Katmanın kendi başına bilemeyeceği gerçekler. Öne çıkan yazının hedefi
+ * gerçekten yayında mı sorusu D1'e bakmayı gerektirir; bu katman saf kalır
+ * ve cevabı çağıranın verdiği bağlamdan okur. Bağlam VERİLMEZSE o denetim
+ * hiç çalışmaz — mevcut bağlamsız çağrılar (layout-api yayın kapısı gibi)
+ * davranış değiştirmez.
+ */
+export type BlockIssueContext = {
+  /** Profil sahibinin YAYINDAKİ yazı kimlikleri. */
+  publishedPostIds?: ReadonlySet<string>;
+};
+
 /** Blok yayına hazır mı? Değilse sorunun kimliği. */
-export function blockIssue(block: ProfileBlock): BlockIssueId | null {
+export function blockIssue(block: ProfileBlock, ctx?: BlockIssueContext): BlockIssueId | null {
   switch (block.type) {
     case "profile":
       return block.data.name ? null : "profile_name";
@@ -961,6 +1010,19 @@ export function blockIssue(block: ProfileBlock): BlockIssueId | null {
       // Sürüm hangi metni gerektiriyorsa O aranır: yalnız Arapça gösteren bir
       // kart meal boş diye eksik sayılmamalı. `both` ikisini de ister.
       return ayetHasText(block.data) ? null : "ayet_verse";
+    case "posts":
+      // Sıfır yayınlanmış yazı BOZULMA DEĞİL: her yeni profilin geçeceği
+      // beklenen ara durum. Public render bloğu zaten atlar, editör nötr
+      // boş-durum metnini gösterir — uyarı üretilmez.
+      return null;
+    case "featuredPost":
+      if (!block.data.postId) return "featured_post_missing";
+      // Hedefin yayında olup olmadığını yalnız bağlam bilir (D1'e bakmak bu
+      // saf katmanın işi değil); bağlam yoksa denetim çalışmaz.
+      if (ctx?.publishedPostIds && !ctx.publishedPostIds.has(block.data.postId)) {
+        return "featured_post_unpublished";
+      }
+      return null;
   }
 }
 
@@ -973,10 +1035,14 @@ function ayetHasText(data: AyetBlockData): boolean {
   return arabic && meal;
 }
 
-/** Yayın öncesi eksik blokların listesi; boşsa yayınlanabilir. */
-export function layoutIssues(layout: ProfileLayout): BlockIssue[] {
+/**
+ * Yayın öncesi eksik blokların listesi; boşsa yayınlanabilir. İsteğe bağlı
+ * ikinci parametre yalnız bağlam gerektiren denetimleri (öne çıkan yazının
+ * hedefi yayında mı — AE3) açar; verilmezse imza da davranış da eskisi gibidir.
+ */
+export function layoutIssues(layout: ProfileLayout, ctx?: BlockIssueContext): BlockIssue[] {
   return layout.blocks.flatMap((block) => {
-    const issue = blockIssue(block);
+    const issue = blockIssue(block, ctx);
     return issue ? [{ blockId: block.id, type: block.type, issue }] : [];
   });
 }
@@ -1061,6 +1127,15 @@ export const BLOCK_GRID_LIMITS: Record<BentoBlockType, BlockGridLimits> = {
   // Ayet kartının sınırı `AYET_GRID_LIMITS`ten okunur (üç sürümde de aynı);
   // buradaki kayıt yalnız `blockGridLimits` dışından bakan kod için yedek.
   ayet: { minW: 2, minH: 2, maxW: 8, maxH: 8 },
+  // Yazı listesi bir METİN listesi: 2 birim (178px) genişlikte başlıklar tek
+  // kelimeye kırılıyor, taban bu yüzden belge kartıyla aynı (4 birim = 368px).
+  // Tavan 8×8: liste 20 yazıya kadar uzayabilir, sığmayan kısım kart içinde
+  // kayar (bkz. `.profile-block-posts`, app.css) — kartı büyütmek kullanıcının
+  // elinde.
+  posts: { minW: 4, minH: 2, maxW: 8, maxH: 8 },
+  // Öne çıkan yazı tek satırlık bir vitrin kartı: kicker + başlık + tarih.
+  // Belge kartıyla aynı sınıf ölçüler.
+  featuredPost: { minW: 4, minH: 2, maxW: 8, maxH: 4 },
 };
 
 /**

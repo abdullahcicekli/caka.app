@@ -39,6 +39,9 @@ export const tr = {
     document: "Belge",
     location: "Konum",
     ayet: "Kur'an ayeti",
+    // Yazı blokları (U6): liste otomatik dolar, öne çıkan tek yazı seçer.
+    posts: "Yazılar",
+    featuredPost: "Öne çıkan yazı",
   } satisfies Record<ProfileBlock["type"], string>,
 
   /** Yayını engelleyen blok sorunlarının kullanıcıya görünen karşılığı. */
@@ -56,6 +59,8 @@ export const tr = {
     document_missing: "Belge yükle",
     location_missing: "Bulunduğun yeri ara ve seç",
     ayet_verse: "Ayet seç",
+    featured_post_missing: "Öne çıkarılacak yazıyı seç",
+    featured_post_unpublished: "Seçtiğin yazı yayında değil — yayınla ya da başka bir yazı seç",
   } satisfies Record<BlockIssueId, string>,
 
   /** Izgara sınırı aşıldığında gösterilen mesaj. */
@@ -75,6 +80,18 @@ export const tr = {
     documentTitlePlaceholder: "Boş bırakırsan kartta dosya adı görünür",
     documentServeHint:
       "Belge caka.app üzerinden servis edilir ve tıklayınca indirilir; “Önizle” yeni sekmede açar.",
+    // Yazı blokları (U6). `postsEmptyPreview` UYARI DEĞİL, nötr boş-durum:
+    // sıfır yayınlanmış yazı her yeni profilin beklenen ara hâli.
+    postsHint:
+      "Yayındaki yazıların kendiliğinden listelenir, en yenisi en üstte. Yeni bir yazı yayınladığında sayfayı yeniden yayınlaman gerekmez.",
+    postsEmptyPreview: "Henüz yayınlanmış yazı yok",
+    featuredPostField: "Öne çıkarılacak yazı",
+    featuredPostNone: "Yazı seç…",
+    featuredPostDraftOption: (title: string) => `${title} — taslak`,
+    featuredPostHint:
+      "Taslak da seçebilirsin; kart, yazı yayınlanana kadar sayfanda görünmez.",
+    featuredPostEmptyPreview: "Öne çıkarılacak yazıyı seç",
+    featuredPostNoPosts: "Henüz yazın yok.",
 
     layoutUnreadable: "Sayfa düzeni okunamadı",
     backToDashboard: "Panele dön",

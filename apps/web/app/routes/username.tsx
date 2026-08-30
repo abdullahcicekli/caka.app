@@ -25,6 +25,7 @@ import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
 import { ogImagePathForProfile } from "../../server/og-image";
+import { getPublishedPostCards } from "../../server/post-list";
 import { resolveUsername } from "../../server/profile";
 import { getYoutubeChannelCards } from "../../server/youtube-widget";
 import type { Route } from "./+types/username";
@@ -149,12 +150,19 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     }),
   ].filter((url, index, values) => /^https?:\/\//.test(url) && values.indexOf(url) === index);
 
-  // Üç zenginleştirme birbirinden bağımsız; sırayla beklenirse gecikmeleri
-  // toplanırdı. Üçü de kendi içinde hata yutar — hiçbiri sayfayı düşürmez.
-  const [githubCalendars, signedImages, youtubeFeeds] = await Promise.all([
+  // Zenginleştirmeler birbirinden bağımsız; sırayla beklenirse gecikmeleri
+  // toplanırdı. İlk üçü kendi içinde hata yutar — hiçbiri sayfayı düşürmez.
+  // Yazı sorgusu düzende yazı bloğu yoksa hiç koşmaz (D1'e boşuna gidilmez);
+  // yayındaki yazılar en yeniden eskiye iner, yani yeni yayın tuval yeniden
+  // yayınlanmadan liste bloğunun başına düşer (AE7).
+  const hasPostBlocks = layout.blocks.some(
+    (block) => block.type === "posts" || block.type === "featuredPost",
+  );
+  const [githubCalendars, signedImages, youtubeFeeds, publishedPosts] = await Promise.all([
     getGithubCalendars(env, collectGithubLogins(layout)),
     signLayoutImages(env, layout),
     getYoutubeChannelCards(env, layout, localeFromRequest(request)),
+    hasPostBlocks ? getPublishedPostCards(env, p.id) : Promise.resolve([]),
   ]);
 
   return {
@@ -177,12 +185,20 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     // Kanal widget'larının son videosu (RSS, 15 dk önbellek). Akış
     // okunamazsa sözlük boş kalır ve kart saklanan bilgiyle yetinir.
     youtubeFeeds,
+    // Yazı blokları (U6): kartların çizeceği yayındaki yazılar. `href` burada
+    // kurulur; bileşen kullanıcı adını bilmek zorunda kalmaz.
+    posts: publishedPosts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      href: `/${p.username}/${post.slug}`,
+      publishedAt: post.publishedAt,
+    })),
   };
 }
 
 export default function PublicProfile({ loaderData }: Route.ComponentProps) {
   const app = useCatalog(appCatalog);
-  const { username, isOwner, layout, theme, githubCalendars, signedImages, youtubeFeeds } =
+  const { username, isOwner, layout, theme, githubCalendars, signedImages, youtubeFeeds, posts } =
     loaderData;
   return (
     <main className="relative min-h-svh">
@@ -192,6 +208,7 @@ export default function PublicProfile({ loaderData }: Route.ComponentProps) {
         githubCalendars={githubCalendars}
         signedImages={signedImages}
         youtubeFeeds={youtubeFeeds}
+        posts={posts}
         // Yerinde oynatma YALNIZ burada açık: editör tuvalinde oynatıcı
         // sürükleme/yeniden boyutlandırmayla çakışır, panel önizlemesinde de
         // gereksiz. Oralarda kart facade olarak kalır.

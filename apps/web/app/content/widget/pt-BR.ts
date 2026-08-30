@@ -105,6 +105,11 @@ export const ptBR = {
     mealCredit: (translator: string) => `Tradução para o turco: ${translator}`,
   },
 
+  posts: {
+    listLabel: "Publicações",
+    featuredKicker: "Publicação",
+  },
+
   github: {
     heatmapLabel: (total: number) => `${total} contribuições no último ano`,
   },
