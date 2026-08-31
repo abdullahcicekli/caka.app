@@ -272,6 +272,13 @@ export const es = {
       placeholder: "Escribe algo…",
       statusPlaceholder: "Escribe tu anuncio…",
       linkUrl: "Dirección del enlace",
+      linkDialog: {
+        title: "Añadir enlace",
+        description: "Escribe la dirección que se abrirá al hacer clic.",
+        placeholder: "ejemplo.com",
+        cancel: "Cancelar",
+        apply: "Añadir enlace",
+      },
       bold: "Negrita",
       italic: "Cursiva",
       bulletList: "Lista con viñetas",

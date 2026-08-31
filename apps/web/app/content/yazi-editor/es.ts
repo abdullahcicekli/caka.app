@@ -53,7 +53,12 @@ export const es = {
     publish: "Publicar",
     unpublish: "Pasar a borrador",
     remove: "Eliminar",
-    removeConfirm: "¿Eliminar esta publicación de forma permanente?",
+    removeDialog: {
+      title: "¿Eliminar publicación?",
+      body: "Esta publicación se eliminará de forma permanente. Esta acción no se puede deshacer.",
+      cancel: "Cancelar",
+      confirm: "Eliminar permanentemente",
+    },
     viewPost: "Abrir publicación",
     actionFailed: "No se pudo completar la acción; inténtalo de nuevo.",
     validationTitle: "Añade un título antes de publicar.",

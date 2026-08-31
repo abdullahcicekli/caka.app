@@ -43,6 +43,17 @@ import {
   validatePostSlug,
 } from "@caka/shared";
 import { richTextExtensions } from "~/components/editor/rich-text-editor";
+import { LinkDialog } from "~/components/editor/link-dialog";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { appCatalog } from "~/content/app";
 import { yaziEditorCatalog, type SlugStatusId } from "~/content/yazi-editor";
 import { prepareImageForUpload } from "~/lib/image-upload";
@@ -144,6 +155,8 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
   const [busy, setBusy] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [showPublishedToast, setShowPublishedToast] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
   // Autosave zinciri — edit.tsx deseni: en son içerik ref'te, gönderim tek
   // kuyruktan (yarışan PUT'lar birbirini ezmesin), debounce 800ms.
@@ -401,8 +414,11 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
       editor.chain().focus().unsetLink().run();
       return;
     }
-    const href = window.prompt(rt.linkUrl);
-    if (!href) return;
+    setLinkDialogOpen(true);
+  }
+
+  function applyLink(href: string) {
+    if (!editor) return;
     const url = /^[a-z][a-z\d+.-]*:/i.test(href) ? href : `https://${href}`;
     editor.chain().focus().setLink({ href: url }).run();
   }
@@ -471,7 +487,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
     }
   }
 
-  async function removePost() {
+  function removePost() {
     if (busy) return;
     // Sunucuda hiç doğmamış yazı: silinecek satır yok, listeye dön.
     if (!persistedRef.current.id) {
@@ -479,7 +495,12 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
       void navigate(path("edit.yazilar"));
       return;
     }
-    if (!window.confirm(content.editor.removeConfirm)) return;
+    setRemoveDialogOpen(true);
+  }
+
+  async function confirmRemovePost() {
+    if (busy || !persistedRef.current.id) return;
+    setRemoveDialogOpen(false);
     setActionError(null);
     setBusy(true);
     try {
@@ -613,7 +634,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
             <button
               type="button"
               disabled={busy}
-              onClick={() => void removePost()}
+              onClick={removePost}
               aria-label={content.editor.remove}
               title={content.editor.remove}
               className="rounded-xl p-2 text-murekkep/70 hover:bg-sinir hover:text-zemin focus-visible:bg-sinir focus-visible:text-zemin disabled:opacity-50"
@@ -781,6 +802,29 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
           </div>
         </section>
       ) : null}
+
+      <LinkDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        onSubmit={applyLink}
+      />
+
+      <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <DialogContent showCloseButton={false} className="max-w-md rounded-2xl p-5">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">{content.editor.removeDialog.title}</DialogTitle>
+            <DialogDescription>{content.editor.removeDialog.body}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-5">
+            <DialogClose asChild>
+              <Button type="button" variant="outline">{content.editor.removeDialog.cancel}</Button>
+            </DialogClose>
+            <Button type="button" variant="destructive" onClick={() => void confirmRemovePost()}>
+              {content.editor.removeDialog.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

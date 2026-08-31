@@ -272,6 +272,13 @@ export const de = {
       placeholder: "Schreib etwas…",
       statusPlaceholder: "Schreib deine Ankündigung…",
       linkUrl: "Adresse des Links",
+      linkDialog: {
+        title: "Link hinzufügen",
+        description: "Gib die Adresse ein, die beim Klicken geöffnet wird.",
+        placeholder: "beispiel.de",
+        cancel: "Abbrechen",
+        apply: "Link hinzufügen",
+      },
       bold: "Fett",
       italic: "Kursiv",
       bulletList: "Aufzählung",

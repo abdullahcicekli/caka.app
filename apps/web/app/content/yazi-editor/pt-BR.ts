@@ -53,7 +53,12 @@ export const ptBR = {
     publish: "Publicar",
     unpublish: "Voltar a rascunho",
     remove: "Excluir",
-    removeConfirm: "Excluir esta publicação permanentemente?",
+    removeDialog: {
+      title: "Excluir publicação?",
+      body: "Esta publicação será excluída permanentemente. Esta ação não pode ser desfeita.",
+      cancel: "Cancelar",
+      confirm: "Excluir permanentemente",
+    },
     viewPost: "Abrir publicação",
     actionFailed: "Não foi possível concluir a ação; tente de novo.",
     validationTitle: "Adicione um título antes de publicar.",

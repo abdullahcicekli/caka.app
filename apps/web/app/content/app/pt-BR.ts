@@ -272,6 +272,13 @@ export const ptBR = {
       placeholder: "Escreva alguma coisa…",
       statusPlaceholder: "Escreva seu anúncio…",
       linkUrl: "Endereço do link",
+      linkDialog: {
+        title: "Adicionar link",
+        description: "Digite o endereço que será aberto ao clicar.",
+        placeholder: "exemplo.com",
+        cancel: "Cancelar",
+        apply: "Adicionar link",
+      },
       bold: "Negrito",
       italic: "Itálico",
       bulletList: "Lista com marcadores",

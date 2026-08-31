@@ -54,7 +54,12 @@ export const de = {
     publish: "Veröffentlichen",
     unpublish: "Auf Entwurf zurücksetzen",
     remove: "Löschen",
-    removeConfirm: "Diesen Beitrag dauerhaft löschen?",
+    removeDialog: {
+      title: "Beitrag löschen?",
+      body: "Dieser Beitrag wird dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
+      cancel: "Abbrechen",
+      confirm: "Dauerhaft löschen",
+    },
     viewPost: "Beitrag öffnen",
     actionFailed: "Die Aktion konnte nicht abgeschlossen werden; versuch es erneut.",
     validationTitle: "Gib vor dem Veröffentlichen einen Titel ein.",

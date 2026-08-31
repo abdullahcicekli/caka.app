@@ -5,6 +5,7 @@
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, Node, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { useState } from "react";
 import {
   Bold,
   Check,
@@ -15,6 +16,7 @@ import {
   Quote,
 } from "iconoir-react";
 import { appCatalog } from "~/content/app";
+import { LinkDialog } from "~/components/editor/link-dialog";
 import { useCatalog } from "~/lib/locale";
 
 /**
@@ -112,6 +114,7 @@ export function InlineTextEditor({
 }) {
   const app = useCatalog(appCatalog);
   const rt = app.editor.richText;
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
@@ -142,8 +145,11 @@ export function InlineTextEditor({
       editor.chain().focus().unsetLink().run();
       return;
     }
-    const href = window.prompt(rt.linkUrl);
-    if (!href) return;
+    setLinkDialogOpen(true);
+  }
+
+  function applyLink(href: string) {
+    if (!editor) return;
     const url = /^[a-z][a-z\d+.-]*:/i.test(href) ? href : `https://${href}`;
     editor.chain().focus().setLink({ href: url }).run();
   }
@@ -184,6 +190,11 @@ export function InlineTextEditor({
           <Check width={15} height={15} />
         </button>
       </div>
+      <LinkDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        onSubmit={applyLink}
+      />
     </article>
   );
 }

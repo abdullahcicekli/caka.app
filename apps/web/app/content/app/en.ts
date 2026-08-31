@@ -271,6 +271,13 @@ export const en = {
       placeholder: "Write something…",
       statusPlaceholder: "Write your announcement…",
       linkUrl: "Link address",
+      linkDialog: {
+        title: "Add link",
+        description: "Enter the address that should open when clicked.",
+        placeholder: "example.com",
+        cancel: "Cancel",
+        apply: "Add link",
+      },
       bold: "Bold",
       italic: "Italic",
       bulletList: "Bulleted list",

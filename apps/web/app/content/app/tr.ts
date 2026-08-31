@@ -290,6 +290,13 @@ export const tr = {
       placeholder: "Bir şeyler yaz…",
       statusPlaceholder: "Duyurunu yaz…",
       linkUrl: "Bağlantı adresi",
+      linkDialog: {
+        title: "Bağlantı ekle",
+        description: "Tıklanınca açılacak adresi yaz.",
+        placeholder: "ornek.com",
+        cancel: "Vazgeç",
+        apply: "Bağlantıyı ekle",
+      },
       bold: "Kalın",
       italic: "İtalik",
       bulletList: "Liste",

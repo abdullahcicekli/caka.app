@@ -53,7 +53,12 @@ export const en = {
     publish: "Publish",
     unpublish: "Unpublish",
     remove: "Delete",
-    removeConfirm: "Delete this post permanently?",
+    removeDialog: {
+      title: "Delete post?",
+      body: "This post will be permanently deleted. This cannot be undone.",
+      cancel: "Cancel",
+      confirm: "Delete permanently",
+    },
     viewPost: "Open post",
     actionFailed: "The action couldn't be completed; try again.",
     validationTitle: "Add a title before publishing.",

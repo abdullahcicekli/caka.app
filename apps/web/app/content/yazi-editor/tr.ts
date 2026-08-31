@@ -63,7 +63,12 @@ export const tr = {
     publish: "Yayınla",
     unpublish: "Taslağa al",
     remove: "Sil",
-    removeConfirm: "Bu yazı kalıcı olarak silinsin mi?",
+    removeDialog: {
+      title: "Yazıyı sil",
+      body: "Bu yazı kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+      cancel: "Vazgeç",
+      confirm: "Kalıcı olarak sil",
+    },
     viewPost: "Yazıyı aç",
     actionFailed: "İşlem tamamlanamadı; yeniden dene.",
     validationTitle: "Yayınlamak için bir başlık yaz.",
