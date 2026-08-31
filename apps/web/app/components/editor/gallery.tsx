@@ -29,7 +29,7 @@ export type GalleryPick =
   | { kind: "content"; type: Exclude<ProfileBlock["type"], "profile" | "social"> }
   | { kind: "social"; platform: SocialPlatform };
 
-type Category = "all" | "social" | "content";
+type Category = "all" | "social" | "content" | "posts";
 
 type ContentBlockType = Exclude<ProfileBlock["type"], "profile" | "social">;
 
@@ -127,9 +127,9 @@ export function BlockGallery({
     }
   }, []);
 
-  const showSocial = category !== "content" && socialItems.length > 0;
-  const showContent = category !== "social" && contentItems.length > 0;
-  const showPosts = category !== "social" && postItems.length > 0;
+  const showSocial = (category === "all" || category === "social") && socialItems.length > 0;
+  const showContent = (category === "all" || category === "content") && contentItems.length > 0;
+  const showPosts = (category === "all" || category === "content" || category === "posts") && postItems.length > 0;
 
   return (
     <div className="block-gallery editor-popover" role="dialog" aria-label={app.editor.blockPickerAria}>
@@ -167,6 +167,14 @@ export function BlockGallery({
             onClick={() => setCategory("content")}
           >
             {app.editor.pickerContent}
+          </button>
+          <button
+            type="button"
+            className={category === "posts" ? "is-active" : ""}
+            aria-pressed={category === "posts"}
+            onClick={() => setCategory("posts")}
+          >
+            {app.editor.pickerPostsTitle}
           </button>
         </div>
         <div className="gallery-scroll">
