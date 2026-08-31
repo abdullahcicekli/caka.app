@@ -47,7 +47,20 @@ const PostImage = Node.create({
     return { src: { default: null }, alt: { default: "" } };
   },
   parseHTML() {
-    return [{ tag: "img[src]" }];
+    return [
+      {
+        tag: "img[src]",
+        // Yapıştırılan HTML'deki DIŞ görseller düğüm OLMAZ: sunucu birinci
+        // taraf dışını her kayıtta reddettiği için (validatePostDoc), dış
+        // src'li tek bir yapıştırma tüm autosave'i kalıcı 400'e sokar ve
+        // kullanıcı sebebini göremezdi. Kaynağı editörde ayıklamak, bozuk
+        // dokümanı hiç üretmemek demek — düğüm sessizce düz metne düşer.
+        getAttrs: (element) => {
+          const src = (element as HTMLElement).getAttribute("src") ?? "";
+          return /^\/i\/[0-9a-f-]+$/i.test(src) ? null : false;
+        },
+      },
+    ];
   },
   renderHTML({ HTMLAttributes }) {
     return ["img", HTMLAttributes];

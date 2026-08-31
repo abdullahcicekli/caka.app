@@ -138,11 +138,18 @@ export async function getProfilePostFeed(
     (block) => block.type === "posts" || block.type === "featuredPost",
   );
   if (!hasPostBlocks) return [];
-  const cards = await getPublishedPostCards(env, profile.id);
-  return cards.map((card) => ({
-    id: card.id,
-    title: card.title,
-    href: `/${profile.username}/${card.slug}`,
-    publishedAt: card.publishedAt,
-  }));
+  try {
+    const cards = await getPublishedPostCards(env, profile.id);
+    return cards.map((card) => ({
+      id: card.id,
+      title: card.title,
+      href: `/${profile.username}/${card.slug}`,
+      publishedAt: card.publishedAt,
+    }));
+  } catch (error) {
+    // Kardeş zenginleştirmelerle (GitHub/R2/YouTube) aynı sözleşme: geçici bir
+    // D1 hatası TÜM public sayfayı düşürmez, yalnız yazı blokları boş kalır.
+    console.error(JSON.stringify({ message: "post feed failed", error: String(error) }));
+    return [];
+  }
 }

@@ -208,6 +208,9 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
             }),
           });
           if (response.status === 401) return setSaveState("unauthenticated");
+          // PUT dalıyla aynı ayrım: ilk kayıtta da 413 "bağlantını kontrol et"
+          // değil, boyut hatasıdır.
+          if (response.status === 413) return setSaveState("tooLarge");
           const result = (await response.json()) as { post?: PostMeta };
           if (response.status === 409) {
             setSlugStatus("taken");
@@ -233,11 +236,13 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
         });
         if (response.status === 401) return setSaveState("unauthenticated");
         if (response.status === 413) return setSaveState("tooLarge");
-        const result = (await response.json()) as { post?: PostMeta };
+        const result = (await response.json()) as { post?: PostMeta; issue?: string };
         if (response.status === 409) {
-          // İki 409 kaynağı var: adres çakışması (yalnız adres DEĞİŞTİYSE
-          // mümkün) ve iyimser kilit. Gövde kimlik taşımıyor; ayrım buradan.
-          if (snapshot.slug !== persistedRef.current.slug) {
+          // İki 409 kaynağı var: adres çakışması ve iyimser kilit. Ayrımı
+          // sunucunun makine-okur `issue` alanı yapar — slug karşılaştırmalı
+          // tahmin, kanonik olmayan girişte gerçek kilidi "adres dolu" diye
+          // okuyup çakışma korumasını hiç devreye sokmuyordu.
+          if (result.issue === "slug_taken") {
             setSlugStatus("taken");
             return setSaveState("error");
           }
@@ -399,7 +404,10 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
   /** Yayınla / taslağa al: önce bekleyen taslak KESİNLEŞİR (edit.tsx'in
    *  publish deseni), sonra eylem iyimser kilit damgasıyla gider. */
   async function runAction(kind: "yayinla" | "taslak") {
-    if (busy || overLimit) return;
+    // Sınır aşımı yalnız YAYINLAMAYI durdurur (düğmesi de kapalı). Taslağa
+    // alma gövde göndermez ({updatedAt} yalnız) — aşırı büyümüş bir yazıyı
+    // yayından ÇEKEBİLMEK tam da bu durumda gerekir; sessiz no-op olmaz.
+    if (busy || (kind === "yayinla" && overLimit)) return;
     setActionError(null);
     if (saveTimerRef.current !== null) {
       window.clearTimeout(saveTimerRef.current);
@@ -681,7 +689,9 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
             <MediaImage width={15} height={15} />
             <input
               type="file"
-              accept="image/*"
+              // Yükleme hattı JPEG/PNG işler (image-upload.ts); "image/*"
+              // webp/gif seçtirip avatar ucundan anlaşılmaz bir 400 döndürüyordu.
+              accept="image/jpeg,image/png"
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0];

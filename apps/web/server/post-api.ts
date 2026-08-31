@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ne } from "drizzle-orm";
+import { and, count, desc, eq, ne, sql } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { z } from "zod";
 
@@ -53,9 +53,12 @@ async function openGate(
   return { session, text };
 }
 
-// Gövde 50 KB (R7) + başlık/slug/JSON zarfı için pay. Zarfı aşan istek daha
-// gövde ayrıştırılmadan 413 ile kesilir (readLimitedJson).
-const REQUEST_BYTE_LIMIT = POST_BODY_MAX_BYTES + 8 * 1024;
+// Zarf sınırı DoS bekçisidir, 50 KB kuralının hakemi DEĞİL: gövde JSON
+// zarfına gömülürken kaçış karakterleri (tırnak, ters bölü, satır sonu)
+// baytları şişirir — kod bloğu ağırlıklı bir yazı ham hâliyle sınırın
+// altındayken zarfı aşabilirdi. Gerçek 50 KB kuralını `validatePostDoc`
+// kanonik ölçümle uygular; zarf payı bu yüzden iki katı + sabit pay.
+const REQUEST_BYTE_LIMIT = POST_BODY_MAX_BYTES * 2 + 8 * 1024;
 
 // Gövde (body) serileştirilmiş JSON metni olarak taşınır — DB kolonu da metin.
 // Doğrulama `validatePostDoc` (R6/R7/R9): boyut, düğüm/mark izin listesi ve
@@ -221,43 +224,38 @@ postApi.post("/", async (c) => {
     const profileId = await ownProfileId(db, session.user.id);
     if (!profileId) return c.json({ error: text.profileNotFound }, 404);
 
-    // 20 sınırı taslak dahil (R8 + R22): sayım status süzmeden, profilin TÜM
-    // yazı satırları üstünden yapılır.
-    const [tally] = await db
-      .select({ value: count() })
-      .from(post)
-      .where(eq(post.profileId, profileId));
-    if ((tally?.value ?? 0) >= MAX_POSTS_PER_PROFILE) {
-      return c.json({ error: text.postLimitReached }, 400);
-    }
-
     // Benzersizlik taslak dahil (R22). Ön kontrol net mesaj için; yarış hâli
     // unique index'e çarpar ve aşağıdaki catch aynı 409'u üretir.
     const clash = await db.query.post.findFirst({
       columns: { id: true },
       where: and(eq(post.profileId, profileId), eq(post.slug, slug.slug)),
     });
-    if (clash) return c.json({ error: text.postSlugTaken }, 409);
+    if (clash) return c.json({ error: text.postSlugTaken, issue: "slug_taken" }, 409);
 
     try {
-      const now = new Date();
-      const [created] = await db
-        .insert(post)
-        .values({
-          id: crypto.randomUUID(),
-          profileId,
-          slug: slug.slug,
-          title: body.data.title,
-          body: body.data.body,
-          status: "draft",
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning();
-      return c.json({ post: toMeta(created!) }, 201);
+      // 20 sınırı taslak dahil (R8 + R22) ve SQLite tarafında ATOMİK: ayrı
+      // isolate'lardaki iki eşzamanlı istek "say → ekle" arasında birbirini
+      // göremezdi; koşullu INSERT ... SELECT sayımı ve eklemeyi tek deyimde
+      // yapar, sınırı aşan ekleme 0 satır değiştirir.
+      const id = crypto.randomUUID();
+      const nowMs = Date.now();
+      const result = await db.run(sql`
+        INSERT INTO post (id, profile_id, slug, title, body, status, published_at, created_at, updated_at)
+        SELECT ${id}, ${profileId}, ${slug.slug}, ${body.data.title}, ${body.data.body}, 'draft', NULL, ${nowMs}, ${nowMs}
+        WHERE (SELECT COUNT(*) FROM post WHERE profile_id = ${profileId}) < ${MAX_POSTS_PER_PROFILE}
+      `);
+      if (((result as { meta?: { changes?: number } }).meta?.changes ?? 0) === 0) {
+        return c.json({ error: text.postLimitReached }, 400);
+      }
+      const created = await db.query.post.findFirst({
+        columns: { body: false },
+        where: eq(post.id, id),
+      });
+      if (!created) return c.json({ error: text.postSaveFailed }, 500);
+      return c.json({ post: toMeta(created) }, 201);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        return c.json({ error: text.postSlugTaken }, 409);
+        return c.json({ error: text.postSlugTaken, issue: "slug_taken" }, 409);
       }
       throw error;
     }
@@ -265,7 +263,10 @@ postApi.post("/", async (c) => {
     if (error instanceof Error && error.message === "body_too_large") {
       return c.json({ error: text.postTooLarge }, 413);
     }
-    return c.json({ error: text.postSaveFailed }, 400);
+    // Sunucu hatası istemci hatası gibi sunulmaz: 400 yerine 500 — izleme
+    // 5xx görür, editör de "girdin hatalı" diye yanlış teşhis koymaz.
+    console.error(JSON.stringify({ message: "post api: create failed", error: String(error) }));
+    return c.json({ error: text.postSaveFailed }, 500);
   }
 });
 
@@ -310,7 +311,7 @@ postApi.put("/:id", async (c) => {
         columns: { id: true },
         where: and(eq(post.profileId, profileId), eq(post.slug, slug.slug)),
       });
-      if (clash) return c.json({ error: text.postSlugTaken }, 409);
+      if (clash) return c.json({ error: text.postSlugTaken, issue: "slug_taken" }, 409);
     }
 
     try {
@@ -334,12 +335,15 @@ postApi.put("/:id", async (c) => {
         )
         .returning();
       if (!updated.length) {
-        return c.json({ error: text.postConflict }, 409);
+        // İyimser kilit 409'u ile "adres dolu" 409'u istemcide AYNI koddan
+        // ayrışamaz; makine-okur `issue` alanı bu yüzden var — istemci slug
+        // karşılaştırarak tahmin yürütmez.
+        return c.json({ error: text.postConflict, issue: "conflict" }, 409);
       }
       return c.json({ post: toMeta(updated[0]!) });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        return c.json({ error: text.postSlugTaken }, 409);
+        return c.json({ error: text.postSlugTaken, issue: "slug_taken" }, 409);
       }
       throw error;
     }
@@ -347,7 +351,8 @@ postApi.put("/:id", async (c) => {
     if (error instanceof Error && error.message === "body_too_large") {
       return c.json({ error: text.postTooLarge }, 413);
     }
-    return c.json({ error: text.postSaveFailed }, 400);
+    console.error(JSON.stringify({ message: "post api: update failed", error: String(error) }));
+    return c.json({ error: text.postSaveFailed }, 500);
   }
 });
 
@@ -401,14 +406,15 @@ async function changeStatus(
       )
       .returning();
     if (!updated.length) {
-      return c.json({ error: text.postConflict }, 409);
+      return c.json({ error: text.postConflict, issue: "conflict" }, 409);
     }
     return c.json({ post: toMeta(updated[0]!) });
   } catch (error) {
     if (error instanceof Error && error.message === "body_too_large") {
       return c.json({ error: text.requestTooLarge }, 413);
     }
-    return c.json({ error: text.postSaveFailed }, 400);
+    console.error(JSON.stringify({ message: "post api: status change failed", error: String(error) }));
+    return c.json({ error: text.postSaveFailed }, 500);
   }
 }
 
