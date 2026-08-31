@@ -24,6 +24,9 @@ export const en = {
     bodyPlaceholder: "Start writing…",
     slugLabel: "Address",
     slugHint: "The address can be changed until the post is first published.",
+    slugAutoHint: "The address is created from your title automatically. You can edit it if you want.",
+    slugEdit: "Edit",
+    slugDone: "Done",
     slugLockedReason:
       "A published post's address can't be changed, so shared links don't break.",
     slugStatus: {
@@ -53,6 +56,14 @@ export const en = {
     removeConfirm: "Delete this post permanently?",
     viewPost: "Open post",
     actionFailed: "The action couldn't be completed; try again.",
+    validationTitle: "Add a title before publishing.",
+    validationSlug: "Choose an available, valid address before publishing.",
+    publishedToast: {
+      title: "Your post is live",
+      body: "You can add a card that automatically lists your posts on your page.",
+      addToPage: "Add to my page",
+      dismiss: "Not now",
+    },
     toolbar: {
       h2: "Heading",
       h3: "Subheading",

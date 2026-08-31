@@ -30,6 +30,9 @@ export const tr = {
     bodyPlaceholder: "Yazmaya başla…",
     slugLabel: "Adres",
     slugHint: "Adres yazı ilk kez yayımlanana kadar değiştirilebilir.",
+    slugAutoHint: "Adres başlığından otomatik oluşturulur. İstersen düzenleyebilirsin.",
+    slugEdit: "Düzenle",
+    slugDone: "Tamam",
     // R18/AE9: alan kilitliyken YANINDA duran açıklama — kilit hata sanılmasın.
     slugLockedReason:
       "Yayınlanan yazının adresi, paylaşılan bağlantılar kırılmasın diye değiştirilemez.",
@@ -63,6 +66,14 @@ export const tr = {
     removeConfirm: "Bu yazı kalıcı olarak silinsin mi?",
     viewPost: "Yazıyı aç",
     actionFailed: "İşlem tamamlanamadı; yeniden dene.",
+    validationTitle: "Yayınlamak için bir başlık yaz.",
+    validationSlug: "Yayınlamak için geçerli ve boşta bir adres seç.",
+    publishedToast: {
+      title: "Yazın yayında",
+      body: "İstersen yazılarını sayfanda otomatik listeleyen bir kart ekleyebilirsin.",
+      addToPage: "Sayfama ekle",
+      dismiss: "Şimdi değil",
+    },
     toolbar: {
       h2: "Başlık",
       h3: "Ara başlık",

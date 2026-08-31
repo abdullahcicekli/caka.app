@@ -8,6 +8,7 @@ import {
   type LinkVariant,
   shortenFileName,
   mapFrameImageKey,
+  sizeToDims,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
@@ -44,6 +45,8 @@ export interface ProfilePostItem {
   href: string;
   /** İlk yayın anı (ms); kartta tarih satırı olarak basılır. */
   publishedAt: number;
+  /** Büyük kartlarda, başlığın altındaki kısa gövde özeti. */
+  excerpt?: string;
 }
 
 function GithubHeatmap({ calendar }: { calendar: GithubCalendar }) {
@@ -737,15 +740,26 @@ export function ProfileBlockCard({
     case "posts": {
       const items = posts ?? [];
       if (items.length === 0) return null;
+      // Küçük kart hızlı bağlantı listesi olarak kalır. İki tam satıra
+      // çıkan kartta ise gövdeden kısa bir kesit gösterilir.
+      const height = block.pos?.lg.h ?? sizeToDims(block.size).h;
+      const showExcerpt = height >= 4;
       return (
-        <article className="profile-block profile-block-posts" aria-label={w.posts.listLabel}>
+        <article
+          className={`profile-block profile-block-posts${showExcerpt ? " has-excerpt" : ""}`}
+          aria-label={w.posts.listLabel}
+        >
           <ul className="posts-list">
             {items.map((post) => (
               <li key={post.id}>
                 <a href={post.href}>
                   <strong>{post.title}</strong>
+                  {showExcerpt && post.excerpt ? <p>{post.excerpt}</p> : null}
                   {/* Belge kartıyla aynı tarih biçimi — tek sözlük, tek biçim. */}
-                  <small>{w.document.date(post.publishedAt)}</small>
+                  <span className="post-meta">
+                    <small>{w.document.date(post.publishedAt)}</small>
+                    {showExcerpt && post.excerpt ? <em>{w.posts.readMore} →</em> : null}
+                  </span>
                 </a>
               </li>
             ))}

@@ -193,6 +193,7 @@ export const tr = {
 
     pickerSocial: "Sosyal medya",
     pickerContent: "İçerik",
+    pickerAll: "Tümü",
     pickerNoResults: (query: string) => `“${query}” için sonuç yok.`,
 
     galleryFullHint: (max: number) =>

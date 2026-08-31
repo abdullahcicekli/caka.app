@@ -155,6 +155,7 @@ export const tr = {
   posts: {
     /** Liste kartının ekran okuyucu etiketi. */
     listLabel: "Yazılar",
+    readMore: "Tamamını oku",
     /** Öne çıkan kartın üst etiketi (kicker). */
     featuredKicker: "Yazı",
   },

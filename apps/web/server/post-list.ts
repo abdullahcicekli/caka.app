@@ -12,6 +12,7 @@ export interface PublishedPostCard {
   id: string;
   slug: string;
   title: string;
+  body: string;
   /** İlk yayın anı (ms) — liste bu alana göre en yeniden eskiye sıralı. */
   publishedAt: number;
 }
@@ -32,6 +33,7 @@ export async function getPublishedPostCards(
       id: post.id,
       slug: post.slug,
       title: post.title,
+      body: post.body,
       publishedAt: post.publishedAt,
     })
     .from(post)
@@ -41,6 +43,7 @@ export async function getPublishedPostCards(
     id: row.id,
     slug: row.slug,
     title: row.title,
+    body: row.body,
     publishedAt: row.publishedAt ? row.publishedAt.getTime() : 0,
   }));
 }
@@ -121,6 +124,28 @@ export interface ProfilePostFeedItem {
   title: string;
   href: string;
   publishedAt: number;
+  /** Kart büyüdüğünde gösterilen kısa gövde özeti. */
+  excerpt: string;
+}
+
+/** Tiptap gövdesinden yalnız düz metni alır. Profil kartı gövdenin tamamını
+ * taşımaz; bu, yazıya giden kısa ve güvenli bir içerik ipucudur. */
+function postExcerpt(body: string, limit = 180): string {
+  try {
+    const root = JSON.parse(body) as unknown;
+    const parts: string[] = [];
+    const visit = (value: unknown) => {
+      if (!value || typeof value !== "object") return;
+      if (Array.isArray(value)) return value.forEach(visit);
+      const node = value as { text?: unknown; content?: unknown };
+      if (typeof node.text === "string") parts.push(node.text);
+      visit(node.content);
+    };
+    visit(root);
+    return parts.join(" ").replace(/\s+/g, " ").trim().slice(0, limit);
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -145,6 +170,7 @@ export async function getProfilePostFeed(
       title: card.title,
       href: `/${profile.username}/${card.slug}`,
       publishedAt: card.publishedAt,
+      excerpt: postExcerpt(card.body),
     }));
   } catch (error) {
     // Kardeş zenginleştirmelerle (GitHub/R2/YouTube) aynı sözleşme: geçici bir

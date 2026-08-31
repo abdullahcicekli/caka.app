@@ -24,6 +24,9 @@ export const ptBR = {
     bodyPlaceholder: "Comece a escrever…",
     slugLabel: "Endereço",
     slugHint: "O endereço pode ser alterado até a publicação ser publicada pela primeira vez.",
+    slugAutoHint: "O endereço é criado automaticamente a partir do título. Você pode editá-lo se quiser.",
+    slugEdit: "Editar",
+    slugDone: "Concluir",
     slugLockedReason:
       "O endereço de uma publicação já publicada não pode ser alterado, para que os links compartilhados não quebrem.",
     slugStatus: {
@@ -53,6 +56,14 @@ export const ptBR = {
     removeConfirm: "Excluir esta publicação permanentemente?",
     viewPost: "Abrir publicação",
     actionFailed: "Não foi possível concluir a ação; tente de novo.",
+    validationTitle: "Adicione um título antes de publicar.",
+    validationSlug: "Escolha um endereço válido e disponível antes de publicar.",
+    publishedToast: {
+      title: "Sua publicação está no ar",
+      body: "Você pode adicionar ao seu perfil um cartão que lista suas publicações automaticamente.",
+      addToPage: "Adicionar à minha página",
+      dismiss: "Agora não",
+    },
     toolbar: {
       h2: "Título de seção",
       h3: "Subtítulo",

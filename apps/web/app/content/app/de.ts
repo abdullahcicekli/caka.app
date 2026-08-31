@@ -180,6 +180,7 @@ export const de = {
 
     pickerSocial: "Soziale Medien",
     pickerContent: "Inhalt",
+    pickerAll: "Alle",
     pickerNoResults: (query: string) => `Keine Treffer für „${query}“.`,
 
     galleryFullHint: (max: number) =>

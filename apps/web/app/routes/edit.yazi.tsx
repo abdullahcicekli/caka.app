@@ -19,6 +19,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   Bold,
   Code,
+  EditPencil,
   Italic,
   Link as LinkIcon,
   List,
@@ -133,6 +134,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
   const [slug, setSlug] = useState(post?.slug ?? "");
   // Mevcut yazıda adres "dokunulmuş" sayılır: başlık değişince ezilmez.
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
+  const [slugEditing, setSlugEditing] = useState(false);
   const [status, setStatus] = useState(post?.status ?? "draft");
   const [publishedAt, setPublishedAt] = useState<number | null>(post?.publishedAt ?? null);
   const [saveState, setSaveState] = useState<SaveState>(post ? "saved" : "pending");
@@ -140,6 +142,8 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
   const [bodyBytes, setBodyBytes] = useState(() => postBodyByteLength(post?.body ?? ""));
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+  const [showPublishedToast, setShowPublishedToast] = useState(false);
 
   // Autosave zinciri — edit.tsx deseni: en son içerik ref'te, gönderim tek
   // kuyruktan (yarışan PUT'lar birbirini ezmesin), debounce 800ms.
@@ -352,6 +356,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
       setSlug(derived);
       latestRef.current.slug = derived;
     }
+    if (actionError) setActionError(null);
     scheduleSave();
   }
 
@@ -359,6 +364,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
     setSlugTouched(true);
     setSlug(value);
     latestRef.current.slug = value;
+    if (actionError) setActionError(null);
     scheduleSave();
   }
 
@@ -408,6 +414,19 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
     // alma gövde göndermez ({updatedAt} yalnız) — aşırı büyümüş bir yazıyı
     // yayından ÇEKEBİLMEK tam da bu durumda gerekir; sessiz no-op olmaz.
     if (busy || (kind === "yayinla" && overLimit)) return;
+    if (kind === "yayinla") {
+      setShowValidation(true);
+      const slugResult = validatePostSlug(latestRef.current.slug);
+      if (!latestRef.current.title.trim()) {
+        setActionError(content.editor.validationTitle);
+        return;
+      }
+      if (!slugResult.ok || slugStatus === "taken" || slugStatus === "checking") {
+        setSlugEditing(true);
+        setActionError(content.editor.validationSlug);
+        return;
+      }
+    }
     setActionError(null);
     if (saveTimerRef.current !== null) {
       window.clearTimeout(saveTimerRef.current);
@@ -444,6 +463,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
       persistedRef.current.updatedAt = result.post.updatedAt;
       setStatus(result.post.status);
       setPublishedAt(result.post.publishedAt);
+      if (kind === "yayinla") setShowPublishedToast(true);
     } catch {
       setActionError(content.editor.actionFailed);
     } finally {
@@ -488,6 +508,9 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
   const slugStatusText = slugStatus && slugStatus !== "available"
     ? content.editor.slugStatus[slugStatus]
     : null;
+  const localSlugResult = validatePostSlug(slug);
+  const titleInvalid = showValidation && !title.trim();
+  const slugInvalid = showValidation && (!localSlugResult.ok || slugStatus === "taken");
 
   type Tool = {
     label: string;
@@ -593,7 +616,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
               onClick={() => void removePost()}
               aria-label={content.editor.remove}
               title={content.editor.remove}
-              className="rounded-xl p-1.5 text-murekkep/50 hover:bg-murekkep/5 hover:text-sinir disabled:opacity-50"
+              className="rounded-xl p-2 text-murekkep/70 hover:bg-sinir hover:text-zemin focus-visible:bg-sinir focus-visible:text-zemin disabled:opacity-50"
             >
               <Trash width={16} height={16} />
             </button>
@@ -624,25 +647,52 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
           maxLength={POST_TITLE_MAX}
           placeholder={content.editor.titlePlaceholder}
           onChange={(event) => onTitleChange(event.target.value)}
-          className="mt-4 w-full bg-transparent text-3xl font-bold leading-tight outline-none placeholder:text-murekkep/30 sm:text-4xl"
+          aria-invalid={titleInvalid}
+          aria-describedby={titleInvalid ? "post-title-error" : undefined}
+          className={`mt-4 w-full rounded-lg bg-transparent text-3xl font-bold leading-tight outline-none placeholder:text-murekkep/30 sm:text-4xl ${
+            titleInvalid ? "ring-2 ring-sinir/70 ring-offset-4 ring-offset-zemin" : ""
+          }`}
         />
+        {titleInvalid ? (
+          <p id="post-title-error" role="alert" className="mt-2 text-sm font-semibold text-sinir">
+            {content.editor.validationTitle}
+          </p>
+        ) : null}
 
         {/* Adres alanı: taslakta düzenlenebilir + canlı denetim; yayınlanmışsa
             kilitli GÖRÜNÜR ve yanında nedeni yazar (R18/AE9) — hata değil. */}
         <div className="mt-4">
-          <label className="flex flex-wrap items-center gap-1 text-sm">
-            <span className="font-medium text-murekkep/60">{content.editor.slugLabel}:</span>
+          <div className="flex flex-wrap items-center gap-1 text-sm" role="group" aria-labelledby="post-slug-label">
+            <span id="post-slug-label" className="font-medium text-murekkep/60">{content.editor.slugLabel}:</span>
             <span className="text-murekkep/40">caka.app/{username}/</span>
-            <input
-              type="text"
-              value={slug}
-              disabled={slugLocked}
-              maxLength={POST_SLUG_MAX}
-              onChange={(event) => onSlugChange(event.target.value)}
-              className="min-w-40 flex-1 rounded-lg border border-murekkep/15 bg-transparent px-2 py-1 font-mono text-sm outline-none focus:border-murekkep/40 disabled:border-transparent disabled:px-0 disabled:text-murekkep/60"
-              aria-describedby="slug-durum"
-            />
-          </label>
+            {slugLocked || !slugEditing ? (
+              <span className={`min-w-40 flex-1 font-mono text-sm ${slugInvalid ? "text-sinir" : "text-murekkep/80"}`}>
+                {slug || "—"}
+              </span>
+            ) : (
+              <input
+                type="text"
+                autoFocus
+                value={slug}
+                maxLength={POST_SLUG_MAX}
+                onChange={(event) => onSlugChange(event.target.value)}
+                className={`min-w-40 flex-1 rounded-lg border bg-transparent px-2 py-1 font-mono text-sm outline-none ${
+                  slugInvalid ? "border-sinir ring-2 ring-sinir/25" : "border-murekkep/20 focus:border-murekkep/50"
+                }`}
+                aria-invalid={slugInvalid}
+                aria-describedby="slug-durum"
+              />
+            )}
+            {!slugLocked ? (
+              <button
+                type="button"
+                onClick={() => setSlugEditing((current) => !current)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-murekkep/65 hover:bg-murekkep/5 hover:text-murekkep"
+              >
+                {slugEditing ? content.editor.slugDone : <><EditPencil width={13} height={13} /> {content.editor.slugEdit}</>}
+              </button>
+            ) : null}
+          </div>
           <p id="slug-durum" className="mt-1.5 text-xs text-murekkep/50">
             {slugLocked ? (
               <span className="inline-flex items-center gap-1">
@@ -656,7 +706,7 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
                 {slugStatusText}
               </span>
             ) : (
-              content.editor.slugHint
+              !slugTouched ? content.editor.slugAutoHint : content.editor.slugHint
             )}
           </p>
         </div>
@@ -704,6 +754,33 @@ export default function EditYazi({ loaderData }: Route.ComponentProps) {
 
         <EditorContent editor={editor} className="yazi-editor-body mt-6" />
       </div>
+
+      {showPublishedToast ? (
+        <section
+          className="fixed inset-x-4 bottom-5 z-20 mx-auto max-w-md rounded-2xl border border-murekkep/15 bg-zemin p-4 shadow-2xl"
+          role="status"
+          aria-live="polite"
+        >
+          <strong className="block text-base">{content.editor.publishedToast.title}</strong>
+          <p className="mt-1 text-sm leading-5 text-murekkep/65">{content.editor.publishedToast.body}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void navigate(`${path("edit")}?add=posts`)}
+              className="rounded-xl bg-murekkep px-3 py-2 text-sm font-semibold text-zemin hover:bg-murekkep/85"
+            >
+              {content.editor.publishedToast.addToPage}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPublishedToast(false)}
+              className="rounded-xl px-3 py-2 text-sm font-semibold text-murekkep/65 hover:bg-murekkep/5 hover:text-murekkep"
+            >
+              {content.editor.publishedToast.dismiss}
+            </button>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

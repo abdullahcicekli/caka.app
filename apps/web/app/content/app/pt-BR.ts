@@ -180,6 +180,7 @@ export const ptBR = {
 
     pickerSocial: "Redes sociais",
     pickerContent: "Conteúdo",
+    pickerAll: "Todos",
     pickerNoResults: (query: string) => `Nenhum resultado para “${query}”.`,
 
     galleryFullHint: (max: number) =>

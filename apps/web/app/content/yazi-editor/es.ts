@@ -24,6 +24,9 @@ export const es = {
     bodyPlaceholder: "Empieza a escribir…",
     slugLabel: "Dirección",
     slugHint: "La dirección puede cambiarse hasta que la publicación se publique por primera vez.",
+    slugAutoHint: "La dirección se crea automáticamente a partir del título. Puedes editarla si quieres.",
+    slugEdit: "Editar",
+    slugDone: "Listo",
     slugLockedReason:
       "La dirección de una publicación ya publicada no puede cambiarse, para que los enlaces compartidos no se rompan.",
     slugStatus: {
@@ -53,6 +56,14 @@ export const es = {
     removeConfirm: "¿Eliminar esta publicación de forma permanente?",
     viewPost: "Abrir publicación",
     actionFailed: "No se pudo completar la acción; inténtalo de nuevo.",
+    validationTitle: "Añade un título antes de publicar.",
+    validationSlug: "Elige una dirección válida y disponible antes de publicar.",
+    publishedToast: {
+      title: "Tu publicación está publicada",
+      body: "Puedes añadir a tu página una tarjeta que liste tus publicaciones automáticamente.",
+      addToPage: "Añadir a mi página",
+      dismiss: "Ahora no",
+    },
     toolbar: {
       h2: "Encabezado",
       h3: "Subencabezado",

@@ -296,8 +296,9 @@ const DEEP_LINK_ADDABLE: Record<ProfileBlock["type"], boolean> = {
   // Ayet bloğu boş doğuyor ve kullanılabilir olması için arama gerekiyor;
   // panelden tek tıkla eklenen bir kısayol boş kart bırakırdı.
   ayet: false,
-  // Panelde kısayolu yok; blok galerisinden eklenir.
-  posts: false,
+  // Yeni yazı yayınlandıktan sonra editörden gelen `?add=posts` akışı bu
+  // kartı doğrudan ekler. Normal keşif yolu yine blok galerisi.
+  posts: true,
   // Öne çıkan yazı boş doğuyor (seçim panelde); tek tık kısayolu boş kart bırakırdı.
   featuredPost: false,
 };
@@ -2102,9 +2103,19 @@ function Inspector({
         );
       }
       // Yazı listesi veri taşımaz: panelde ayar yok, yalnız kartın nasıl
-      // dolduğunu anlatan bir not var (liste yayındaki yazılardan kurulur).
+      // dolduğunu anlatan bir not ve yazmaya götüren net bir eylem var.
       case "posts":
-        return <p className="inspector-hint">{app.editor.postsHint}</p>;
+        return (
+          <>
+            <p className="inspector-hint">{app.editor.postsHint}</p>
+            <Link
+              to={lpath("edit.yazi", { id: "yeni" })}
+              className="inline-flex w-fit rounded-lg bg-murekkep px-3 py-2 text-sm font-semibold text-zemin hover:bg-murekkep/85"
+            >
+              {app.editor.postsEmptyCta}
+            </Link>
+          </>
+        );
       case "featuredPost":
         return (
           <>
@@ -2775,7 +2786,11 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
     const addParam = searchParams.get("add");
     const panelParam = searchParams.get("panel");
     if (!addParam && !panelParam) return;
-    if (addParam && isDeepLinkAddable(addParam)) {
+    if (addParam === "posts") {
+      const existing = layout.blocks.find((block) => block.type === "posts");
+      if (existing) setSelectedId(existing.id);
+      else add("posts");
+    } else if (addParam && isDeepLinkAddable(addParam)) {
       add(addParam);
     } else if (addParam === "image") {
       // Eski kısayol: `image` bloğu fotoğraf bloğunda eridi, kayıtlı bir
@@ -2987,7 +3002,13 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
           <div
             className="editor-grid-area"
             onClickCapture={(event) => {
-              if ((event.target as Element).closest("a")) event.preventDefault();
+              const target = event.target as Element;
+              // Tuvaldeki kart bağlantıları düzenleme için kapalıdır; boş
+              // yazı kartındaki "Yeni yazı yaz" ise bilinçli bir gezinme
+              // eylemidir ve bu yakalayıcıdan muaf tutulur.
+              if (target.closest("a") && !target.closest("[data-editor-navigation]")) {
+                event.preventDefault();
+              }
             }}
           >
             <EditorGrid
@@ -3047,9 +3068,11 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     </span>
                     <Link
                       to={lpath("edit.yazi", { id: "yeni" })}
+                      data-editor-navigation
                       className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold underline underline-offset-2"
                       // Tıklama grid sürüklemesine dönüşmesin.
                       onPointerDown={(event) => event.stopPropagation()}
+                      onClick={(event) => event.stopPropagation()}
                     >
                       {app.editor.postsEmptyCta} →
                     </Link>
@@ -3063,8 +3086,10 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
                     </span>
                     <Link
                       to={lpath("edit.yazi", { id: "yeni" })}
+                      data-editor-navigation
                       className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold underline underline-offset-2"
                       onPointerDown={(event) => event.stopPropagation()}
+                      onClick={(event) => event.stopPropagation()}
                     >
                       {app.editor.postsEmptyCta} →
                     </Link>

@@ -179,6 +179,7 @@ export const en = {
 
     pickerSocial: "Social media",
     pickerContent: "Content",
+    pickerAll: "All",
     pickerNoResults: (query: string) => `No results for “${query}”.`,
 
     galleryFullHint: (max: number) =>

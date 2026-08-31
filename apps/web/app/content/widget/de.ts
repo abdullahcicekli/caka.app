@@ -107,6 +107,7 @@ export const de = {
 
   posts: {
     listLabel: "Beiträge",
+    readMore: "Weiterlesen",
     featuredKicker: "Beitrag",
   },
 

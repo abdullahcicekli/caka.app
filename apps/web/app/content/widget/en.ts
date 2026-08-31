@@ -109,6 +109,7 @@ export const en = {
 
   posts: {
     listLabel: "Posts",
+    readMore: "Read more",
     featuredKicker: "Post",
   },
 

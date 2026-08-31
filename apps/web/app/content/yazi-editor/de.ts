@@ -24,6 +24,9 @@ export const de = {
     bodyPlaceholder: "Fang an zu schreiben…",
     slugLabel: "Adresse",
     slugHint: "Die Adresse lässt sich ändern, bis der Beitrag zum ersten Mal veröffentlicht wird.",
+    slugAutoHint: "Die Adresse wird automatisch aus dem Titel erstellt. Du kannst sie bei Bedarf bearbeiten.",
+    slugEdit: "Bearbeiten",
+    slugDone: "Fertig",
     slugLockedReason:
       "Die Adresse eines veröffentlichten Beitrags kann nicht geändert werden, damit geteilte Links nicht brechen.",
     slugStatus: {
@@ -54,6 +57,14 @@ export const de = {
     removeConfirm: "Diesen Beitrag dauerhaft löschen?",
     viewPost: "Beitrag öffnen",
     actionFailed: "Die Aktion konnte nicht abgeschlossen werden; versuch es erneut.",
+    validationTitle: "Gib vor dem Veröffentlichen einen Titel ein.",
+    validationSlug: "Wähle vor dem Veröffentlichen eine gültige, freie Adresse.",
+    publishedToast: {
+      title: "Dein Beitrag ist online",
+      body: "Du kannst eine Karte hinzufügen, die deine Beiträge automatisch auf deiner Seite auflistet.",
+      addToPage: "Zu meiner Seite hinzufügen",
+      dismiss: "Jetzt nicht",
+    },
     toolbar: {
       h2: "Überschrift",
       h3: "Zwischenüberschrift",

@@ -107,6 +107,7 @@ export const ptBR = {
 
   posts: {
     listLabel: "Publicações",
+    readMore: "Ler mais",
     featuredKicker: "Publicação",
   },
 

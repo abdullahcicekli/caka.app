@@ -16,7 +16,6 @@ import {
   OpenBook,
   Search,
   Text,
-  Xmark,
 } from "iconoir-react";
 
 import { SocialIcon } from "~/components/icons/social";
@@ -30,7 +29,7 @@ export type GalleryPick =
   | { kind: "content"; type: Exclude<ProfileBlock["type"], "profile" | "social"> }
   | { kind: "social"; platform: SocialPlatform };
 
-type Category = "social" | "content";
+type Category = "all" | "social" | "content";
 
 type ContentBlockType = Exclude<ProfileBlock["type"], "profile" | "social">;
 
@@ -92,7 +91,9 @@ export function BlockGallery({
   const onboarding = useOnboardingLists();
   const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<Category | null>(null);
+  // Galeri ilk açıldığında bütün seçenekler görünür. Filtreler birbirini
+  // dışlar; "tekrar tıkla" ile ne olduğunu belirsizleştiren kapalı hâl yok.
+  const [category, setCategory] = useState<Category>("all");
 
   const app = useCatalog(appCatalog);
   const needle = query.trim().toLocaleLowerCase("tr");
@@ -145,28 +146,35 @@ export function BlockGallery({
         <div className="gallery-chips" role="group" aria-label={app.editor.categoriesAria}>
           <button
             type="button"
+            className={category === "all" ? "is-active" : ""}
+            aria-pressed={category === "all"}
+            onClick={() => setCategory("all")}
+          >
+            {app.editor.pickerAll}
+          </button>
+          <button
+            type="button"
             className={category === "social" ? "is-active" : ""}
-            onClick={() => setCategory(category === "social" ? null : "social")}
+            aria-pressed={category === "social"}
+            onClick={() => setCategory("social")}
           >
             {app.editor.pickerSocial}
           </button>
           <button
             type="button"
             className={category === "content" ? "is-active" : ""}
-            onClick={() => setCategory(category === "content" ? null : "content")}
+            aria-pressed={category === "content"}
+            onClick={() => setCategory("content")}
           >
             {app.editor.pickerContent}
           </button>
-          {category !== null ? (
-            <button type="button" aria-label={app.editor.clearFilterAria} onClick={() => setCategory(null)}>
-              <Xmark width={16} height={16} />
-            </button>
-          ) : null}
         </div>
         <div className="gallery-scroll">
           {showContent ? (
-            <div className="gallery-grid">
-              {contentItems.map((item) => {
+            <section className="gallery-section" aria-label={app.editor.pickerContent}>
+              <h2>{app.editor.pickerContent}</h2>
+              <div className="gallery-grid">
+                {contentItems.map((item) => {
                 const blocked = blockers?.[item.type];
                 return (
                   <button
@@ -188,15 +196,14 @@ export function BlockGallery({
                     ) : null}
                   </button>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            </section>
           ) : null}
           {showPosts ? (
-            <section aria-label={app.editor.pickerPostsTitle}>
-              <div className="mb-1.5 mt-3 flex items-baseline justify-between gap-3 px-0.5">
-                <strong className="text-xs font-bold tracking-wide text-murekkep/60 uppercase">
-                  {app.editor.pickerPostsTitle}
-                </strong>
+            <section className="gallery-section" aria-label={app.editor.pickerPostsTitle}>
+              <div className="gallery-section-heading">
+                <h2>{app.editor.pickerPostsTitle}</h2>
                 <span className="flex items-center gap-3 text-[12.5px] font-medium">
                   <Link to={lpath("edit.yazi", { id: "yeni" })} className="underline underline-offset-2">
                     {app.editor.pickerPostsWrite}
@@ -234,8 +241,10 @@ export function BlockGallery({
             </section>
           ) : null}
           {showSocial ? (
-            <div className="gallery-grid">
-              {socialItems.map((platform) => (
+            <section className="gallery-section" aria-label={app.editor.pickerSocial}>
+              <h2>{app.editor.pickerSocial}</h2>
+              <div className="gallery-grid">
+                {socialItems.map((platform) => (
                 <button
                   key={platform.id}
                   type="button"
@@ -247,8 +256,9 @@ export function BlockGallery({
                   </span>
                   {platform.label}
                 </button>
-              ))}
-            </div>
+                ))}
+              </div>
+            </section>
           ) : null}
           {!showSocial && !showContent ? (
             <p className="gallery-empty">{app.editor.pickerNoResults(query)}</p>
