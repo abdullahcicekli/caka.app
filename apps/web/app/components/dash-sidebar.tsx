@@ -1,7 +1,17 @@
-// Panel sol menüsü — Dashboard ve Ayarlar sayfalarının ortak sidebar'ı.
-// routes/dashboard.tsx'ten çıkarıldı; görünüm birebir korunur (dash-* CSS).
+// Panel sol menüsü — PanelShell iskeletindeki sayfaların ortak sidebar'ı.
+// Girişler standart: Sayfam, Analitik, Yazılar, Ayarlar + belirgin
+// "Sayfayı düzenle" bağlantısı (tuval editörü iskelete girmez, tam ekrandır).
+// Aktif sayfa vurgusu NavLink'in aria-current'ından gelir (dash-* CSS).
 import { useEffect, useState } from "react";
-import { Check, Copy, MultiplePages, PageEdit, Settings, StatsReport } from "iconoir-react";
+import {
+  Check,
+  Copy,
+  EditPencil,
+  MultiplePages,
+  PageEdit,
+  Settings,
+  StatsReport,
+} from "iconoir-react";
 import { Link, NavLink } from "react-router";
 
 import { logoBlack } from "~/assets/brand";
@@ -62,21 +72,28 @@ export function DashSidebar({
         </div>
       </header>
 
+      {/* Tuval editörüne belirgin giriş: liste bağlantısı değil, eylem düğmesi. */}
+      <Link
+        to={path("edit")}
+        className="flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-murekkep px-4 text-sm font-semibold text-zemin hover:bg-murekkep/85"
+      >
+        <EditPencil width={16} height={16} /> {nav.editPage}
+      </Link>
+
       <section>
         <div className="dash-page-list">
-          <NavLink to="/dashboard">
+          {/* Adresler slug tablosundan gelir (path): route'lar dilli. */}
+          <NavLink to={path("dashboard")}>
             <MultiplePages width={17} height={17} /> {nav.pages}
           </NavLink>
-          {/* Analitik ayrı bir sayfa değil; sayfanın istatistikleri
-              /dashboard'da önizlemenin altında duruyor. */}
-          {/* Yazı yönetimi (U7). Adres slug tablosundan gelir: route dilli. */}
+          <NavLink to={path("analitik")}>
+            <StatsReport width={17} height={17} /> {nav.analytics}
+          </NavLink>
+          {/* Yazı yönetimi (U7). */}
           <NavLink to={path("edit.yazilar")}>
             <PageEdit width={17} height={17} /> {yaziNav}
           </NavLink>
-          <NavLink to="/dashboard#analitik">
-            <StatsReport width={17} height={17} /> {nav.analytics}
-          </NavLink>
-          <NavLink to="/ayarlar">
+          <NavLink to={path("ayarlar")}>
             <Settings width={17} height={17} /> {nav.settings}
           </NavLink>
         </div>

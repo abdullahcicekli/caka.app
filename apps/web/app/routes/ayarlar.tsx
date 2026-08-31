@@ -1,6 +1,8 @@
-// Ayarlar: dört bölüm — Adres (kullanıcı adı değişikliği), Dil, Paylaşım
-// görseli (og:image şablonu + fotoğraf kaynağı) ve Hesap (salt okunur bilgi +
-// hesap silme).
+// Ayarlar: panel iskeletinde (PanelShell) alt alta ayrık bölüm kartları —
+// Adres (kullanıcı adı değişikliği), Dil, Paylaşım görseli (og:image şablonu
+// + fotoğraf kaynağı) ve Hesap (salt okunur bilgi + en altta "tehlikeli
+// bölge" olarak hesap silme; görsel ayrıklık `ayarlar-card-tehlike`
+// token'ından gelir).
 //
 // Paylaşım görseli önizlemeleri GERÇEK /og/u/... render'larıdır — hash'li
 // URL'ler loader'da üretilir; seçim kaydedilince revalidate ile taze hash'ler
@@ -11,17 +13,16 @@
 // bağlamasından ve bölümlerin dizilişinden sorumludur.
 import { useState } from "react";
 import { env } from "cloudflare:workers";
-import { data, redirect, useSearchParams } from "react-router";
+import { Settings } from "iconoir-react";
+import { data } from "react-router";
 
 import { AccountCard } from "~/components/ayarlar/account-card";
 import { AddressCard } from "~/components/ayarlar/address-card";
 import { ShareImageCard, type SaveState } from "~/components/ayarlar/share-image-card";
-import { DashSidebar } from "~/components/dash-sidebar";
+import { PanelShell } from "~/components/panel-shell";
 import {
-  AYARLAR_SECTION_IDS,
   ayarlarCatalog,
   type AddressErrorId,
-  type AyarlarSectionId,
   type DeleteErrorId,
 } from "~/content/ayarlar";
 import { LanguageCard } from "~/components/ayarlar/language-card";
@@ -216,93 +217,50 @@ async function deleteAccountAction(request: Request, userId: string, confirmatio
   throw localizedRedirect(request, "/?veda=1", { headers });
 }
 
-/** Adresten gelen bölüm kimliği geçerli mi (kullanıcı elle yazmış olabilir). */
-function isSectionId(value: string | null): value is AyarlarSectionId {
-  return value !== null && (AYARLAR_SECTION_IDS as readonly string[]).includes(value);
-}
-
 export default function Ayarlar({ loaderData }: Route.ComponentProps) {
   const { username, account, accountInfo, addressChange, imageBlocks, previews } = loaderData;
   const content = useCatalog(ayarlarCatalog);
+  const app = useCatalog(appCatalog);
   const common = useCatalog(commonCatalog);
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
-  // Aktif sekme adreste durur (`?bolum=dil`): sayfa yenilenince veya bağlantı
-  // paylaşılınca aynı bölüm açılır. Anahtar dilden bağımsızdır — etiketler
-  // çevrilir, kimlikler çevrilmez.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requested = searchParams.get("bolum");
-  const active: AyarlarSectionId = isSectionId(requested) ? requested : AYARLAR_SECTION_IDS[0];
-
-  function selectSection(id: AyarlarSectionId) {
-    // `replace`: sekme gezinmesi geri tuşunu kirletmesin.
-    setSearchParams(id === AYARLAR_SECTION_IDS[0] ? {} : { bolum: id }, { replace: true });
-  }
-
+  // Bölümler sekme değil, alt alta ayrık kartlar: hepsi tek bakışta görünür.
+  // Hesap silme kartı en sondadır (AccountCard'ın içinde, tehlike tonuyla).
   return (
-    <main className="dash-shell">
-      <DashSidebar username={username} account={account} />
+    <PanelShell
+      icon={Settings}
+      title={content.title}
+      description={app.panel.settingsDescription}
+      titleAside={
+        <span aria-live="polite" className="ayarlar-save-state" data-state={saveState}>
+          {saveState === "saving" && common.saveState.saving}
+          {saveState === "saved" && common.saveState.saved}
+          {saveState === "error" && common.saveState.error}
+        </span>
+      }
+      username={username}
+      account={account}
+    >
+      <AddressCard username={username} change={addressChange} />
 
-      <section className="dash-main ayarlar-main">
-        <header className="ayarlar-header">
-          <h1>{content.title}</h1>
-          <span aria-live="polite" className="ayarlar-save-state" data-state={saveState}>
-            {saveState === "saving" && common.saveState.saving}
-            {saveState === "saved" && common.saveState.saved}
-            {saveState === "error" && common.saveState.error}
-          </span>
-        </header>
+      <LanguageCard />
 
-        <div className="ayarlar-nav" role="tablist" aria-label={content.sectionNavLabel}>
-          {AYARLAR_SECTION_IDS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              id={`ayarlar-sekme-${id}`}
-              aria-selected={id === active}
-              aria-controls={`ayarlar-panel-${id}`}
-              onClick={() => selectSection(id)}
-            >
-              {content.sectionLabels[id]}
-            </button>
-          ))}
-        </div>
+      <ShareImageCard
+        ogTemplate={loaderData.ogTemplate}
+        ogPhotoAssetId={loaderData.ogPhotoAssetId}
+        imageBlocks={imageBlocks}
+        previews={previews}
+        account={account}
+        onSaveStateChange={setSaveState}
+      />
 
-        <div
-          className="ayarlar-panel"
-          role="tabpanel"
-          id={`ayarlar-panel-${active}`}
-          aria-labelledby={`ayarlar-sekme-${active}`}
-        >
-          {active === "adres" ? (
-            <AddressCard username={username} change={addressChange} />
-          ) : null}
-
-          {active === "dil" ? <LanguageCard /> : null}
-
-          {active === "paylasim-gorseli" ? (
-            <ShareImageCard
-              ogTemplate={loaderData.ogTemplate}
-              ogPhotoAssetId={loaderData.ogPhotoAssetId}
-              imageBlocks={imageBlocks}
-              previews={previews}
-              account={account}
-              onSaveStateChange={setSaveState}
-            />
-          ) : null}
-
-          {active === "hesap" ? (
-            <AccountCard
-              username={username}
-              providers={accountInfo.providers}
-              email={accountInfo.email}
-              emailVerified={accountInfo.emailVerified}
-              publishedLegal={loaderData.publishedLegal}
-            />
-          ) : null}
-        </div>
-      </section>
-    </main>
+      <AccountCard
+        username={username}
+        providers={accountInfo.providers}
+        email={accountInfo.email}
+        emailVerified={accountInfo.emailVerified}
+        publishedLegal={loaderData.publishedLegal}
+      />
+    </PanelShell>
   );
 }

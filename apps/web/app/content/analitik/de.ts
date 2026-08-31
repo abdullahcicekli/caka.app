@@ -55,7 +55,6 @@ const SOURCES: Record<string, string> = {
 };
 
 export const de = {
-  title: "Seitenstatistik",
   windowLabel: "Letzte 30 Tage",
 
   viewsTitle: "Aufrufe",

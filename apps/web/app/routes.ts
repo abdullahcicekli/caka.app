@@ -23,6 +23,7 @@ const ROUTE_FILES: Record<RouteKey, string> = {
   login: "routes/login.tsx",
   edit: "routes/edit.tsx",
   dashboard: "routes/dashboard.tsx",
+  analitik: "routes/analitik.tsx",
   ayarlar: "routes/ayarlar.tsx",
   gizlilik: "routes/gizlilik.tsx",
   "kullanim-kosullari": "routes/kullanim-kosullari.tsx",

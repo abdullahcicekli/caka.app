@@ -25,7 +25,7 @@ const RESERVED_GROUPS: Record<string, readonly string[]> = {
     "onboarding", "login", "logout", "signin", "signout", "signup", "register",
     "edit", "editor", "settings", "api", "i", "b", "belge", "og", "basla",
     "tamamla", "hazir",
-    "kurulum", "dashboard", "profile", "account", "home", "index", "new",
+    "kurulum", "dashboard", "analitik", "profile", "account", "home", "index", "new",
     "search", "explore", "discover", "popular", "trending", "preview",
   ],
   // A1. Dil önekleri (L20). Bunlar top-level segment olduğu için Değişmez #1

@@ -10,13 +10,6 @@ import type { AyarlarContent } from "./index";
 
 export const de = {
   title: "Einstellungen",
-  sectionNavLabel: "Bereiche der Einstellungen",
-  sectionLabels: {
-    adres: "Adresse",
-    dil: "Sprache",
-    "paylasim-gorseli": "Teilen-Bild",
-    hesap: "Konto",
-  },
 
   address: {
     title: "Adresse",

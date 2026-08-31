@@ -14,10 +14,6 @@ import { tr } from "./tr";
 
 export type AyarlarContent = typeof tr;
 
-/** Ayarlar bölümleri — sayfa içi gezinme ve `<section id>` kaynağı. */
-export const AYARLAR_SECTION_IDS = ["adres", "dil", "paylasim-gorseli", "hesap"] as const;
-
-export type AyarlarSectionId = (typeof AYARLAR_SECTION_IDS)[number];
 
 /**
  * Adres değişikliği sonucu için sunucudan dönebilecek hata kimlikleri.

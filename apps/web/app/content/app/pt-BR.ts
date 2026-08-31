@@ -16,6 +16,7 @@ export const ptBR = {
   titles: {
     editor: "Editor — Caka",
     dashboard: "Painel — Caka",
+    analytics: "Analytics — Caka",
     settings: "Configurações — Caka",
     login: "Entrar — Caka",
     setup: "Prepare sua página — Caka",
@@ -370,7 +371,7 @@ export const ptBR = {
     close: "Fechar",
     copied: "Copiado",
     copyLink: "Copiar link",
-    pages: "Páginas",
+    pages: "Minha página",
     analytics: "Analytics",
     settings: "Configurações",
     homeAria: "Início",
@@ -382,6 +383,12 @@ export const ptBR = {
       "Você tem alterações não publicadas — a prévia abaixo mostra a versão no ar.",
     editPage: "Editar a página",
     openPage: "Abrir a página",
+  },
+
+  panel: {
+    pageDescription: "A versão publicada da sua página. Abra o editor para fazer alterações.",
+    analyticsDescription: "As visitas, os cliques e as origens de visitantes da sua página.",
+    settingsDescription: "Seu endereço, seu idioma, sua imagem de compartilhamento e sua conta.",
   },
 
   profile: {

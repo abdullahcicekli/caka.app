@@ -10,13 +10,6 @@ import type { AyarlarContent } from "./index";
 
 export const ptBR = {
   title: "Configurações",
-  sectionNavLabel: "Seções das configurações",
-  sectionLabels: {
-    adres: "Endereço",
-    dil: "Idioma",
-    "paylasim-gorseli": "Imagem de compartilhamento",
-    hesap: "Conta",
-  },
 
   address: {
     title: "Endereço",

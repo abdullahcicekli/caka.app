@@ -16,6 +16,7 @@ export const en = {
   titles: {
     editor: "Editor — Caka",
     dashboard: "Dashboard — Caka",
+    analytics: "Analytics — Caka",
     settings: "Settings — Caka",
     login: "Log in — Caka",
     setup: "Set up your page — Caka",
@@ -368,7 +369,7 @@ export const en = {
     close: "Close",
     copied: "Copied",
     copyLink: "Copy link",
-    pages: "Pages",
+    pages: "My page",
     analytics: "Analytics",
     settings: "Settings",
     homeAria: "Home",
@@ -380,6 +381,12 @@ export const en = {
       "You have unpublished changes — the preview below shows the live version.",
     editPage: "Edit page",
     openPage: "Open page",
+  },
+
+  panel: {
+    pageDescription: "The live version of your page. Open the editor to make changes.",
+    analyticsDescription: "Your page's visits, clicks and visitor sources.",
+    settingsDescription: "Your address, language, share image and account.",
   },
 
   profile: {

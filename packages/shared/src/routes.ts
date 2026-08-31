@@ -17,6 +17,7 @@ export const ROUTE_KEYS = [
   "login",
   "edit",
   "dashboard",
+  "analitik",
   "ayarlar",
   "gizlilik",
   "kullanim-kosullari",
@@ -60,6 +61,15 @@ export const ROUTE_SLUGS: Record<RouteKey, Record<Locale, string>> = {
     es: "panel",
     "pt-BR": "painel",
     de: "uebersicht",
+  },
+  // Panel iskeletinin ayrık analitik sayfası. TR slug'ı top-level olduğundan
+  // rezerve isim listesine de girer (Değişmez #1).
+  analitik: {
+    tr: "analitik",
+    en: "analytics",
+    es: "analiticas",
+    "pt-BR": "analises",
+    de: "statistiken",
   },
   ayarlar: {
     tr: "ayarlar",

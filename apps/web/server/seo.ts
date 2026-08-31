@@ -94,6 +94,7 @@ const PRIVATE_ROUTE_KEYS: RouteKey[] = [
   "edit",
   "login",
   "dashboard",
+  "analitik",
   "ayarlar",
   "onboarding",
   "onboarding.tamamla",

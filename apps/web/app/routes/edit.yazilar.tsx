@@ -3,11 +3,11 @@
 // yazar; asıl kapı sunucudadır (post-api POST), burası kullanıcıyı 400'e
 // çarpmadan durduran arayüz katmanıdır.
 import { env } from "cloudflare:workers";
-import { Plus } from "iconoir-react";
+import { PageEdit, Plus } from "iconoir-react";
 import { Link } from "react-router";
 
 import { DEFAULT_LOCALE, MAX_POSTS_PER_PROFILE } from "@caka/shared";
-import { DashSidebar } from "~/components/dash-sidebar";
+import { PanelShell } from "~/components/panel-shell";
 import { yaziCatalog } from "~/content/yazi";
 import { yaziEditorCatalog } from "~/content/yazi-editor";
 import { useCatalog, useLocalizedPath } from "~/lib/locale";
@@ -56,81 +56,76 @@ export default function EditYazilar({ loaderData }: Route.ComponentProps) {
   const atLimit = posts.length >= MAX_POSTS_PER_PROFILE;
 
   return (
-    <main className="dash-shell">
-      <DashSidebar username={username} account={account} />
+    <PanelShell
+      icon={PageEdit}
+      title={content.list.title}
+      description={content.list.intro}
+      titleAside={
+        atLimit ? (
+          <button
+            type="button"
+            disabled
+            className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-murekkep/10 px-4 py-2 text-sm font-semibold text-murekkep/40"
+          >
+            <Plus width={16} height={16} /> {content.list.newPost}
+          </button>
+        ) : (
+          <Link
+            to={path("edit.yazi", { id: "yeni" })}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-murekkep px-4 py-2 text-sm font-semibold text-zemin hover:bg-murekkep/85"
+          >
+            <Plus width={16} height={16} /> {content.list.newPost}
+          </Link>
+        )
+      }
+      username={username}
+      account={account}
+    >
+      {/* R8: engel kimlikli ve sebepli — düğme neden kapalı, yazıyor. */}
+      {atLimit ? (
+        <p className="rounded-xl bg-kum px-4 py-3 text-sm font-medium">
+          {content.list.limitReason}
+        </p>
+      ) : null}
 
-      <section className="dash-main">
-        <div className="mx-auto w-full max-w-2xl px-5 py-10">
-          <header className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold">{content.list.title}</h1>
-              <p className="mt-2 max-w-md text-sm text-murekkep/60">{content.list.intro}</p>
-            </div>
-            {atLimit ? (
-              <button
-                type="button"
-                disabled
-                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-murekkep/10 px-4 py-2 text-sm font-semibold text-murekkep/40"
-              >
-                <Plus width={16} height={16} /> {content.list.newPost}
-              </button>
-            ) : (
+      {posts.length === 0 ? (
+        <p className="text-sm text-murekkep/60">{content.list.empty}</p>
+      ) : (
+        <ul className="divide-y divide-murekkep/10">
+          {posts.map((post) => (
+            <li key={post.id}>
               <Link
-                to={path("edit.yazi", { id: "yeni" })}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-murekkep px-4 py-2 text-sm font-semibold text-zemin hover:bg-murekkep/85"
+                to={path("edit.yazi", { id: post.id })}
+                className="flex items-center justify-between gap-4 py-4 hover:opacity-70"
               >
-                <Plus width={16} height={16} /> {content.list.newPost}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{post.title}</span>
+                  <span className="mt-1 block text-xs text-murekkep/50">
+                    {yazi.date(
+                      dayKeyOf(
+                        post.status === "published" && post.publishedAt
+                          ? post.publishedAt
+                          : post.updatedAt,
+                      ),
+                    )}
+                  </span>
+                </span>
+                <span
+                  className={
+                    post.status === "published"
+                      ? "shrink-0 rounded-lg bg-kirec px-2.5 py-1 text-xs font-semibold text-murekkep"
+                      : "shrink-0 rounded-lg bg-murekkep/10 px-2.5 py-1 text-xs font-semibold text-murekkep/60"
+                  }
+                >
+                  {post.status === "published"
+                    ? content.list.statusPublished
+                    : content.list.statusDraft}
+                </span>
               </Link>
-            )}
-          </header>
-
-          {/* R8: engel kimlikli ve sebepli — düğme neden kapalı, yazıyor. */}
-          {atLimit ? (
-            <p className="mt-3 rounded-xl bg-kum px-4 py-3 text-sm font-medium">
-              {content.list.limitReason}
-            </p>
-          ) : null}
-
-          {posts.length === 0 ? (
-            <p className="mt-10 text-sm text-murekkep/60">{content.list.empty}</p>
-          ) : (
-            <ul className="mt-8 divide-y divide-murekkep/10">
-              {posts.map((post) => (
-                <li key={post.id}>
-                  <Link
-                    to={path("edit.yazi", { id: post.id })}
-                    className="flex items-center justify-between gap-4 py-4 hover:opacity-70"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold">{post.title}</span>
-                      <span className="mt-1 block text-xs text-murekkep/50">
-                        {yazi.date(
-                          dayKeyOf(
-                            post.status === "published" && post.publishedAt
-                              ? post.publishedAt
-                              : post.updatedAt,
-                          ),
-                        )}
-                      </span>
-                    </span>
-                    <span
-                      className={
-                        post.status === "published"
-                          ? "shrink-0 rounded-lg bg-kirec px-2.5 py-1 text-xs font-semibold text-murekkep"
-                          : "shrink-0 rounded-lg bg-murekkep/10 px-2.5 py-1 text-xs font-semibold text-murekkep/60"
-                      }
-                    >
-                      {post.status === "published"
-                        ? content.list.statusPublished
-                        : content.list.statusDraft}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-    </main>
+            </li>
+          ))}
+        </ul>
+      )}
+    </PanelShell>
   );
 }

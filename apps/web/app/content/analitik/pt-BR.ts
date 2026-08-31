@@ -55,7 +55,6 @@ const SOURCES: Record<string, string> = {
 };
 
 export const ptBR = {
-  title: "Estatísticas da página",
   windowLabel: "Últimos 30 dias",
 
   viewsTitle: "Visualizações",

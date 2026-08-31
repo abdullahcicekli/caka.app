@@ -10,13 +10,6 @@ import type { AyarlarContent } from "./index";
 
 export const es = {
   title: "Ajustes",
-  sectionNavLabel: "Secciones de ajustes",
-  sectionLabels: {
-    adres: "Dirección",
-    dil: "Idioma",
-    "paylasim-gorseli": "Imagen para compartir",
-    hesap: "Cuenta",
-  },
 
   address: {
     title: "Dirección",

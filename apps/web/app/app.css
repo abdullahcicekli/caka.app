@@ -3696,7 +3696,6 @@ button.photo-cell:focus-visible {
 .dash-account-labels strong { overflow: hidden; font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .dash-account-labels small { overflow: hidden; color: color-mix(in srgb, var(--color-murekkep) 50%, transparent); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 
-.dash-main { display: flex; align-items: center; justify-content: center; gap: 24px; flex-direction: column; padding: 44px 24px; }
 .dash-draft-note {
   border: 1px solid color-mix(in srgb, var(--color-uyari) 40%, transparent);
   border-radius: 999px;
@@ -3711,18 +3710,16 @@ button.photo-cell:focus-visible {
 .dash-actions > * { display: flex; min-height: 44px; align-items: center; gap: 8px; border: 1px solid var(--color-sinir); border-radius: 999px; padding: 0 20px; background: white; font-size: 14px; font-weight: 500; }
 .dash-actions > .dash-edit { border-color: var(--color-murekkep); background: var(--color-murekkep); color: white; }
 .dash-actions > *:hover { opacity: .88; }
-.dash-main .dashboard-preview { width: 300px; height: 560px; margin: 0; }
-.dash-main .dashboard-preview-scale { transform: scale(0.7576); }
+/* Panel iskeletindeki telefon önizlemesi (routes/dashboard.tsx). */
+.panel-preview.dashboard-preview { width: 300px; height: 560px; margin: 0; }
+.panel-preview .dashboard-preview-scale { transform: scale(0.7576); }
 
 @media (max-width: 820px) {
   .dash-shell { display: block; }
   .dash-sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--color-sinir); }
 }
 
-/* Ayarlar sayfası: dash-main'in ortalanmış düzenini içerik akışına çevirir */
-.ayarlar-main { align-items: stretch; justify-content: flex-start; max-width: 760px; width: 100%; margin: 0 auto; gap: 18px; }
-.ayarlar-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.ayarlar-header h1 { font-size: 22px; font-weight: 700; }
+/* Ayarlar sayfası: iskelet PanelShell'den gelir, burada yalnız kart içleri */
 .ayarlar-save-state { min-height: 1em; font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--color-murekkep) 55%, transparent); }
 .ayarlar-save-state[data-state="error"] { color: var(--color-uyari); }
 .ayarlar-card { display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--color-sinir); border-radius: var(--radius-2xl); background: white; padding: 22px 24px 26px; }
@@ -3757,12 +3754,6 @@ button.photo-cell:focus-visible {
    başına gösteriliyor. Çipler `role="tab"`, panel `role="tabpanel"`; seçili
    sekme dolu zeminle işaretlenir çünkü yalnız kenarlık farkı dokunmatikte ve
    yüksek kontrast modunda okunmuyordu. */
-.ayarlar-nav { display: flex; flex-wrap: wrap; gap: 8px; }
-.ayarlar-nav button { border: 1px solid var(--color-sinir); border-radius: 999px; background: white; padding: 6px 14px; font-size: 13px; font-weight: 600; color: color-mix(in srgb, var(--color-murekkep) 75%, transparent); cursor: pointer; transition: border-color .15s ease, color .15s ease, background-color .15s ease; }
-.ayarlar-nav button:hover { border-color: var(--color-murekkep); color: var(--color-murekkep); }
-.ayarlar-nav button[aria-selected="true"] { background: var(--color-murekkep); border-color: var(--color-murekkep); color: white; }
-.ayarlar-nav button:focus-visible { outline: 2px solid var(--color-mavi); outline-offset: 2px; }
-.ayarlar-panel { display: flex; flex-direction: column; gap: 18px; }
 .ayarlar-link { font-weight: 600; color: var(--color-mavi); text-decoration: underline; text-underline-offset: 2px; }
 .ayarlar-link:hover { opacity: .7; }
 .ayarlar-current { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; border: 1px solid var(--color-sinir); border-radius: var(--radius-xl); background: var(--color-zemin); padding: 12px 16px; }

@@ -22,6 +22,7 @@ describe("slug tablosu", () => {
     expect(ROUTE_SLUGS.login.tr).toBe("login");
     expect(ROUTE_SLUGS.edit.tr).toBe("edit");
     expect(ROUTE_SLUGS.dashboard.tr).toBe("dashboard");
+    expect(ROUTE_SLUGS.analitik.tr).toBe("analitik");
     expect(ROUTE_SLUGS["onboarding.kurulum"].tr).toBe("onboarding/kurulum/:step");
     expect(ROUTE_SLUGS["edit.yazilar"].tr).toBe("edit/yazilar");
     expect(ROUTE_SLUGS["edit.yazi"].tr).toBe("edit/yazi/:id");
@@ -69,6 +70,11 @@ describe("slug tablosu", () => {
 });
 
 describe("rezerve isimler", () => {
+  it("analitik top-level Türkçe slug'dır ve kullanıcı adı olarak alınamaz", () => {
+    // Değişmez #1: yeni top-level route → rezerve isim. (`analytics` zaten listede.)
+    expect(RESERVED_USERNAMES.has("analitik")).toBe(true);
+  });
+
   it("pt-br kullanıcı adı olarak alınamaz", () => {
     // Değişmez #1 / L20: beş karakterli geçerli bir desen, çakışabilir.
     expect(RESERVED_USERNAMES.has("pt-br")).toBe(true);

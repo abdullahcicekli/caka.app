@@ -15,6 +15,7 @@ export const tr = {
   titles: {
     editor: "Editör — Caka",
     dashboard: "Panel — Caka",
+    analytics: "Analitik — Caka",
     settings: "Ayarlar — Caka",
     login: "Giriş yap — Caka",
     setup: "Sayfanı hazırla — Caka",
@@ -389,7 +390,7 @@ export const tr = {
     close: "Kapat",
     copied: "Kopyalandı",
     copyLink: "Bağlantıyı kopyala",
-    pages: "Sayfalar",
+    pages: "Sayfam",
     analytics: "Analitik",
     settings: "Ayarlar",
     homeAria: "Ana sayfa",
@@ -401,6 +402,14 @@ export const tr = {
       "Yayınlanmamış değişikliklerin var — aşağıdaki önizleme yayındaki hâli gösteriyor.",
     editPage: "Sayfayı düzenle",
     openPage: "Sayfayı aç",
+  },
+
+  /** Panel iskeleti: sayfa başlıkları sidebar etiketleriyle aynı (nav.*),
+   * buradakiler yalnız h1 altındaki kısa açıklamalar. */
+  panel: {
+    pageDescription: "Sayfanın yayındaki hâli. Düzenlemek için editörü aç.",
+    analyticsDescription: "Sayfanın ziyaretleri, tıklamaları ve ziyaretçi kaynakları.",
+    settingsDescription: "Adresin, dilin, paylaşım görselin ve hesabın.",
   },
 
   profile: {

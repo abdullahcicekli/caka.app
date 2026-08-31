@@ -55,7 +55,6 @@ const SOURCES: Record<string, string> = {
 };
 
 export const es = {
-  title: "Estadísticas de la página",
   windowLabel: "Últimos 30 días",
 
   viewsTitle: "Visualizaciones",

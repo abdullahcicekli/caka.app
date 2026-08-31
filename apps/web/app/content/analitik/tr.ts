@@ -64,7 +64,6 @@ const SOURCES: Record<string, string> = {
 };
 
 export const tr = {
-  title: "Sayfa istatistikleri",
   windowLabel: "Son 30 gün",
 
   viewsTitle: "Görüntülenme",

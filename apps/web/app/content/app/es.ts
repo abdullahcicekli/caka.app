@@ -16,6 +16,7 @@ export const es = {
   titles: {
     editor: "Editor — Caka",
     dashboard: "Panel — Caka",
+    analytics: "Analíticas — Caka",
     settings: "Ajustes — Caka",
     login: "Iniciar sesión — Caka",
     setup: "Prepara tu página — Caka",
@@ -370,7 +371,7 @@ export const es = {
     close: "Cerrar",
     copied: "Copiado",
     copyLink: "Copiar enlace",
-    pages: "Páginas",
+    pages: "Mi página",
     analytics: "Analíticas",
     settings: "Ajustes",
     homeAria: "Inicio",
@@ -382,6 +383,12 @@ export const es = {
       "Tienes cambios sin publicar: la vista previa de abajo muestra la versión publicada.",
     editPage: "Editar la página",
     openPage: "Abrir la página",
+  },
+
+  panel: {
+    pageDescription: "La versión publicada de tu página. Abre el editor para hacer cambios.",
+    analyticsDescription: "Las visitas, los clics y las fuentes de visitantes de tu página.",
+    settingsDescription: "Tu dirección, tu idioma, tu imagen para compartir y tu cuenta.",
   },
 
   profile: {

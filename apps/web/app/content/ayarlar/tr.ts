@@ -8,13 +8,6 @@ import {
 
 export const tr = {
   title: "Ayarlar",
-  sectionNavLabel: "Ayarlar bölümleri",
-  sectionLabels: {
-    adres: "Adres",
-    dil: "Dil",
-    "paylasim-gorseli": "Paylaşım görseli",
-    hesap: "Hesap",
-  },
 
   address: {
     title: "Adres",
