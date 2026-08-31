@@ -1586,6 +1586,16 @@
   text-transform: uppercase;
 }
 .profile-block-featured-post strong { font-size: 17px; font-weight: 650; line-height: 1.3; }
+.profile-block-featured-post p {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--profile-card-muted, var(--profile-muted));
+  font-size: 12.5px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .featured-post-date { color: var(--profile-card-muted, var(--profile-muted)); font-size: 11.5px; }
 
 .profile-image-placeholder {
@@ -3736,12 +3746,9 @@ button.photo-cell:focus-visible {
 .ayarlar-card h2 { font-size: 16.5px; font-weight: 700; }
 .ayarlar-card h3 { margin-top: 10px; font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: color-mix(in srgb, var(--color-murekkep) 60%, transparent); }
 .ayarlar-hint { font-size: 13.5px; color: color-mix(in srgb, var(--color-murekkep) 60%, transparent); }
-/* Dil seçici (L17). Tarayıcının kendi <select> okunu gizleyip marka oku
-   koyuyoruz; alan .ayarlar-field ile aynı yüksekliği tutsun diye padding
-   oradan kopyalandı. */
-.ayarlar-select { appearance: none; width: 100%; max-width: 320px; border: 1px solid var(--color-sinir); border-radius: var(--radius-xl); background: white; padding: 11px 40px 11px 16px; font-size: 15px; font-weight: 600; color: var(--color-murekkep); cursor: pointer; transition: border-color .15s ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2314141a' stroke-width='1.6'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 14px center; background-size: 18px; }
+/* Dil seçici (L17). Ortak dropdown bileşeniyle açılır; ayarlar kartı kendi
+   daha geniş form alanı ölçüsünü burada verir. */
+.ayarlar-select { width: 100%; max-width: 320px; min-height: 46px; border-radius: var(--radius-xl); padding: 11px 14px 11px 16px; font-size: 15px; font-weight: 600; }
 .ayarlar-select:focus-visible { outline: none; border-color: var(--color-murekkep); }
 .ayarlar-hero { border: 1px solid var(--color-sinir); border-radius: var(--radius-xl); overflow: hidden; background: var(--color-zemin); }
 .ayarlar-hero img { display: block; width: 100%; height: auto; }
@@ -4023,7 +4030,7 @@ button.photo-cell:focus-visible {
 .editor-inspector > header { display: flex; min-height: 58px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-sinir); padding: 0 16px; }
 .inspector-fields { display: flex; padding: 18px 16px; flex-direction: column; gap: 16px; overflow-y: auto; }
 .inspector-fields label, .inspector-fields fieldset { display: flex; gap: 8px; flex-direction: column; font-size: 12px; font-weight: 500; }
-.inspector-fields input, .inspector-fields textarea, .inspector-fields select { min-height: 42px; border: 1px solid var(--color-sinir); border-radius: var(--radius-lg); padding: 9px 11px; background: white; outline: none; font-size: 13px; font-weight: 400; }
+.inspector-fields input, .inspector-fields textarea, .dropdown-select-trigger { min-height: 42px; border: 1px solid var(--color-sinir); border-radius: var(--radius-lg); padding: 9px 11px; background: white; outline: none; font-size: 13px; font-weight: 400; }
 .inspector-fields textarea { min-height: 78px; resize: vertical; }
 .inspector-error { margin-top: -2px; color: var(--color-destructive); font-size: 11.5px; font-weight: 500; line-height: 1.45; }
 .inspector-hint { margin-top: -2px; color: color-mix(in srgb, var(--color-murekkep) 52%, transparent); font-size: 11.5px; font-weight: 400; line-height: 1.45; }
@@ -4053,7 +4060,7 @@ button.photo-cell:focus-visible {
   overflow: hidden;
 }
 
-.inspector-fields input:focus, .inspector-fields textarea:focus, .inspector-fields select:focus { border-color: var(--color-murekkep); }
+.inspector-fields input:focus, .inspector-fields textarea:focus, .dropdown-select-trigger:focus-visible { border-color: var(--color-murekkep); }
 /* Sürüm seçici (ayet kartı): üç seçenek yan yana. `select` DEĞİL, çünkü
    seçim kartın ölçüsünü de değiştiriyor — sonucu görünür bir düğmeye
    bağlamak açılır listeden dürüst. */
@@ -4262,11 +4269,52 @@ html[data-profile-theme] body {
   [role="button"]:not([aria-disabled="true"]),
   [role="menuitem"],
   label[for],
-  select:not(:disabled),
   summary {
     cursor: pointer;
   }
 }
+
+/* Native seçicilerin platforma göre değişen menüsü yerine bütün yüzeylerde
+   aynı Radix menüsü kullanılır. Genişlik doğrudan tetikleyiciden gelir;
+   böylece dil seçici ve dar editör alanları kendi hiza çizgilerini korur. */
+.dropdown-select-trigger {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--color-sinir);
+  background: white;
+  color: var(--color-murekkep);
+  text-align: left;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.dropdown-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dropdown-select-trigger > svg { flex: none; color: color-mix(in srgb, var(--color-murekkep) 58%, transparent); transition: transform .15s ease; }
+.dropdown-select-trigger[data-state="open"] { border-color: var(--color-murekkep); background: var(--color-zemin); }
+.dropdown-select-trigger[data-state="open"] > svg { transform: rotate(180deg); }
+.dropdown-select-content { width: var(--radix-dropdown-menu-trigger-width); min-width: min(220px, calc(100vw - 24px)); padding: 6px; }
+.dropdown-select-content [role="menuitemradio"] { min-height: 38px; padding: 9px 32px 9px 10px; line-height: 1.35; }
+
+/* Public yazıda dönüş bağlantısı, ince ve belirsiz bir metin yerine ayrı bir
+   dokunma hedefidir: ok yönü, çerçeve ve hover durumu dönüş eylemini açıkça
+   anlatır. */
+.post-back-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-sinir);
+  border-radius: 999px;
+  padding: 0 15px 0 12px;
+  color: color-mix(in srgb, var(--color-murekkep) 76%, transparent);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.post-back-link:hover { border-color: var(--color-murekkep); background: white; color: var(--color-murekkep); }
+.post-back-link:focus-visible { outline: 2px solid var(--color-murekkep); outline-offset: 3px; }
 
 @theme inline {
   --font-heading: var(--font-sans);

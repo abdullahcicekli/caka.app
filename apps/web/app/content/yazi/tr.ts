@@ -37,7 +37,7 @@ export const tr = {
     if (!parsed || !name) return day;
     return `${parsed.d} ${name} ${parsed.y}`;
   },
-  backToProfile: (username: string) => `@${username} profiline dön`,
+  backToProfile: (username: string) => `${username}'ın Caka sayfasına dön`,
   /** AE2: sahip taslağını görür; ziyaretçiye bu sayfa hiç inmez (404). */
   draftNotice: "Taslak — bu yazıyı şu an yalnız sen görebiliyorsun.",
   shareImageAlt: (title: string) => `${title} — Caka'da bir yazı`,

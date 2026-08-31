@@ -8,7 +8,6 @@ import {
   type LinkVariant,
   shortenFileName,
   mapFrameImageKey,
-  sizeToDims,
   type ProfileBlock,
   type ProfileLayout,
   type ProfileTheme,
@@ -740,13 +739,9 @@ export function ProfileBlockCard({
     case "posts": {
       const items = posts ?? [];
       if (items.length === 0) return null;
-      // Küçük kart hızlı bağlantı listesi olarak kalır. İki tam satıra
-      // çıkan kartta ise gövdeden kısa bir kesit gösterilir.
-      const height = block.pos?.lg.h ?? sizeToDims(block.size).h;
-      const showExcerpt = height >= 4;
       return (
         <article
-          className={`profile-block profile-block-posts${showExcerpt ? " has-excerpt" : ""}`}
+          className="profile-block profile-block-posts"
           aria-label={w.posts.listLabel}
         >
           <ul className="posts-list">
@@ -754,11 +749,11 @@ export function ProfileBlockCard({
               <li key={post.id}>
                 <a href={post.href}>
                   <strong>{post.title}</strong>
-                  {showExcerpt && post.excerpt ? <p>{post.excerpt}</p> : null}
+                  {post.excerpt ? <p>{post.excerpt}</p> : null}
                   {/* Belge kartıyla aynı tarih biçimi — tek sözlük, tek biçim. */}
                   <span className="post-meta">
                     <small>{w.document.date(post.publishedAt)}</small>
-                    {showExcerpt && post.excerpt ? <em>{w.posts.readMore} →</em> : null}
+                    {post.excerpt ? <em>{w.posts.readMore} →</em> : null}
                   </span>
                 </a>
               </li>
@@ -781,6 +776,7 @@ export function ProfileBlockCard({
         <a className="profile-block profile-block-featured-post" href={target.href}>
           <small className="featured-post-kicker">{w.posts.featuredKicker}</small>
           <strong>{target.title}</strong>
+          {target.excerpt ? <p>{target.excerpt}</p> : null}
           <small className="featured-post-date">{w.document.date(target.publishedAt)}</small>
         </a>
       );

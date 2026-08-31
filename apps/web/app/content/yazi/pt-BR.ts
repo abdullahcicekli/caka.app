@@ -23,7 +23,7 @@ export const ptBR = {
     if (!parsed || !name) return day;
     return `${parsed.d} de ${name} de ${parsed.y}`;
   },
-  backToProfile: (username: string) => `Voltar ao perfil de @${username}`,
+  backToProfile: (username: string) => `Voltar ao Caka de ${username}`,
   draftNotice: "Rascunho — por enquanto só você pode ver esta publicação.",
   shareImageAlt: (title: string) => `${title} — uma publicação no Caka`,
   notFound: {

@@ -31,6 +31,7 @@ import {
   type GalleryPick,
 } from "~/components/editor/gallery";
 import { ProfileAvatar } from "~/components/profile-avatar";
+import { DropdownSelect } from "~/components/ui/dropdown-select";
 import { EditorGrid, type EditorDevice, type GridUpdate } from "~/components/editor/grid";
 import { InlineTextEditor } from "~/components/editor/rich-text-editor";
 import { ProfileBlockCard } from "~/components/profile-block";
@@ -88,7 +89,11 @@ import {
 import { getSession } from "../../server/auth";
 import { collectGithubLogins, getGithubCalendars } from "../../server/github";
 import { signLayoutImages } from "../../server/layout-images";
-import { getOwnPostOptions, type OwnPostOption } from "../../server/post-list";
+import {
+  getOwnPostOptions,
+  getPublishedProfilePostFeed,
+  type OwnPostOption,
+} from "../../server/post-list";
 import { getProfileByUserId } from "../../server/profile";
 import type { Route } from "./+types/edit";
 import { localizedRedirect } from "../../server/locale";
@@ -135,6 +140,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Yazı blokları (U6): öne çıkan seçici TASLAKLARI da listeler, önizleme
     // ve uyarı bağlamı yayındakileri süzer. Tek sorgu, üç tüketici.
     posts: await getOwnPostOptions(env, profile.id),
+    // Editörde yeni bir yazı bloğu anlık eklenebildiği için, açılıştaki
+    // düzende böyle bir blok olmasa da kısa gövdeleri hazır tutarız. Public
+    // sayfanın beslemesiyle aynı güvenli özet üreticisinden gelir.
+    publishedPosts: await getPublishedProfilePostFeed(env, profile),
   };
 }
 
@@ -1400,10 +1409,15 @@ function Inspector({
         return (
           <>
             <label>{app.editor.fieldPlatform}
-              <select
+              <DropdownSelect
+                label={app.editor.fieldPlatform}
                 value={block.data.platform}
-                onChange={(event) => {
-                  const config = onboarding.byId(event.target.value as SocialPlatform);
+                options={onboarding.platforms.map((platform) => ({
+                  value: platform.id,
+                  label: platform.label,
+                }))}
+                onValueChange={(platform) => {
+                  const config = onboarding.byId(platform as SocialPlatform);
                   // Kullanıcı kendi başlığını yazdıysa platform değişince
                   // silinmez; yalnız varsayılan etiket yeni platformunkine
                   // döner (varsayılan zaten kartta görünmüyor).
@@ -1418,11 +1432,7 @@ function Inspector({
                     favicon: "",
                   });
                 }}
-              >
-                {onboarding.platforms.map((platform) => (
-                  <option key={platform.id} value={platform.id}>{platform.label}</option>
-                ))}
-              </select>
+              />
             </label>
             <label>{app.editor.fieldSocialTarget}
               <input
@@ -2121,22 +2131,24 @@ function Inspector({
           <>
             <label>
               {app.editor.featuredPostField}
-              <select
+              <DropdownSelect
+                label={app.editor.featuredPostField}
                 value={block.data.postId}
-                onChange={(event) => update({ postId: event.target.value })}
-              >
-                <option value="">{app.editor.featuredPostNone}</option>
-                {posts.map((post) => (
-                  <option key={post.id} value={post.id}>
-                    {/* Taslaklar da listelenir ama işaretli: taslak seçmek
-                        serbest, kart yayında görünmez ve uyarı rozeti anında
-                        çıkar (blockIssue + publishedPostIds bağlamı). */}
-                    {post.status === "published"
-                      ? post.title
-                      : app.editor.featuredPostDraftOption(post.title)}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: app.editor.featuredPostNone },
+                  ...posts.map((post) => ({
+                    // Taslaklar da listelenir ama işaretli: taslak seçmek
+                    // serbest, kart yayında görünmez ve uyarı rozeti anında
+                    // çıkar (blockIssue + publishedPostIds bağlamı).
+                    value: post.id,
+                    label:
+                      post.status === "published"
+                        ? post.title
+                        : app.editor.featuredPostDraftOption(post.title),
+                  })),
+                ]}
+                onValueChange={(postId) => update({ postId })}
+              />
               {posts.length === 0 ? (
                 <small className="inspector-hint">
                   {app.editor.featuredPostNoPosts}{" "}
@@ -2203,16 +2215,8 @@ export default function Editor({ loaderData }: Route.ComponentProps) {
   // gerçeği okusun.
   const publishedPosts = useMemo(
     () =>
-      loaderData.posts
-        .filter((post) => post.status === "published")
-        .sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0))
-        .map((post) => ({
-          id: post.id,
-          title: post.title,
-          href: `/${loaderData.username}/${post.slug}`,
-          publishedAt: post.publishedAt ?? 0,
-        })),
-    [loaderData.posts, loaderData.username],
+      loaderData.publishedPosts,
+    [loaderData.publishedPosts],
   );
   const issueCtx = useMemo(
     () => ({ publishedPostIds: new Set(publishedPosts.map((post) => post.id)) }),

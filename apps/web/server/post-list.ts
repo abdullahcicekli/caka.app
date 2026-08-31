@@ -163,6 +163,16 @@ export async function getProfilePostFeed(
     (block) => block.type === "posts" || block.type === "featuredPost",
   );
   if (!hasPostBlocks) return [];
+  return getPublishedProfilePostFeed(env, profile);
+}
+
+/** Yayındaki yazıların kart beslemesi. Editör bunu doğrudan çağırır: kullanıcı
+ * yazı bloğunu o an ekleyebileceği için, açılıştaki düzende yazı bloğu olmasa
+ * bile WYSIWYG önizlemesinde hazır olmalıdır. */
+export async function getPublishedProfilePostFeed(
+  env: Env,
+  profile: { id: string; username: string },
+): Promise<ProfilePostFeedItem[]> {
   try {
     const cards = await getPublishedPostCards(env, profile.id);
     return cards.map((card) => ({

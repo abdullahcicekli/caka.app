@@ -11,6 +11,7 @@
 import { env } from "cloudflare:workers";
 import { and, eq } from "drizzle-orm";
 import { Link, data, redirect } from "react-router";
+import { NavArrowLeft } from "iconoir-react";
 
 import { createDb, post } from "@caka/db";
 import {
@@ -233,9 +234,10 @@ export default function PublicPost({ loaderData }: Route.ComponentProps) {
         <p className="mb-8">
           <Link
             to={`/${username}`}
-            className="text-sm font-medium text-murekkep/60 underline underline-offset-2 hover:text-murekkep"
+            className="post-back-link"
           >
-            ← {yazi.backToProfile(username)}
+            <NavArrowLeft width={18} height={18} aria-hidden />
+            {yazi.backToProfile(username)}
           </Link>
         </p>
         {published ? null : (

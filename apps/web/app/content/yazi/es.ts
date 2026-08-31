@@ -23,7 +23,7 @@ export const es = {
     if (!parsed || !name) return day;
     return `${parsed.d} de ${name} de ${parsed.y}`;
   },
-  backToProfile: (username: string) => `Volver al perfil de @${username}`,
+  backToProfile: (username: string) => `Volver al Caka de ${username}`,
   draftNotice: "Borrador — por ahora solo tú puedes ver esta publicación.",
   shareImageAlt: (title: string) => `${title} — una publicación en Caka`,
   notFound: {

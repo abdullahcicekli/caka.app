@@ -23,7 +23,7 @@ export const en = {
     if (!parsed || !name) return day;
     return `${name} ${parsed.d}, ${parsed.y}`;
   },
-  backToProfile: (username: string) => `Back to @${username}'s profile`,
+  backToProfile: (username: string) => `Back to ${username}'s Caka`,
   draftNotice: "Draft — only you can see this post right now.",
   shareImageAlt: (title: string) => `${title} — a post on Caka`,
   notFound: {

@@ -19,6 +19,7 @@ import {
 } from "@caka/shared";
 
 import { useLocale } from "~/lib/locale";
+import { DropdownSelect } from "~/components/ui/dropdown-select";
 
 export function LocaleSelect({
   id,
@@ -41,18 +42,16 @@ export function LocaleSelect({
   }
 
   return (
-    <select
+    <DropdownSelect
       id={id}
-      aria-label={label}
-      className={className}
       value={locale}
-      onChange={(event) => change(event.target.value as Locale)}
-    >
-      {SUPPORTED_LOCALES.map((option) => (
-        <option key={option} value={option}>
-          {LOCALE_LABELS[option]}
-        </option>
-      ))}
-    </select>
+      label={label}
+      className={className}
+      onValueChange={change}
+      options={SUPPORTED_LOCALES.map((option) => ({
+        value: option,
+        label: LOCALE_LABELS[option],
+      }))}
+    />
   );
 }
